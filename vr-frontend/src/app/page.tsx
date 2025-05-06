@@ -15,4 +15,6 @@ export default function Home() {
       </main>
     </div>
   );
+
+  //the complete signup page complete
 }
