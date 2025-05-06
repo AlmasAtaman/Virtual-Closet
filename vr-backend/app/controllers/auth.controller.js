@@ -20,9 +20,25 @@ export const signup = async (req, res) => {
           ? { connect: roles.map(role => ({ name: role })) }
           : { connect: [{ name: "user" }] },
       },
+      include: {roles: true}
     });
 
-    res.send({ message: "User was registered successfully!" });
+    const token = jwt.sign(
+      { id: user.id, username: user.username, email: user.email },
+      jwtConfig.secret,
+      { expiresIn: 86400, algorithm: 'HS256', allowInsecureKeySizes: true }
+    );
+
+    const authorities = user.roles.map(role => `ROLE_${role.name.toUpperCase()}`);
+
+
+    res.status(200).send({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      roles: authorities,
+      accessToken: token
+    });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -43,7 +59,7 @@ export const signin = async (req, res) => {
     if (!validPassword) return res.status(401).send({ message: "Invalid Password!" });
 
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, username: user.username, email: user.email },
       jwtConfig.secret,
       { expiresIn: 86400, algorithm: 'HS256', allowInsecureKeySizes: true }
     );
