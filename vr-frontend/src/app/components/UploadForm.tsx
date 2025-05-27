@@ -120,11 +120,37 @@ export default function UploadForm({
 
   const formData = new FormData();
   let finalFile: File | null = null;
+
   if (uploadMethod === "image") {
     finalFile = cleanedFile;
-  } else {
+  } else if (uploadMethod === "url" && selectedImage) {
     try {
-      finalFile = await urlToFile(selectedImage!);
+        // Process the image from URL on submit
+        const res = await axios.post("http://localhost:8000/api/scrape", {
+            url: selectedImage, // Send the selected image URL for processing
+            process: true // Add a flag to indicate processing is needed
+        });
+
+        if (res.data.processedImage?.imageBuffer) {
+            const { clothingData, imageBuffer, originalname } = res.data.processedImage;
+            const binary = atob(imageBuffer);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: "image/png" });
+            finalFile = new File([blob], originalname || 'processed.png', { type: "image/png" });
+
+            // Update autoData with processed clothing data
+            setAutoData(prev => ({ ...prev, ...clothingData }));
+
+        } else {
+            alert("Failed to process image from URL.");
+            console.error("Image processing failed for selected image:", res.data);
+            setSubmitting(false);
+            return;
+        }
+
     } catch (err) {
       alert("Failed to process image from URL.");
       console.error(err);
@@ -132,6 +158,7 @@ export default function UploadForm({
       return;
     }
   }
+
   formData.append("image", finalFile!);
 
     if (uploadTarget === "wishlist" && !autoData.sourceUrl) {
@@ -289,9 +316,11 @@ export default function UploadForm({
             url: autoData.sourceUrl,
           });
           const data = res.data;
+
+          // Only set scrape data and select the first image for preview
           setSelectedImage(data.imageUrl || data.imageGallery?.[0] || null);
           setScrapeData(data);
-          setAutoData((prev) => ({
+           setAutoData((prev) => ({
             ...prev,
             name: data.name || "",
             brand: data.brand || "",
@@ -308,6 +337,7 @@ export default function UploadForm({
             notes: data.notes || "",
             sourceUrl: data.sourceUrl || autoData.sourceUrl,
           }));
+
         } catch (err) {
           console.error("Failed to fetch URL data:", err);
           alert("Failed to scrape URL");
@@ -319,6 +349,12 @@ export default function UploadForm({
 
     {scrapeData && (
       <>
+        {selectedImage && (
+            <div className="w-full max-h-80 flex justify-center items-center mb-4 border rounded">
+                <img src={selectedImage} alt="Selected Product Image" className="max-h-full object-contain" />
+            </div>
+        )}
+
         <div className="flex gap-2 mb-4 overflow-x-auto">
           {scrapeData.imageGallery?.map((img: string, idx: number) => (
             <img
