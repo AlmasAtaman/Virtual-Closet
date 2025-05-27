@@ -3,6 +3,13 @@
 import React, { useRef, useState } from "react";
 import axios from "axios";
 
+async function urlToFile(imageUrl: string): Promise<File> {
+  const response = await fetch(imageUrl);
+  const blob = await response.blob();
+  const filename = imageUrl.split('/').pop()?.split('?')[0] || 'image.jpg';
+  return new File([blob], filename, { type: blob.type });
+}
+
 
 const initialData = {
     name: "",
@@ -38,6 +45,10 @@ export default function UploadForm({
   const [cleanedFile, setCleanedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [autoData, setAutoData] = useState<typeof initialData>(initialData);
+  const [uploadMethod, setUploadMethod] = useState<"image" | "url">("image");
+  const [scrapeData, setScrapeData] = useState<any | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -102,14 +113,33 @@ export default function UploadForm({
   };
 
   const handleSubmit = async () => {
-    if (!cleanedFile) return alert("No cleaned image to submit.");
+  if (uploadMethod === "image" && !cleanedFile) return alert("No cleaned image to submit.");
+  if (uploadMethod === "url" && !selectedImage) return alert("No image selected from URL.");
+
+  setSubmitting(true);
+
+  const formData = new FormData();
+  let finalFile: File | null = null;
+  if (uploadMethod === "image") {
+    finalFile = cleanedFile;
+  } else {
+    try {
+      finalFile = await urlToFile(selectedImage!);
+    } catch (err) {
+      alert("Failed to process image from URL.");
+      console.error(err);
+      setSubmitting(false);
+      return;
+    }
+  }
+  formData.append("image", finalFile!);
+
     if (uploadTarget === "wishlist" && !autoData.sourceUrl) {
       alert("Source URL is required for wishlist items.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("image", cleanedFile);
+    formData.append("url", uploadMethod === "image" ? previewUrl! : selectedImage!);
     formData.append("name", autoData.name);
     formData.append("type", autoData.type);
     formData.append("brand", autoData.brand);
@@ -171,94 +201,154 @@ export default function UploadForm({
         {mode === "basic" ? "Switch to Advanced Mode" : "Switch to Basic Mode"}
       </button>
     </div>
-      <label className="block w-full cursor-pointer mb-2 text-white text-sm font-medium">
-        <input
-          type="file"
-          ref={inputRef}
-          accept="image/*"
-          onChange={handleFileChange}
-          className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-        />
-      </label>
+    {uploadTarget === "wishlist" && (
+      <div className="mb-3 flex items-center gap-4">
+        <span className="text-sm font-medium">Upload Method:</span>
+        <button
+          onClick={() => setUploadMethod((m) => (m === "image" ? "url" : "image"))}
+          className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600 text-sm shadow"
+        >
+          {uploadMethod === "image" ? "Switch to URL" : "Switch to Image"}
+        </button>
+      </div>
+    )}
 
-      {mode === "advanced" ? (
-        <div className="flex flex-col md:flex-row gap-6 mt-4">
-          {/* Image Preview Left */}
-          {previewUrl && (
-            <div className="flex-1 max-w-sm">
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="w-full object-contain rounded border"
-              />
-            </div>
-          )}
+{uploadMethod === "image" ? (
+  <>
+    <label className="block w-full cursor-pointer mb-2 text-white text-sm font-medium">
+      <input
+        type="file"
+        ref={inputRef}
+        accept="image/*"
+        onChange={handleFileChange}
+        className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+      />
+    </label>
 
-          {/* Form Fields Right */}
-          <div className="flex-1 space-y-3">
+    {mode === "advanced" ? (
+      <div className="flex flex-col md:flex-row gap-6 mt-4">
+        {previewUrl && (
+          <div className="flex-1 max-w-sm">
+            <img src={previewUrl} alt="Preview" className="w-full object-contain rounded border" />
+          </div>
+        )}
+        <div className="flex-1 space-y-3">
+          {["name", "type", "brand", "occasion", "style", "fit", "color", "material", "season"].map((field) => (
             <input
+              key={field}
               type="text"
-              placeholder="Name"
-              value={autoData.name}
-              onChange={(e) => setAutoData({ ...autoData, name: e.target.value })}
-              className="w-full border px-3 py-3 rounded text-lg"
+              placeholder={field}
+              value={autoData[field as ClothingFields]}
+              onChange={(e) => setAutoData({ ...autoData, [field]: e.target.value })}
+              className="w-full border px-3 py-2 rounded"
             />
-            <div className="grid grid-cols-2 gap-2">
-              {["type", "brand", "occasion", "style", "fit", "color", "material", "season"].map((field) => (
-                <input
-                  key={field}
-                  type="text"
-                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  value={autoData[field as keyof typeof autoData] || ""}
-                  onChange={(e) =>
-                    setAutoData({
-                      ...autoData,
-                      [field]: e.target.value,
-                    })
-                  }
-                  className="border px-3 py-2 rounded w-full"
-                />
-              ))}
-            </div>
-
-            <textarea
-              placeholder="Notes (optional)"
-              value={autoData.notes}
-              onChange={(e) => setAutoData({ ...autoData, notes: e.target.value })}
-              className="w-full border px-3 py-2 rounded h-24"
-            />
-          </div>
+          ))}
+          <textarea
+            placeholder="Notes"
+            value={autoData.notes}
+            onChange={(e) => setAutoData({ ...autoData, notes: e.target.value })}
+            className="w-full border px-3 py-2 rounded h-24"
+          />
         </div>
-      ) : (
-        <>
-          {/* BASIC Mode */}
-          {previewUrl && (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full max-h-80 object-contain mb-4 rounded"
+      </div>
+    ) : (
+      <>
+        {previewUrl && (
+          <img src={previewUrl} alt="Preview" className="w-full max-h-80 object-contain mb-4 rounded" />
+        )}
+        <div className="space-y-2 mt-4">
+          {["name", "type", "brand"].map((field) => (
+            <input
+              key={field}
+              type="text"
+              placeholder={field}
+              value={autoData[field as ClothingFields]}
+              onChange={(e) => setAutoData({ ...autoData, [field]: e.target.value })}
+              className="w-full border px-3 py-2 rounded"
             />
-          )}
+          ))}
+        </div>
+      </>
+    )}
+  </>
+) : (
+  <>
+    {/* URL MODE */}
+    <input
+      type="text"
+      placeholder="Paste product URL"
+      value={autoData.sourceUrl}
+      onChange={(e) => setAutoData({ ...autoData, sourceUrl: e.target.value })}
+      className="w-full border px-3 py-2 rounded mb-3"
+    />
+    <button
+      className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
+      onClick={async () => {
+        try {
+          const res = await axios.post("http://localhost:8000/api/scrape", {
+            url: autoData.sourceUrl,
+          });
+          const data = res.data;
+          setSelectedImage(data.imageUrl || data.imageGallery?.[0] || null);
+          setScrapeData(data);
+          setAutoData((prev) => ({
+            ...prev,
+            name: data.name || "",
+            brand: data.brand || "",
+            price: data.price || "",
+            currency: data.currency || "",
+            description: data.description || "",
+            type: data.type || "",
+            occasion: data.occasion || "",
+            style: data.style || "",
+            fit: data.fit || "",
+            color: data.color || "",
+            material: data.material || "",
+            season: data.season || "",
+            notes: data.notes || "",
+            sourceUrl: data.sourceUrl || autoData.sourceUrl,
+          }));
+        } catch (err) {
+          console.error("Failed to fetch URL data:", err);
+          alert("Failed to scrape URL");
+        }
+      }}
+    >
+      Fetch Info
+    </button>
 
-          <div className="space-y-2 mt-4">
-            {["name", "type", "brand"].map((field) => (
-              <input
-                key={field}
-                type="text"
-                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                value={autoData[field as ClothingFields]}
-                onChange={(e) =>
-                  setAutoData((prev) => ({
-                    ...prev,
-                    [field]: e.target.value,
-                  }))
-                }
-                className="w-full border px-3 py-2 rounded"
-              />
-            ))}
-          </div>
-        </>
-      )}
+    {scrapeData && (
+      <>
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          {scrapeData.imageGallery?.map((img: string, idx: number) => (
+            <img
+              key={idx}
+              src={img}
+              onClick={() => setSelectedImage(img)}
+              className={`h-24 w-24 object-cover rounded border-4 cursor-pointer ${
+                selectedImage === img ? "border-blue-500" : "border-transparent"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          {["name", "type", "brand"].map((field) => (
+            <input
+              key={field}
+              type="text"
+              placeholder={field}
+              value={autoData[field as ClothingFields]}
+              onChange={(e) => setAutoData({ ...autoData, [field]: e.target.value })}
+              className="w-full border px-3 py-2 rounded"
+            />
+          ))}
+        </div>
+      </>
+    )}
+  </>
+)}
+
 
       {/* Source URL input for all wishlist uploads, both modes */}
       {uploadTarget === "wishlist" && (
@@ -272,17 +362,20 @@ export default function UploadForm({
       )}
 
       <div className="flex gap-4 mt-4">
-        <button
-          onClick={handleUpload}
-          disabled={submitting || !image}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-        >
-          {submitting ? "Uploading..." : "Auto-fill"}
-        </button>
+        {uploadMethod === "image" && (
+          <button
+            onClick={handleUpload}
+            disabled={submitting || !image}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {submitting ? "Uploading..." : "Auto-fill"}
+          </button>
+        )}
         <button
           onClick={handleSubmit}
           disabled={
-            !cleanedFile ||
+            (uploadMethod === "image" && !cleanedFile) ||
+            (uploadMethod === "url" && !selectedImage) ||
             !autoData.name ||
             !autoData.type ||
             (uploadTarget === "wishlist" && !autoData.sourceUrl)
@@ -292,6 +385,7 @@ export default function UploadForm({
           Submit
         </button>
       </div>
+
     </div>
   );
 

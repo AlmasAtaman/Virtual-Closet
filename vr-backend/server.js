@@ -6,7 +6,7 @@ import db from './app/models/index.js';
 import authRoutes from './app/routes/auth.routes.js';
 import userRoutes from './app/routes/user.routes.js';
 import uploadRoutes from './app/routes/upload.js';
-
+import { scrapeProduct } from './app/scrape/scrape.controller.js';
 
 dotenv.config();
 
@@ -30,6 +30,7 @@ app.use(cookieParser());
 app.use('/api/images', uploadRoutes); // So POST /images works
 //make sure to only change code here
 
+app.post('/api/scrape', scrapeProduct);
 
 
 // Routes
