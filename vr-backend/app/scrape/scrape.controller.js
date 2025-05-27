@@ -64,46 +64,56 @@ export async function scrapeProduct(req, res) {
 
     const mainContent = $('main').html() || $('body').html();
     const structured = await extractProductData(mainContent);
+
+    // Check if the extracted product is clothing
+    if (!structured?.isClothing) {
+        await browser.close();
+        return res.status(400).json({
+            error: 'Scraped item is not clothing',
+            structured: structured // Optionally return structured data even if not clothing
+        });
+    }
+
     const normalizedGallery = (structured.imageGallery || []).map(img =>
       normalizeUrl(img, url)
     );
 
-    // Process the main product image
-    const normalizedImageUrl = normalizeUrl(imageUrl, url);
-    if (normalizedImageUrl) {
-      try {
-        const processedImage = await processImage({
-          type: 'url',
-          data: normalizedImageUrl,
-          originalname: 'product.jpg'
-        }, req.user?.id);
+    // Process the main product image - This part is now handled on Submit with process: true
+    // const normalizedImageUrl = normalizeUrl(imageUrl, url);
+    // if (normalizedImageUrl) {
+    //   try {
+    //     const processedImage = await processImage({
+    //       type: 'url',
+    //       data: normalizedImageUrl,
+    //       originalname: 'product.jpg'
+    //     }, req.user?.id);
 
         res.json({
           ...structured,
           imageGallery: normalizedGallery,
-          imageUrl: normalizedImageUrl,
+          imageUrl: normalizeUrl(imageUrl, url), // Keep original image URL for initial display
           sourceUrl: url,
-          processedImage: processedImage
+          // processedImage is now returned only on Submit
         });
-      } catch (error) {
-        console.error('Image processing failed:', error);
-        res.status(500).json({ 
-          error: 'Image processing failed', 
-          details: error.message,
-          structured,
-          imageGallery: normalizedGallery,
-          imageUrl: normalizedImageUrl,
-          sourceUrl: url
-        });
-      }
-    } else {
-      res.json({
-        ...structured,
-        imageGallery: normalizedGallery,
-        imageUrl: normalizedImageUrl,
-        sourceUrl: url
-      });
-    }
+    //   } catch (error) {
+    //     console.error('Image processing failed:', error);
+    //     res.status(500).json({ 
+    //       error: 'Image processing failed', 
+    //       details: error.message,
+    //       structured,
+    //       imageGallery: normalizedGallery,
+    //       imageUrl: normalizedImageUrl,
+    //       sourceUrl: url
+    //     });
+    //   }
+    // } else {
+    //   res.json({
+    //     ...structured,
+    //     imageGallery: normalizedGallery,
+    //     imageUrl: normalizedImageUrl,
+    //     sourceUrl: url
+    //   });
+    // }
 
     await browser.close();
   } catch (err) {

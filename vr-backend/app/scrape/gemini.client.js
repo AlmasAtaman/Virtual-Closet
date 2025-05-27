@@ -16,11 +16,9 @@ export async function extractProductData(html) {
     From the provided HTML, return only a pure JSON object in the following format:
 
     {
+    "isClothing": boolean,
     "name": "...",
     "brand": "...",
-    "price": "...",
-    "currency": "...",
-    "description": "...",
     "type": "...",
     "occasion": "...",
     "style": "...",
@@ -28,15 +26,27 @@ export async function extractProductData(html) {
     "color": "...",
     "material": "...",
     "season": "...",
-    "notes": "...",
-    "imageGallery": ["url1", "url2", "..."],
-    "sourceUrl": "..."
+    "sourceUrl": "...",
+    "imageGallery": ["url1", "url2", "..."]
     }
 
     Guidelines:
-    - Fill in as many fields as possible. Use null if not found.
-    - For “notes”, include extra info like features, style tips, etc.
-    - Prioritize high-quality product images only in imageGallery.
+    - Analyze the HTML to identify a single clothing item if present.
+    - Set "isClothing" to true if a single clothing item is clearly identified, otherwise set to false.
+    - If "isClothing" is true, fill in the following fields based on the clothing item:
+      - "name": a short descriptive name.
+      - "brand": guessed brand name (e.g. "Nike", "Adidas"), or null if unknown
+      - "type": one of ["T-shirt", "Jacket", "Pants", "Shoes", "Hat", "Sweater", "Shorts", "Dress", "Skirt"], or null.
+      - "occasion": one of ["Casual", "Formal", "Party", "Athletic"], or null.
+      - "style": one of ["Streetwear", "Minimalist", "Old Money", "Y2K", "Preppy"], or null.
+      - "fit": one of ["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"], or null.
+      - "color": one of basic colors like ["Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink"], or null.
+      - "material": one of ["Cotton", "Linen", "Denim", "Leather", "Knit", "Polyester"], or null.
+      - "season": one of ["Spring", "Summer", "Fall", "Winter"], or null.
+      - "sourceUrl": the URL of the product page.
+      - "imageGallery": an array of high-quality image URLs for the product.
+    - If "isClothing" is false, all other fields should be null or empty arrays.
+    - Only return the specified JSON object. Do not include any other text, explanations, or fields.
 
     HTML:
     \`\`\`html
@@ -55,11 +65,9 @@ export async function extractProductData(html) {
   } catch (err) {
     console.error("Failed to parse Gemini response:", text);
     return {
+      isClothing: false,
       name: null,
       brand: null,
-      price: null,
-      currency: null,
-      description: null,
       type: null,
       occasion: null,
       style: null,
@@ -67,9 +75,8 @@ export async function extractProductData(html) {
       color: null,
       material: null,
       season: null,
-      notes: null,
-      imageGallery: [],
-      sourceUrl: null
+      sourceUrl: null,
+      imageGallery: []
     };
   }
 }
