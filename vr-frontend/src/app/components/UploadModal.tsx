@@ -37,7 +37,7 @@ export default function UploadModal({ show, onClose, onUploadComplete, currentVi
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
       <div
         ref={modalRef}
-        className="bg-[#1f1f1f] text-white rounded-lg p-6 w-full max-w-md shadow-lg relative border border-gray-700"
+        className="bg-[#1f1f1f] text-white rounded-lg p-6 w-full max-w-md shadow-lg relative border border-gray-700 max-h-[90vh] overflow-y-auto"
       >
         <button
           className="absolute top-2 right-2 text-gray-400 hover:text-white text-xl"
