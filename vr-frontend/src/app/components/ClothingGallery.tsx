@@ -147,6 +147,25 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     }
   };
 
+  const handleMoveToCloset = async (item: Clothing) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:8000/api/images/move-to-closet/${item.id}`,
+        {},
+        { withCredentials: true }
+      );
+      
+      // Remove the item from the current view
+      setClothingItems((prev) => prev.filter((i) => i.id !== item.id));
+      
+      // Show success message
+      alert("Item moved to closet successfully!");
+    } catch (err) {
+      console.error("Error moving item to closet:", err);
+      alert("Failed to move item to closet");
+    }
+  };
+
   useImperativeHandle(ref, () => ({
     refresh: fetchImages,
     addClothingItem: (newItem: Clothing) => {
@@ -364,15 +383,28 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                     </button>
                   ))}
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(item.key);
-                }}
-                className="mt-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
-              >
-                Delete
-              </button>
+              <div className="mt-2 flex gap-2">
+                {viewMode === "wishlist" && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveToCloset(item);
+                    }}
+                    className="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600"
+                  >
+                    Move to Closet
+                  </button>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item.key);
+                  }}
+                  className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))
         )}
