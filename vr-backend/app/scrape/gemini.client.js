@@ -20,6 +20,7 @@ export async function extractProductData(html) {
     "name": "...",
     "brand": "...",
     "type": "...",
+    "price": "...",
     "occasion": "...",
     "style": "...",
     "fit": "...",
@@ -37,6 +38,7 @@ export async function extractProductData(html) {
       - "name": a short descriptive name.
       - "brand": guessed brand name (e.g. "Nike", "Adidas"), or null if unknown
       - "type": one of ["T-shirt", "Jacket", "Pants", "Shoes", "Hat", "Sweater", "Shorts", "Dress", "Skirt"], or null.
+      - "price": numeric string or number only, e.g. "39.99" or 39.99. Null if not found.
       - "occasion": one of ["Casual", "Formal", "Party", "Athletic"], or null.
       - "style": one of ["Streetwear", "Minimalist", "Old Money", "Y2K", "Preppy"], or null.
       - "fit": one of ["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"], or null.

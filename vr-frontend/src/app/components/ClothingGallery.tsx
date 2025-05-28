@@ -16,6 +16,7 @@ type Clothing = {
   name: string;
   type: string;
   brand: string;
+  price?: number | string | null;
   occasion?: string;
   style?: string;
   fit?: string;
@@ -31,6 +32,7 @@ type EditFormFields = {
   name: string;
   type: string;
   brand: string;
+  price: string;
   occasion: string;
   style: string;
   fit: string;
@@ -53,6 +55,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     name: "",
     type: "",
     brand: "",
+    price: "",
     occasion: "",
     style: "",
     fit: "",
@@ -290,6 +293,13 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     );
   };
 
+  // Helper function to safely format price
+  const formatPrice = (price: number | string | null | undefined): string => {
+    if (price === null || price === undefined) return "N/A";
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return isNaN(numPrice) ? "N/A" : `$${numPrice.toFixed(2)}`;
+  };
+
   return (
     <div className="mt-6">
       <div className="flex gap-2 mb-4">
@@ -451,6 +461,9 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
               <p className="font-medium mt-2">{item.name}</p>
               <p className="text-sm text-gray-600">{item.type}</p>
               <p className="text-sm text-gray-600">{item.brand}</p>
+              <p className="text-sm text-gray-600">
+                {formatPrice(item.price)}
+              </p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {[item.type]
                   .filter((tag): tag is string => Boolean(tag))
@@ -573,6 +586,14 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                       placeholder="Brand"
                     />
                     <input
+                      type="number"
+                      step="0.01"
+                      value={editForm.price}
+                      onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
+                      placeholder="Price"
+                    />
+                    <input
                       type="text"
                       value={editForm.occasion}
                       onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
@@ -670,6 +691,9 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                     {selectedItem.sourceUrl && <p><strong>Source URL:</strong> <a href={selectedItem.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{selectedItem.sourceUrl}</a></p>}
                     <p><strong>Type:</strong> {selectedItem.type}</p>
                     <p><strong>Brand:</strong> {selectedItem.brand}</p>
+                    {selectedItem.price !== undefined && selectedItem.price !== null && (
+                      <p><strong>Price:</strong> {formatPrice(selectedItem.price)}</p>
+                    )}
                     {selectedItem.occasion && <p><strong>Occasion:</strong> {selectedItem.occasion}</p>}
                     {selectedItem.style && <p><strong>Style:</strong> {selectedItem.style}</p>}
                     {selectedItem.fit && <p><strong>Fit:</strong> {selectedItem.fit}</p>}
@@ -697,6 +721,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                         name: selectedItem.name,
                         type: selectedItem.type,
                         brand: selectedItem.brand,
+                        price: selectedItem.price?.toString() || "",
                         occasion: selectedItem.occasion || "",
                         style: selectedItem.style || "",
                         fit: selectedItem.fit || "",

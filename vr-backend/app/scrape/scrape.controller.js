@@ -18,16 +18,31 @@ export async function scrapeProduct(req, res) {
 
   try {
     if (process) {
-      const processedImage = await processImage({
-        type: 'url',
-        data: url,
-        originalname: 'product.jpg'
-      }, req.user?.id);
+      try {
+        // Validate URL format
+        new URL(url);
+        
+        const processedImage = await processImage({
+          type: 'url',
+          data: url,
+          originalname: 'product.jpg'
+        }, req.user?.id);
 
-      return res.json({
-        success: true,
-        processedImage: processedImage
-      });
+        if (!processedImage) {
+          throw new Error('Failed to process image');
+        }
+
+        return res.json({
+          success: true,
+          processedImage: processedImage
+        });
+      } catch (error) {
+        console.error('Image processing error:', error);
+        return res.status(500).json({ 
+          error: 'Failed to process image', 
+          details: error.message 
+        });
+      }
     }
 
     browser = await playwright.webkit.launch({ headless: true });

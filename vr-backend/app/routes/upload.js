@@ -72,7 +72,8 @@ router.get("/", authMiddleware, async (req, res) => {
         season: item.season || "",
         notes: item.notes || "",
         mode: item.mode || "closet",
-        sourceUrl: item.sourceUrl || ""
+        sourceUrl: item.sourceUrl || "",
+        price: item.price || ""
       };
     });
 
@@ -85,7 +86,7 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 router.post("/submit-clothing", authMiddleware, async (req, res) => {
-  const { name, type, brand, key, mode = "closet", sourceUrl = null } = req.body;
+  const { name, type, brand, key, price, mode = "closet", sourceUrl = null } = req.body;
   const userId = req.user.id;
 
   if (!key) return res.status(400).json({ message: "Missing image key" });
@@ -99,6 +100,7 @@ router.post("/submit-clothing", authMiddleware, async (req, res) => {
         name: name || null,
         type: type || null,
         brand: brand || null,
+        price: price ? parseFloat(price) : null,
         mode,
         sourceUrl
       },
@@ -116,7 +118,8 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
     occasion, style, fit,
     color, material, season, notes,
     mode = "closet",
-    sourceUrl = null
+    sourceUrl = null,
+    price = null
   } = req.body;
   const userId = req.user.id;
   const file = req.file;
@@ -144,7 +147,8 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
         season: season || null,
         notes: notes || null,
         mode,
-        sourceUrl
+        sourceUrl,
+        price: price ? parseFloat(price) : null
       }
     });
 
@@ -157,8 +161,7 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
     const { url: presignedUrl, error: presignError } = await getPresignedUrl(key);
     if (presignError) {
       console.error("Error generating presigned URL for new item:", presignError);
-      // Decide how to handle this - maybe return the item without URL or indicate error
-      // For now, let's return the item with an empty URL if presigning fails
+
     }
 
     const newClothingItemWithUrl = {
@@ -177,7 +180,7 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
 router.delete("/:key", authMiddleware, deleteImage);
 
 router.patch("/update", authMiddleware, async (req, res) => {
-  const { id, name, type, brand, occasion, style, fit, color, material, season, notes, sourceUrl } = req.body;
+  const { id, name, type, brand, occasion, style, fit, color, material, season, notes, sourceUrl, price  } = req.body;
 
   if (!id) return res.status(400).json({ error: "Missing clothing ID" });
 
@@ -186,7 +189,8 @@ router.patch("/update", authMiddleware, async (req, res) => {
       where: { id },
       data: {
         name, type, brand, occasion, style, fit,
-        color, material, season, notes, sourceUrl
+        color, material, season, notes, sourceUrl,
+        price: price ? parseFloat(price) : null
       },
     });
 
