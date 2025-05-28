@@ -65,6 +65,8 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     notes: "",
     sourceUrl: "",
   });
+  const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
+  const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
   const [showFilters, setShowFilters] = useState(false);
   const [filterAcrossModes, setFilterAcrossModes] = useState(false);
   const [searchAcrossModes, setSearchAcrossModes] = useState(false);
@@ -80,6 +82,23 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     { key: 'color', label: 'Color' },
     { key: 'material', label: 'Material' },
     { key: 'season', label: 'Season' },
+  ];
+
+  // Helper function to safely convert price to number
+  const getNumericPrice = (price: string | number | null | undefined): number | null => {
+    if (price === null || price === undefined) return null;
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return isNaN(numPrice) ? null : numPrice;
+  };
+
+  // Add price range options
+  const priceRanges = [
+    { label: "Under $10", range: [0, 10] },
+    { label: "$10 - $20", range: [10, 20] },
+    { label: "$20 - $40", range: [20, 40] },
+    { label: "$40 - $60", range: [40, 60] },
+    { label: "$60 - $100", range: [60, 100] },
+    { label: "Over $100", range: [100, Infinity] }
   ];
 
   // Helper function to render filter options for a single attribute
@@ -266,19 +285,56 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     ? fuse.search(searchQuery).map(result => result.item)
     : baseItems;
 
-  const filteredItems = searchResults.filter((item) => {
-    if (selectedTags.length === 0) return true;
-    const itemTags = [
-      item.type,
-      item.occasion,
-      item.style,
-      item.fit,
-      item.color,
-      item.material,
-      item.season,
-    ].filter(Boolean);
-    return selectedTags.every((tag) => itemTags.includes(tag));
-  });
+  const filteredItems = searchResults
+    .filter((item) => {
+      // Tag filtering
+      if (selectedTags.length > 0) {
+        const itemTags = [
+          item.type,
+          item.occasion,
+          item.style,
+          item.fit,
+          item.color,
+          item.material,
+          item.season,
+        ].filter(Boolean);
+        if (!selectedTags.every((tag) => itemTags.includes(tag))) {
+          return false;
+        }
+      }
+
+      // Price range filtering
+      if (priceRange[0] !== null || priceRange[1] !== null) {
+        const itemPrice = getNumericPrice(item.price);
+        if (itemPrice === null) return false;
+        
+        if (priceRange[0] !== null && itemPrice < priceRange[0]) return false;
+        if (priceRange[1] !== null && itemPrice > priceRange[1]) return false;
+      }
+
+      return true;
+    })
+    .filter(item => {
+      const itemPrice = getNumericPrice(item.price);
+      // Exclude items with no valid price when price sorting is active
+      if ((priceSort === "asc" || priceSort === "desc") && itemPrice === null) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (priceSort === "none") return 0;
+      
+      const priceA = getNumericPrice(a.price);
+      const priceB = getNumericPrice(b.price);
+      
+      // If either price is null, move that item to the end
+      if (priceA === null && priceB === null) return 0;
+      if (priceA === null) return 1;
+      if (priceB === null) return -1;
+      
+      return priceSort === "asc" ? priceA - priceB : priceB - priceA;
+    });
 
   const toggleMultiSelect = () => {
     setIsMultiSelecting(prev => !prev);
@@ -360,12 +416,69 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
       {showFilters && (
         <div className="mb-4 p-4 border rounded bg-gray-800">
           <h3 className="text-lg font-semibold mb-2">Filter Options</h3>
-          {
-            filterAttributes.map(attribute => {
-              const uniqueValues = uniqueAttributeValues[attribute.key];
-              return renderAttributeFilters(attribute.key as keyof Clothing, attribute.label, uniqueValues);
-            })
-          }
+          
+          {/* Price Sorting */}
+          <div className="mb-4">
+            <h4 className="text-md font-medium mb-1">Price Sort</h4>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setPriceSort("none")}
+                className={`px-3 py-1 rounded-full text-sm border ${
+                  priceSort === "none" ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                None
+              </button>
+              <button
+                onClick={() => setPriceSort("asc")}
+                className={`px-3 py-1 rounded-full text-sm border ${
+                  priceSort === "asc" ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                Least Expensive
+              </button>
+              <button
+                onClick={() => setPriceSort("desc")}
+                className={`px-3 py-1 rounded-full text-sm border ${
+                  priceSort === "desc" ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                Most Expensive
+              </button>
+            </div>
+          </div>
+
+          {/* Price Range */}
+          <div className="mb-4">
+            <h4 className="text-md font-medium mb-1">Price Range</h4>
+            <div className="flex flex-wrap gap-2">
+              {priceRanges.map((range) => (
+                <button
+                  key={range.label}
+                  onClick={() => {
+                    if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
+                      setPriceRange([null, null]);
+                    } else {
+                      setPriceRange(range.range as [number, number]);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-full text-sm border ${
+                    priceRange[0] === range.range[0] && priceRange[1] === range.range[1]
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Existing attribute filters */}
+          {filterAttributes.map(attribute => {
+            const uniqueValues = uniqueAttributeValues[attribute.key];
+            return renderAttributeFilters(attribute.key as keyof Clothing, attribute.label, uniqueValues);
+          })}
         </div>
       )}
 
