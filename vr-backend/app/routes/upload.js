@@ -197,4 +197,40 @@ router.patch("/update", authMiddleware, async (req, res) => {
   }
 });
 
+// Add new endpoint to move item from wishlist to closet
+router.patch("/move-to-closet/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  if (!id) return res.status(400).json({ error: "Missing clothing ID" });
+
+  try {
+    // First verify the item exists and belongs to the user
+    const item = await prisma.clothing.findFirst({
+      where: {
+        id,
+        userId,
+        mode: "wishlist"
+      }
+    });
+
+    if (!item) {
+      return res.status(404).json({ error: "Item not found in wishlist" });
+    }
+
+    // Update the item's mode to closet
+    const updated = await prisma.clothing.update({
+      where: { id },
+      data: {
+        mode: "closet"
+      },
+    });
+
+    res.json({ message: "Item moved to closet", item: updated });
+  } catch (error) {
+    console.error("Failed to move item:", error);
+    res.status(500).json({ error: "Failed to move item" });
+  }
+});
+
 export default router;
