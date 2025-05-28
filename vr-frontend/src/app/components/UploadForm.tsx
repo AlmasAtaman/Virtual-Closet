@@ -15,6 +15,7 @@ const initialData = {
     name: "",
     type: "",
     brand: "",
+    price: "",
     occasion: "",
     style: "",
     fit: "",
@@ -84,6 +85,7 @@ export default function UploadForm({
         name: clothingData?.name ?? prev.name,
         type: clothingData?.type ?? prev.type,
         brand: clothingData?.brand ?? prev.brand,
+        price: clothingData?.price ?? prev.price,
         occasion: clothingData?.occasion ?? prev.occasion,
         style: clothingData?.style ?? prev.style,
         fit: clothingData?.fit ?? prev.fit,
@@ -135,7 +137,6 @@ export default function UploadForm({
 
         if (res.data.processedImage?.imageBuffer) {
             const { clothingData, imageBuffer, originalname } = res.data.processedImage;
-            // Decode base64 string into binary and create a File object
             const binary = atob(imageBuffer);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -186,6 +187,7 @@ export default function UploadForm({
     formData.append("name", autoData.name);
     formData.append("type", autoData.type);
     formData.append("brand", autoData.brand);
+    formData.append("price", autoData.price || "");
     formData.append("mode", uploadTarget); 
     if (uploadTarget === "wishlist" && autoData.sourceUrl) {
       formData.append("sourceUrl", autoData.sourceUrl);
@@ -349,7 +351,7 @@ export default function UploadForm({
         </div>
 
         <div className="space-y-2">
-          {["name", "type", "brand"].map((field) => (
+          {["name", "type", "brand", ...(uploadTarget === "wishlist" ? ["price"] : [])].map((field) => (
             <input
               key={`basic-${field}`}
               type="text"
@@ -384,7 +386,7 @@ export default function UploadForm({
         )()}
         <div className="flex-1 space-y-3">
             {/* Advanced mode fields */}
-            {["name", "type", "brand", "occasion", "style", "fit", "color", "material", "season"].map((field) => (
+            {["name", "type", "brand", "price", "occasion", "style", "fit", "color", "material", "season"].map((field) => (
                 <input
                     key={`advanced-${field}`}
                     type="text"
@@ -406,7 +408,7 @@ export default function UploadForm({
     <>
         {/* Basic mode fields */}
         <div className="space-y-2 mt-4">
-            {["name", "type", "brand"].map((field) => (
+            {["name", "type", "brand", ...(uploadTarget === "wishlist" ? ["price"] : [])].map((field) => (
                 <input
                     key={`basic-${field}`}
                     type="text"

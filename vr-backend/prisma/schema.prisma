@@ -36,6 +36,7 @@ model Clothing {
   name      String?
   type      String?
   brand     String?
+  price     Float?
   occasion  String?
   style     String?
   fit       String?

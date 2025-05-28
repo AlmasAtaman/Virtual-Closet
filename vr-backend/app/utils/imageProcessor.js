@@ -12,10 +12,26 @@ export async function processImage(imageData, userId) {
   try {
     // Handle both direct uploads and URL-based uploads
     if (type === 'url') {
-      // Download image from URL
-      const response = await axios.get(data, { responseType: 'arraybuffer' });
-      tempImagePath = `temp_${Date.now()}_${originalname || 'scraped.jpg'}`;
-      fs.writeFileSync(tempImagePath, response.data);
+      try {
+        // Download image from URL
+        const response = await axios.get(data, { 
+          responseType: 'arraybuffer',
+          timeout: 10000, // 10 second timeout
+          validateStatus: function (status) {
+            return status >= 200 && status < 300; // Only accept 2xx status codes
+          }
+        });
+        
+        if (!response.data || response.data.length === 0) {
+          throw new Error('Empty response from image URL');
+        }
+
+        tempImagePath = `temp_${Date.now()}_${originalname || 'scraped.jpg'}`;
+        fs.writeFileSync(tempImagePath, response.data);
+      } catch (error) {
+        console.error('Failed to download image from URL:', error);
+        throw new Error(`Failed to download image: ${error.message}`);
+      }
     } else if (type === 'file') {
       // Handle direct file upload
       tempImagePath = `temp_${Date.now()}_${originalname}`;
