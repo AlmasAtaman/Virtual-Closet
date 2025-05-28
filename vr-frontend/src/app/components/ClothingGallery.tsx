@@ -63,6 +63,8 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     sourceUrl: "",
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [filterAcrossModes, setFilterAcrossModes] = useState(false);
+  const [searchAcrossModes, setSearchAcrossModes] = useState(false);
 
   // Define the filterable attributes
   const filterAttributes = [
@@ -103,17 +105,32 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     uniqueAttributeValues[attribute.key] = Array.from(new Set(clothingItems.map(item => item[attribute.key as keyof Clothing]).filter(Boolean))) as string[];
   });
 
+  // Determine the items to search/filter based on searchAcrossModes and filterAcrossModes
+  const baseItems = (searchAcrossModes || filterAcrossModes) ? clothingItems : clothingItems.filter(item => item.mode === viewMode);
+
   const fetchImages = async () => {
     try {
+      // If either checkbox is checked, fetch all items
+      if (searchAcrossModes || filterAcrossModes) {
+        const [closetRes, wishlistRes] = await Promise.all([
+          axios.get(`http://localhost:8000/api/images?mode=closet`, { withCredentials: true }),
+          axios.get(`http://localhost:8000/api/images?mode=wishlist`, { withCredentials: true })
+        ]);
+        
+        const allItems = [
+          ...(closetRes.data.clothingItems || []),
+          ...(wishlistRes.data.clothingItems || [])
+        ];
+        setClothingItems(allItems);
+      } else {
+        // Otherwise, fetch only items for current view mode
         const res = await axios.get(`http://localhost:8000/api/images?mode=${viewMode}`, {
           withCredentials: true,
         });
-        console.log("response data", res.data);
         setClothingItems(res.data.clothingItems || []);
-        console.log("First clothing item:", res.data.clothingItems?.[0]);
-
+      }
     } catch (err) {
-        console.error("Error fetching images:", err);
+      console.error("Error fetching images:", err);
     }
   };
 
@@ -142,7 +159,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
 
   useEffect(() => {
     fetchImages();
-  }, [viewMode]);
+  }, [viewMode, searchAcrossModes, filterAcrossModes]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -150,7 +167,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     );
   };
 
-  const fuse = new Fuse(clothingItems, {
+  const fuse = new Fuse(baseItems, {
     keys: [
       "name", "type", "brand",
       "occasion", "style", "fit",
@@ -161,7 +178,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
 
   const searchResults = searchQuery
     ? fuse.search(searchQuery).map(result => result.item)
-    : clothingItems;
+    : baseItems;
 
   const filteredItems = searchResults.filter((item) => {
     if (selectedTags.length === 0) return true;
@@ -201,9 +218,9 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
           Filter
         </button>
       </div>
-      <h2 className="text-xl font-semibold mb-2">Your Closet</h2>
+      <h2 className="text-xl font-semibold mb-2">Your {viewMode === "closet" ? "Closet" : "Wishlist"}</h2>
       {clothingItems.length === 0 && (
-        <p className="text-gray-500 text-center col-span-full">Your closet is empty. Upload something!</p>
+        <p className="text-gray-500 text-center col-span-full">Your {viewMode} is empty. Upload something!</p>
       )}
       {selectedTags.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -247,7 +264,8 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
             setSearchQuery(input);
 
             if (autocompleteEnabled && input) {
-              const results = fuse.search(input).map(r => r.item.name);
+              // Autocomplete suggestions based on searchableItems
+              const results = new Fuse(baseItems, { keys: ["name"] }).search(input).map(r => r.item.name);
               const unique = [...new Set(results)].slice(0, 5); // top 5
               setSuggestions(unique);
             } else {
@@ -259,13 +277,33 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
       </div>
 
       <div className="flex justify-between items-center mt-1 mb-2">
-        <label className="flex items-center space-x-2">
+        <label className="flex items-center space-x-2 text-gray-400">
           <input
             type="checkbox"
             checked={autocompleteEnabled}
             onChange={(e) => setAutocompleteEnabled(e.target.checked)}
           />
-          <span className="text-sm text-gray-700">Enable Autocomplete</span>
+          <span className="text-sm">Enable Autocomplete</span>
+        </label>
+
+        {/* New checkbox for searching across modes */}
+        <label className="flex items-center space-x-2 text-gray-400">
+          <input
+            type="checkbox"
+            checked={searchAcrossModes}
+            onChange={(e) => setSearchAcrossModes(e.target.checked)}
+          />
+          <span className="text-sm">Search All Items</span>
+        </label>
+
+         {/* New checkbox for filtering across modes */}
+        <label className="flex items-center space-x-2 text-gray-400">
+          <input
+            type="checkbox"
+            checked={filterAcrossModes}
+            onChange={(e) => setFilterAcrossModes(e.target.checked)}
+          />
+          <span className="text-sm">Filter All Items</span>
         </label>
       </div>
 
@@ -290,9 +328,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
         {filteredItems.length === 0 ? (
           <p className="text-center text-gray-500 col-span-full">No results found.</p>
         ) : (
-          filteredItems
-            .filter(item => item.mode === viewMode)
-            .map((item, index) => (
+          filteredItems.map((item, index) => (
             <div
               key={item.key || item.url || index}
               className="border rounded p-3 shadow cursor-pointer"
@@ -309,7 +345,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
               <p className="text-sm text-gray-600">{item.type}</p>
               <p className="text-sm text-gray-600">{item.brand}</p>
               <div className="mt-2 flex flex-wrap gap-1">
-                {[item.type, item.occasion, item.style, item.fit, item.color, item.material, item.season]
+                {[item.type]
                   .filter((tag): tag is string => Boolean(tag))
                   .map((tag) => (
                     <button
