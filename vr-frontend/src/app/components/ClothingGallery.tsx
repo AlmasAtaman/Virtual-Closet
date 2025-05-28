@@ -65,6 +65,8 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   const [showFilters, setShowFilters] = useState(false);
   const [filterAcrossModes, setFilterAcrossModes] = useState(false);
   const [searchAcrossModes, setSearchAcrossModes] = useState(false);
+  const [isMultiSelecting, setIsMultiSelecting] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
   // Define the filterable attributes
   const filterAttributes = [
@@ -142,6 +144,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
         withCredentials: true,
       });
         setClothingItems((prev) => prev.filter((item) => item.key !== key));
+      setSelectedItemIds(prev => prev.filter(id => id !== key));
     } catch (err) {
         console.error("Error deleting image:", err);
     }
@@ -154,15 +157,76 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
         {},
         { withCredentials: true }
       );
-      
+
       // Remove the item from the current view
       setClothingItems((prev) => prev.filter((i) => i.id !== item.id));
-      
+
+      // Close the modal
+      setSelectedItem(null);
+
       // Show success message
       alert("Item moved to closet successfully!");
     } catch (err) {
       console.error("Error moving item to closet:", err);
       alert("Failed to move item to closet");
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedItemIds.length} item(s)?`)) {
+      return;
+    }
+
+    try {
+      // Get the keys for the selected item IDs
+      const itemsToDelete = clothingItems.filter(item => selectedItemIds.includes(item.id));
+      const keysToDelete = itemsToDelete.map(item => item.key);
+
+      // Send delete requests in parallel
+      await Promise.all(keysToDelete.map(key =>
+        axios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`, { withCredentials: true })
+      ));
+
+      // Update frontend state
+      setClothingItems(prev => prev.filter(item => !selectedItemIds.includes(item.id)));
+      setSelectedItemIds([]);
+      setIsMultiSelecting(false); // Exit multi-select mode after deletion
+
+      alert(`${selectedItemIds.length} item(s) deleted successfully!`);
+    } catch (err) {
+      console.error("Error deleting selected items:", err);
+      alert("Failed to delete selected items.");
+    }
+  };
+
+  const handleMoveSelectedToCloset = async () => {
+    if (!confirm(`Are you sure you want to move ${selectedItemIds.length} item(s) to your closet?`)) {
+      return;
+    }
+
+    try {
+      // Ensure we only attempt to move items currently displayed in the wishlist view
+      const itemsToMove = clothingItems.filter(item => selectedItemIds.includes(item.id) && item.mode === 'wishlist');
+
+      if (itemsToMove.length === 0) {
+        alert("No wishlist items selected to move.");
+        return;
+      }
+
+      // Send move requests in parallel
+      await Promise.all(itemsToMove.map(item =>
+        axios.patch(`http://localhost:8000/api/images/move-to-closet/${item.id}`, {}, { withCredentials: true })
+      ));
+
+      // Update frontend state by removing moved items (from wishlist view)
+      setClothingItems(prev => prev.filter(item => !selectedItemIds.includes(item.id)));
+      setSelectedItemIds([]);
+      setIsMultiSelecting(false); // Exit multi-select mode after moving
+
+      alert(`${itemsToMove.length} item(s) moved to closet successfully!`);
+    } catch (err) {
+      console.error("Error moving selected items to closet:", err);
+      alert("Failed to move selected items to closet.");
     }
   };
 
@@ -213,6 +277,19 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
     return selectedTags.every((tag) => itemTags.includes(tag));
   });
 
+  const toggleMultiSelect = () => {
+    setIsMultiSelecting(prev => !prev);
+    if (isMultiSelecting) {
+      setSelectedItemIds([]);
+    }
+  };
+
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedItemIds(prev =>
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
   return (
     <div className="mt-6">
       <div className="flex gap-2 mb-4">
@@ -236,6 +313,12 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
         >
           Filter
         </button>
+        <button
+          className={`px-4 py-2 rounded ${isMultiSelecting ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
+          onClick={toggleMultiSelect}
+        >
+          {isMultiSelecting ? 'Cancel Selection' : 'Select Multiple'}
+        </button>
       </div>
       <h2 className="text-xl font-semibold mb-2">Your {viewMode === "closet" ? "Closet" : "Wishlist"}</h2>
       {clothingItems.length === 0 && (
@@ -250,7 +333,10 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
             >
               <span>{tag}</span>
               <button
-                onClick={() => toggleTag(tag)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTag(tag);
+                }}
                 className="ml-2 text-red-500 font-bold focus:outline-none"
               >
                 ×
@@ -350,8 +436,10 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
           filteredItems.map((item, index) => (
             <div
               key={item.key || item.url || index}
-              className="border rounded p-3 shadow cursor-pointer"
-              onClick={() => setSelectedItem(item)}
+              className={`border rounded p-3 shadow cursor-pointer ${
+                isMultiSelecting && selectedItemIds.includes(item.id) ? 'border-blue-500 border-2' : ''
+              }`}
+              onClick={() => isMultiSelecting ? toggleItemSelection(item.id) : setSelectedItem(item)}
             >
               {item.url ? (
                 <img src={item.url} alt={item.name} className="w-full h-48 object-cover" />
@@ -593,6 +681,14 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                 )}
 
                 <div className="mt-6 flex gap-2">
+                  {!isEditing && selectedItem.mode === 'wishlist' && (
+                    <button
+                      className="px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      onClick={() => handleMoveToCloset(selectedItem)}
+                    >
+                      Move to Closet
+                    </button>
+                  )}
                   <button
                     className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                     onClick={() => {
@@ -641,6 +737,25 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
           </div>
         )}
       </div>
+      {/* Action buttons for multiple selection */}
+      {isMultiSelecting && selectedItemIds.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-50">
+          {viewMode === 'wishlist' && (
+            <button
+              className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700"
+              onClick={handleMoveSelectedToCloset}
+            >
+              Move Selected to Closet ({selectedItemIds.length})
+            </button>
+          )}
+          <button
+            className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700"
+            onClick={handleDeleteSelected}
+          >
+            Delete Selected ({selectedItemIds.length})
+          </button>
+        </div>
+      )}
     </div>
   );
 })
