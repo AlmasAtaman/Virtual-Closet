@@ -6,6 +6,7 @@ import db from './app/models/index.js';
 import authRoutes from './app/routes/auth.routes.js';
 import userRoutes from './app/routes/user.routes.js';
 import uploadRoutes from './app/routes/upload.js';
+import outfitRoutes from './app/routes/outfit.routes.js';
 import { scrapeProduct } from './app/scrape/scrape.controller.js';
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.post('/api/scrape', scrapeProduct);
 // Routes
 authRoutes(app);
 userRoutes(app);
+app.use('/api/outfits', outfitRoutes);
 
 // Initial role seeding
 async function initial() {
