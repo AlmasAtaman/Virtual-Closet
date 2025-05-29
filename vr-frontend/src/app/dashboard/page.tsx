@@ -49,6 +49,14 @@ export default function Homepage(){
                 <h1 className="text-2xl font-bold">Welcome, {username ? username : "Guest"}</h1>
                 <LogOutButton />
             </div>
+            <div> 
+                <button
+                    onClick={() => router.push('/outfits')}
+                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                >
+                    👔 View Outfits
+                </button>
+            </div>
             <div className="mb-8 text-right">
             <button
                 onClick={() => setShowModal(true)}
@@ -61,6 +69,9 @@ export default function Homepage(){
                 <h2 className="text-xl font-semibold mb-4">Your Images</h2>
                 <ClothingGallery ref={galleryRef} viewMode={viewMode} setViewMode={setViewMode}/>
             </div>
+            
+            
+
 
             <UploadModal
             show={showModal}
