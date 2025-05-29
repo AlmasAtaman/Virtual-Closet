@@ -20,6 +20,7 @@ model User {
   password String
   roles    Role[]     @relation("UserRoles")
   clothing Clothing[]
+  outfits  Outfit[]
 }
 
 model Role {
@@ -49,4 +50,30 @@ model Clothing {
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   mode       String   @default("closet")
+  outfits     OutfitClothing[]
+}
+
+model Outfit {
+  id          String    @id @default(uuid())
+  name        String?   // optional
+  totalPrice  Float?    // optional
+  season      String?   // optional
+  occasion    String?   // optional
+  notes       String?   // optional
+  createdAt   DateTime  @default(now())
+  
+  userId       Int
+  user        User      @relation(fields: [userId], references: [id])
+
+  outfitClothing OutfitClothing[] 
+}
+
+model OutfitClothing {
+  outfitId   String
+  clothingId String
+
+  outfit     Outfit   @relation(fields: [outfitId], references: [id])
+  clothing   Clothing @relation(fields: [clothingId], references: [id])
+
+  @@id([outfitId, clothingId])
 }
