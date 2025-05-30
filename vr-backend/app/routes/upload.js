@@ -166,7 +166,7 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
 
     const newClothingItemWithUrl = {
       ...newClothingItem,
-      url: presignedUrl || "", // Use the URL from the specific presign call
+      url: presignedUrl || "", 
       mode: newClothingItem?.mode || "closet"
     };
 
