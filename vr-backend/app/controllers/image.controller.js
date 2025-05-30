@@ -14,7 +14,16 @@ export const deleteImage = async (req, res) => {
     // Delete from S3
     await deleteFromS3({ key });
 
-    // Delete from DB
+    // Delete associated OutfitClothing records first
+    await prisma.outfitClothing.deleteMany({
+      where: {
+        clothing: {
+          key: key // Find OutfitClothing records where the related Clothing item has this key
+        }
+      }
+    });
+
+    // Then delete the Clothing item from DB
     await prisma.clothing.deleteMany({
       where: {
         userId: req.user.id,

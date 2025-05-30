@@ -11,11 +11,22 @@ interface ClothingItem {
     name?: string;
     url: string;
     type?: string;
+    brand?: string;
+    occasion?: string;
+    season?: string;
+    notes?: string;
+    price?: number;
+    key?: string;
 }
 
 interface Outfit {
     id: string;
     clothingItems: ClothingItem[];
+    name?: string;
+    occasion?: string;
+    season?: string;
+    notes?: string;
+    price?: number;
 }
 
 export default function OutfitsPage() {
@@ -84,7 +95,10 @@ export default function OutfitsPage() {
                 )}
                 {!loadingOutfits && outfits.length > 0 && (
                     outfits.map(outfit => (
-                        <OutfitCard key={outfit.id} outfit={outfit} />
+                        <OutfitCard 
+                            key={outfit.id} 
+                            outfit={outfit}
+                        />
                     ))
                 )}
             </div>
