@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import authMiddleware from '../middlewares/auth.middleware.js';
+import { getPresignedUrl } from '../../s3.mjs';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -24,15 +25,29 @@ router.get('/', authMiddleware, async (req, res) => {
         });
 
         // Transform the data to match the frontend's expected format
-        const transformedOutfits = outfits.map(outfit => ({
+        const transformedOutfits = await Promise.all(outfits.map(async outfit => ({
             id: outfit.id,
-            clothingItems: outfit.outfitClothing.map(oc => ({
-                id: oc.clothing.id,
-                name: oc.clothing.name,
-                url: oc.clothing.url,
-                type: oc.clothing.type
+            clothingItems: await Promise.all(outfit.outfitClothing.map(async oc => {
+                // Generate a presigned URL for each clothing item's key
+                const { url: presignedUrl, error: presignError } = await getPresignedUrl(oc.clothing.key);
+                if (presignError) {
+                    console.error(`Error generating presigned URL for key ${oc.clothing.key}:`, presignError);
+                    // Decide how to handle errors - maybe return a placeholder URL or an empty string
+                    return {
+                        id: oc.clothing.id,
+                        name: oc.clothing.name,
+                        url: "", // Return empty URL on error
+                        type: oc.clothing.type
+                    };
+                }
+                return {
+                    id: oc.clothing.id,
+                    name: oc.clothing.name,
+                    url: presignedUrl || "", // Use the generated presigned URL
+                    type: oc.clothing.type
+                };
             }))
-        }));
+        })));
 
         res.json({ outfits: transformedOutfits });
     } catch (error) {
@@ -92,7 +107,7 @@ router.post('/', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Error creating outfit in backend:', error);
         // Check if the error is due to invalid clothing item ID
-        if (error.code === 'P2025') { // Prisma error code for record not found
+        if (error.code === 'P2025') {
             return res.status(404).json({ message: 'One or more clothing items not found' });
         }
         res.status(500).json({ message: 'Failed to create outfit' });
