@@ -130,12 +130,24 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
     };
 
     const handleSelectItem = (item: ClothingItem, category: "top" | "bottom" | "outerwear") => {
-        if (category === "top") {
-            setSelectedTop(item);
-        } else if (category === "bottom") {
-            setSelectedBottom(item);
-        } else if (category === "outerwear") {
-            setSelectedOuterwear(item);
+        if (item.id === 'none') {
+            // Handle 'Select None' option
+            if (category === "top") {
+                setSelectedTop(null);
+            } else if (category === "bottom") {
+                setSelectedBottom(null);
+            } else if (category === "outerwear") {
+                setSelectedOuterwear(null);
+            }
+        } else {
+            // Handle selecting a regular clothing item
+            if (category === "top") {
+                setSelectedTop(item);
+            } else if (category === "bottom") {
+                setSelectedBottom(item);
+            } else if (category === "outerwear") {
+                setSelectedOuterwear(item);
+            }
         }
         setViewingCategory("none"); // Go back to the main form after selection
     };
@@ -173,6 +185,14 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                         <p>No tops available.</p>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                            {/* Add Select None option */}
+                            <div
+                                key="none"
+                                className="cursor-pointer border rounded p-1 text-center flex items-center justify-center text-gray-400 text-sm p-2"
+                                onClick={() => handleSelectItem({ id: 'none', url: '' }, "top")}
+                            >
+                                Select None
+                            </div>
                             {clothingItems.tops.map(item => (
                                 <div key={item.id} className="cursor-pointer border rounded p-1 text-center"
                                      onClick={() => handleSelectItem(item, "top")}>
@@ -196,6 +216,14 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                         <p>No bottoms available.</p>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                            {/* Add Select None option */}
+                            <div
+                                key="none"
+                                className="cursor-pointer border rounded p-1 text-center flex items-center justify-center text-gray-400 text-sm p-2"
+                                onClick={() => handleSelectItem({ id: 'none', url: '' }, "bottom")}
+                            >
+                                Select None
+                            </div>
                             {clothingItems.bottoms.map(item => (
                                 <div key={item.id} className="cursor-pointer border rounded p-1 text-center"
                                      onClick={() => handleSelectItem(item, "bottom")}>
@@ -219,6 +247,14 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                         <p>No outerwear available.</p>
                     ) : (
                          <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                            {/* Add Select None option */}
+                             <div
+                                key="none"
+                                className="cursor-pointer border rounded p-1 text-center flex items-center justify-center text-gray-400 text-sm p-2"
+                                onClick={() => handleSelectItem({ id: 'none', url: '' }, "outerwear")}
+                            >
+                                Select None
+                            </div>
                             {clothingItems.outerwear.map(item => (
                                 <div key={item.id} className="cursor-pointer border rounded p-1 text-center"
                                      onClick={() => handleSelectItem(item, "outerwear")}>

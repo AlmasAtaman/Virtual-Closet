@@ -3,8 +3,8 @@
 import LogOutButton from "../components/LogoutButton";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import CreateOutfitModal from '../../components/CreateOutfitModal';
-import OutfitCard from '../../components/OutfitCard';
+import CreateOutfitModal from '../components/CreateOutfitModal';
+import OutfitCard from '../components/OutfitCard';
 
 interface ClothingItem {
     id: string;
