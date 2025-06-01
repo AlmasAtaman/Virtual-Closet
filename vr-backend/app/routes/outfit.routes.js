@@ -143,11 +143,11 @@ router.get('/:outfitId', authMiddleware, async (req, res) => {
         // Transform the data to include presigned URLs
         const transformedOutfit = {
             id: outfit.id,
-            name: outfit.name, // Include outfit name if it exists
-            occasion: outfit.occasion, // Include outfit occasion if it exists
-            season: outfit.season, // Include outfit season if it exists
-            notes: outfit.notes, // Include outfit notes if it exists
-            price: outfit.price, // Include outfit price if it exists
+            name: outfit.name,
+            occasion: outfit.occasion,
+            season: outfit.season,
+            notes: outfit.notes,
+            price: outfit.totalPrice,
             clothingItems: await Promise.all(outfit.outfitClothing.map(async oc => {
                 const { url: presignedUrl, error: presignError } = await getPresignedUrl(oc.clothing.key);
                 if (presignError) {
@@ -253,6 +253,107 @@ router.delete('/:outfitId/items/:clothingItemId', authMiddleware, async (req, re
     } catch (error) {
         console.error('Error removing clothing item from outfit:', error);
         res.status(500).json({ message: 'Failed to remove clothing item from outfit' });
+    }
+});
+
+// Update an outfit
+router.put('/:outfitId', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    const { outfitId } = req.params;
+    const { name, occasion, season, notes, price, clothingItems } = req.body;
+
+    try {
+        // Verify the outfit belongs to the user
+        const existingOutfit = await prisma.outfit.findFirst({
+            where: {
+                id: outfitId,
+                userId: userId
+            }
+        });
+
+        if (!existingOutfit) {
+            return res.status(404).json({ message: 'Outfit not found or does not belong to user' });
+        }
+
+        // Start a transaction to update the outfit and its clothing items
+        const updatedOutfit = await prisma.$transaction(async (prisma) => {
+            // Update the outfit details
+            const outfit = await prisma.outfit.update({
+                where: { id: outfitId },
+                data: {
+                    name,
+                    occasion,
+                    season,
+                    notes,
+                    totalPrice: price ? parseFloat(price) : null,
+                }
+            });
+
+            // If clothingItems is provided, update the outfit's clothing items
+            if (clothingItems && Array.isArray(clothingItems)) {
+                // Delete existing outfit-clothing relationships
+                await prisma.outfitClothing.deleteMany({
+                    where: { outfitId }
+                });
+
+                // Create new outfit-clothing relationships
+                if (clothingItems.length > 0) {
+                    await prisma.outfitClothing.createMany({
+                        data: clothingItems.map(clothingId => ({
+                            outfitId,
+                            clothingId: clothingId // Now we know this is just the ID string
+                        }))
+                    });
+                }
+            }
+
+            // Fetch the updated outfit with its clothing items
+            return await prisma.outfit.findFirst({
+                where: { id: outfitId },
+                include: {
+                    outfitClothing: {
+                        include: {
+                            clothing: true
+                        }
+                    }
+                }
+            });
+        });
+
+        // Transform the response to include presigned URLs
+        const transformedOutfit = {
+            id: updatedOutfit.id,
+            name: updatedOutfit.name,
+            occasion: updatedOutfit.occasion,
+            season: updatedOutfit.season,
+            notes: updatedOutfit.notes,
+            price: updatedOutfit.totalPrice, // Map totalPrice to price in the response
+            clothingItems: await Promise.all(updatedOutfit.outfitClothing.map(async oc => {
+                const { url: presignedUrl, error: presignError } = await getPresignedUrl(oc.clothing.key);
+                if (presignError) {
+                    console.error(`Error generating presigned URL for key ${oc.clothing.key}:`, presignError);
+                    return {
+                        id: oc.clothing.id,
+                        name: oc.clothing.name,
+                        url: "",
+                        type: oc.clothing.type,
+                        key: oc.clothing.key
+                    };
+                }
+                return {
+                    id: oc.clothing.id,
+                    name: oc.clothing.name,
+                    url: presignedUrl || "",
+                    type: oc.clothing.type,
+                    key: oc.clothing.key
+                };
+            }))
+        };
+
+        res.json({ outfit: transformedOutfit });
+    } catch (error) {
+        console.error('Error updating outfit:', error);
+        res.status(500).json({ message: 'Failed to update outfit' });
     }
 });
 
