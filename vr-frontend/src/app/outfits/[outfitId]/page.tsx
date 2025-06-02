@@ -158,9 +158,16 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             const res = await axios.put(`http://localhost:8000/api/outfits/${outfit.id}`, outfitData, {
                 withCredentials: true,
             });
-            setOutfit(res.data.outfit);
-            setEditedOutfit(res.data.outfit);
-            setEditedCategorizedItems(categorizeOutfitItems(res.data.outfit.clothingItems));
+
+            // Create a new outfit object with full item details for state update
+            const updatedOutfitWithFullItems = {
+                ...res.data.outfit, // Use updated non-item properties from the backend response
+                clothingItems: clothingItemsToSave, // Use the full items from the frontend state with correct modes
+            };
+
+            setOutfit(updatedOutfitWithFullItems);
+            setEditedOutfit(updatedOutfitWithFullItems); // Also update editedOutfit
+            setEditedCategorizedItems(categorizeOutfitItems(clothingItemsToSave)); // Categorize based on the full items
             setIsEditing(false);
             alert('Outfit updated successfully!');
         } catch (err: any) {
