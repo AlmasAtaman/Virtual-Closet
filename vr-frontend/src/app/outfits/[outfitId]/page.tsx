@@ -520,31 +520,34 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         <div className="mb-4">
                              <h3 className="font-semibold mb-2">Clothing Items:</h3>
 
-                             {/* Display wishlist warning if any item is from wishlist */}
-                            {itemsToDisplay.some(item => item.mode === 'wishlist') && (
-                                // Find the first wishlist item to display its name
-                                itemsToDisplay.find(item => item.mode === 'wishlist')?.name && (
-                                    <p className="text-red-500 text-center mb-4">
-                                        Note: &quot;{itemsToDisplay.find(item => item.mode === 'wishlist')?.name}&quot; is from your wishlist.
-                                    </p>
-                                )
-                            )}
+                            {/* New multi-line wishlist warnings */}
+                            <div className="mb-4 space-y-1">
+                            {itemsToDisplay
+                                .filter(item => item.mode === 'wishlist')
+                                .map(item => (
+                                <p key={item.id} className="text-red-500 text-sm text-left">
+                                    {item.name} is from your wishlist.
+                                </p>
+                                ))}
+                            </div>
 
-                             <div className="flex flex-wrap gap-2">
-                                 {itemsToDisplay.map((item, index) => (
-                                      <div
-                                          key={item.id}
-                                          className="w-16 h-16 overflow-hidden rounded border border-gray-600 cursor-pointer hover:border-blue-500"
-                                           onClick={() => handleOpenModal(index)}
-                                      >
-                                          <img
-                                              src={item.url}
-                                              alt={item.name || 'Clothing Item'}
-                                              className="w-full h-full object-cover"
-                                          />
-                                      </div>
-                                 ))}
-                             </div>
+
+                            <div className="flex flex-wrap gap-4">
+                                {itemsToDisplay.map((item, index) => (
+                                    <div key={item.id} className="flex flex-col items-center space-y-1">
+                                        <div
+                                            className="w-16 h-16 overflow-hidden rounded border border-gray-600 cursor-pointer hover:border-blue-500"
+                                            onClick={() => handleOpenModal(index)}
+                                        >
+                                            <img
+                                                src={item.url}
+                                                alt={item.name || 'Clothing Item'}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                          </div>
                      )}
                 </div>
