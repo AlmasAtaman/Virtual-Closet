@@ -37,6 +37,8 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
     const [showTopSelectModal, setShowTopSelectModal] = useState(false);
     const [showBottomSelectModal, setShowBottomSelectModal] = useState(false);
     const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false);
+    const [randomizeFromCloset, setRandomizeFromCloset] = useState(true);
+    const [randomizeFromWishlist, setRandomizeFromWishlist] = useState(false);
 
     useEffect(() => {
         if (show) {
@@ -95,7 +97,12 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
     };
 
     const isFormValid = () => {
-        return selectedTop !== null && selectedBottom !== null;
+        return (
+            selectedTop !== null &&
+            selectedTop.id !== 'none' &&
+            selectedBottom !== null &&
+            selectedBottom.id !== 'none'
+        );
     };
 
     const handleCreateOutfit = async () => {
@@ -186,6 +193,26 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
         }
     };
 
+    // Helper to get random item from array
+    const getRandomItem = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
+
+    const handleRandomize = () => {
+        // Filter items by selected sources
+        const sources: ('closet' | 'wishlist')[] = [];
+        if (randomizeFromCloset) sources.push('closet');
+        if (randomizeFromWishlist) sources.push('wishlist');
+        if (sources.length === 0) return; // No sources selected
+
+        const filterBySource = (items: ClothingItem[]): ClothingItem[] => items.filter((item: ClothingItem) => sources.includes(item.mode));
+        const tops = filterBySource(clothingItems.tops);
+        const bottoms = filterBySource(clothingItems.bottoms);
+        const outerwear = filterBySource(clothingItems.outerwear);
+
+        setSelectedTop(getRandomItem(tops));
+        setSelectedBottom(getRandomItem(bottoms));
+        setSelectedOuterwear(getRandomItem(outerwear));
+    };
+
     if (!show) {
         return null;
     }
@@ -223,13 +250,46 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
             // Main outfit creation form
             return (
                  <div className="mt-4 space-y-6">
+                    {/* Randomize Button and Checkboxes */}
+                    <div className="flex flex-col items-center mb-4">
+                        <button
+                            className="px-6 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                            onClick={handleRandomize}
+                        >
+                            Randomize Outfit
+                        </button>
+                        <div className="flex gap-4 mt-2">
+                            <label className="flex items-center text-gray-200">
+                                <input
+                                    type="checkbox"
+                                    checked={randomizeFromCloset}
+                                    onChange={e => setRandomizeFromCloset(e.target.checked)}
+                                    className="mr-2 accent-blue-600"
+                                />
+                                Closet
+                            </label>
+                            <label className="flex items-center text-gray-200">
+                                <input
+                                    type="checkbox"
+                                    checked={randomizeFromWishlist}
+                                    onChange={e => setRandomizeFromWishlist(e.target.checked)}
+                                    className="mr-2 accent-blue-600"
+                                />
+                                Wishlist
+                            </label>
+                        </div>
+                    </div>
                     
                     {/* Clothing Item Selection Area - Adjusted Layout and Sizing */}
                     <div>
                         <h4 className="text-md font-semibold text-gray-900 mb-4 text-center">Select Clothing Items</h4>
                         
                         {/* Display wishlist warning if any selected item is from wishlist */}
-                        {(selectedTop?.mode === 'wishlist' || selectedBottom?.mode === 'wishlist' || selectedOuterwear?.mode === 'wishlist') && (
+                        {([
+                            selectedTop,
+                            selectedBottom,
+                            selectedOuterwear
+                        ].filter(item => item && item.id !== 'none' && item.mode === 'wishlist').length > 0) && (
                             <p className="text-red-500 text-center mb-4">Note: One or more selected items are from your wishlist.</p>
                         )}
 
