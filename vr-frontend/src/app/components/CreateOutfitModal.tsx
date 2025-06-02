@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import ClothingItemSelectModal from './ClothingItemSelectModal';
 
 interface CreateOutfitModalProps {
     show: boolean;
@@ -15,6 +16,7 @@ interface ClothingItem {
     name?: string;
     url: string; 
     type?: string; 
+    mode: "closet" | "wishlist";
 }
 
 interface CategorizedClothing {
@@ -32,6 +34,9 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
     const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [] });
     const [loadingClothing, setLoadingClothing] = useState(true);
     const [viewingCategory, setViewingCategory] = useState<"none" | "top" | "bottom" | "outerwear">("none");
+    const [showTopSelectModal, setShowTopSelectModal] = useState(false);
+    const [showBottomSelectModal, setShowBottomSelectModal] = useState(false);
+    const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false);
 
     useEffect(() => {
         if (show) {
@@ -42,18 +47,27 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
     const fetchClothingItems = async () => {
         setLoadingClothing(true);
         try {
-
-
-            const res = await fetch('http://localhost:8000/api/images', { 
-                credentials: 'include' // Include cookies for authentication
+            // Fetch closet items
+            const closetRes = await fetch('http://localhost:8000/api/images?mode=closet', {
+                credentials: 'include'
             });
-
-            if (!res.ok) {
-                throw new Error(`Failed to fetch clothing items: ${res.status} ${res.statusText}`);
+            if (!closetRes.ok) {
+                throw new Error(`Failed to fetch closet items: ${closetRes.status} ${closetRes.statusText}`);
             }
+            const closetData = await closetRes.json();
+            const closetItems: ClothingItem[] = (closetData.clothingItems || []).map((item: ClothingItem) => ({ ...item, mode: 'closet' }));
 
-            const data = await res.json();
-            const allItems: ClothingItem[] = data.clothingItems || []; // Assuming the response has a clothingItems array
+            // Fetch wishlist items
+            const wishlistRes = await fetch('http://localhost:8000/api/images?mode=wishlist', {
+                credentials: 'include'
+            });
+            if (!wishlistRes.ok) {
+                throw new Error(`Failed to fetch wishlist items: ${wishlistRes.status} ${wishlistRes.statusText}`);
+            }
+            const wishlistData = await wishlistRes.json();
+            const wishlistItems: ClothingItem[] = (wishlistData.clothingItems || []).map((item: ClothingItem) => ({ ...item, mode: 'wishlist' }));
+
+            const allItems = [...closetItems, ...wishlistItems];
 
             // Categorize items based on type (using your examples)
             const categorized = allItems.reduce<CategorizedClothing>((acc, item) => {
@@ -66,7 +80,6 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                     } else if (['jacket', 'sweater'].includes(lowerCaseType)) {
                         acc.outerwear.push(item);
                     } else {
-                        // Optionally handle items with types not in your defined categories
                         console.warn(`Unknown clothing type: ${item.type}`);
                     }
                 }
@@ -158,6 +171,10 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
         setSelectedTop(null);
         setSelectedBottom(null);
         setSelectedOuterwear(null);
+        // Reset modal visibility states
+        setShowTopSelectModal(false);
+        setShowBottomSelectModal(false);
+        setShowOuterwearSelectModal(false);
         setViewingCategory("none");
         onClose(); // Call the original onClose prop
     };
@@ -179,30 +196,8 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
             return (
                 <div>
                     <h4 className="text-lg font-semibold mb-4">Select a Top</h4>
-                    {loadingClothing ? (
-                        <p>Loading tops...</p>
-                    ) : clothingItems.tops.length === 0 ? (
-                        <p>No tops available.</p>
-                    ) : (
-                        <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                            {/* Add Select None option */}
-                            <div
-                                key="none"
-                                className="cursor-pointer border rounded p-1 text-center flex items-center justify-center text-gray-400 text-sm p-2"
-                                onClick={() => handleSelectItem({ id: 'none', url: '' }, "top")}
-                            >
-                                Select None
-                            </div>
-                            {clothingItems.tops.map(item => (
-                                <div key={item.id} className="cursor-pointer border rounded p-1 text-center"
-                                     onClick={() => handleSelectItem(item, "top")}>
-                                    {/* TODO: Display item image */}
-                                    <img src={item.url} alt={item.name || 'Top Image'} className="w-full h-20 object-cover rounded mb-1" />
-                                    <p className="text-sm truncate text-gray-300">{item.name || 'Unnamed Top'}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    {/* The ClothingItemSelectModal will handle the view mode toggle and item display */}
+                    {/* Old inline item list removed */}
                     <button onClick={() => setViewingCategory("none")} className="mt-4 px-4 py-2 bg-gray-300 rounded">Back</button>
                 </div>
             );
@@ -210,30 +205,8 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
              return (
                 <div>
                     <h4 className="text-lg font-semibold mb-4">Select a Bottom</h4>
-                     {loadingClothing ? (
-                        <p>Loading bottoms...</p>
-                    ) : clothingItems.bottoms.length === 0 ? (
-                        <p>No bottoms available.</p>
-                    ) : (
-                        <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                            {/* Add Select None option */}
-                            <div
-                                key="none"
-                                className="cursor-pointer border rounded p-1 text-center flex items-center justify-center text-gray-400 text-sm p-2"
-                                onClick={() => handleSelectItem({ id: 'none', url: '' }, "bottom")}
-                            >
-                                Select None
-                            </div>
-                            {clothingItems.bottoms.map(item => (
-                                <div key={item.id} className="cursor-pointer border rounded p-1 text-center"
-                                     onClick={() => handleSelectItem(item, "bottom")}>
-                                     {/* TODO: Display item image */}
-                                    <img src={item.url} alt={item.name || 'Bottom Image'} className="w-full h-20 object-cover rounded mb-1" />
-                                    <p className="text-sm truncate text-gray-300">{item.name || 'Unnamed Bottom'}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    {/* The ClothingItemSelectModal will handle the view mode toggle and item display */}
+                    {/* Old inline item list removed */}
                      <button onClick={() => setViewingCategory("none")} className="mt-4 px-4 py-2 bg-gray-300 rounded">Back</button>
                 </div>
             );
@@ -241,30 +214,8 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
              return (
                 <div>
                     <h4 className="text-lg font-semibold mb-4">Select Outerwear (Optional)</h4>
-                     {loadingClothing ? (
-                        <p>Loading outerwear...</p>
-                    ) : clothingItems.outerwear.length === 0 ? (
-                        <p>No outerwear available.</p>
-                    ) : (
-                         <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                            {/* Add Select None option */}
-                             <div
-                                key="none"
-                                className="cursor-pointer border rounded p-1 text-center flex items-center justify-center text-gray-400 text-sm p-2"
-                                onClick={() => handleSelectItem({ id: 'none', url: '' }, "outerwear")}
-                            >
-                                Select None
-                            </div>
-                            {clothingItems.outerwear.map(item => (
-                                <div key={item.id} className="cursor-pointer border rounded p-1 text-center"
-                                     onClick={() => handleSelectItem(item, "outerwear")}>
-                                      {/* TODO: Display item image */}
-                                    <img src={item.url} alt={item.name || 'Outerwear Image'} className="w-full h-20 object-cover rounded mb-1" />
-                                    <p className="text-sm truncate text-gray-300">{item.name || 'Unnamed Outerwear'}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    {/* The ClothingItemSelectModal will handle the view mode toggle and item display */}
+                    {/* Old inline item list removed */}
                      <button onClick={() => setViewingCategory("none")} className="mt-4 px-4 py-2 bg-gray-300 rounded">Back</button>
                 </div>
             );
@@ -277,16 +228,24 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                     <div>
                         <h4 className="text-md font-semibold text-gray-900 mb-4 text-center">Select Clothing Items</h4>
                         
+                        {/* Display wishlist warning if any selected item is from wishlist */}
+                        {(selectedTop?.mode === 'wishlist' || selectedBottom?.mode === 'wishlist' || selectedOuterwear?.mode === 'wishlist') && (
+                            <p className="text-red-500 text-center mb-4">Note: One or more selected items are from your wishlist.</p>
+                        )}
+
                         {/* Flex container for the outfit layout (Outerwear left, Tops/Bottoms right) */}
                         {/* Adjusted alignment and gap for visual balance */}
                         {/* Further refined gap and item sizing for sketch match */}
-                        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6"> {/* Adjusted horizontal gap and items alignment */}
+                        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4"> {/* Adjusted horizontal gap and items alignment */}
                             
                             {/* Outerwear Section (Left) */}
                             {/* Increased size and conditional styling */}
                             <button 
                                 className={`flex-shrink-0 w-48 h-64 flex flex-col justify-center items-center rounded-md overflow-hidden transition-all duration-200 ${selectedOuterwear ? 'border-none p-0' : 'border border-gray-600 hover:bg-gray-700 p-4'}`} // Conditional border/padding, adjusted size
-                                onClick={() => setViewingCategory("outerwear")}
+                                onClick={() => {
+                                    const initialMode = clothingItems.outerwear.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist';
+                                    setShowOuterwearSelectModal(true);
+                                }}
                                 disabled={loadingClothing}
                             >
                                 {selectedOuterwear ? (
@@ -303,12 +262,15 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                             {/* Top and Bottom Sections (Right Column) */}
                             {/* Adjusted gap and width for column */}
                             {/* Reduced vertical gap and adjusted item heights for sketch match */}
-                            <div className="flex flex-col flex-grow gap-3 w-56 lg:w-64"> {/* Adjusted vertical gap, adjusted fixed width for the column */}
+                            <div className="flex flex-col flex-grow gap-2 w-56 lg:w-64"> {/* Adjusted vertical gap, adjusted fixed width for the column */}
                                 {/* Top Section */}
                                 {/* Adjusted size and conditional styling */}
                                 <button 
                                     className={`w-full h-56 flex flex-col justify-center items-center rounded-md overflow-hidden transition-all duration-200 ${selectedTop ? 'border-none p-0' : 'border border-gray-600 hover:bg-gray-700 p-4'}`} // Conditional border/padding, increased size
-                                    onClick={() => setViewingCategory("top")}
+                                    onClick={() => {
+                                        const initialMode = clothingItems.tops.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist';
+                                        setShowTopSelectModal(true);
+                                    }}
                                     disabled={loadingClothing}
                                 >
                                     {selectedTop ? (
@@ -325,7 +287,10 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                                 {/* Adjusted size and conditional styling */}
                                 <button 
                                     className={`w-full h-56 flex flex-col justify-center items-center rounded-md overflow-hidden transition-all duration-200 ${selectedBottom ? 'border-none p-0' : 'border border-gray-600 hover:bg-gray-700 p-4'}`} // Conditional border/padding, increased size
-                                    onClick={() => setViewingCategory("bottom")}
+                                    onClick={() => {
+                                        const initialMode = clothingItems.bottoms.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist';
+                                        setShowBottomSelectModal(true);
+                                    }}
                                      disabled={loadingClothing}
                                 >
                                     {selectedBottom ? (
@@ -383,8 +348,46 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                     )}
                  </div>
                 
+                {/* Render the appropriate modal content based on viewingCategory */}
                 {renderModalContent()}
-               
+
+                {/* Render ClothingItemSelectModals */}
+                <ClothingItemSelectModal
+                    isOpen={showOuterwearSelectModal}
+                    onClose={() => setShowOuterwearSelectModal(false)}
+                    clothingItems={[...(clothingItems.outerwear || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
+                    onSelectItem={(item) => {
+                        setSelectedOuterwear(item);
+                        setShowOuterwearSelectModal(false);
+                    }}
+                    viewMode={clothingItems.outerwear.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist'}
+                    selectedCategory='outerwear' // Pass the category
+                />
+
+                <ClothingItemSelectModal
+                    isOpen={showTopSelectModal}
+                    onClose={() => setShowTopSelectModal(false)}
+                    clothingItems={[...(clothingItems.tops || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
+                    onSelectItem={(item) => {
+                        setSelectedTop(item);
+                        setShowTopSelectModal(false);
+                    }}
+                    viewMode={clothingItems.tops.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist'}
+                    selectedCategory='top' // Pass the category
+                />
+
+                <ClothingItemSelectModal
+                    isOpen={showBottomSelectModal}
+                    onClose={() => setShowBottomSelectModal(false)}
+                    clothingItems={[...(clothingItems.bottoms || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
+                    onSelectItem={(item) => {
+                        setSelectedBottom(item);
+                        setShowBottomSelectModal(false);
+                    }}
+                    viewMode={clothingItems.bottoms.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist'}
+                    selectedCategory='bottom' // Pass the category
+                />
+
             </div>
         </div>
     );

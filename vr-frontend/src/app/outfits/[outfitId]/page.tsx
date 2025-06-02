@@ -18,6 +18,7 @@ interface ClothingItem {
     notes?: string;
     price?: number;
     key?: string;
+    mode: 'closet' | 'wishlist';
 }
 
 interface CategorizedOutfitItems {
@@ -57,8 +58,10 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
     const [itemIndexToReplace, setItemIndexToReplace] = useState<number | null>(null);
     const [categoryToFill, setCategoryToFill] = useState<'outerwear' | 'top' | 'bottom' | null>(null);
+    const [selectModalCategory, setSelectModalCategory] = useState<'outerwear' | 'top' | 'bottom' | null>(null);
     const [filteredSelectItems, setFilteredSelectItems] = useState<ClothingItem[]>([]);
     const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null);
+    const [itemToReplaceFromOthers, setItemToReplaceFromOthers] = useState<ClothingItem | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -67,13 +70,36 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 const outfitRes = await axios.get(`http://localhost:8000/api/outfits/${outfitId}`, {
                     withCredentials: true,
                 });
-                setOutfit(outfitRes.data.outfit);
-                setEditedOutfit(outfitRes.data.outfit);
+                console.log("→ Raw outfit data from backend:", outfitRes.data.outfit);
 
-                const clothingRes = await axios.get('http://localhost:8000/api/images/', {
+                const wishlistRes = await axios.get('http://localhost:8000/api/images?mode=wishlist', {
                     withCredentials: true,
                 });
-                setAllClothingItems(clothingRes.data.clothingItems || []);
+                const closetRes = await axios.get('http://localhost:8000/api/images?mode=closet', {
+                    withCredentials: true,
+                });
+
+                const closetItems: ClothingItem[] = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({ ...item, mode: 'closet' }));
+                const wishlistItems: ClothingItem[] = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({ ...item, mode: 'wishlist' }));
+
+                const allItems = [...closetItems, ...wishlistItems];
+                setAllClothingItems(allItems);
+
+                // Map the outfit's clothing item IDs to full item objects including the mode
+                console.log("→ Outfit item IDs before mapping:", outfitRes.data.outfit.clothingItems);
+                console.log("→ IDs available in allItems:", allItems.map(item => item.id));
+                const outfitClothingItemsWithMode = (outfitRes.data.outfit.clothingItems || [])
+                    .map((itemObject: { id: string }) => allItems.find((item: ClothingItem) => item.id === itemObject.id))
+                    .filter((item: ClothingItem | undefined): item is ClothingItem => item !== undefined) as ClothingItem[]; // Ensure only valid items are included and refine type
+                console.log("→ Outfit items after mapping and filtering:", outfitClothingItemsWithMode.map(i => `${i.name} (${i.mode})`));
+
+                const outfitWithFullItems = {
+                    ...outfitRes.data.outfit,
+                    clothingItems: outfitClothingItemsWithMode,
+                };
+
+                setOutfit(outfitWithFullItems);
+                setEditedOutfit(outfitWithFullItems); // Also update editedOutfit with full items
 
             } catch (err: any) {
                 console.error('Error fetching data:', err);
@@ -181,56 +207,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         }
     };
 
-    const handleOpenSelectModal = (indexOrCategory: number | 'outerwear' | 'top' | 'bottom') => {
-        let category: 'outerwear' | 'top' | 'bottom' | null = null;
-        let itemType: string | undefined;
-
-        if (typeof indexOrCategory === 'number') {
-            if (!editedCategorizedItems) return;
-
-            const allEditedItems = [
-                editedCategorizedItems.outerwear,
-                editedCategorizedItems.top,
-                editedCategorizedItems.bottom,
-                ...editedCategorizedItems.others,
-            ].filter(item => item !== undefined) as ClothingItem[];
-
-            if (allEditedItems.length <= indexOrCategory) return;
-
-            const itemToReplace = allEditedItems[indexOrCategory];
-            itemType = itemToReplace.type;
-            setItemIndexToReplace(indexOrCategory);
-            setCategoryToFill(null);
-
+    const handleOpenSelectModal = (param: 'outerwear' | 'top' | 'bottom' | ClothingItem) => {
+        if (typeof param === 'string') {
+            setSelectModalCategory(param);
+            setItemToReplaceFromOthers(null);
         } else {
-            category = indexOrCategory;
-            itemType = undefined;
-            setItemIndexToReplace(null);
-            setCategoryToFill(category);
+            setSelectModalCategory(null);
+            setItemToReplaceFromOthers(param);
         }
-
-        const filteredList = allClothingItems.filter(item => {
-            if (category) {
-                return getItemCategory(item) === category;
-            } else if (itemType) {
-                return item.type?.toLowerCase() === itemType?.toLowerCase();
-            } else {
-                return false;
-            }
-        });
-        
-        if (category) {
-            const noneOption: ClothingItem = {
-                id: 'none',
-                name: 'Select None',
-                url: '',
-                type: category,
-            };
-            setFilteredSelectItems([noneOption, ...filteredList]);
-        } else {
-             setFilteredSelectItems(filteredList);
-        }
-
         setIsSelectModalOpen(true);
     };
 
@@ -246,44 +230,24 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
         let updatedCategorizedItems = { ...editedCategorizedItems };
 
-        if (itemIndexToReplace !== null) {
-            const allEditedItems = [
-                updatedCategorizedItems.outerwear,
-                updatedCategorizedItems.top,
-                updatedCategorizedItems.bottom,
-                ...updatedCategorizedItems.others,
-            ].filter(item => item !== undefined) as ClothingItem[];
-
-             if (itemIndexToReplace < allEditedItems.length) {
-                const itemToReplace = allEditedItems[itemIndexToReplace];
-                const category = getItemCategory(itemToReplace);
-
-                if (category !== 'others') {
-                     if (selectedItem.id === 'none') {
-                         updatedCategorizedItems[category] = undefined;
-                     } else {
-                        updatedCategorizedItems[category] = selectedItem;
-                     }
-                } else {
-                     if (selectedItem.id === 'none') {
-                          updatedCategorizedItems.others = updatedCategorizedItems.others.filter(item => item.id !== itemToReplace.id);
-                     } else {
-                          const othersIndex = updatedCategorizedItems.others.findIndex(item => item.id === itemToReplace.id);
-                          if(othersIndex !== -1) {
-                             updatedCategorizedItems.others[othersIndex] = selectedItem;
-                          }
-                     }
-                }
-             }
-
-        } else if (categoryToFill !== null) {
+        if (itemToReplaceFromOthers) {
             if (selectedItem.id === 'none') {
-                updatedCategorizedItems[categoryToFill] = undefined;
+                updatedCategorizedItems.others = updatedCategorizedItems.others.filter(
+                    item => item.id !== itemToReplaceFromOthers.id
+                );
             } else {
-                updatedCategorizedItems[categoryToFill] = selectedItem;
+                updatedCategorizedItems.others = updatedCategorizedItems.others.map(item => 
+                    item.id === itemToReplaceFromOthers.id ? selectedItem : item
+                );
             }
-        } else {
-            return;
+            setItemToReplaceFromOthers(null);
+        } else if (selectModalCategory) {
+            if (selectedItem.id === 'none') {
+                 updatedCategorizedItems[selectModalCategory] = undefined;
+            } else {
+                 updatedCategorizedItems[selectModalCategory] = selectedItem;
+            }
+            setSelectModalCategory(null);
         }
 
         setEditedCategorizedItems(updatedCategorizedItems);
@@ -294,12 +258,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         const categorized: CategorizedOutfitItems = { others: [] };
         items.forEach(item => {
             const category = getItemCategory(item);
-            if (category === 'outerwear' && !categorized.outerwear) {
-                categorized.outerwear = item;
-            } else if (category === 'top' && !categorized.top) {
-                categorized.top = item;
-            } else if (category === 'bottom' && !categorized.bottom) {
-                categorized.bottom = item;
+            if (category === 'outerwear' || category === 'top' || category === 'bottom') {
+                categorized[category] = item;
             } else {
                 categorized.others.push(item);
             }
@@ -540,7 +500,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                                                     const mainItemsCount = (editedCategorizedItems.outerwear ? 1 : 0) +
                                                                            (editedCategorizedItems.top ? 1 : 0) +
                                                                            (editedCategorizedItems.bottom ? 1 : 0);
-                                                    handleOpenSelectModal(mainItemsCount + index);
+                                                    handleOpenSelectModal(item);
                                                   }}
                                               >
                                                   <img
@@ -559,6 +519,17 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                      {!isEditing && itemsToDisplay && itemsToDisplay.length > 0 && (
                         <div className="mb-4">
                              <h3 className="font-semibold mb-2">Clothing Items:</h3>
+
+                             {/* Display wishlist warning if any item is from wishlist */}
+                            {itemsToDisplay.some(item => item.mode === 'wishlist') && (
+                                // Find the first wishlist item to display its name
+                                itemsToDisplay.find(item => item.mode === 'wishlist')?.name && (
+                                    <p className="text-red-500 text-center mb-4">
+                                        Note: &quot;{itemsToDisplay.find(item => item.mode === 'wishlist')?.name}&quot; is from your wishlist.
+                                    </p>
+                                )
+                            )}
+
                              <div className="flex flex-wrap gap-2">
                                  {itemsToDisplay.map((item, index) => (
                                       <div
@@ -590,8 +561,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 <ClothingItemSelectModal
                     isOpen={isSelectModalOpen}
                     onClose={handleCloseSelectModal}
-                    clothingItems={filteredSelectItems}
+                    clothingItems={allClothingItems}
                     onSelectItem={handleSelectItemForOutfit}
+                    viewMode={selectModalCategory ? 
+                                (allClothingItems.filter(item => item.mode === 'closet' && getItemCategory(item) === selectModalCategory).length > 0 ? 'closet' : 'wishlist')
+                                : 'closet'
+                              }
+                    selectedCategory={selectModalCategory}
                 />
             )}
         </div>
