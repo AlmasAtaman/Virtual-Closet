@@ -15,13 +15,30 @@ interface ClothingItem {
     notes?: string;
     price?: number;
     key?: string;
+    mode: 'closet' | 'wishlist';
 }
+
+// Helper function to determine the broad category of an item based on its type
+const getItemCategory = (item: ClothingItem): 'top' | 'bottom' | 'outerwear' | 'others' => {
+    const type = item.type?.toLowerCase() || '';
+    if (['t-shirt', 'dress', 'shirt', 'blouse'].includes(type)) {
+        return 'top';
+    } else if (['pants', 'skirt', 'shorts', 'jeans', 'leggings'].includes(type)) {
+        return 'bottom';
+    } else if (['jacket', 'sweater', 'coat', 'hoodie', 'cardigan'].includes(type)) {
+        return 'outerwear';
+    } else {
+        return 'others';
+    }
+};
 
 interface ClothingItemSelectModalProps {
     isOpen: boolean;
     onClose: () => void;
     clothingItems: ClothingItem[];
     onSelectItem: (selectedItem: ClothingItem) => void;
+    viewMode: 'closet' | 'wishlist';
+    selectedCategory: 'outerwear' | 'top' | 'bottom' | null;
 }
 
 const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
@@ -29,18 +46,43 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
     onClose,
     clothingItems,
     onSelectItem,
+    viewMode,
+    selectedCategory,
 }) => {
     const [filterText, setFilterText] = useState('');
     const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([]);
+    const [currentModalViewMode, setCurrentModalViewMode] = useState<'closet' | 'wishlist'>(viewMode);
 
     useEffect(() => {
-        setFilteredItems(clothingItems.filter(item =>
+        if (!clothingItems) return;
+    
+        console.log("→ Current View Mode:", currentModalViewMode);
+        console.log("→ Items passed to modal:", clothingItems.map(i => `${i.name} (${i.mode})`));
+        console.log("→ Mode values of passed items:", clothingItems.map(i => i.mode));
+    
+        // Filter by category first, then by mode
+        const itemsFilteredByCategory = selectedCategory ?
+            clothingItems.filter(item => {
+                const category = getItemCategory(item);
+                console.log(`  Checking item: ${item.name} (Type: ${item.type}, Category: ${category}, Mode: ${item.mode}). Matches selectedCategory (${selectedCategory})? ${category === selectedCategory}`);
+                return category === selectedCategory;
+            }) :
+            clothingItems; // If no category selected, use all items
+
+        console.log("→ Filtered items after category match:", itemsFilteredByCategory.map(i => `${i.name} (${i.mode})`));
+
+        const itemsToFilter = itemsFilteredByCategory.filter(item => item.mode?.toLowerCase() === currentModalViewMode);
+    
+        console.log("→ Filtered items after mode match:", itemsToFilter.map(i => i.name));
+    
+        setFilteredItems(itemsToFilter.filter(item =>
             item.name?.toLowerCase().includes(filterText.toLowerCase()) ||
             item.type?.toLowerCase().includes(filterText.toLowerCase()) ||
             item.brand?.toLowerCase().includes(filterText.toLowerCase()) ||
             ''.includes(filterText.toLowerCase())
         ));
-    }, [filterText, clothingItems]);
+    }, [filterText, clothingItems, currentModalViewMode, selectedCategory]);
+    
 
     if (!isOpen) {
         return null;
@@ -62,6 +104,21 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 </button>
 
                 <h2 className="text-xl font-bold mb-4">Select Clothing Item</h2>
+
+                <div className="flex justify-center mb-4">
+                    <button
+                        className={`px-4 py-2 rounded-l ${currentModalViewMode === 'closet' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'}`}
+                        onClick={() => setCurrentModalViewMode('closet')}
+                    >
+                        Closet
+                    </button>
+                    <button
+                        className={`px-4 py-2 rounded-r ${currentModalViewMode === 'wishlist' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'}`}
+                        onClick={() => setCurrentModalViewMode('wishlist')}
+                    >
+                        Wishlist
+                    </button>
+                </div>
 
                 <input
                     type="text"

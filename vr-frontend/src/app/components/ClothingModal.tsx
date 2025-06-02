@@ -76,7 +76,7 @@ const ClothingModal: React.FC<ClothingModalProps> = ({
                     {currentItem.brand && <p><span className="font-semibold">Brand:</span> {currentItem.brand}</p>}
                     {currentItem.occasion && <p><span className="font-semibold">Occasion:</span> {currentItem.occasion}</p>}
                     {currentItem.season && <p><span className="font-semibold">Season:</span> {currentItem.season}</p>}
-                    {currentItem.price != null && <p><span className="font-semibold">Price:</span> ${currentItem.price.toFixed(2)}</p>}
+                    {typeof currentItem.price === 'number' && currentItem.price != null && <p><span className="font-semibold">Price:</span> ${currentItem.price.toFixed(2)}</p>}
                     {currentItem.notes && <p><span className="font-semibold">Notes:</span> {currentItem.notes}</p>}
                 </div>
 
