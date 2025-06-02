@@ -93,6 +93,21 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
         onClose();
     };
 
+    // Prepend a 'None' option if a category is selected
+    let itemsToShow = filteredItems;
+    if (selectedCategory) {
+        itemsToShow = [
+            {
+                id: 'none',
+                name: 'None (Clear selection)',
+                url: '',
+                mode: currentModalViewMode,
+                type: selectedCategory,
+            } as ClothingItem,
+            ...filteredItems,
+        ];
+    }
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={onClose}>
             <div className="bg-gray-800 p-6 rounded-lg max-w-2xl max-h-[90vh] w-full relative text-white overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -129,22 +144,21 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 />
 
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {filteredItems.map(item => (
+                    {itemsToShow.map(item => (
                         <div key={item.id} className="cursor-pointer" onClick={() => handleItemClick(item)}>
                             {item.id === 'none' ? (
-                                <div className="w-full h-32 flex items-center justify-center border border-gray-600 rounded text-gray-400 text-center text-sm p-2">
+                                <div className="w-full h-32 flex items-center justify-center border border-gray-600 rounded text-gray-400 text-center text-sm p-2 bg-gray-900 hover:bg-gray-700 transition">
                                     {item.name}
                                 </div>
                             ) : (
-                                <img
-                                    src={item.url}
-                                    alt={item.name || 'Clothing Item'}
-                                    className="w-full h-32 object-cover rounded"
-                                />
-                            )}
-                            
-                            {! (item.id === 'none') && (
-                                <p className="text-center text-sm mt-1 truncate">{item.name || 'Unnamed'}</p>
+                                <>
+                                    <img
+                                        src={item.url}
+                                        alt={item.name || 'Clothing Item'}
+                                        className="w-full h-32 object-cover rounded"
+                                    />
+                                    <p className="text-center text-sm mt-1 truncate">{item.name || 'Unnamed'}</p>
+                                </>
                             )}
                         </div>
                     ))}
