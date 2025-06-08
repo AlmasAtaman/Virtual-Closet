@@ -17,8 +17,15 @@ const handler = NextAuth({
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Always redirect to the dashboard after successful sign-in
+      return baseUrl + '/dashboard';
+    },
   },
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   jwt: {
     encode: async ({ token, secret }) => {
       if (!token) {
