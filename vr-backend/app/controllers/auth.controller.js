@@ -4,6 +4,7 @@ import db from "../models/index.js";
 import { jwtConfig } from "../config/auth.config.js";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
+import { v4 as uuidv4 } from "uuid";
 
 const prisma = db.prisma;
 
@@ -12,9 +13,11 @@ export const signup = async (req, res) => {
     const { username, email, password, roles } = req.body;
 
     const hashedPassword = bcrypt.hashSync(password, 8);
+    const id = uuidv4(); // Generate a unique ID
 
     const user = await prisma.user.create({
       data: {
+        id, // Add the generated ID here
         username,
         email,
         password: hashedPassword,

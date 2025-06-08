@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE,
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT || "587"),
     secure: process.env.EMAIL_SECURE === 'true',
@@ -12,7 +13,7 @@ const sendEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.EMAIL_FROM,
     to: options.email,
     subject: options.subject,
     html: options.html,
