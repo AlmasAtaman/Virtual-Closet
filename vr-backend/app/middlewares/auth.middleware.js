@@ -17,8 +17,9 @@ const getDerivedEncryptionKey = async (secret, salt) => {
 
 const authMiddleware = async (req, res, next) => {
   console.log("Received cookies in authMiddleware:", req.cookies);
-  const token = req.cookies["next-auth.session-token"];
+  const token = req.cookies.accessToken;
   console.log("Value of token variable:", token);
+  console.log("Type of accessToken:", typeof req.cookies.accessToken);
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized: No token provided!" });
