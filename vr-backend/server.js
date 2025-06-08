@@ -29,7 +29,6 @@ app.use(cookieParser());
 
 //added code for AWS S3
 app.use('/api/images', uploadRoutes); // So POST /images works
-//make sure to only change code here
 
 app.post('/api/scrape', scrapeProduct);
 

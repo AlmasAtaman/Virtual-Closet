@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaFacebookF, FaApple, FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+import { signIn } from "next-auth/react";
+
 
 type User = {
     id: number;
@@ -55,14 +57,11 @@ export default function signUp(){
                 </div>
                 {/* Social Buttons */}
                 <div className="flex flex-col gap-3">
-                    <button className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition">
+                    <button
+                        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                        className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition"
+                        >
                         <FaGoogle className="text-lg" /> Sign in with Google
-                    </button>
-                    <button className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                        <FaFacebookF className="text-lg" /> Continue With Facebook
-                    </button>
-                    <button className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition">
-                        <FaApple className="text-lg" /> Continue With Apple
                     </button>
                 </div>
                 {/* Divider */}
