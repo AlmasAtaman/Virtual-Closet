@@ -19,6 +19,8 @@ model User {
   email    String   @unique
   password String?
   roles    Role[]   @relation("UserRoles")
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
   clothing Clothing[]
   outfits  Outfit[]
 }

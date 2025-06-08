@@ -16,6 +16,8 @@ export default function(app) {
 
   app.post("/api/auth/signin", authController.signin);
   app.post("/api/auth/signout", authController.signout);
+  app.post("/api/auth/forgot-password", authController.forgotPassword);
+  app.post("/api/auth/reset-password", authController.resetPassword);
   
   app.get("/api/auth/me", authMiddleware, (req, res) => {
     res.status(200).json({
