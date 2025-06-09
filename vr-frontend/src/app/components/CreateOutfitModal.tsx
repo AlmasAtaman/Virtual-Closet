@@ -5,7 +5,7 @@ import ClothingItemSelectModal from './ClothingItemSelectModal';
 
 interface CreateOutfitModalProps {
     show: boolean;
-    onClose: () => void;
+    onCloseAction: () => void;
     // TODO: Add a prop to trigger outfit list refresh on parent page if needed
     onOutfitCreated: () => void;
 }
@@ -26,7 +26,7 @@ interface CategorizedClothing {
     // Add other categories if needed
 }
 
-export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: CreateOutfitModalProps) {
+export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated }: CreateOutfitModalProps) {
     const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null);
     const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null);
     const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null);
@@ -183,7 +183,7 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
         setShowBottomSelectModal(false);
         setShowOuterwearSelectModal(false);
         setViewingCategory("none");
-        onClose(); // Call the original onClose prop
+        onCloseAction(); // Call the original onCloseAction prop
     };
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -414,7 +414,7 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
                 {/* Render ClothingItemSelectModals */}
                 <ClothingItemSelectModal
                     isOpen={showOuterwearSelectModal}
-                    onClose={() => setShowOuterwearSelectModal(false)}
+                    onCloseAction={() => setShowOuterwearSelectModal(false)}
                     clothingItems={[...(clothingItems.outerwear || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
                     onSelectItem={(item) => {
                         setSelectedOuterwear(item);
@@ -426,7 +426,7 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
 
                 <ClothingItemSelectModal
                     isOpen={showTopSelectModal}
-                    onClose={() => setShowTopSelectModal(false)}
+                    onCloseAction={() => setShowTopSelectModal(false)}
                     clothingItems={[...(clothingItems.tops || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
                     onSelectItem={(item) => {
                         setSelectedTop(item);
@@ -438,7 +438,7 @@ export default function CreateOutfitModal({ show, onClose, onOutfitCreated }: Cr
 
                 <ClothingItemSelectModal
                     isOpen={showBottomSelectModal}
-                    onClose={() => setShowBottomSelectModal(false)}
+                    onCloseAction={() => setShowBottomSelectModal(false)}
                     clothingItems={[...(clothingItems.bottoms || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
                     onSelectItem={(item) => {
                         setSelectedBottom(item);

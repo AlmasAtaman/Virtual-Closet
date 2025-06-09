@@ -23,7 +23,7 @@ interface Outfit {
 
 interface ClothingItemDetailModalProps {
     show: boolean;
-    onClose: () => void;
+    onCloseAction: () => void;
     item: ClothingItem | null;
     outfit: Outfit | null; // Pass the whole outfit to show other items
     onItemDeleted: (itemId: string, outfitId: string) => void; // Update handler to include outfitId
@@ -31,7 +31,7 @@ interface ClothingItemDetailModalProps {
 
 const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
     show,
-    onClose,
+    onCloseAction,
     item,
     outfit,
     onItemDeleted,
@@ -80,7 +80,7 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
     return (
         <div
             className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-            onClick={onClose} // Close modal when clicking outside content
+            onClick={onCloseAction} // Close modal when clicking outside content
         >
             <div
                 className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full max-h-[90vh] overflow-y-auto text-white"
@@ -142,7 +142,7 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
                     </button>
                     <button
                         className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                        onClick={onClose}
+                        onClick={onCloseAction}
                     >
                         Close
                     </button>

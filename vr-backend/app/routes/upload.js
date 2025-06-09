@@ -148,13 +148,33 @@ router.post("/final-submit", authMiddleware, ensureUserExists, upload.single("im
   } = req.body;
   const userId = req.user.id;
   const file = req.file;
+  const imageUrl = req.body.imageUrl; // Get imageUrl from body for URL uploads
 
-  if (!file || !userId) return res.status(400).json({ message: "Bad Request" });
+  if (!userId || (!file && !imageUrl)) return res.status(400).json({ message: "Bad Request: Missing userId or image data" });
 
+  let processedResult;
   try {
-    const { error, key } = await uploadToS3({ file, userId });
-    if (error) return res.status(500).json({ message: error.message });
+    if (file) {
+      processedResult = await processImage({
+        type: 'file',
+        data: file.buffer,
+        originalname: file.originalname
+      }, userId);
+    } else if (imageUrl) {
+      processedResult = await processImage({
+        type: 'url',
+        data: imageUrl,
+        originalname: 'scraped_image.jpg' // Provide a default originalname for URL images
+      }, userId);
+    } else {
+      return res.status(400).json({ message: "No image data provided for processing." });
+    }
 
+    if (!processedResult.success) {
+      throw new Error(processedResult.message || "Image processing failed");
+    }
+
+    const key = processedResult.s3Key; // Use the S3 key returned from processImage
 
     const clothing = await prisma.clothing.create({
       data: {
@@ -186,19 +206,19 @@ router.post("/final-submit", authMiddleware, ensureUserExists, upload.single("im
     const { url: presignedUrl, error: presignError } = await getPresignedUrl(key);
     if (presignError) {
       console.error("Error generating presigned URL for new item:", presignError);
-
     }
 
     const newClothingItemWithUrl = {
       ...newClothingItem,
       url: presignedUrl || "", 
-      mode: newClothingItem?.mode || "closet"
+      mode: newClothingItem?.mode || "closet",
+      tags: newClothingItem?.tags || [], // Ensure tags are included
     };
 
     return res.status(201).json({ message: "Clothing saved", item: newClothingItemWithUrl });
   } catch (err) {
     console.error("Final submit failed:", err);
-    return res.status(500).json({ message: "Final submit failed" });
+    return res.status(500).json({ message: err.message || "Final submission failed" });
   }
 });
 

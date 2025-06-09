@@ -19,14 +19,14 @@ interface ClothingItem {
 
 interface ClothingModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onCloseAction: () => void;
     clothingItems: ClothingItem[];
     initialItemIndex: number;
 }
 
 const ClothingModal: React.FC<ClothingModalProps> = ({
     isOpen,
-    onClose,
+    onCloseAction,
     clothingItems,
     initialItemIndex,
 }) => {
@@ -54,10 +54,10 @@ const ClothingModal: React.FC<ClothingModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={onCloseAction}>
             <div className="bg-gray-800 p-6 rounded-lg max-w-lg w-full relative text-white" onClick={(e) => e.stopPropagation()}>
                 <button
-                    onClick={onClose}
+                    onClick={onCloseAction}
                     className="absolute top-3 right-3 text-gray-400 hover:text-gray-200"
                 >
                     <FontAwesomeIcon icon={faTimes} size="lg" />

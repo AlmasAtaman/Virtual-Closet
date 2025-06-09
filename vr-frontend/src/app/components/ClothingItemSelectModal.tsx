@@ -34,7 +34,7 @@ const getItemCategory = (item: ClothingItem): 'top' | 'bottom' | 'outerwear' | '
 
 interface ClothingItemSelectModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onCloseAction: () => void;
     clothingItems: ClothingItem[];
     onSelectItem: (selectedItem: ClothingItem) => void;
     viewMode: 'closet' | 'wishlist';
@@ -43,7 +43,7 @@ interface ClothingItemSelectModalProps {
 
 const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
     isOpen,
-    onClose,
+    onCloseAction,
     clothingItems,
     onSelectItem,
     viewMode,
@@ -90,7 +90,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
 
     const handleItemClick = (item: ClothingItem) => {
         onSelectItem(item);
-        onClose();
+        onCloseAction();
     };
 
     // Prepend a 'None' option if a category is selected
@@ -109,10 +109,10 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={onCloseAction}>
             <div className="bg-gray-800 p-6 rounded-lg max-w-2xl max-h-[90vh] w-full relative text-white overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <button
-                    onClick={onClose}
+                    onClick={onCloseAction}
                     className="absolute top-3 right-3 text-gray-400 hover:text-gray-200"
                 >
                     <FontAwesomeIcon icon={faTimes} size="lg" />

@@ -105,7 +105,7 @@ export default function OutfitsPage() {
 
             <CreateOutfitModal 
                 show={showCreateOutfitModal} 
-                onClose={() => setShowCreateOutfitModal(false)} 
+                onCloseAction={() => setShowCreateOutfitModal(false)} 
                 onOutfitCreated={handleOutfitCreated}
             />
         </div>
