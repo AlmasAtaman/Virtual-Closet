@@ -4,6 +4,7 @@ import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import axios from "axios";
 import Fuse from "fuse.js";
 import { motion, AnimatePresence } from "framer-motion";
+import Dropdown from "./Dropdown";
 
 type ClothingGalleryProps = {
   viewMode: "closet" | "wishlist";
@@ -381,8 +382,14 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   const formatPrice = (price: number | string | null | undefined): string => {
     if (price === null || price === undefined) return "";
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return isNaN(numPrice) ? "" : `$${numPrice.toFixed(2)}`;
+    if (isNaN(numPrice) || numPrice === 0) return "";
+    return `$${numPrice.toFixed(2)}`;
   };
+
+  const currentIndex = selectedItem ? clothingItems.findIndex(
+    (item) => item.key === selectedItem.key
+  ) : -1;
+  const lastIndex = clothingItems.length - 1;
 
   return (
     <div className="space-y-6">
@@ -615,7 +622,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                       </span>
                     ))}
                 </div>
-                {formatPrice(item.price) && (
+                {(isEditing || formatPrice(item.price)) && (
                   <p className="text-sm font-medium text-primary">
                     {formatPrice(item.price)}
                   </p>
@@ -676,38 +683,41 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
             <div className="flex h-full flex-col md:flex-row flex-grow">
               {/* Image Section */}
               <div className="relative w-[400px] bg-muted p-6 flex items-center justify-center overflow-hidden">
-              <img
-                src={selectedItem.url}
-                alt={selectedItem.name}
-                className="h-[350px] w-auto object-contain rounded"
-                />
+                {selectedItem.url ? (
+                  <img
+                    src={selectedItem.url}
+                    alt={selectedItem.name}
+                    className="h-[350px] w-auto object-contain rounded"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-muted">
+                    <span className="text-2xl">👕</span>
+                  </div>
+                )}
                 {!isEditing && (
                   <>
-                    <button
-                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const currentIndex = clothingItems.findIndex(
-                          (item) => item.key === selectedItem.key
-                        );
-                        if (currentIndex > 0) setSelectedItem(clothingItems[currentIndex - 1]);
-                      }}
-                    >
-                      ❮
-                    </button>
-                    <button
-                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const currentIndex = clothingItems.findIndex(
-                          (item) => item.key === selectedItem.key
-                        );
-                        if (currentIndex < clothingItems.length - 1)
+                    {currentIndex > 0 && (
+                      <button
+                        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItem(clothingItems[currentIndex - 1]);
+                        }}
+                      >
+                        ❮
+                      </button>
+                    )}
+                    {currentIndex < lastIndex && (
+                      <button
+                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedItem(clothingItems[currentIndex + 1]);
-                      }}
-                    >
-                      ❯
-                    </button>
+                        }}
+                      >
+                        ❯
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -725,167 +735,254 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                 </button>
 
                 <div className="flex flex-col flex-grow h-0 overflow-y-auto pr-2">
+                  <h2 className="text-2xl font-semibold mb-4">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className="text-2xl font-semibold w-full rounded-md border border-input bg-background px-3 py-2 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Enter name"
+                      />
+                    ) : (
+                      selectedItem.name
+                    )}
+                  </h2>
+
                   {isEditing ? (
-                    <div className="space-y-4">
-                      {Object.entries(editForm).map(([key, value]) => (
-                        <div key={key}>
-                          <label className="mb-1.5 block text-sm font-medium">
-                            {key.charAt(0).toUpperCase() + key.slice(1)}
-                          </label>
-                          {key === "notes" || key === "sourceUrl" ? (
-                            <textarea
-                              value={value}
-                              onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                              placeholder={`Add ${key}`}
-                              rows={3}
-                            />
-                          ) : (
-                            <input
-                              type={key === "price" ? "number" : "text"}
-                              value={value}
-                              onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                              placeholder={`Enter ${key}`}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                    <input
+                      type="text"
+                      value={editForm.sourceUrl}
+                      onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      placeholder="Add source URL"
+                    />
                   ) : (
-                    <div className="space-y-6">
-                      <h2 className="text-2xl font-semibold mb-4">{selectedItem.name}</h2>
-                      {selectedItem.sourceUrl && (
-                        <a
-                          href={selectedItem.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-1 inline-block text-sm text-primary hover:underline"
-                        >
-                          View Source
-                        </a>
-                      )}
+                    selectedItem.sourceUrl && (
+                      <a
+                        href={selectedItem.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-block text-sm hover:underline"
+                      >
+                        <span className="text-muted-foreground">Website: </span>
+                        <span className="text-blue-500">{selectedItem.sourceUrl}</span>
+                      </a>
+                    )
+                  )}
 
-                      {/* Tab Navigation */}
-                      <div className="flex border-b">
-                        <button
-                          className={`py-2 px-4 text-sm font-medium ${selectedTab === 'general' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTab('general');
-                          }}
-                        >
-                          General Info
-                        </button>
-                        <button
-                          className={`py-2 px-4 text-sm font-medium ${selectedTab === 'details' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTab('details');
-                          }}
-                        >
-                          Style & Details
-                        </button>
-                      </div>
+                  {/* Tab Navigation */}
+                  <div className="flex border-b">
+                    <button
+                      className={`py-2 px-4 text-sm font-medium ${selectedTab === 'general' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTab('general');
+                      }}
+                    >
+                      General Info
+                    </button>
+                    <button
+                      className={`py-2 px-4 text-sm font-medium ${selectedTab === 'details' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTab('details');
+                      }}
+                    >
+                      Style & Details
+                    </button>
+                  </div>
 
-                      {selectedTab === 'general' && (
-                        <div className="space-y-4 pt-4">
-                          {!(selectedItem.type || selectedItem.brand || formatPrice(selectedItem.price) || selectedItem.notes) ? (
-                            <div className="col-span-full text-center text-muted-foreground py-8">
-                              Click Edit to fill this Section Out!
-                            </div>
-                          ) : (
-                            <>
-                              <div className="grid gap-y-2 gap-x-4 sm:grid-cols-2">
-                                {selectedItem.type && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Type:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.type}</dd>
-                                  </div>
-                                )}
-                                {selectedItem.brand && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Brand:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.brand}</dd>
-                                  </div>
-                                )}
-                                {formatPrice(selectedItem.price) && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Price:</dt>
-                                    <dd className="text-base text-foreground">{formatPrice(selectedItem.price)}</dd>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Notes Section - Always present as a box, content changes based on selectedItem.notes */}
-                                <div className="border border-border rounded-md p-4 mt-4 bg-secondary/10">
-                                <h4 className="text-sm font-semibold text-muted-foreground mb-2">Notes:</h4>
-                                {selectedItem.notes ? (
-                                    <p className="text-base text-foreground whitespace-pre-wrap break-words overflow-hidden overflow-ellipsis break-all max-w-full">
-                                    {selectedItem.notes}
-                                    </p>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">No notes added.</p>
-                                )}
-                                </div>
-                            </>
-                          )}
+                  {selectedTab === 'general' && (
+                    <div className="space-y-4 pt-4">
+                      {!(selectedItem.type || selectedItem.brand || formatPrice(selectedItem.price) || selectedItem.notes) && !isEditing ? (
+                        <div className="col-span-full text-center text-muted-foreground py-8">
+                          Click Edit to fill this Section Out!
                         </div>
-                      )}
-
-                      {selectedTab === 'details' && (
-                        <div className="space-y-4 pt-4">
+                      ) : (
+                        <>
                           <div className="grid gap-y-2 gap-x-4 sm:grid-cols-2">
-                            {(selectedItem.occasion || selectedItem.style || selectedItem.fit || selectedItem.color || selectedItem.material || selectedItem.season) ? (
-                              <>
-                                {selectedItem.occasion && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Occasion:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.occasion}</dd>
-                                  </div>
+                            {/* Type */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Type:</dt>
+                              {isEditing ? (
+                                <Dropdown
+                                  options={["T-shirt", "Jacket", "Pants", "Shoes", "Hat", "Sweater", "Shorts", "Dress", "Skirt"]}
+                                  value={editForm.type}
+                                  onChange={(value) => setEditForm({ ...editForm, type: value })}
+                                  placeholder="Select Type"
+                                />
+                              ) : (
+                                selectedItem.type && <dd className="text-base text-foreground">{selectedItem.type}</dd>
+                              )}
+                            </div>
+                            {/* Brand */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Brand:</dt>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={editForm.brand}
+                                  onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                  placeholder="Enter brand"
+                                />
+                              ) : (
+                                selectedItem.brand && <dd className="text-base text-foreground">{selectedItem.brand}</dd>
+                              )}
+                            </div>
+                            {/* Price */}
+                            {(isEditing || formatPrice(selectedItem.price)) && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Price:</dt>
+                                {isEditing ? (
+                                  <input
+                                    type="number"
+                                    value={editForm.price}
+                                    onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    placeholder="Enter price"
+                                  />
+                                ) : (
+                                  <dd className="text-base text-foreground">{formatPrice(selectedItem.price)}</dd>
                                 )}
-                                {selectedItem.style && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Style:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.style}</dd>
-                                  </div>
-                                )}
-                                {selectedItem.fit && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Fit:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.fit}</dd>
-                                  </div>
-                                )}
-                                {selectedItem.color && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Color:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.color}</dd>
-                                  </div>
-                                )}
-                                {selectedItem.material && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Material:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.material}</dd>
-                                  </div>
-                                )}
-                                {selectedItem.season && (
-                                  <div className="flex flex-col">
-                                    <dt className="text-sm font-semibold text-muted-foreground">Season:</dt>
-                                    <dd className="text-base text-foreground">{selectedItem.season}</dd>
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <div className="col-span-full text-center text-muted-foreground">
-                                Click Edit to fill this Section Out!
                               </div>
                             )}
                           </div>
-                        </div>
-                      )}
 
+                          {/* Notes Section - Always present as a box, content changes based on selectedItem.notes */}
+                          <div className="border border-border rounded-md p-4 mt-4 bg-secondary/10">
+                            <h4 className="text-sm font-semibold text-muted-foreground mb-2">Notes:</h4>
+                            {isEditing ? (
+                              <div className="flex flex-col">
+                                <textarea
+                                  value={editForm.notes}
+                                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                  placeholder="Add notes"
+                                  rows={3}
+                                  maxLength={100}
+                                />
+                                <p className="text-right text-xs text-muted-foreground mt-1">
+                                  {editForm.notes.length}/100
+                                </p>
+                              </div>
+                            ) : (
+                              selectedItem.notes ? (
+                                <p className="text-base text-foreground whitespace-pre-wrap break-words overflow-hidden overflow-ellipsis break-all max-w-full">
+                                  {selectedItem.notes}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No notes added.</p>
+                              )
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
+
+                  {selectedTab === 'details' && (
+                    <div className="space-y-4 pt-4">
+                      <div className="grid gap-y-2 gap-x-4 sm:grid-cols-2">
+                        {((selectedItem.occasion || selectedItem.style || selectedItem.fit || selectedItem.color || selectedItem.material || selectedItem.season) || isEditing) ? (
+                          <>
+                            {/* Occasion */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Occasion:</dt>
+                              {isEditing ? (
+                                <Dropdown
+                                  options={["Casual", "Formal", "Party", "Athletic"]}
+                                  value={editForm.occasion}
+                                  onChange={(value) => setEditForm({ ...editForm, occasion: value })}
+                                  placeholder="Select Occasion"
+                                />
+                              ) : (
+                                selectedItem.occasion && <dd className="text-base text-foreground">{selectedItem.occasion}</dd>
+                              )}
+                            </div>
+                            {/* Style */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Style:</dt>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={editForm.style}
+                                  onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                  placeholder="Enter style"
+                                />
+                              ) : (
+                                selectedItem.style && <dd className="text-base text-foreground">{selectedItem.style}</dd>
+                              )}
+                            </div>
+                            {/* Fit */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Fit:</dt>
+                              {isEditing ? (
+                                <Dropdown
+                                  options={["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"]}
+                                  value={editForm.fit}
+                                  onChange={(value) => setEditForm({ ...editForm, fit: value })}
+                                  placeholder="Select Fit"
+                                />
+                              ) : (
+                                selectedItem.fit && <dd className="text-base text-foreground">{selectedItem.fit}</dd>
+                              )}
+                            </div>
+                            {/* Color */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Color:</dt>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={editForm.color}
+                                  onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                  placeholder="Enter color"
+                                />
+                              ) : (
+                                selectedItem.color && <dd className="text-base text-foreground">{selectedItem.color}</dd>
+                              )}
+                            </div>
+                            {/* Material */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Material:</dt>
+                              {isEditing ? (
+                                <Dropdown
+                                  options={["Cotton", "Linen", "Denim", "Leather", "Knit", "Polyester"]}
+                                  value={editForm.material}
+                                  onChange={(value) => setEditForm({ ...editForm, material: value })}
+                                  placeholder="Select Material"
+                                />
+                              ) : (
+                                selectedItem.material && <dd className="text-base text-foreground">{selectedItem.material}</dd>
+                              )}
+                            </div>
+                            {/* Season */}
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Season:</dt>
+                              {isEditing ? (
+                                <Dropdown
+                                  options={["Spring", "Summer", "Fall", "Winter"]}
+                                  value={editForm.season}
+                                  onChange={(value) => setEditForm({ ...editForm, season: value })}
+                                  placeholder="Select Season"
+                                />
+                              ) : (
+                                selectedItem.season && <dd className="text-base text-foreground">{selectedItem.season}</dd>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="col-span-full text-center text-muted-foreground">
+                            Click Edit to fill this Section Out!
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
 
                 <div className="flex gap-2 mt-auto pt-4 border-t border-border">
