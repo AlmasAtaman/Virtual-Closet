@@ -5,6 +5,7 @@ import axios from "axios";
 import Fuse from "fuse.js";
 import { motion, AnimatePresence } from "framer-motion";
 import Dropdown from "./Dropdown";
+import FilterSection from "./FilterSection";
 
 type ClothingGalleryProps = {
   viewMode: "closet" | "wishlist";
@@ -79,7 +80,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   const [selectedTab, setSelectedTab] = useState<'general' | 'details'>('general');
 
   // Define the filterable attributes
-  const filterAttributes = [
+  const filterAttributes: { key: keyof Clothing; label: string; }[] = [
     { key: 'type', label: 'Type' },
     { key: 'occasion', label: 'Occasion' },
     { key: 'style', label: 'Style' },
@@ -316,19 +317,26 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
 
   const filteredItems = searchResults
     .filter((item) => {
-      // Tag filtering
-      if (selectedTags.length > 0) {
-        const itemTags = [
-          item.type,
-          item.occasion,
-          item.style,
-          item.fit,
-          item.color,
-          item.material,
-          item.season,
-        ].filter(Boolean);
-        if (!selectedTags.every((tag) => itemTags.includes(tag))) {
-          return false;
+      // Group selected tags by their attribute type
+      const selectedTagsByCategory: Record<string, string[]> = {};
+      selectedTags.forEach(tag => {
+        const attribute = filterAttributes.find(attr => uniqueAttributeValues[attr.key]?.includes(tag));
+        if (attribute) {
+          if (!selectedTagsByCategory[attribute.key]) {
+            selectedTagsByCategory[attribute.key] = [];
+          }
+          selectedTagsByCategory[attribute.key].push(tag);
+        }
+      });
+
+      // Apply filtering logic: AND across categories, OR within categories
+      for (const attributeKey in selectedTagsByCategory) {
+        const selectedValuesInThisCategory = selectedTagsByCategory[attributeKey];
+        if (selectedValuesInThisCategory.length > 0) {
+          const itemValueForCategory = item[attributeKey as keyof Clothing];
+          if (!itemValueForCategory || !selectedValuesInThisCategory.some(val => val === itemValueForCategory)) {
+            return false; // Item does not match any selected tag in this category
+          }
         }
       }
 
@@ -434,13 +442,6 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
 
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <span>🔍</span>
-            <span>Filters</span>
-          </button>
-          <button
             onClick={toggleMultiSelect}
             className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-sm transition-colors ${
               isMultiSelecting
@@ -454,92 +455,21 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
         </div>
       </div>
 
-      {/* Filter Options */}
-      {showFilters && (
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <div className="space-y-6">
-            {/* Price Sorting */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Price Sort</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: "none", label: "None" },
-                  { value: "asc", label: "Least Expensive" },
-                  { value: "desc", label: "Most Expensive" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPriceSort(option.value as "none" | "asc" | "desc")}
-                    className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      priceSort === option.value
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Filter Section */}
+      <FilterSection
+        clothingItems={clothingItems}
+        selectedTags={selectedTags}
+        setSelectedTags={setSelectedTags}
+        filterAttributes={filterAttributes}
+        uniqueAttributeValues={uniqueAttributeValues}
+        priceSort={priceSort}
+        setPriceSort={setPriceSort}
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+      />
 
-            {/* Price Range */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Price Range</h3>
-              <div className="flex flex-wrap gap-2">
-                {priceRanges.map((range) => (
-                  <button
-                    key={range.label}
-                    onClick={() => {
-                      if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
-                        setPriceRange([null, null]);
-                      } else {
-                        setPriceRange(range.range as [number, number]);
-                      }
-                    }}
-                    className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      priceRange[0] === range.range[0] && priceRange[1] === range.range[1]
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                    }`}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Attribute Filters */}
-            {filterAttributes.map((attribute) => {
-              const uniqueValues = uniqueAttributeValues[attribute.key];
-              if (uniqueValues.length === 0) return null;
-
-              return (
-                <div key={attribute.key}>
-                  <h3 className="mb-3 text-sm font-medium">{attribute.label}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {uniqueValues.map((value) => (
-                      <button
-                        key={value}
-                        onClick={() => toggleTag(value)}
-                        className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                          selectedTags.includes(value)
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        }`}
-                      >
-                        {value}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Selected Tags */}
-      {selectedTags.length > 0 && (
+      {/* Selected Tags - These are now handled within FilterSection */}
+      {/* {selectedTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {selectedTags.map((tag) => (
             <div
@@ -556,7 +486,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
             </div>
           ))}
         </div>
-      )}
+      )} */}
 
       {/* Clothing Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
