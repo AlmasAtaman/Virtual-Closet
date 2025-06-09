@@ -3,6 +3,7 @@
 import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import axios from "axios";
 import Fuse from "fuse.js";
+import { motion, AnimatePresence } from "framer-motion";
 
 type ClothingGalleryProps = {
   viewMode: "closet" | "wishlist";
@@ -26,6 +27,7 @@ type Clothing = {
   notes?: string;
   mode?: "closet" | "wishlist";
   sourceUrl?: string;
+  tags?: string[];
 };
 
 type EditFormFields = {
@@ -72,6 +74,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   const [searchAcrossModes, setSearchAcrossModes] = useState(false);
   const [isMultiSelecting, setIsMultiSelecting] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [clickedItemRect, setClickedItemRect] = useState<DOMRect | null>(null);
 
   // Define the filterable attributes
   const filterAttributes = [
@@ -165,10 +168,34 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
       await axios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`, {
         withCredentials: true,
       });
-        setClothingItems((prev) => prev.filter((item) => item.key !== key));
+      setClothingItems((prev) => prev.filter((item) => item.key !== key));
       setSelectedItemIds(prev => prev.filter(id => id !== key));
     } catch (err) {
-        console.error("Error deleting image:", err);
+      console.error("Error deleting image:", err);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedItem) return;
+
+    const updated = { ...selectedItem, ...editForm };
+    try {
+      console.log("Updating item with ID:", selectedItem.id, "with data:", editForm);
+
+      await axios.patch(
+        "http://localhost:8000/api/images/update",
+        { id: selectedItem.id, ...editForm },
+        { withCredentials: true }
+      );
+
+      setSelectedItem(updated);
+      setClothingItems(prev =>
+        prev.map(item => item.key === updated.key ? updated : item)
+      );
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to update clothing item:", err);
+      alert("Failed to save changes.");
     }
   };
 
@@ -351,549 +378,535 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
 
   // Helper function to safely format price
   const formatPrice = (price: number | string | null | undefined): string => {
-    if (price === null || price === undefined) return "N/A";
+    if (price === null || price === undefined) return "";
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return isNaN(numPrice) ? "N/A" : `$${numPrice.toFixed(2)}`;
+    return isNaN(numPrice) ? "" : `$${numPrice.toFixed(2)}`;
   };
 
   return (
-    <div className="mt-6">
-      <div className="flex gap-2 mb-4">
-        <button
-          className={`px-4 py-2 rounded ${viewMode === "closet" ? "bg-blue-600 text-white" : "bg-gray-200 text-black"}`}
-          onClick={() => setViewMode("closet")}
-        >
-          My Closet
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${viewMode === "wishlist" ? "bg-blue-600 text-white" : "bg-gray-200 text-black"}`}
-          onClick={() => setViewMode("wishlist")}
-        >
-          Wishlist
-        </button>
-      </div>
-      <div className="flex justify-between items-center mb-4">
-        <button
-          className="px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          Filter
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${isMultiSelecting ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'} text-white`}
-          onClick={toggleMultiSelect}
-        >
-          {isMultiSelecting ? 'Cancel Selection' : 'Select Multiple'}
-        </button>
-      </div>
-      <h2 className="text-xl font-semibold mb-2">Your {viewMode === "closet" ? "Closet" : "Wishlist"}</h2>
-      {clothingItems.length === 0 && (
-        <p className="text-gray-500 text-center col-span-full">Your {viewMode} is empty. Upload something!</p>
-      )}
-      {selectedTags.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          {selectedTags.map((tag) => (
-            <div
-              key={tag}
-              className="flex items-center bg-gray-200 rounded-full px-3 py-1 text-sm text-gray-800"
-            >
-              <span>{tag}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTag(tag);
-                }}
-                className="ml-2 text-red-500 font-bold focus:outline-none"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="space-y-6">
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Search by name or tag..."
+            value={searchQuery}
+            onChange={(e) => {
+              const input = e.target.value;
+              setSearchQuery(input);
 
-      {/* Filter Options Section */}
-      {showFilters && (
-        <div className="mb-4 p-4 border rounded bg-gray-800">
-          <h3 className="text-lg font-semibold mb-2">Filter Options</h3>
-          
-          {/* Price Sorting */}
-          <div className="mb-4">
-            <h4 className="text-md font-medium mb-1">Price Sort</h4>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setPriceSort("none")}
-                className={`px-3 py-1 rounded-full text-sm border ${
-                  priceSort === "none" ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                }`}
-              >
-                None
-              </button>
-              <button
-                onClick={() => setPriceSort("asc")}
-                className={`px-3 py-1 rounded-full text-sm border ${
-                  priceSort === "asc" ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                }`}
-              >
-                Least Expensive
-              </button>
-              <button
-                onClick={() => setPriceSort("desc")}
-                className={`px-3 py-1 rounded-full text-sm border ${
-                  priceSort === "desc" ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                }`}
-              >
-                Most Expensive
-              </button>
-            </div>
-          </div>
-
-          {/* Price Range */}
-          <div className="mb-4">
-            <h4 className="text-md font-medium mb-1">Price Range</h4>
-            <div className="flex flex-wrap gap-2">
-              {priceRanges.map((range) => (
+              if (autocompleteEnabled && input) {
+                const results = new Fuse(baseItems, { keys: ["name"] }).search(input).map(r => r.item.name);
+                const unique = [...new Set(results)].slice(0, 5);
+                setSuggestions(unique);
+              } else {
+                setSuggestions([]);
+              }
+            }}
+            className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+          {suggestions.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+              {suggestions.map((sug, i) => (
                 <button
-                  key={range.label}
+                  key={i}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
                   onClick={() => {
-                    if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
-                      setPriceRange([null, null]);
-                    } else {
-                      setPriceRange(range.range as [number, number]);
-                    }
+                    setSearchQuery(sug);
+                    setSuggestions([]);
                   }}
-                  className={`px-3 py-1 rounded-full text-sm border ${
-                    priceRange[0] === range.range[0] && priceRange[1] === range.range[1]
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                  }`}
                 >
-                  {range.label}
+                  {sug}
                 </button>
               ))}
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Existing attribute filters */}
-          {filterAttributes.map(attribute => {
-            const uniqueValues = uniqueAttributeValues[attribute.key];
-            return renderAttributeFilters(attribute.key as keyof Clothing, attribute.label, uniqueValues);
-          })}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <span>🔍</span>
+            <span>Filters</span>
+          </button>
+          <button
+            onClick={toggleMultiSelect}
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-sm transition-colors ${
+              isMultiSelecting
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            }`}
+          >
+            <span>{isMultiSelecting ? "✕" : "✓"}</span>
+            <span>{isMultiSelecting ? "Cancel Selection" : "Select Multiple"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Options */}
+      {showFilters && (
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="space-y-6">
+            {/* Price Sorting */}
+            <div>
+              <h3 className="mb-3 text-sm font-medium">Price Sort</h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "none", label: "None" },
+                  { value: "asc", label: "Least Expensive" },
+                  { value: "desc", label: "Most Expensive" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPriceSort(option.value as "none" | "asc" | "desc")}
+                    className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      priceSort === option.value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range */}
+            <div>
+              <h3 className="mb-3 text-sm font-medium">Price Range</h3>
+              <div className="flex flex-wrap gap-2">
+                {priceRanges.map((range) => (
+                  <button
+                    key={range.label}
+                    onClick={() => {
+                      if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
+                        setPriceRange([null, null]);
+                      } else {
+                        setPriceRange(range.range as [number, number]);
+                      }
+                    }}
+                    className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      priceRange[0] === range.range[0] && priceRange[1] === range.range[1]
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Attribute Filters */}
+            {filterAttributes.map((attribute) => {
+              const uniqueValues = uniqueAttributeValues[attribute.key];
+              if (uniqueValues.length === 0) return null;
+
+              return (
+                <div key={attribute.key}>
+                  <h3 className="mb-3 text-sm font-medium">{attribute.label}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueValues.map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => toggleTag(value)}
+                        className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          selectedTags.includes(value)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        }`}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by name or tag..."
-          value={searchQuery}
-          onChange={(e) => {
-            const input = e.target.value;
-            setSearchQuery(input);
-
-            if (autocompleteEnabled && input) {
-              // Autocomplete suggestions based on searchableItems
-              const results = new Fuse(baseItems, { keys: ["name"] }).search(input).map(r => r.item.name);
-              const unique = [...new Set(results)].slice(0, 5); // top 5
-              setSuggestions(unique);
-            } else {
-              setSuggestions([]);
-            }
-          }}
-          className="w-full p-2 rounded border border-gray-300 text-white bg-gray-900 placeholder-gray-400"
-        />
-      </div>
-
-      <div className="flex justify-between items-center mt-1 mb-2">
-        <label className="flex items-center space-x-2 text-gray-400">
-          <input
-            type="checkbox"
-            checked={autocompleteEnabled}
-            onChange={(e) => setAutocompleteEnabled(e.target.checked)}
-          />
-          <span className="text-sm">Enable Autocomplete</span>
-        </label>
-
-        {/* New checkbox for searching across modes */}
-        <label className="flex items-center space-x-2 text-gray-400">
-          <input
-            type="checkbox"
-            checked={searchAcrossModes}
-            onChange={(e) => setSearchAcrossModes(e.target.checked)}
-          />
-          <span className="text-sm">Search All Items</span>
-        </label>
-
-         {/* New checkbox for filtering across modes */}
-        <label className="flex items-center space-x-2 text-gray-400">
-          <input
-            type="checkbox"
-            checked={filterAcrossModes}
-            onChange={(e) => setFilterAcrossModes(e.target.checked)}
-          />
-          <span className="text-sm">Filter All Items</span>
-        </label>
-      </div>
-
-      {autocompleteEnabled && suggestions.length > 0 && (
-        <ul className="mb-4 bg-white border border-gray-300 rounded shadow text-sm text-black max-h-40 overflow-y-auto">
-          {suggestions.map((sug, i) => (
-            <li
-              key={i}
-              className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
-              onClick={() => {
-                setSearchQuery(sug);
-                setSuggestions([]);
-              }}
+      {/* Selected Tags */}
+      {selectedTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedTags.map((tag) => (
+            <div
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
             >
-              {sug}
-            </li>
+              <span>{tag}</span>
+              <button
+                onClick={() => toggleTag(tag)}
+                className="ml-1 rounded-full p-0.5 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                ✕
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Clothing Grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredItems.length === 0 ? (
-          <p className="text-center text-gray-500 col-span-full">No results found.</p>
+          <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+            <div className="mb-4 rounded-full bg-muted p-3">
+              <span className="text-2xl">👕</span>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold">No items found</h3>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery || selectedTags.length > 0
+                ? "Try adjusting your search or filters"
+                : "Add some clothing items to get started"}
+            </p>
+          </div>
         ) : (
-          filteredItems.map((item, index) => (
+          filteredItems.map((item) => (
             <div
-              key={item.key || item.url || index}
-              className={`border rounded p-3 shadow cursor-pointer ${
-                isMultiSelecting && selectedItemIds.includes(item.id) ? 'border-blue-500 border-2' : ''
+              key={item.key || item.url}
+              className={`group relative overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow-md group-hover:scale-[1.02] ${
+                isMultiSelecting && selectedItemIds.includes(item.id)
+                  ? "ring-2 ring-primary"
+                  : ""
               }`}
-              onClick={() => isMultiSelecting ? toggleItemSelection(item.id) : setSelectedItem(item)}
             >
-              {item.url ? (
-                <img src={item.url} alt={item.name} className="w-full h-48 object-cover" />
-              ) : (
-                <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                  No Image
-                </div>
-              )}
-              <p className="font-medium mt-2">{item.name}</p>
-              <p className="text-sm text-gray-600">{item.type}</p>
-              <p className="text-sm text-gray-600">{item.brand}</p>
-              <p className="text-sm text-gray-600">
-                {formatPrice(item.price)}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {[item.type]
-                  .filter((tag): tag is string => Boolean(tag))
-                  .map((tag) => (
-                    <button
-                      key={`${item.key}-${tag}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleTag(tag);
-                      }}
-                      className={`text-xs px-2 py-1 rounded-full border ${
-                        selectedTags.includes(tag)
-                          ? "bg-black text-white"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-              </div>
-              <div className="mt-2 flex gap-2">
-                {viewMode === "wishlist" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMoveToCloset(item);
-                    }}
-                    className="bg-green-500 text-white px-2 py-1 rounded text-sm hover:bg-green-600"
-                  >
-                    Move to Closet
-                  </button>
+              <div
+                className="aspect-square cursor-pointer overflow-hidden"
+                onClick={(e) => {
+                  if (isMultiSelecting) {
+                    toggleItemSelection(item.id);
+                  } else {
+                    // Capture the bounding rect of the clicked element
+                    setClickedItemRect(e.currentTarget.getBoundingClientRect());
+                    setSelectedItem(item);
+                    setIsEditing(false);
+                  }
+                }}
+              >
+                {item.url ? (
+                  <img
+                    src={item.url}
+                    alt={item.name}
+                    className="h-full w-full object-cover transition-transform"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-muted">
+                    <span className="text-2xl">👕</span>
+                  </div>
                 )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(item.key);
-                  }}
-                  className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
-                >
-                  Delete
-                </button>
+              </div>
+
+              <div className="p-4">
+                <h3 className="mb-1 font-medium">{item.name}</h3>
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {[item.type, item.brand]
+                    .filter(Boolean)
+                    .map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                </div>
+                {formatPrice(item.price) && (
+                  <p className="text-sm font-medium text-primary">
+                    {formatPrice(item.price)}
+                  </p>
+                )}
               </div>
             </div>
           ))
         )}
-
-        {selectedItem && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 text-white"
-            onClick={() => {
-              setSelectedItem(null);
-              setIsEditing(false);
-            }}
-          >
-            <div
-              className="relative bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Left Arrow */}
-              {!isEditing && (
-                <button
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 text-3xl px-4 text-white hover:text-gray-400 z-10"
-                  onClick={() => {
-                    const currentIndex = clothingItems.findIndex(item => item.key === selectedItem.key);
-                    if (currentIndex > 0) setSelectedItem(clothingItems[currentIndex - 1]);
-                  }}
-                >
-                  ❮
-                </button>
-              )}
-
-              {/* Right Arrow */}
-              {!isEditing && (
-                <button
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-3xl px-4 text-white hover:text-gray-400 z-10"
-                  onClick={() => {
-                    const currentIndex = clothingItems.findIndex(item => item.key === selectedItem.key);
-                    if (currentIndex < clothingItems.length - 1)
-                      setSelectedItem(clothingItems[currentIndex + 1]);
-                  }}
-                >
-                  ❯
-                </button>
-              )}
-
-              {/* Image Section */}
-              <div className="w-1/2 bg-gray-800 p-4 flex justify-center items-center border-r border-gray-700">
-                <img src={selectedItem.url} alt={selectedItem.name} className="max-h-[400px] rounded-lg" />
-              </div>
-
-              {/* Info Section */}
-              <div className="w-1/2 p-6 flex flex-col justify-between max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-                <button
-                  onClick={() => setSelectedItem(null)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl"
-                >
-                  ✕
-                </button>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Name"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.type}
-                      onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Type"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.brand}
-                      onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Brand"
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editForm.price}
-                      onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Price"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.occasion}
-                      onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Occasion"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.style}
-                      onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Style"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.fit}
-                      onChange={(e) => setEditForm({ ...editForm, fit: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Fit"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.color}
-                      onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Color"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.material}
-                      onChange={(e) => setEditForm({ ...editForm, material: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Material"
-                    />
-                    <input
-                      type="text"
-                      value={editForm.season}
-                      onChange={(e) => setEditForm({ ...editForm, season: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Season"
-                    />
-                    <textarea
-                      value={editForm.notes}
-                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Notes"
-                      rows={3}
-                    />
-                    <input
-                      type="text"
-                      value={editForm.sourceUrl || ""}
-                      onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
-                      className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                      placeholder="Source URL"
-                    />
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={async () => {
-                          const updated = { ...selectedItem, ...editForm };
-                          try {
-                            console.log("Updating item with ID:", selectedItem.id, "with data:", editForm);
-
-                            await axios.patch(
-                              "http://localhost:8000/api/images/update",
-                              { id: selectedItem.id, ...editForm },
-                              { withCredentials: true }
-                            );
-
-                            setSelectedItem(updated);
-                            setClothingItems(prev =>
-                              prev.map(item => item.key === updated.key ? updated : item)
-                            );
-                            setIsEditing(false);
-                          } catch (err) {
-                            console.error("Failed to update clothing item:", err);
-                            alert("Failed to save changes.");
-                          }
-                        }}
-                        className="bg-green-600 px-4 py-2 rounded text-white hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setIsEditing(false)}
-                        className="bg-gray-600 px-4 py-2 rounded text-white hover:bg-gray-700"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold mb-2">{selectedItem.name}</h2>
-                    {selectedItem.sourceUrl && <p><strong>Source URL:</strong> <a href={selectedItem.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{selectedItem.sourceUrl}</a></p>}
-                    <p><strong>Type:</strong> {selectedItem.type}</p>
-                    <p><strong>Brand:</strong> {selectedItem.brand}</p>
-                    {selectedItem.price !== undefined && selectedItem.price !== null && (
-                      <p><strong>Price:</strong> {formatPrice(selectedItem.price)}</p>
-                    )}
-                    {selectedItem.occasion && <p><strong>Occasion:</strong> {selectedItem.occasion}</p>}
-                    {selectedItem.style && <p><strong>Style:</strong> {selectedItem.style}</p>}
-                    {selectedItem.fit && <p><strong>Fit:</strong> {selectedItem.fit}</p>}
-                    {selectedItem.color && <p><strong>Color:</strong> {selectedItem.color}</p>}
-                    {selectedItem.material && <p><strong>Material:</strong> {selectedItem.material}</p>}
-                    {selectedItem.season && <p><strong>Season:</strong> {selectedItem.season}</p>}
-                    {selectedItem.notes && <p><strong>Notes:</strong> {selectedItem.notes}</p>}
-                  </div>
-                )}
-
-                <div className="mt-6 flex gap-2">
-                  {!isEditing && selectedItem.mode === 'wishlist' && (
-                    <button
-                      className="px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                      onClick={() => handleMoveToCloset(selectedItem)}
-                    >
-                      Move to Closet
-                    </button>
-                  )}
-                  <button
-                    className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    onClick={() => {
-                      setIsEditing(true);
-                      setEditForm({
-                        name: selectedItem.name,
-                        type: selectedItem.type,
-                        brand: selectedItem.brand,
-                        price: selectedItem.price?.toString() || "",
-                        occasion: selectedItem.occasion || "",
-                        style: selectedItem.style || "",
-                        fit: selectedItem.fit || "",
-                        color: selectedItem.color || "",
-                        material: selectedItem.material || "",
-                        season: selectedItem.season || "",
-                        notes: selectedItem.notes || "",
-                        sourceUrl: selectedItem.sourceUrl || "",
-                      });
-                    }}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="px-5 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                    onClick={async () => {
-                      const confirmDelete = confirm("Are you sure you want to delete this item?");
-                      if (!confirmDelete) return;
-                      try {
-                        await axios.delete(
-                          `http://localhost:8000/api/images/${encodeURIComponent(selectedItem.key)}`,
-                          { withCredentials: true }
-                        );
-                        setClothingItems((prev) => prev.filter((item) => item.key !== selectedItem.key));
-                        setSelectedItem(null);
-                      } catch (err) {
-                        console.error("Error deleting item:", err);
-                        alert("Failed to delete item.");
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-      {/* Action buttons for multiple selection */}
+
+      {/* Multi-select Actions */}
       {isMultiSelecting && selectedItemIds.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-50">
-          {viewMode === 'wishlist' && (
+        <div className="fixed bottom-4 left-1/2 flex -translate-x-1/2 gap-4 rounded-lg border bg-card p-4 shadow-lg">
+          {viewMode === "wishlist" && (
             <button
-              className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700"
               onClick={handleMoveSelectedToCloset}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
             >
-              Move Selected to Closet ({selectedItemIds.length})
+              Move to Closet ({selectedItemIds.length})
             </button>
           )}
           <button
-            className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700"
             onClick={handleDeleteSelected}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
           >
             Delete Selected ({selectedItemIds.length})
           </button>
         </div>
       )}
+
+      {/* Item Modal */}
+      <AnimatePresence>
+      {selectedItem && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => {
+            setSelectedItem(null);
+            setIsEditing(false);
+            setClickedItemRect(null);
+          }}
+        >
+          <motion.div
+            className="relative mx-4 max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-lg bg-card shadow-lg flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+            }}
+          >
+            <div className="flex h-full flex-col md:flex-row flex-grow">
+              {/* Image Section */}
+              <div className="relative flex-1 bg-muted p-6 max-h-full md:max-h-full overflow-hidden">
+                <img
+                  src={selectedItem.url}
+                  alt={selectedItem.name}
+                  className="mx-auto max-h-[400px] rounded-lg object-contain"
+                />
+                {!isEditing && (
+                  <>
+                    <button
+                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                      onClick={() => {
+                        const currentIndex = clothingItems.findIndex(
+                          (item) => item.key === selectedItem.key
+                        );
+                        if (currentIndex > 0) setSelectedItem(clothingItems[currentIndex - 1]);
+                      }}
+                    >
+                      ❮
+                    </button>
+                    <button
+                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                      onClick={() => {
+                        const currentIndex = clothingItems.findIndex(
+                          (item) => item.key === selectedItem.key
+                        );
+                        if (currentIndex < clothingItems.length - 1)
+                          setSelectedItem(clothingItems[currentIndex + 1]);
+                      }}
+                    >
+                      ❯
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Info Section */}
+              <div className="flex flex-col flex-grow px-6 py-4">
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  ✕
+                </button>
+
+                <div className="flex flex-col overflow-y-auto pr-2">
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      {Object.entries(editForm).map(([key, value]) => (
+                        <div key={key}>
+                          <label className="mb-1.5 block text-sm font-medium">
+                            {key.charAt(0).toUpperCase() + key.slice(1)}
+                          </label>
+                          {key === "notes" || key === "sourceUrl" ? (
+                            <textarea
+                              value={value}
+                              onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              placeholder={`Add ${key}`}
+                              rows={3}
+                            />
+                          ) : (
+                            <input
+                              type={key === "price" ? "number" : "text"}
+                              value={value}
+                              onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              placeholder={`Enter ${key}`}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-semibold mb-4">{selectedItem.name}</h2>
+                      {selectedItem.sourceUrl && (
+                        <a
+                          href={selectedItem.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-block text-sm text-primary hover:underline"
+                        >
+                          View Source
+                        </a>
+                      )}
+
+                      {/* General Info Section */}
+                      <div className="space-y-4 pt-4 border-t border-border mt-4">
+                        <h3 className="text-xl font-semibold text-foreground">General Info</h3>
+                        <div className="grid gap-y-4 gap-x-8 sm:grid-cols-2">
+                          {selectedItem.type && (
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Type:</dt>
+                              <dd className="text-base text-foreground">{selectedItem.type}</dd>
+                            </div>
+                          )}
+                          {selectedItem.brand && (
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Brand:</dt>
+                              <dd className="text-base text-foreground">{selectedItem.brand}</dd>
+                            </div>
+                          )}
+                          {formatPrice(selectedItem.price) && (
+                            <div className="flex flex-col">
+                              <dt className="text-sm font-semibold text-muted-foreground">Price:</dt>
+                              <dd className="text-base text-foreground">{formatPrice(selectedItem.price)}</dd>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Style & Details Section */}
+                      {(selectedItem.occasion || selectedItem.style || selectedItem.fit || selectedItem.color || selectedItem.material || selectedItem.season) && (
+                        <div className="space-y-4 pt-4 border-t border-border mt-6">
+                          <h3 className="text-xl font-semibold text-foreground">Style & Details</h3>
+                          <div className="grid gap-y-4 gap-x-8 sm:grid-cols-2">
+                            {selectedItem.occasion && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Occasion:</dt>
+                                <dd className="text-base text-foreground">{selectedItem.occasion}</dd>
+                              </div>
+                            )}
+                            {selectedItem.style && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Style:</dt>
+                                <dd className="text-base text-foreground">{selectedItem.style}</dd>
+                              </div>
+                            )}
+                            {selectedItem.fit && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Fit:</dt>
+                                <dd className="text-base text-foreground">{selectedItem.fit}</dd>
+                              </div>
+                            )}
+                            {selectedItem.color && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Color:</dt>
+                                <dd className="text-base text-foreground">{selectedItem.color}</dd>
+                              </div>
+                            )}
+                            {selectedItem.material && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Material:</dt>
+                                <dd className="text-base text-foreground">{selectedItem.material}</dd>
+                              </div>
+                            )}
+                            {selectedItem.season && (
+                              <div className="flex flex-col">
+                                <dt className="text-sm font-semibold text-muted-foreground">Season:</dt>
+                                <dd className="text-base text-foreground">{selectedItem.season}</dd>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Notes Section (simplified from Extras) */}
+                      {selectedItem.notes && (
+                        <div className="space-y-4 pt-4 border-t border-border mt-6">
+                          {/* Removed h3 for Extras */}
+                          <div className="grid gap-y-4 gap-x-8 sm:grid-cols-2">
+                            <div className="flex flex-col col-span-2"> {/* Notes always takes full width */}
+                              <dt className="text-sm font-semibold text-muted-foreground">Notes:</dt>
+                              <dd className="text-base text-foreground">{selectedItem.notes}</dd>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 mt-auto pt-4 border-t border-border">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleEdit}
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                      >
+                        Save Changes
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {selectedItem.mode === "wishlist" && (
+                        <button
+                          onClick={() => handleMoveToCloset(selectedItem)}
+                          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                        >
+                          Move to Closet
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsEditing(true);
+                          setEditForm({
+                            name: selectedItem.name,
+                            type: selectedItem.type,
+                            brand: selectedItem.brand,
+                            price: selectedItem.price?.toString() || "",
+                            occasion: selectedItem.occasion || "",
+                            style: selectedItem.style || "",
+                            fit: selectedItem.fit || "",
+                            color: selectedItem.color || "",
+                            material: selectedItem.material || "",
+                            season: selectedItem.season || "",
+                            notes: selectedItem.notes || "",
+                            sourceUrl: selectedItem.sourceUrl || "",
+                          });
+                        }}
+                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(selectedItem.key)}
+                        className="inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 })
