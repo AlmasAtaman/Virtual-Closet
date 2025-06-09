@@ -75,6 +75,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   const [isMultiSelecting, setIsMultiSelecting] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [clickedItemRect, setClickedItemRect] = useState<DOMRect | null>(null);
+  const [selectedTab, setSelectedTab] = useState<'general' | 'details'>('general');
 
   // Define the filterable attributes
   const filterAttributes = [
@@ -249,7 +250,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   };
 
   const handleMoveSelectedToCloset = async () => {
-    if (!confirm(`Are you sure you want to move ${selectedItemIds.length} item(s) to your closet?`)) {
+    if (!confirm(`Are you sure you want to move ${selectedItemIds.length} item(s)?`)) {
       return;
     }
 
@@ -631,14 +632,14 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
           {viewMode === "wishlist" && (
             <button
               onClick={handleMoveSelectedToCloset}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
             >
               Move to Closet ({selectedItemIds.length})
             </button>
           )}
           <button
             onClick={handleDeleteSelected}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+            className="inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
           >
             Delete Selected ({selectedItemIds.length})
           </button>
@@ -653,15 +654,16 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={() => {
+          onClick={(e) => {
             setSelectedItem(null);
             setIsEditing(false);
             setClickedItemRect(null);
+            setSelectedTab('general');
+            e.stopPropagation();
           }}
         >
           <motion.div
-            className="relative mx-4 max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-lg bg-card shadow-lg flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-5xl max-h-[90vh] h-[500px] overflow-y-auto rounded-lg bg-card shadow-lg flex flex-col"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -669,20 +671,22 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
               duration: 0.3,
               ease: "easeOut",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex h-full flex-col md:flex-row flex-grow">
               {/* Image Section */}
-              <div className="relative flex-1 bg-muted p-6 max-h-full md:max-h-full overflow-hidden">
-                <img
-                  src={selectedItem.url}
-                  alt={selectedItem.name}
-                  className="mx-auto max-h-[400px] rounded-lg object-contain"
+              <div className="relative w-[400px] bg-muted p-6 flex items-center justify-center overflow-hidden">
+              <img
+                src={selectedItem.url}
+                alt={selectedItem.name}
+                className="h-[350px] w-auto object-contain rounded"
                 />
                 {!isEditing && (
                   <>
                     <button
                       className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const currentIndex = clothingItems.findIndex(
                           (item) => item.key === selectedItem.key
                         );
@@ -693,7 +697,8 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                     </button>
                     <button
                       className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const currentIndex = clothingItems.findIndex(
                           (item) => item.key === selectedItem.key
                         );
@@ -710,13 +715,16 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
               {/* Info Section */}
               <div className="flex flex-col flex-grow px-6 py-4">
                 <button
-                  onClick={() => setSelectedItem(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedItem(null);
+                  }}
                   className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   ✕
                 </button>
 
-                <div className="flex flex-col overflow-y-auto pr-2">
+                <div className="flex flex-col flex-grow h-0 overflow-y-auto pr-2">
                   {isEditing ? (
                     <div className="space-y-4">
                       {Object.entries(editForm).map(([key, value]) => (
@@ -758,88 +766,124 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                         </a>
                       )}
 
-                      {/* General Info Section */}
-                      <div className="space-y-4 pt-4 border-t border-border mt-4">
-                        <h3 className="text-xl font-semibold text-foreground">General Info</h3>
-                        <div className="grid gap-y-4 gap-x-8 sm:grid-cols-2">
-                          {selectedItem.type && (
-                            <div className="flex flex-col">
-                              <dt className="text-sm font-semibold text-muted-foreground">Type:</dt>
-                              <dd className="text-base text-foreground">{selectedItem.type}</dd>
-                            </div>
-                          )}
-                          {selectedItem.brand && (
-                            <div className="flex flex-col">
-                              <dt className="text-sm font-semibold text-muted-foreground">Brand:</dt>
-                              <dd className="text-base text-foreground">{selectedItem.brand}</dd>
-                            </div>
-                          )}
-                          {formatPrice(selectedItem.price) && (
-                            <div className="flex flex-col">
-                              <dt className="text-sm font-semibold text-muted-foreground">Price:</dt>
-                              <dd className="text-base text-foreground">{formatPrice(selectedItem.price)}</dd>
-                            </div>
-                          )}
-                        </div>
+                      {/* Tab Navigation */}
+                      <div className="flex border-b">
+                        <button
+                          className={`py-2 px-4 text-sm font-medium ${selectedTab === 'general' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTab('general');
+                          }}
+                        >
+                          General Info
+                        </button>
+                        <button
+                          className={`py-2 px-4 text-sm font-medium ${selectedTab === 'details' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTab('details');
+                          }}
+                        >
+                          Style & Details
+                        </button>
                       </div>
 
-                      {/* Style & Details Section */}
-                      {(selectedItem.occasion || selectedItem.style || selectedItem.fit || selectedItem.color || selectedItem.material || selectedItem.season) && (
-                        <div className="space-y-4 pt-4 border-t border-border mt-6">
-                          <h3 className="text-xl font-semibold text-foreground">Style & Details</h3>
-                          <div className="grid gap-y-4 gap-x-8 sm:grid-cols-2">
-                            {selectedItem.occasion && (
-                              <div className="flex flex-col">
-                                <dt className="text-sm font-semibold text-muted-foreground">Occasion:</dt>
-                                <dd className="text-base text-foreground">{selectedItem.occasion}</dd>
+                      {selectedTab === 'general' && (
+                        <div className="space-y-4 pt-4">
+                          {!(selectedItem.type || selectedItem.brand || formatPrice(selectedItem.price) || selectedItem.notes) ? (
+                            <div className="col-span-full text-center text-muted-foreground py-8">
+                              Click Edit to fill this Section Out!
+                            </div>
+                          ) : (
+                            <>
+                              <div className="grid gap-y-2 gap-x-4 sm:grid-cols-2">
+                                {selectedItem.type && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Type:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.type}</dd>
+                                  </div>
+                                )}
+                                {selectedItem.brand && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Brand:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.brand}</dd>
+                                  </div>
+                                )}
+                                {formatPrice(selectedItem.price) && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Price:</dt>
+                                    <dd className="text-base text-foreground">{formatPrice(selectedItem.price)}</dd>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {selectedItem.style && (
-                              <div className="flex flex-col">
-                                <dt className="text-sm font-semibold text-muted-foreground">Style:</dt>
-                                <dd className="text-base text-foreground">{selectedItem.style}</dd>
-                              </div>
-                            )}
-                            {selectedItem.fit && (
-                              <div className="flex flex-col">
-                                <dt className="text-sm font-semibold text-muted-foreground">Fit:</dt>
-                                <dd className="text-base text-foreground">{selectedItem.fit}</dd>
-                              </div>
-                            )}
-                            {selectedItem.color && (
-                              <div className="flex flex-col">
-                                <dt className="text-sm font-semibold text-muted-foreground">Color:</dt>
-                                <dd className="text-base text-foreground">{selectedItem.color}</dd>
-                              </div>
-                            )}
-                            {selectedItem.material && (
-                              <div className="flex flex-col">
-                                <dt className="text-sm font-semibold text-muted-foreground">Material:</dt>
-                                <dd className="text-base text-foreground">{selectedItem.material}</dd>
-                              </div>
-                            )}
-                            {selectedItem.season && (
-                              <div className="flex flex-col">
-                                <dt className="text-sm font-semibold text-muted-foreground">Season:</dt>
-                                <dd className="text-base text-foreground">{selectedItem.season}</dd>
+
+                              {/* Notes Section - Always present as a box, content changes based on selectedItem.notes */}
+                                <div className="border border-border rounded-md p-4 mt-4 bg-secondary/10">
+                                <h4 className="text-sm font-semibold text-muted-foreground mb-2">Notes:</h4>
+                                {selectedItem.notes ? (
+                                    <p className="text-base text-foreground whitespace-pre-wrap break-words overflow-hidden overflow-ellipsis break-all max-w-full">
+                                    {selectedItem.notes}
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No notes added.</p>
+                                )}
+                                </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {selectedTab === 'details' && (
+                        <div className="space-y-4 pt-4">
+                          <div className="grid gap-y-2 gap-x-4 sm:grid-cols-2">
+                            {(selectedItem.occasion || selectedItem.style || selectedItem.fit || selectedItem.color || selectedItem.material || selectedItem.season) ? (
+                              <>
+                                {selectedItem.occasion && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Occasion:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.occasion}</dd>
+                                  </div>
+                                )}
+                                {selectedItem.style && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Style:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.style}</dd>
+                                  </div>
+                                )}
+                                {selectedItem.fit && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Fit:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.fit}</dd>
+                                  </div>
+                                )}
+                                {selectedItem.color && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Color:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.color}</dd>
+                                  </div>
+                                )}
+                                {selectedItem.material && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Material:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.material}</dd>
+                                  </div>
+                                )}
+                                {selectedItem.season && (
+                                  <div className="flex flex-col">
+                                    <dt className="text-sm font-semibold text-muted-foreground">Season:</dt>
+                                    <dd className="text-base text-foreground">{selectedItem.season}</dd>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="col-span-full text-center text-muted-foreground">
+                                Click Edit to fill this Section Out!
                               </div>
                             )}
                           </div>
                         </div>
                       )}
 
-                      {/* Notes Section (simplified from Extras) */}
-                      {selectedItem.notes && (
-                        <div className="space-y-4 pt-4 border-t border-border mt-6">
-                          {/* Removed h3 for Extras */}
-                          <div className="grid gap-y-4 gap-x-8 sm:grid-cols-2">
-                            <div className="flex flex-col col-span-2"> {/* Notes always takes full width */}
-                              <dt className="text-sm font-semibold text-muted-foreground">Notes:</dt>
-                              <dd className="text-base text-foreground">{selectedItem.notes}</dd>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -848,13 +892,19 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                   {isEditing ? (
                     <>
                       <button
-                        onClick={() => setIsEditing(false)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditing(false);
+                        }}
                         className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
                       >
                         Cancel
                       </button>
                       <button
-                        onClick={handleEdit}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit();
+                        }}
                         className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
                       >
                         Save Changes
@@ -864,14 +914,18 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                     <>
                       {selectedItem.mode === "wishlist" && (
                         <button
-                          onClick={() => handleMoveToCloset(selectedItem)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveToCloset(selectedItem);
+                          }}
                           className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
                         >
                           Move to Closet
                         </button>
                       )}
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setIsEditing(true);
                           setEditForm({
                             name: selectedItem.name,
@@ -887,13 +941,17 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                             notes: selectedItem.notes || "",
                             sourceUrl: selectedItem.sourceUrl || "",
                           });
+                          setSelectedTab('general');
                         }}
                         className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(selectedItem.key)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(selectedItem.key);
+                        }}
                         className="inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
                       >
                         Delete
@@ -912,4 +970,4 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
 })
 
 export default ClothingGallery;
-export type ViewMode = "closet" | "wishlist";
+export type ViewMode = "closet" | "wishlist"; 
