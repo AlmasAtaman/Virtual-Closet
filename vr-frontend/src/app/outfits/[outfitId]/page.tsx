@@ -562,7 +562,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
             <ClothingModal
                 isOpen={isModalOpen}
-                onClose={handleCloseModal}
+                onCloseAction={handleCloseModal}
                 clothingItems={outfit.clothingItems || []}
                 initialItemIndex={selectedItemIndex}
             />
@@ -570,7 +570,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             {isSelectModalOpen && (
                 <ClothingItemSelectModal
                     isOpen={isSelectModalOpen}
-                    onClose={handleCloseSelectModal}
+                    onCloseAction={handleCloseSelectModal}
                     clothingItems={allClothingItems}
                     onSelectItem={handleSelectItemForOutfit}
                     viewMode={selectModalCategory ? 

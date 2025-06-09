@@ -1,13 +1,12 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import LogOutButton from "../components/LogoutButton";
-import UploadModal from "../components/UploadModal";
+import UploadForm from "../components/UploadForm"; // Correctly importing UploadForm
 import { useRouter } from "next/navigation";
 import ClothingGallery from "../components/ClothingGallery";
 import Image from "next/image";
-
-
+import type { ClothingItem } from "../types/clothing";
 
 export default function Homepage(){
     const [ username, setUsername ] = useState<string | null >(null);
@@ -17,6 +16,26 @@ export default function Homepage(){
     const router = useRouter();
     const galleryRef = useRef<any>(null);
     const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet");
+
+    // ALL REACT HOOKS (useState, useRef, useEffect, useCallback) MUST BE DECLARED AT THE TOP LEVEL
+    // AND CALLED UNCONDITIONALLY ON EVERY RENDER.
+    // This is the correct placement to avoid "Rules of Hooks" errors.
+
+    const handleCloseModal = useCallback(() => {
+        setShowModal(false);
+    }, []);
+
+    const handleUploadComplete = useCallback((target: "closet" | "wishlist", newItem: ClothingItem) => {
+        setShowModal(false);
+        console.log("Dashboard: onUploadComplete received - target:", target, "newItem:", newItem);
+        setViewMode(target);
+        console.log("Dashboard: viewMode after setViewMode:", viewMode);
+        galleryRef.current?.addClothingItem(newItem);
+    }, [galleryRef, viewMode]);
+
+    const handleOpenUploadModal = useCallback(() => {
+        setShowModal(true);
+    }, []);
 
     useEffect(() => {
         setHasMounted(true);
@@ -32,7 +51,7 @@ export default function Homepage(){
                 router.push("/login");
             } else {
                 const data = await res.json();
-                setUsername(data.username); // check if /me route makes it correct
+                setUsername(data.username);
             }
 
             setLoading(false);
@@ -41,8 +60,8 @@ export default function Homepage(){
         checkAuth();
     }, [router]);
 
+    // Conditional return statements must come AFTER all hooks have been called.
     if (!hasMounted || loading) return null;
-
 
     return (
         <div className="min-h-screen bg-background">
@@ -103,7 +122,7 @@ export default function Homepage(){
                         </div>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={handleOpenUploadModal} // Using the memoized function here
                         className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
                         <span>➕</span>
@@ -113,24 +132,21 @@ export default function Homepage(){
 
                 {/* Gallery Section */}
                 <div className="rounded-lg border bg-card p-6 shadow-sm">
-                    <ClothingGallery ref={galleryRef} viewMode={viewMode} setViewMode={setViewMode} />
+                    <ClothingGallery
+                        ref={galleryRef}
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
+                        openUploadModal={handleOpenUploadModal} // Passing the memoized function
+                    />
                 </div>
             </main>
 
-            <UploadModal
-                show={showModal}
-                onClose={() => setShowModal(false)}
-                onUploadComplete={(target, newItem) => {
-                    setShowModal(false);
-                    console.log("Dashboard: onUploadComplete received - target:", target, "newItem:", newItem);
-                    setViewMode(target);
-                    console.log("Dashboard: viewMode after setViewMode:", viewMode);
-                    galleryRef.current?.addClothingItem(newItem);
-                }}
+            <UploadForm
+                isOpen={showModal}
+                onCloseAction={handleCloseModal} // Using the memoized function
+                onUploadComplete={handleUploadComplete} // Using the memoized function
                 currentViewMode={viewMode}
             />
         </div>
     );
 }
-
-
