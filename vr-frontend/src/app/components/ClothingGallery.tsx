@@ -78,7 +78,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [clickedItemRect, setClickedItemRect] = useState<DOMRect | null>(null);
   const [selectedTab, setSelectedTab] = useState<'general' | 'details'>('general');
-
+  
   // Define the filterable attributes
   const filterAttributes: { key: keyof Clothing; label: string; }[] = [
     { key: 'type', label: 'Type' },
@@ -443,14 +443,18 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
         <div className="flex items-center gap-4">
           <button
             onClick={toggleMultiSelect}
-            className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-sm transition-colors ${
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
               isMultiSelecting
-                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-secondary border border-secondary"
             }`}
           >
             <span>{isMultiSelecting ? "✕" : "✓"}</span>
-            <span>{isMultiSelecting ? "Cancel Selection" : "Select Multiple"}</span>
+            <span>
+              {isMultiSelecting
+                ? `Cancel Selection (${selectedItemIds.length})`
+                : "Select Multiple"}
+            </span>
           </button>
         </div>
       </div>
@@ -489,79 +493,93 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
       )} */}
 
       {/* Clothing Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredItems.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="mb-4 rounded-full bg-muted p-3">
-              <span className="text-2xl">👕</span>
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={viewMode} // Key change triggers animation
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          {filteredItems.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+              <div className="mb-4 rounded-full bg-muted p-3">
+                <span className="text-2xl">👕</span>
+              </div>
+              <h3 className="mb-2 text-lg font-semibold">No items found</h3>
+              <p className="text-sm text-muted-foreground">
+                {searchQuery || selectedTags.length > 0
+                  ? "Try adjusting your search or filters"
+                  : "Add some clothing items to get started"}
+              </p>
             </div>
-            <h3 className="mb-2 text-lg font-semibold">No items found</h3>
-            <p className="text-sm text-muted-foreground">
-              {searchQuery || selectedTags.length > 0
-                ? "Try adjusting your search or filters"
-                : "Add some clothing items to get started"}
-            </p>
-          </div>
-        ) : (
-          filteredItems.map((item) => (
-            <div
-              key={item.key || item.url}
-              className={`group relative overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow-md group-hover:scale-[1.02] ${
-                isMultiSelecting && selectedItemIds.includes(item.id)
-                  ? "ring-2 ring-primary"
-                  : ""
-              }`}
-            >
+          ) : (
+            filteredItems.map((item) => (
               <div
-                className="aspect-square cursor-pointer overflow-hidden"
-                onClick={(e) => {
-                  if (isMultiSelecting) {
-                    toggleItemSelection(item.id);
-                  } else {
-                    // Capture the bounding rect of the clicked element
-                    setClickedItemRect(e.currentTarget.getBoundingClientRect());
-                    setSelectedItem(item);
-                    setIsEditing(false);
-                  }
-                }}
+                key={item.key || item.url}
+                className={`group relative overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow-md group-hover:scale-[1.02] ${
+                  isMultiSelecting && selectedItemIds.includes(item.id)
+                    ? "ring-4 ring-primary ring-offset-2"
+                    : ""
+                }`}
               >
-                {item.url ? (
-                  <img
-                    src={item.url}
-                    alt={item.name}
-                    className="h-full w-full object-cover transition-transform"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center bg-muted">
-                    <span className="text-2xl">👕</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4">
-                <h3 className="mb-1 font-medium">{item.name}</h3>
-                <div className="mb-2 flex flex-wrap gap-1">
-                  {[item.type, item.brand]
-                    .filter(Boolean)
-                    .map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                <div
+                  className="aspect-square cursor-pointer overflow-hidden"
+                  onClick={(e) => {
+                    if (isMultiSelecting) {
+                      toggleItemSelection(item.id);
+                    } else {
+                      // Capture the bounding rect of the clicked element
+                      setClickedItemRect(e.currentTarget.getBoundingClientRect());
+                      setSelectedItem(item);
+                      setIsEditing(false);
+                    }
+                  }}
+                >
+                  {item.url ? (
+                    <img
+                      src={item.url}
+                      alt={item.name}
+                      className="h-full w-full object-cover transition-transform"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-muted">
+                      <span className="text-2xl">👕</span>
+                    </div>
+                  )}
+                  {isMultiSelecting && selectedItemIds.includes(item.id) && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="text-white text-4xl">✓</span>
+                    </div>
+                  )}
                 </div>
-                {(isEditing || formatPrice(item.price)) && (
-                  <p className="text-sm font-medium text-primary">
-                    {formatPrice(item.price)}
-                  </p>
-                )}
+
+                <div className="p-4">
+                  <h3 className="mb-1 font-medium">{item.name}</h3>
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {[item.type, item.brand]
+                      .filter(Boolean)
+                      .map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
+                  {(isEditing || formatPrice(item.price)) && (
+                    <p className="text-sm font-medium text-primary">
+                      {formatPrice(item.price)}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Multi-select Actions */}
       {isMultiSelecting && selectedItemIds.length > 0 && (
@@ -617,7 +635,7 @@ const ClothingGallery = forwardRef(({ viewMode, setViewMode }: ClothingGalleryPr
                   <img
                     src={selectedItem.url}
                     alt={selectedItem.name}
-                    className="h-[350px] w-auto object-contain rounded"
+                    className="h-full w-full object-contain rounded"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-muted">
