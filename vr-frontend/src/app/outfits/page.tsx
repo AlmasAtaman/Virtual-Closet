@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import CreateOutfitModal from "../components/CreateOutfitModal";
 import OutfitCard from "../components/OutfitCard";
 import LogoutButton from "../components/LogoutButton";
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 
 interface ClothingItem {
     id: string;
@@ -69,21 +71,22 @@ export default function OutfitsPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-            <div className="container mx-auto px-4 py-8">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-between items-center mb-8"
-                >
-                    <div>
-                        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Your Outfits</h1>
-                        <p className="text-slate-600 dark:text-slate-400">Create and manage your perfect outfit combinations</p>
+            {/* Dashboard Header */}
+            <header className="border-b border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+                <div className="container flex h-16 items-center justify-between px-4">
+                    <div className="flex items-center gap-2">
+                        <Image src="/VrClogo.png" alt="VrC Logo" width={32} height={32} className="h-8 w-8" />
+                        <span className="text-xl font-semibold tracking-tight">VrC</span>
                     </div>
-                    <LogoutButton />
-                </motion.div>
+                    <div className="flex items-center gap-4">
+                        {/* Removed the 'View Outfits' button that was here */}
+                        <LogoutButton />
+                    </div>
+                </div>
+            </header>
 
-                {/* Navigation */}
+            <div className="container mx-auto px-4 py-8">
+                {/* Back to Closet Navigation Button */}
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -110,7 +113,7 @@ export default function OutfitsPage() {
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
                         <Card
-                            className="h-80 cursor-pointer border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-300 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm"
+                            className="h-[32rem] cursor-pointer border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-300 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm"
                             onClick={() => setShowCreateOutfitModal(true)}
                         >
                             <CardContent className="h-full flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
