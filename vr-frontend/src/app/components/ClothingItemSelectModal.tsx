@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import type React from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Search, Grid, List } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ClothingItem {
     id: string;
@@ -15,20 +21,20 @@ interface ClothingItem {
     notes?: string;
     price?: number;
     key?: string;
-    mode: 'closet' | 'wishlist';
+    mode: "closet" | "wishlist";
 }
 
 // Helper function to determine the broad category of an item based on its type
-const getItemCategory = (item: ClothingItem): 'top' | 'bottom' | 'outerwear' | 'others' => {
-    const type = item.type?.toLowerCase() || '';
-    if (['t-shirt', 'dress', 'shirt', 'blouse'].includes(type)) {
-        return 'top';
-    } else if (['pants', 'skirt', 'shorts', 'jeans', 'leggings'].includes(type)) {
-        return 'bottom';
-    } else if (['jacket', 'sweater', 'coat', 'hoodie', 'cardigan'].includes(type)) {
-        return 'outerwear';
+const getItemCategory = (item: ClothingItem): "top" | "bottom" | "outerwear" | "others" => {
+    const type = item.type?.toLowerCase() || "";
+    if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
+        return "top";
+    } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
+        return "bottom";
+    } else if (["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(type)) {
+        return "outerwear";
     } else {
-        return 'others';
+        return "others";
     }
 };
 
@@ -37,8 +43,8 @@ interface ClothingItemSelectModalProps {
     onCloseAction: () => void;
     clothingItems: ClothingItem[];
     onSelectItem: (selectedItem: ClothingItem) => void;
-    viewMode: 'closet' | 'wishlist';
-    selectedCategory: 'outerwear' | 'top' | 'bottom' | null;
+    viewMode: "closet" | "wishlist";
+    selectedCategory: "outerwear" | "top" | "bottom" | null;
 }
 
 const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
@@ -49,9 +55,10 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
     viewMode,
     selectedCategory,
 }) => {
-    const [filterText, setFilterText] = useState('');
+    const [filterText, setFilterText] = useState("");
     const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([]);
-    const [currentModalViewMode, setCurrentModalViewMode] = useState<'closet' | 'wishlist'>(viewMode);
+    const [currentModalViewMode, setCurrentModalViewMode] = useState<"closet" | "wishlist">(viewMode);
+    const [viewType, setViewType] = useState<"grid" | "list">("grid");
 
     useEffect(() => {
         if (!clothingItems) return;
@@ -93,79 +100,195 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
         onCloseAction();
     };
 
-    // Prepend a 'None' option if a category is selected
-    let itemsToShow = filteredItems;
-    if (selectedCategory) {
-        itemsToShow = [
-            {
-                id: 'none',
-                name: 'None (Clear selection)',
-                url: '',
-                mode: currentModalViewMode,
-                type: selectedCategory,
-            } as ClothingItem,
-            ...filteredItems,
-        ];
-    }
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50" onClick={onCloseAction}>
-            <div className="bg-gray-800 p-6 rounded-lg max-w-2xl max-h-[90vh] w-full relative text-white overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <button
-                    onClick={onCloseAction}
-                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-200"
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={onCloseAction}
+            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
                 >
-                    <FontAwesomeIcon icon={faTimes} size="lg" />
-                </button>
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Select Clothing Item</h2>
+                            <p className="text-slate-600 dark:text-slate-400 mt-1">
+                                Choose from your {selectedCategory || "clothing"} collection
+                            </p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={onCloseAction} className="rounded-full">
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </div>
 
-                <h2 className="text-xl font-bold mb-4">Select Clothing Item</h2>
+                    <div className="p-6">
+                        {/* Controls */}
+                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                            {/* View Mode Tabs */}
+                            <Tabs
+                                value={currentModalViewMode}
+                                onValueChange={(value) => setCurrentModalViewMode(value as "closet" | "wishlist")}
+                            >
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="closet">Closet</TabsTrigger>
+                                    <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
 
-                <div className="flex justify-center mb-4">
-                    <button
-                        className={`px-4 py-2 rounded-l ${currentModalViewMode === 'closet' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'}`}
-                        onClick={() => setCurrentModalViewMode('closet')}
-                    >
-                        Closet
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-r ${currentModalViewMode === 'wishlist' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'}`}
-                        onClick={() => setCurrentModalViewMode('wishlist')}
-                    >
-                        Wishlist
-                    </button>
-                </div>
+                            {/* Search */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search by name, type, or brand..."
+                                    className="pl-10"
+                                    value={filterText}
+                                    onChange={(e) => setFilterText(e.target.value)}
+                                />
+                            </div>
 
-                <input
-                    type="text"
-                    placeholder="Search by name, type, or brand..."
-                    className="w-full p-2 mb-4 rounded bg-gray-700 text-white"
-                    value={filterText}
-                    onChange={(e) => setFilterText(e.target.value)}
-                />
+                            {/* View Type Toggle */}
+                            <div className="flex rounded-lg border border-slate-200 dark:border-slate-700">
+                                <Button
+                                    variant={viewType === "grid" ? "default" : "ghost"}
+                                    size="sm"
+                                    onClick={() => setViewType("grid")}
+                                    className="rounded-r-none"
+                                >
+                                    <Grid className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    variant={viewType === "list" ? "default" : "ghost"}
+                                    size="sm"
+                                    onClick={() => setViewType("list")}
+                                    className="rounded-l-none"
+                                >
+                                    <List className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
 
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {itemsToShow.map(item => (
-                        <div key={item.id} className="cursor-pointer" onClick={() => handleItemClick(item)}>
-                            {item.id === 'none' ? (
-                                <div className="w-full h-32 flex items-center justify-center border border-gray-600 rounded text-gray-400 text-center text-sm p-2 bg-gray-900 hover:bg-gray-700 transition">
-                                    {item.name}
+                        {/* Items Grid/List */}
+                        <div className="max-h-96 overflow-y-auto">
+                            {viewType === "grid" ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {filteredItems.map((item, index) => (
+                                        <motion.div
+                                            key={item.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <Card
+                                                className="cursor-pointer hover:shadow-lg transition-all duration-200"
+                                                onClick={() => handleItemClick(item)}
+                                            >
+                                                <CardContent className="p-3">
+                                                    {item.id === "none" ? (
+                                                        <div className="aspect-square flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-400 dark:text-slate-500">
+                                                            <div className="text-center">
+                                                                <X className="w-8 h-8 mx-auto mb-2" />
+                                                                <p className="text-xs">None</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800">
+                                                                <img
+                                                                    src={item.url || "/placeholder.svg"}
+                                                                    alt={item.name || "Clothing Item"}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                                {item.mode === "wishlist" && (
+                                                                    <Badge className="absolute top-1 right-1 text-xs bg-amber-500">Wishlist</Badge>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                                                {item.name || "Unnamed"}
+                                                            </p>
+                                                            {item.type && (
+                                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{item.type}</p>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        </motion.div>
+                                    ))}
                                 </div>
                             ) : (
-                                <>
-                                    <img
-                                        src={item.url}
-                                        alt={item.name || 'Clothing Item'}
-                                        className="w-full h-32 object-cover rounded"
-                                    />
-                                    <p className="text-center text-sm mt-1 truncate">{item.name || 'Unnamed'}</p>
-                                </>
+                                <div className="space-y-2">
+                                    {filteredItems.map((item, index) => (
+                                        <motion.div
+                                            key={item.id}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.03 }}
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <Card
+                                                className="cursor-pointer hover:shadow-md transition-all duration-200"
+                                                onClick={() => handleItemClick(item)}
+                                            >
+                                                <CardContent className="p-4">
+                                                    <div className="flex items-center space-x-4">
+                                                        {item.id === "none" ? (
+                                                            <div className="w-16 h-16 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
+                                                                <X className="w-6 h-6 text-slate-400" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800 flex-shrink-0">
+                                                                <img
+                                                                    src={item.url || "/placeholder.svg"}
+                                                                    alt={item.name || "Clothing Item"}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="font-medium text-slate-900 dark:text-white truncate">
+                                                                {item.name || (item.id === "none" ? "Select None" : "Unnamed")}
+                                                            </h3>
+                                                            {item.type && <p className="text-sm text-slate-500 dark:text-slate-400">{item.type}</p>}
+                                                            {item.brand && <p className="text-xs text-slate-400 dark:text-slate-500">{item.brand}</p>}
+                                                        </div>
+                                                        {item.mode === "wishlist" && item.id !== "none" && (
+                                                            <Badge className="bg-amber-500">Wishlist</Badge>
+                                                        )}
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {filteredItems.length === 0 && (
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
+                                    <div className="text-slate-400 dark:text-slate-500">
+                                        <Search className="w-12 h-12 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium mb-2">No items found</h3>
+                                        <p className="text-sm">Try adjusting your search or switching between Closet and Wishlist</p>
+                                    </div>
+                                </motion.div>
                             )}
                         </div>
-                    ))}
-                </div>
-                {filteredItems.length === 0 && <p className="text-center">No items found matching your search.</p>}
-            </div>
-        </div>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
     );
 };
 

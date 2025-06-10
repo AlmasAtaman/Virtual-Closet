@@ -1,6 +1,10 @@
 "use client";
 
-import React from 'react';
+import type React from "react"
+import { motion } from "framer-motion"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Shirt } from "lucide-react"
 
 interface ClothingItem {
     id: string;
@@ -13,87 +17,157 @@ interface OutfitCardProps {
     outfit: {
         id: string;
         clothingItems: ClothingItem[];
-        // Add other optional metadata fields if your backend returns them
-        // name?: string;
-        // season?: string;
-        // occasion?: string;
-        // totalPrice?: number;
+        name?: string;
+        season?: string;
+        occasion?: string;
+        totalPrice?: number;
     };
-    // Removed onItemClick as we will navigate on card click
-    // onItemClick: (item: ClothingItem, outfit: OutfitCardProps['outfit']) => void;
 }
 
-const OutfitCard: React.FC<OutfitCardProps> = ({ outfit /* Removed onItemClick from destructuring */ }) => {
+const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
     // Categorize clothing items
     const categorizedItems: {
-        top: ClothingItem | undefined;
-        bottom: ClothingItem | undefined;
-        outerwear: ClothingItem | undefined;
+        tops: ClothingItem[];
+        bottoms: ClothingItem[];
+        outerwear: ClothingItem[];
+        others: ClothingItem[];
     } = {
-        top: outfit.clothingItems.find(item => ['t-shirt', 'dress'].includes(item.type?.toLowerCase() || '')),
-        bottom: outfit.clothingItems.find(item => ['pants', 'skirt', 'shorts'].includes(item.type?.toLowerCase() || '')),
-        outerwear: outfit.clothingItems.find(item => ['jacket', 'sweater'].includes(item.type?.toLowerCase() || '')),
-    };
+        tops: outfit.clothingItems.filter((item) =>
+            ["t-shirt", "dress", "shirt", "blouse"].includes(item.type?.toLowerCase() || ""),
+        ),
+        bottoms: outfit.clothingItems.filter((item) =>
+            ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || ""),
+        ),
+        outerwear: outfit.clothingItems.filter((item) =>
+            ["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(item.type?.toLowerCase() || ""),
+        ),
+        others: outfit.clothingItems.filter(
+            (item) =>
+                ![
+                    "t-shirt",
+                    "dress",
+                    "shirt",
+                    "blouse",
+                    "pants",
+                    "skirt",
+                    "shorts",
+                    "jeans",
+                    "leggings",
+                    "jacket",
+                    "sweater",
+                    "coat",
+                    "hoodie",
+                    "cardigan",
+                ].includes(item.type?.toLowerCase() || ""),
+        ),
+    }
+
+    // Combine tops and outerwear for the top section
+    const topItems = categorizedItems.tops
+
+
+    const handleCardClick = () => {
+        window.location.href = `/outfits/${outfit.id}`
+    }
 
     return (
-        // Added cursor-pointer and onClick handler to the main div
-        <div 
-            className="border rounded-lg p-4 shadow-sm bg-gray-700 text-white flex flex-col items-center cursor-pointer"
-            onClick={() => window.location.href = `/outfits/${outfit.id}`} // Navigate to the new outfit detail page
+        <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-            {/* Removed outfit ID heading */}
-            {/* <h3 className="text-lg font-semibold mb-4 text-center">Outfit {outfit.id.substring(0, 6)}</h3> */}
+            <Card
+                className="h-[32rem] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
+                onClick={handleCardClick}
+            >
+                <CardContent className="p-0 h-full flex flex-col">
+                    {/* Outfit Visual Area */}
+                    <div className="flex-1 relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-6">
+                    <div className="h-full relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-6 flex items-center justify-center">
+                        {/* Outfit Image Collage */}
+                        <div className="relative w-44 h-80 mx-auto">
+                        {/* Bottom (pants) */}
+                        {categorizedItems.bottoms[0] && (
+                            <img
+                            src={categorizedItems.bottoms[0].url}
+                            alt="Bottom"
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
+                            />
+                        )}
 
-            {/* Outfit display area - vertical stack, relative for absolute positioning of outerwear */}
-            {/* Adjusted vertical gap and width */}
-            <div className="flex flex-col items-center w-full relative space-y-1">
+                        {/* Top (shirt) */}
+                        {topItems[0] && (
+                            <img
+                            src={topItems[0].url}
+                            alt="Top"
+                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
+                            />
+                        )}
 
-                {/* Outerwear - positioned absolutely to slightly overlap */}
-                {/* Adjusted top positioning and size for subtle overlap */}
-                {categorizedItems.outerwear && (
-                    // Removed cursor-pointer and onClick handler
-                    <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-11/12 h-11/12 z-10 flex justify-center items-center">
-                         <img
-                            src={categorizedItems.outerwear.url}
-                            alt={categorizedItems.outerwear.name || 'Outerwear'}
-                            className="w-full h-full object-contain"
-                        />
+                        {/* Outerwear */}
+                        {categorizedItems.outerwear[0] && (
+                            <img
+                            src={categorizedItems.outerwear[0].url}
+                            alt="Outerwear"
+                            className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
+                            />
+                        )}
+                        </div>
+
+
+
+
+
+                            {/* Fallback if no images */}
+                            {topItems.length === 0 && categorizedItems.bottoms.length === 0 && (
+                                <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                                <div className="text-center">
+                                    <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No items</p>
+                                </div>
+                                </div>
+                            )}
+                        </div>
+
                     </div>
-                )}
 
-                {/* Top and Bottom - stacked vertically */}
-                {/* Removed mt-16, adjusted spacing and width */}
-                <div className="flex flex-col items-center w-full space-y-1 mt-8">
-                    {categorizedItems.top && (
-                        // Removed cursor-pointer and onClick handler
-                         <div className="w-full h-48 flex justify-center items-center overflow-hidden rounded">
-                            <img
-                                src={categorizedItems.top.url}
-                                alt={categorizedItems.top.name || 'Top'}
-                                className="w-full h-full object-contain"
-                            />
+                    {/* Outfit Info */}
+                    <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                                {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
+                            </h3>
+                            <div className="flex items-center space-x-1">
+                                <Shirt className="w-4 h-4 text-slate-400" />
+                                <span className="text-xs text-slate-500">{outfit.clothingItems.length}</span>
+                            </div>
                         </div>
-                    )}
 
-                    {categorizedItems.bottom && (
-                        // Removed cursor-pointer and onClick handler
-                         <div className="w-full h-60 flex justify-center items-center overflow-hidden rounded">
-                            <img
-                                src={categorizedItems.bottom.url}
-                                alt={categorizedItems.bottom.name || 'Bottom'}
-                                className="w-full h-full object-contain"
-                            />
+                        <div className="flex items-center justify-between">
+                            <div className="flex space-x-1">
+                                {outfit.occasion && (
+                                    <Badge variant="secondary" className="text-xs">
+                                        {outfit.occasion}
+                                    </Badge>
+                                )}
+                                {outfit.season && (
+                                    <Badge variant="outline" className="text-xs">
+                                        {outfit.season}
+                                    </Badge>
+                                )}
+                            </div>
+
+                            {outfit.totalPrice && (
+                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                    ${outfit.totalPrice.toFixed(2)}
+                                </span>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
+    )
+}
 
-                {/* Render other items if necessary (optional, based on how outfits are structured) */}
-                {/* If an outfit can have more than one of each type, this would need adjustment */}
-
-            </div>
-            {/* TODO: Display other outfit metadata here if available */}
-        </div>
-    );
-};
-
-export default OutfitCard; 
+export default OutfitCard 
