@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Shuffle, Check, AlertTriangle, Sparkles } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 import ClothingItemSelectModal from './ClothingItemSelectModal';
 
 interface CreateOutfitModalProps {
@@ -39,6 +46,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false);
     const [randomizeFromCloset, setRandomizeFromCloset] = useState(true);
     const [randomizeFromWishlist, setRandomizeFromWishlist] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
         if (show) {
@@ -49,37 +57,29 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const fetchClothingItems = async () => {
         setLoadingClothing(true);
         try {
-            // Fetch closet items
-            const closetRes = await fetch('http://localhost:8000/api/images?mode=closet', {
-                credentials: 'include'
-            });
-            if (!closetRes.ok) {
-                throw new Error(`Failed to fetch closet items: ${closetRes.status} ${closetRes.statusText}`);
+            const [closetRes, wishlistRes] = await Promise.all([
+                fetch('http://localhost:8000/api/images?mode=closet', { credentials: 'include' }),
+                fetch('http://localhost:8000/api/images?mode=wishlist', { credentials: 'include' }),
+            ]);
+
+            if (!closetRes.ok || !wishlistRes.ok) {
+                throw new Error('Failed to fetch clothing items');
             }
-            const closetData = await closetRes.json();
+
+            const [closetData, wishlistData] = await Promise.all([closetRes.json(), wishlistRes.json()]);
+
             const closetItems: ClothingItem[] = (closetData.clothingItems || []).map((item: ClothingItem) => ({ ...item, mode: 'closet' }));
-
-            // Fetch wishlist items
-            const wishlistRes = await fetch('http://localhost:8000/api/images?mode=wishlist', {
-                credentials: 'include'
-            });
-            if (!wishlistRes.ok) {
-                throw new Error(`Failed to fetch wishlist items: ${wishlistRes.status} ${wishlistRes.statusText}`);
-            }
-            const wishlistData = await wishlistRes.json();
             const wishlistItems: ClothingItem[] = (wishlistData.clothingItems || []).map((item: ClothingItem) => ({ ...item, mode: 'wishlist' }));
-
             const allItems = [...closetItems, ...wishlistItems];
 
-            // Categorize items based on type (using your examples)
             const categorized = allItems.reduce<CategorizedClothing>((acc, item) => {
                 if (item.type) {
                     const lowerCaseType = item.type.toLowerCase();
-                    if (['t-shirt', 'dress'].includes(lowerCaseType)) {
+                    if (['t-shirt', 'dress', 'shirt', 'blouse'].includes(lowerCaseType)) {
                         acc.tops.push(item);
-                    } else if (['pants', 'skirt', 'shorts'].includes(lowerCaseType)) {
+                    } else if (['pants', 'skirt', 'shorts', 'jeans', 'leggings'].includes(lowerCaseType)) {
                         acc.bottoms.push(item);
-                    } else if (['jacket', 'sweater'].includes(lowerCaseType)) {
+                    } else if (['jacket', 'sweater', 'coat', 'hoodie', 'cardigan'].includes(lowerCaseType)) {
                         acc.outerwear.push(item);
                     } else {
                         console.warn(`Unknown clothing type: ${item.type}`);
@@ -105,21 +105,25 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         );
     };
 
+    const hasWishlistItems = () => {
+        return [selectedTop, selectedBottom, selectedOuterwear].some((item) => item && item.mode === 'wishlist');
+    };
+
     const handleCreateOutfit = async () => {
         if (!isFormValid()) {
             alert('Please select at least a top and a bottom.');
             return;
         }
-        const newOutfitData = {
-            clothingItems: [
-                selectedTop?.id,
-                selectedBottom?.id,
-                selectedOuterwear?.id,
-            ].filter(Boolean), // Filter out null/undefined ids
-        };
-        // console.log('Creating outfit:', newOutfitData); // Removed console log
-
+        setIsCreating(true);
         try {
+            const newOutfitData = {
+                clothingItems: [
+                    selectedTop?.id,
+                    selectedBottom?.id,
+                    selectedOuterwear?.id,
+                ].filter(Boolean), // Filter out null/undefined ids
+            };
+            // console.log('Creating outfit:', newOutfitData); // Removed console log
 
             const res = await fetch('http://localhost:8000/api/outfits', { // Assuming POST /api/outfits is the endpoint
                 method: 'POST',
@@ -146,6 +150,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             console.error('Error creating outfit:', error);
             alert(`Error creating outfit: ${error.message}`); // Show error to user
             // Keep modal open on error for user to retry/adjust
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -285,11 +291,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         <h4 className="text-md font-semibold text-gray-900 mb-4 text-center">Select Clothing Items</h4>
                         
                         {/* Display wishlist warning if any selected item is from wishlist */}
-                        {([
-                            selectedTop,
-                            selectedBottom,
-                            selectedOuterwear
-                        ].filter(item => item && item.id !== 'none' && item.mode === 'wishlist').length > 0) && (
+                        {hasWishlistItems() && (
                             <p className="text-red-500 text-center mb-4">Note: One or more selected items are from your wishlist.</p>
                         )}
 
@@ -374,9 +376,20 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             id="create-outfit-btn"
                             className={`px-6 py-2 bg-green-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 ${!isFormValid() && 'opacity-50 cursor-not-allowed'}`}
                             onClick={handleCreateOutfit}
-                            disabled={!isFormValid()}
+                            disabled={!isFormValid() || isCreating}
                         >
-                            Create Outfit
+                            {isCreating ? (
+                                <>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                                        className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"
+                                    />
+                                    Creating...
+                                </>
+                            ) : (
+                                "Create Outfit"
+                            )}
                         </button>
                         <button 
                             id="cancel-btn"
@@ -392,63 +405,275 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4" id="my-modal" onClick={handleOverlayClick}> {/* Centered the modal using flexbox and added padding */}
-            {/* Increased modal width and adjusted positioning */}
-            {/* Adjusted width: max-w-2xl on larger screens, full width on smaller, removed absolute top */}
-            <div className="relative bg-gray-800 text-white rounded-md shadow-lg p-6 w-full max-w-sm md:max-w-xl lg:max-w-2xl" onClick={e => e.stopPropagation()}> {/* Adjusted padding and max-width, stopped propagation on modal content */}
-                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold leading-6 text-white">{viewingCategory === "none" ? "Create New Outfit" : "Select Clothing"}</h3>
-                     {viewingCategory !== "none" && (
-                        <button 
-                            className="text-gray-500 hover:text-gray-700"
-                            onClick={() => setViewingCategory("none")}
-                        >
-                           ← Back
-                        </button>
-                    )}
-                 </div>
-                
-                {/* Render the appropriate modal content based on viewingCategory */}
-                {renderModalContent()}
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={handleCloseModal}
+            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create New Outfit</h2>
+                            <p className="text-slate-600 dark:text-slate-400 mt-1">Mix and match your favorite pieces</p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </div>
 
-                {/* Render ClothingItemSelectModals */}
+                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+                        {/* Randomize Section */}
+                        <Card className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                        <h3 className="font-semibold text-slate-900 dark:text-white">Surprise Me!</h3>
+                                    </div>
+                                    <Button
+                                        onClick={handleRandomize}
+                                        disabled={!randomizeFromCloset && !randomizeFromWishlist}
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                                    >
+                                        <Shuffle className="w-4 h-4 mr-2" />
+                                        Randomize
+                                    </Button>
+                                </div>
+                                <div className="flex space-x-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="closet"
+                                            checked={randomizeFromCloset}
+                                            onCheckedChange={(checked: boolean) => setRandomizeFromCloset(checked)}
+                                        />
+                                        <label htmlFor="closet" className="text-sm text-slate-700 dark:text-slate-300">
+                                            From Closet
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="wishlist"
+                                            checked={randomizeFromWishlist}
+                                            onCheckedChange={(checked: boolean) => setRandomizeFromWishlist(checked)}
+                                        />
+                                        <label htmlFor="wishlist" className="text-sm text-slate-700 dark:text-slate-300">
+                                            From Wishlist
+                                        </label>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Wishlist Warning */}
+                        {hasWishlistItems() && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+                                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                    <AlertDescription className="text-amber-800 dark:text-amber-200">
+                                        Some selected items are from your wishlist and may not be available.
+                                    </AlertDescription>
+                                </Alert>
+                            </motion.div>
+                        )}
+
+                        {/* Outfit Builder */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Outerwear */}
+                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                <Card
+                                    className={`h-80 cursor-pointer transition-all duration-300 ${
+                                        selectedOuterwear
+                                            ? "ring-2 ring-blue-500 shadow-lg"
+                                            : "border-dashed border-2 hover:border-slate-400 dark:hover:border-slate-500"
+                                    }`}
+                                    onClick={() => setShowOuterwearSelectModal(true)}
+                                >
+                                    <CardContent className="h-full flex flex-col items-center justify-center p-4">
+                                        {selectedOuterwear ? (
+                                            <div className="relative w-full h-full">
+                                                <img
+                                                    src={selectedOuterwear.url || "/placeholder.svg"}
+                                                    alt={selectedOuterwear.name || "Outerwear"}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                {selectedOuterwear.mode === "wishlist" && (
+                                                    <Badge className="absolute top-2 right-2 bg-amber-500">Wishlist</Badge>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-slate-500 dark:text-slate-400">
+                                                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                                    <span className="text-2xl">🧥</span>
+                                                </div>
+                                                <h3 className="font-medium mb-1">Outerwear</h3>
+                                                <p className="text-sm opacity-75">Optional</p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+
+                            {/* Top */}
+                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                <Card
+                                    className={`h-80 cursor-pointer transition-all duration-300 ${
+                                        selectedTop
+                                            ? "ring-2 ring-green-500 shadow-lg"
+                                            : "border-dashed border-2 hover:border-slate-400 dark:hover:border-slate-500"
+                                    }`}
+                                    onClick={() => setShowTopSelectModal(true)}
+                                >
+                                    <CardContent className="h-full flex flex-col items-center justify-center p-4">
+                                        {selectedTop ? (
+                                            <div className="relative w-full h-full">
+                                                <img
+                                                    src={selectedTop.url || "/placeholder.svg"}
+                                                    alt={selectedTop.name || "Top"}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                {selectedTop.mode === "wishlist" && (
+                                                    <Badge className="absolute top-2 right-2 bg-amber-500">Wishlist</Badge>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-slate-500 dark:text-slate-400">
+                                                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                                    <span className="text-2xl">👕</span>
+                                                </div>
+                                                <h3 className="font-medium mb-1">Top</h3>
+                                                <p className="text-sm opacity-75">Required</p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+
+                            {/* Bottom */}
+                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                <Card
+                                    className={`h-80 cursor-pointer transition-all duration-300 ${
+                                        selectedBottom
+                                            ? "ring-2 ring-purple-500 shadow-lg"
+                                            : "border-dashed border-2 hover:border-slate-400 dark:hover:border-slate-500"
+                                    }`}
+                                    onClick={() => setShowBottomSelectModal(true)}
+                                >
+                                    <CardContent className="h-full flex flex-col items-center justify-center p-4">
+                                        {selectedBottom ? (
+                                            <div className="relative w-full h-full">
+                                                <img
+                                                    src={selectedBottom.url || "/placeholder.svg"}
+                                                    alt={selectedBottom.name || "Bottom"}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                {selectedBottom.mode === "wishlist" && (
+                                                    <Badge className="absolute top-2 right-2 bg-amber-500">Wishlist</Badge>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-slate-500 dark:text-slate-400">
+                                                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                                    <span className="text-2xl">👖</span>
+                                                </div>
+                                                <h3 className="font-medium mb-1">Bottom</h3>
+                                                <p className="text-sm opacity-75">Required</p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                            {isFormValid() ? (
+                                <div className="flex items-center text-green-600 dark:text-green-400">
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Ready to create
+                                </div>
+                            ) : (
+                                "Select at least a top and bottom"
+                            )}
+                        </div>
+                        <div className="flex space-x-3">
+                            <Button variant="outline" onClick={handleCloseModal}>
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleCreateOutfit}
+                                disabled={!isFormValid() || isCreating}
+                                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                            >
+                                {isCreating ? (
+                                    <>
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                                            className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"
+                                        />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    "Create Outfit"
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Selection Modals */}
                 <ClothingItemSelectModal
                     isOpen={showOuterwearSelectModal}
                     onCloseAction={() => setShowOuterwearSelectModal(false)}
-                    clothingItems={[...(clothingItems.outerwear || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
+                    clothingItems={[
+                        ...clothingItems.outerwear,
+                        { id: "none", url: "", name: "Select None", mode: "closet" as const },
+                    ]}
                     onSelectItem={(item) => {
-                        setSelectedOuterwear(item);
-                        setShowOuterwearSelectModal(false);
+                        setSelectedOuterwear(item.id === "none" ? null : item)
+                        setShowOuterwearSelectModal(false)
                     }}
-                    viewMode={clothingItems.outerwear.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist'}
-                    selectedCategory='outerwear' // Pass the category
+                    viewMode={clothingItems.outerwear.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
+                    selectedCategory="outerwear"
                 />
 
                 <ClothingItemSelectModal
                     isOpen={showTopSelectModal}
                     onCloseAction={() => setShowTopSelectModal(false)}
-                    clothingItems={[...(clothingItems.tops || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
+                    clothingItems={clothingItems.tops}
                     onSelectItem={(item) => {
-                        setSelectedTop(item);
-                        setShowTopSelectModal(false);
+                        setSelectedTop(item)
+                        setShowTopSelectModal(false)
                     }}
-                    viewMode={clothingItems.tops.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist'}
-                    selectedCategory='top' // Pass the category
+                    viewMode={clothingItems.tops.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
+                    selectedCategory="top"
                 />
 
                 <ClothingItemSelectModal
                     isOpen={showBottomSelectModal}
                     onCloseAction={() => setShowBottomSelectModal(false)}
-                    clothingItems={[...(clothingItems.bottoms || []), { id: 'none', url: '', name: 'Select None', mode: 'closet' }]} // Add 'Select None' option and ensure array
+                    clothingItems={clothingItems.bottoms}
                     onSelectItem={(item) => {
-                        setSelectedBottom(item);
-                        setShowBottomSelectModal(false);
+                        setSelectedBottom(item)
+                        setShowBottomSelectModal(false)
                     }}
-                    viewMode={clothingItems.bottoms.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist'}
-                    selectedCategory='bottom' // Pass the category
+                    viewMode={clothingItems.bottoms.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
+                    selectedCategory="bottom"
                 />
-
-            </div>
-        </div>
+            </motion.div>
+        </AnimatePresence>
     );
 } 
