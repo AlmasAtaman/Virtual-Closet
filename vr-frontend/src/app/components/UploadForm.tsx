@@ -177,24 +177,41 @@ const initialFormData = {
         process: false, // We just want the scrape data, not image processing yet
       });
 
-      const { product } = res.data;
+      const data = res.data;
 
-      if (product && product.images && product.images.length > 0) {
-        setScrapedProducts([product]);
-        setSelectedScrapedImage(product.images[0]); // Select the first image by default
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.imageGallery && data.imageGallery.length > 0) {
+        setScrapedProducts([{
+          name: data.name,
+          brand: data.brand,
+          price: data.price,
+          images: data.imageGallery,
+          sourceUrl: data.sourceUrl
+        }]);
+        setSelectedScrapedImage(data.imageGallery[0]); // Select the first image by default
         setFormData((prev: Partial<ClothingItem>) => ({
           ...prev,
-          name: product.name,
-          brand: product.brand,
-          price: product.price,
-          sourceUrl: scrapingUrl,
+          name: data.name,
+          brand: data.brand,
+          price: data.price,
+          sourceUrl: data.sourceUrl,
+          type: data.type,
+          occasion: data.occasion,
+          style: data.style,
+          fit: data.fit,
+          color: data.color,
+          material: data.material,
+          season: data.season
         }));
       } else {
         alert("No product images found at this URL.");
       }
     } catch (error) {
       console.error("Scraping failed:", error);
-      alert("Scraping failed.");
+      alert(error instanceof Error ? error.message : "Scraping failed. Please try a different URL.");
     } finally {
       setIsLoading(false);
     }
