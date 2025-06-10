@@ -110,6 +110,35 @@ const initialFormData = {
     reader.readAsDataURL(file);
   }, []);
 
+  // Effect to listen for paste events
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            console.log("Image pasted", file);
+            handleFileUpload(file);
+            event.preventDefault(); // Prevent default paste behavior
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [isOpen, handleFileUpload]);
+
   // Handle drag and drop
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
