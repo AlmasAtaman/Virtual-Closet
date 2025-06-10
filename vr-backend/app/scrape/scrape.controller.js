@@ -12,6 +12,7 @@ function normalizeUrl(raw, baseUrl) {
 
 export async function scrapeProduct(req, res) {
   const { url, process } = req.body;
+  console.log(`[Scraper] Attempting to scrape URL: ${url}`);
   if (!url) return res.status(400).json({ error: 'URL required' });
 
   let browser;
@@ -52,6 +53,7 @@ export async function scrapeProduct(req, res) {
     const page = await context.newPage();
 
     await page.goto(url, { timeout: 60000, waitUntil: 'domcontentloaded' });
+    console.log(`[Scraper] Page loaded for URL: ${url}`);
 
     await page.evaluate(async () => {
       await new Promise((resolve) => {
@@ -71,17 +73,22 @@ export async function scrapeProduct(req, res) {
     await page.waitForTimeout(3000);
 
     const html = await page.content();
+    console.log(`[Scraper] HTML content length: ${html.length}`);
     const $ = cheerio.load(html);
     const imageUrl =
       $('meta[property="og:image"]').attr('content') ||
       $('meta[name="twitter:image"]').attr('content') ||
       $('img').first().attr('src');
+    console.log(`[Scraper] Extracted imageUrl: ${imageUrl}`);
 
     const mainContent = $('main').html() || $('body').html();
+    console.log(`[Scraper] Main content length for Gemini: ${mainContent?.length}`);
     const structured = await extractProductData(mainContent);
+    console.log(`[Scraper] Structured data from Gemini: ${JSON.stringify(structured)}`);
 
     // Check if the extracted product is clothing
     if (!structured?.isClothing) {
+        console.log(`[Scraper] Item not identified as clothing. isClothing: ${structured?.isClothing}`);
         await browser.close();
         return res.status(400).json({
             error: 'Scraped item is not clothing',
