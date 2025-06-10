@@ -84,7 +84,6 @@ export async function scrapeProduct(req, res) {
     const mainContent = $('main').html() || $('body').html();
     console.log(`[Scraper] Main content length for Gemini: ${mainContent?.length}`);
     const structured = await extractProductData(mainContent);
-    console.log(`[Scraper] Structured data from Gemini: ${JSON.stringify(structured)}`);
 
     // Check if the extracted product is clothing
     if (!structured?.isClothing) {

@@ -41,10 +41,10 @@ export async function extractProductData(html) {
       - "price": numeric string or number only, e.g. "39.99" or 39.99. Null if not found.
       - "occasion": one of ["Casual", "Formal", "Party", "Athletic"], or null.
       - "style": one of ["Streetwear", "Minimalist", "Old Money", "Y2K", "Preppy"], or null.
-      - "fit": one of ["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"], or null.
-      - "color": one of basic colors like ["Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink"], or null.
-      - "material": one of ["Cotton", "Linen", "Denim", "Leather", "Knit", "Polyester"], or null.
-      - "season": one of ["Spring", "Summer", "Fall", "Winter"], or null.
+      - "fit": one of ["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"]
+      - "color": one of basic colors like ["Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink"]
+      - "material": one of ["Cotton", "Linen", "Denim", "Leather", "Knit", "Polyester"]
+      - "season": one of ["Spring", "Summer", "Fall", "Winter"]
       - "sourceUrl": the URL of the product page.
       - "imageGallery": an array of high-quality image URLs for the product.
     - If "isClothing" is false, all other fields should be null or empty arrays.
