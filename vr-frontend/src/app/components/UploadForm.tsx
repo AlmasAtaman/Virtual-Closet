@@ -171,10 +171,25 @@ const initialFormData = {
     if (!scrapingUrl.trim()) return;
 
     setIsLoading(true);
+    setUploadProgress(0); // Reset progress for scraper
+
+    let progressInterval: NodeJS.Timeout | undefined; // Declare interval variable
+
     try {
+      // Start fake progress for scraping
+      progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200); // Simulate progress every 200ms
+
       const res = await axios.post("http://localhost:8000/api/scrape", {
         url: scrapingUrl,
-        process: false, // We just want the scrape data, not image processing yet
+        process: false,
       });
 
       const data = res.data;
@@ -184,13 +199,15 @@ const initialFormData = {
       }
 
       if (data.imageGallery && data.imageGallery.length > 0) {
-        setScrapedProducts([{
-          name: data.name,
-          brand: data.brand,
-          price: data.price,
-          images: data.imageGallery,
-          sourceUrl: data.sourceUrl
-        }]);
+        setScrapedProducts([
+          {
+            name: data.name,
+            brand: data.brand,
+            price: data.price,
+            images: data.imageGallery,
+            sourceUrl: data.sourceUrl,
+          },
+        ]);
         setSelectedScrapedImage(data.imageGallery[0]); // Select the first image by default
         setFormData((prev: Partial<ClothingItem>) => ({
           ...prev,
@@ -201,19 +218,28 @@ const initialFormData = {
           type: data.type,
           occasion: data.occasion,
           style: data.style,
-          fit: data.fit,
+          fit: data.fit?.toLowerCase() || "",
           color: data.color,
-          material: data.material,
-          season: data.season
+          material: data.material?.toLowerCase() || "",
+          season: data.season?.toLowerCase() || "",
         }));
       } else {
         alert("No product images found at this URL.");
       }
+
+      if (progressInterval) {
+        clearInterval(progressInterval); // Clear interval on success
+      }
+      setUploadProgress(100); // Set to 100% on completion
     } catch (error) {
       console.error("Scraping failed:", error);
       alert(error instanceof Error ? error.message : "Scraping failed. Please try a different URL.");
+      if (progressInterval) {
+        clearInterval(progressInterval); // Ensure interval is cleared on error
+      }
     } finally {
       setIsLoading(false);
+      setUploadProgress(0); // Reset progress bar at the end
     }
   };
 
@@ -336,7 +362,7 @@ const initialFormData = {
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-w-5xl h-[90vh] p-0 flex flex-col">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] duration-300">
 
 
         <DialogHeader className="px-6 py-4 border-b">
@@ -514,7 +540,7 @@ const initialFormData = {
                   <TabsTrigger value="advanced">Advanced Details</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="basic" className="space-y-4 mt-6">
+                <TabsContent value="basic" className="space-y-4 mt-6 data-[state=inactive]:hidden data-[state=active]:animate-in data-[state=active]:fade-in duration-300">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
@@ -589,7 +615,7 @@ const initialFormData = {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="advanced" className="space-y-4 mt-6">
+                <TabsContent value="advanced" className="space-y-4 mt-6 data-[state=inactive]:hidden data-[state=active]:animate-in data-[state=active]:fade-in duration-300">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="occasion">Occasion</Label>
@@ -685,10 +711,10 @@ const initialFormData = {
 
             {/* Footer Actions */}
             <div className="border-t p-6">
-              {isSubmitting && (
+              {(isSubmitting || isLoading) && (
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <span>Uploading...</span>
+                    <span>{isSubmitting ? "Uploading..." : "Scraping..."}</span>
                     <span>{uploadProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
