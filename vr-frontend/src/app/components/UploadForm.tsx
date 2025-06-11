@@ -4,7 +4,8 @@ import type React from "react";
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import axios from "axios";
-import { Upload, Link, Wand2, X, Loader2, Check } from "lucide-react";
+import { Upload, Link, Wand2, X, Loader2, Check, Sparkles, ImageIcon, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import type { ClothingItem, ScrapedProduct } from "../types/clothing";
 
 interface UploadFormProps {
@@ -38,14 +40,14 @@ export default function UploadForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-const initialFormData = {
+  const initialFormData = {
     mode: currentViewMode,
     name: "",
     type: "",
     brand: "",
     price: undefined,
     sourceUrl: "",
-    image: "", // This will be the URL after upload/scraping
+    image: "",
     occasion: "",
     style: "",
     fit: "",
@@ -56,18 +58,16 @@ const initialFormData = {
   };
 
   const [formData, setFormData] = useState<Partial<ClothingItem>>(initialFormData);
-
-  // Image upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [scrapedProducts, setScrapedProducts] = useState<ScrapedProduct[]>([]);
   const [selectedScrapedImage, setSelectedScrapedImage] = useState<string>("");
   const [scrapingUrl, setScrapingUrl] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Reset form when modal opens or viewMode changes
     if (isOpen) {
       setUploadMethod("direct");
       setUploadTarget(currentViewMode);
@@ -82,10 +82,10 @@ const initialFormData = {
       setScrapedProducts([]);
       setSelectedScrapedImage("");
       setScrapingUrl("");
+      setIsDragOver(false);
     }
   }, [isOpen, currentViewMode]);
 
-  // Validation
   const isFormValid = () => {
     const hasImage = imagePreview || selectedScrapedImage;
     const hasName = formData.name?.trim();
@@ -100,7 +100,6 @@ const initialFormData = {
     return true;
   };
 
-  // Handle file upload for direct upload
   const handleFileUpload = useCallback((file: File) => {
     setSelectedFile(file);
     const reader = new FileReader();
@@ -110,7 +109,6 @@ const initialFormData = {
     reader.readAsDataURL(file);
   }, []);
 
-  // Effect to listen for paste events
   useEffect(() => {
     if (!isOpen) return;
 
@@ -120,39 +118,34 @@ const initialFormData = {
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        if (item.kind === 'file' && item.type.startsWith('image/')) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
           const file = item.getAsFile();
           if (file) {
-            console.log("Image pasted", file);
             handleFileUpload(file);
-            event.preventDefault(); // Prevent default paste behavior
+            event.preventDefault();
             break;
           }
         }
       }
     };
 
-    window.addEventListener('paste', handlePaste);
-
-    return () => {
-      window.removeEventListener('paste', handlePaste);
-    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
   }, [isOpen, handleFileUpload]);
 
-  // Handle drag and drop
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      setIsDragOver(false);
       const files = Array.from(e.dataTransfer.files);
       const imageFile = files.find((file) => file.type.startsWith("image/"));
       if (imageFile) {
         handleFileUpload(imageFile);
       }
     },
-    [handleFileUpload]
+    [handleFileUpload],
   );
 
-  // Auto-fill using AI (for direct image upload)
   const handleAutoFill = async () => {
     if (!selectedFile) return;
 
@@ -195,17 +188,15 @@ const initialFormData = {
     }
   };
 
-  // Handle URL scraping
   const handleUrlScraping = async () => {
     if (!scrapingUrl.trim()) return;
 
     setIsLoading(true);
-    setUploadProgress(0); // Reset progress for scraper
+    setUploadProgress(0);
 
-    let progressInterval: NodeJS.Timeout | undefined; // Declare interval variable
+    let progressInterval: NodeJS.Timeout | undefined;
 
     try {
-      // Start fake progress for scraping
       progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -214,7 +205,7 @@ const initialFormData = {
           }
           return prev + 10;
         });
-      }, 200); // Simulate progress every 200ms
+      }, 200);
 
       const res = await axios.post("http://localhost:8000/api/scrape", {
         url: scrapingUrl,
@@ -237,7 +228,7 @@ const initialFormData = {
             sourceUrl: data.sourceUrl,
           },
         ]);
-        setSelectedScrapedImage(data.imageGallery[0]); // Select the first image by default
+        setSelectedScrapedImage(data.imageGallery[0]);
         setFormData((prev: Partial<ClothingItem>) => ({
           ...prev,
           name: data.name,
@@ -257,22 +248,21 @@ const initialFormData = {
       }
 
       if (progressInterval) {
-        clearInterval(progressInterval); // Clear interval on success
+        clearInterval(progressInterval);
       }
-      setUploadProgress(100); // Set to 100% on completion
+      setUploadProgress(100);
     } catch (error) {
       console.error("Scraping failed:", error);
       alert(error instanceof Error ? error.message : "Scraping failed. Please try a different URL.");
       if (progressInterval) {
-        clearInterval(progressInterval); // Ensure interval is cleared on error
+        clearInterval(progressInterval);
       }
     } finally {
       setIsLoading(false);
-      setUploadProgress(0); // Reset progress bar at the end
+      setUploadProgress(0);
     }
   };
 
-  // Handle form submission
   const handleSubmit = async () => {
     if (!isFormValid()) return;
 
@@ -288,7 +278,6 @@ const initialFormData = {
       if (uploadMethod === "direct" && selectedFile) {
         finalImageFile = selectedFile;
       } else if (uploadMethod === "url" && selectedScrapedImage) {
-        // If using URL, we need to send the image URL to backend to fetch and process
         finalImageUrl = selectedScrapedImage;
       }
 
@@ -305,7 +294,7 @@ const initialFormData = {
       submitFormData.append("type", formData.type || "");
       submitFormData.append("brand", formData.brand || "");
       submitFormData.append("price", (formData.price || 0).toString());
-      submitFormData.append("mode", uploadTarget); // Use uploadTarget for mode
+      submitFormData.append("mode", uploadTarget);
       submitFormData.append("sourceUrl", formData.sourceUrl || "");
 
       if (mode === "advanced") {
@@ -336,14 +325,13 @@ const initialFormData = {
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      const { item: newItem } = res.data; // Assuming backend returns the new item
+      const { item: newItem } = res.data;
 
-      // Map backend item to frontend ClothingItem type
       const clothingItem: ClothingItem = {
         id: newItem.id,
         key: newItem.key,
         url: newItem.url,
-        image: newItem.url, // Alias url to image
+        image: newItem.url,
         name: newItem.name,
         type: newItem.type,
         brand: newItem.brand,
@@ -355,16 +343,15 @@ const initialFormData = {
         material: newItem.material,
         season: newItem.season,
         notes: newItem.notes,
-        mode: newItem.mode, // Ensure mode is correctly passed
+        mode: newItem.mode,
         sourceUrl: newItem.sourceUrl,
-        tags: newItem.tags, // If tags exist
+        tags: newItem.tags,
       };
 
       if (onUploadComplete) {
         onUploadComplete(uploadTarget, clothingItem);
       }
 
-      // Reset form
       setFormData(initialFormData);
       setSelectedFile(null);
       setImagePreview("");
@@ -385,388 +372,565 @@ const initialFormData = {
     }
   };
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-w-5xl h-[90vh] p-0 flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] duration-300">
+    <AnimatePresence>
+      <Dialog open={isOpen} onOpenChange={onCloseAction}>
+        <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col h-full"
+          >
+            {/* Header */}
+            <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-background to-muted/20">
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Add New Clothing Item
+              </DialogTitle>
+            </DialogHeader>
 
+            <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
+              {/* Left Column - Image Upload */}
+              <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10">
+                <div className="space-y-6">
+                  {/* Upload Method Toggle */}
+                  <Card className="p-1 bg-background/50 backdrop-blur-sm">
+                    <div className="flex gap-1">
+                      <Button
+                        variant={uploadMethod === "direct" ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setUploadMethod("direct")}
+                        className="flex-1 transition-all duration-200"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Direct Upload
+                      </Button>
+                      {uploadTarget === "wishlist" && (
+                        <Button
+                          variant={uploadMethod === "url" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setUploadMethod("url")}
+                          className="flex-1 transition-all duration-200"
+                        >
+                          <Link className="w-4 h-4 mr-2" />
+                          From URL
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
 
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="text-2xl font-semibold">Add New Clothing Item</DialogTitle>
-        </DialogHeader>
+                  {/* Direct Upload */}
+                  <AnimatePresence mode="wait">
+                    {uploadMethod === "direct" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4"
+                      >
+                        <Card
+                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden ${
+                            isDragOver
+                              ? "border-primary bg-primary/5 scale-[1.02]"
+                              : imagePreview
+                                ? "border-primary/50 bg-primary/5"
+                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                          }`}
+                          onDrop={handleDrop}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDragOver(true);
+                          }}
+                          onDragLeave={() => setIsDragOver(false)}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <CardContent className="p-8">
+                            <AnimatePresence mode="wait">
+                              {imagePreview ? (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  className="space-y-4"
+                                >
+                                  <div className="relative group">
+                                    <img
+                                      src={imagePreview || "/placeholder.svg"}
+                                      alt="Preview"
+                                      className="max-w-full max-h-64 mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setImagePreview("");
+                                      setSelectedFile(null);
+                                    }}
+                                    className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                    Remove Image
+                                  </Button>
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="text-center space-y-4"
+                                >
+                                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <ImageIcon className="w-8 h-8 text-primary" />
+                                  </div>
+                                  <div>
+                                    <p className="text-lg font-medium text-foreground">
+                                      Drop an image here or click to browse
+                                    </p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      PNG, JPG up to 10MB • Paste from clipboard
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </CardContent>
+                        </Card>
 
-        <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
-          {/* Left Column - Image Upload */}
-          <div className="lg:w-2/5 p-6 border-r bg-gray-50/50">
-            <div className="space-y-4">
-              {/* Upload Method Toggle */}
-              <div className="flex gap-2">
-                <Button
-                  variant={uploadMethod === "direct" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setUploadMethod("direct")}
-                  className="flex-1"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Direct Upload
-                </Button>
-                {uploadTarget === "wishlist" && (
-                <Button
-                  variant={uploadMethod === "url" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setUploadMethod("url")}
-                  className="flex-1"
-                >
-                  <Link className="w-4 h-4 mr-2" />
-                  From URL
-                </Button>
-                )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(file);
+                          }}
+                        />
+
+                        <AnimatePresence>
+                          {imagePreview && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <Button
+                                onClick={handleAutoFill}
+                                disabled={isAutoFilling || !selectedFile}
+                                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                                size="lg"
+                              >
+                                {isAutoFilling ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4 mr-2" />
+                                )}
+                                {isAutoFilling ? "Analyzing..." : "Auto-fill with AI"}
+                              </Button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+
+                    {/* URL Upload */}
+                    {uploadTarget === "wishlist" && uploadMethod === "url" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4"
+                      >
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Enter product URL..."
+                                value={scrapingUrl}
+                                onChange={(e) => setScrapingUrl(e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                onClick={handleUrlScraping}
+                                disabled={isLoading || !scrapingUrl.trim()}
+                                className="px-6"
+                              >
+                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Scrape"}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <AnimatePresence>
+                          {scrapedProducts.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="space-y-3"
+                            >
+                              <Label className="text-sm font-medium">Select Product Image</Label>
+                              <div className="grid grid-cols-2 gap-3">
+                                {scrapedProducts[0].images.map((image, index) => (
+                                  <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                                      selectedScrapedImage === image
+                                        ? "border-primary shadow-lg scale-[1.02]"
+                                        : "border-border hover:border-primary/50 hover:scale-[1.01]"
+                                    }`}
+                                    onClick={() => setSelectedScrapedImage(image)}
+                                  >
+                                    <img
+                                      src={image || "/placeholder.svg"}
+                                      alt={`Product ${index + 1}`}
+                                      className="w-full h-32 object-cover"
+                                    />
+                                    <AnimatePresence>
+                                      {selectedScrapedImage === image && (
+                                        <motion.div
+                                          initial={{ opacity: 0, scale: 0.5 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          exit={{ opacity: 0, scale: 0.5 }}
+                                          className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg"
+                                        >
+                                          <Check className="w-3 h-3" />
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
-              {/* Direct Upload */}
-              {uploadMethod === "direct" && (
-                <div className="space-y-4">
-                  <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                    onDrop={handleDrop}
-                    onDragOver={(e) => e.preventDefault()}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {imagePreview ? (
-                      <div className="space-y-4">
-                        <img
-                          src={imagePreview || "/placeholder.svg"}
-                          alt="Preview"
-                          className="max-w-full max-h-64 mx-auto rounded-lg shadow-md"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setImagePreview("");
-                            setSelectedFile(null);
+              {/* Right Column - Form */}
+              <div className="lg:w-3/5 flex flex-col overflow-hidden">
+                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
+                  {/* Target Toggle */}
+                  <Card className="p-4 bg-gradient-to-r from-background to-muted/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Add to:</Label>
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          checked={uploadTarget === "wishlist"}
+                          onCheckedChange={(checked: boolean) => {
+                            setUploadTarget(checked ? "wishlist" : "closet");
+                            setFormData((prev) => ({ ...prev, mode: checked ? "wishlist" : "closet" }));
                           }}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                        <Badge
+                          variant={uploadTarget === "wishlist" ? "default" : "secondary"}
+                          className="px-3 py-1 font-medium transition-all duration-200"
                         >
-                          <X className="w-4 h-4 mr-2" />
-                          Remove
-                        </Button>
+                          {uploadTarget === "wishlist" ? "✨ Wishlist" : "👕 My Closet"}
+                        </Badge>
                       </div>
-                    ) : (
+                    </div>
+                  </Card>
+
+                  <Separator />
+
+                  {/* Form Tabs */}
+                  <Tabs value={mode} onValueChange={(value) => setMode(value as "basic" | "advanced")}>
+                    <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50">
+                      <TabsTrigger value="basic" className="transition-all duration-200">
+                        Basic Details
+                      </TabsTrigger>
+                      <TabsTrigger value="advanced" className="transition-all duration-200">
+                        Advanced Details
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="basic" className="space-y-6 mt-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="name" className="text-sm font-medium">
+                            Name *
+                          </Label>
+                          <Input
+                            id="name"
+                            placeholder="e.g., Classic Denim Jacket"
+                            value={formData.name || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="type" className="text-sm font-medium">
+                            Type *
+                          </Label>
+                          <Input
+                            id="type"
+                            placeholder="e.g., Jacket, T-Shirt, Jeans"
+                            value={formData.type || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="brand" className="text-sm font-medium">
+                            Brand
+                          </Label>
+                          <Input
+                            id="brand"
+                            placeholder="e.g., Levi's, Nike, Zara"
+                            value={formData.brand || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="price" className="text-sm font-medium">
+                            Price {uploadTarget === "wishlist" && "*"}
+                          </Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            placeholder="0.00"
+                            value={formData.price ?? ""}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                price: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                              }))
+                            }
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </motion.div>
+
+                      <AnimatePresence>
+                        {uploadTarget === "wishlist" && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-2"
+                          >
+                            <Label htmlFor="sourceUrl" className="text-sm font-medium">
+                              Source URL *
+                            </Label>
+                            <Input
+                              id="sourceUrl"
+                              placeholder="https://..."
+                              value={formData.sourceUrl || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, sourceUrl: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <div className="space-y-2">
-                        <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                        <p className="text-gray-600">Drop an image here or click to browse</p>
-                        <p className="text-sm text-gray-400">PNG, JPG up to 10MB</p>
+                        <Label htmlFor="notes" className="text-sm font-medium">
+                          Notes
+                        </Label>
+                        <Textarea
+                          id="notes"
+                          placeholder="Additional notes about this item..."
+                          maxLength={100}
+                          value={formData.notes || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                          className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 resize-none"
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground text-right">{formData.notes?.length || 0}/100</p>
                       </div>
+                    </TabsContent>
+
+                    <TabsContent value="advanced" className="space-y-6 mt-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="occasion" className="text-sm font-medium">
+                            Occasion
+                          </Label>
+                          <Input
+                            id="occasion"
+                            placeholder="e.g., Casual, Formal, Work"
+                            value={formData.occasion || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, occasion: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="style" className="text-sm font-medium">
+                            Style
+                          </Label>
+                          <Input
+                            id="style"
+                            placeholder="e.g., Vintage, Modern, Bohemian"
+                            value={formData.style || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, style: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="fit" className="text-sm font-medium">
+                            Fit
+                          </Label>
+                          <Select
+                            value={formData.fit || ""}
+                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, fit: value }))}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder="Select fit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="slim">Slim</SelectItem>
+                              <SelectItem value="regular">Regular</SelectItem>
+                              <SelectItem value="oversized">Oversized</SelectItem>
+                              <SelectItem value="crop">Crop</SelectItem>
+                              <SelectItem value="skinny">Skinny</SelectItem>
+                              <SelectItem value="tapered">Tapered</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="color" className="text-sm font-medium">
+                            Color
+                          </Label>
+                          <Input
+                            id="color"
+                            placeholder="e.g., Navy Blue, Black, Red"
+                            value={formData.color || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="material" className="text-sm font-medium">
+                            Material
+                          </Label>
+                          <Select
+                            value={formData.material || ""}
+                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, material: value }))}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder="Select material" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cotton">Cotton</SelectItem>
+                              <SelectItem value="linen">Linen</SelectItem>
+                              <SelectItem value="denim">Denim</SelectItem>
+                              <SelectItem value="leather">Leather</SelectItem>
+                              <SelectItem value="knit">Knit</SelectItem>
+                              <SelectItem value="polyester">Polyester</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="season" className="text-sm font-medium">
+                            Season
+                          </Label>
+                          <Select
+                            value={formData.season || ""}
+                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder="Select season" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="spring">🌸 Spring</SelectItem>
+                              <SelectItem value="summer">☀️ Summer</SelectItem>
+                              <SelectItem value="fall">🍂 Fall</SelectItem>
+                              <SelectItem value="winter">❄️ Winter</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </motion.div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="border-t bg-gradient-to-r from-background to-muted/20 p-6">
+                  <AnimatePresence>
+                    {(isSubmitting || isLoading) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mb-4"
+                      >
+                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                          <span className="font-medium">{isSubmitting ? "Uploading..." : "Scraping..."}</span>
+                          <span className="font-mono">{uploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <motion.div
+                            className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${uploadProgress}%` }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                          />
+                        </div>
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
 
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileUpload(file);
-                    }}
-                  />
-
-                  {imagePreview && (
-                    <Button onClick={handleAutoFill} disabled={isAutoFilling || !selectedFile} className="w-full" variant="secondary">
-                      {isAutoFilling ? (
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={onCloseAction}
+                      disabled={isSubmitting}
+                      className="px-6 transition-all duration-200"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!isFormValid() || isSubmitting}
+                      className="px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                    >
+                      {isSubmitting ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
-                        <Wand2 className="w-4 h-4 mr-2" />
+                        <Plus className="w-4 h-4 mr-2" />
                       )}
-                      {isAutoFilling ? "Analyzing..." : "Auto-fill Details"}
+                      {isSubmitting ? "Adding..." : "Add Item"}
                     </Button>
-                  )}
-                </div>
-              )}
-
-              {/* URL Upload */}
-              {uploadTarget === "wishlist" && uploadMethod === "url" && (
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter product URL..."
-                      value={scrapingUrl}
-                      onChange={(e) => setScrapingUrl(e.target.value)}
-                    />
-                    <Button onClick={handleUrlScraping} disabled={isLoading || !scrapingUrl.trim()}>
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Scrape"}
-                    </Button>
-                  </div>
-
-                  {scrapedProducts.length > 0 && (
-                    <div className="space-y-3">
-                      <Label>Select Product Image</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {scrapedProducts[0].images.map((image, index) => (
-                          <div
-                            key={index}
-                            className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-colors ${
-                              selectedScrapedImage === image
-                                ? "border-blue-500"
-                                : "border-gray-200 hover:border-gray-300"
-                            }`}
-                            onClick={() => setSelectedScrapedImage(image)}
-                          >
-                            <img
-                              src={image || "/placeholder.svg"}
-                              alt={`Product ${index + 1}`}
-                              className="w-full h-32 object-cover"
-                            />
-                            {selectedScrapedImage === image && (
-                              <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
-                                <Check className="w-3 h-3" />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column - Form */}
-          <div className="lg:w-3/5 flex flex-col overflow-hidden">
-
-          <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
-
-              {/* Target Toggle */}
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Add to:</Label>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={uploadTarget === "wishlist"}
-                      onCheckedChange={(checked: boolean) => {
-                        setUploadTarget(checked ? "wishlist" : "closet");
-                        setFormData((prev) => ({ ...prev, mode: checked ? "wishlist" : "closet" }));
-                      }}
-                    />
-                    <Badge variant={uploadTarget === "wishlist" ? "default" : "secondary"}>
-                      {uploadTarget === "wishlist" ? "Wishlist" : "My Closet"}
-                    </Badge>
                   </div>
                 </div>
               </div>
-
-              <Separator />
-
-              {/* Mode Toggle */}
-              <Tabs value={mode} onValueChange={(value) => setMode(value as "basic" | "advanced")}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="basic">Basic Details</TabsTrigger>
-                  <TabsTrigger value="advanced">Advanced Details</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="basic" className="space-y-4 mt-6 data-[state=inactive]:hidden data-[state=active]:animate-in data-[state=active]:fade-in duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g., Classic Denim Jacket"
-                        value={formData.name || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="type">Type *</Label>
-                      <Input
-                        id="type"
-                        placeholder="e.g., Jacket, T-Shirt, Jeans"
-                        value={formData.type || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="brand">Brand</Label>
-                      <Input
-                        id="brand"
-                        placeholder="e.g., Levi's, Nike, Zara"
-                        value={formData.brand || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price {uploadTarget === "wishlist" && "*"}</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        placeholder="0.00"
-                        value={formData.price ?? ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            price: e.target.value ? Number.parseFloat(e.target.value) : undefined,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  {uploadTarget === "wishlist" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="sourceUrl">Source URL *</Label>
-                      <Input
-                        id="sourceUrl"
-                        placeholder="https://..."
-                        value={formData.sourceUrl || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, sourceUrl: e.target.value }))}
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Additional notes about this item..."
-                      maxLength={100}
-                      value={formData.notes || ""}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-gray-500 text-right">{formData.notes?.length || 0}/100</p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="advanced" className="space-y-4 mt-6 data-[state=inactive]:hidden data-[state=active]:animate-in data-[state=active]:fade-in duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="occasion">Occasion</Label>
-                      <Input
-                        id="occasion"
-                        placeholder="e.g., Casual, Formal, Work"
-                        value={formData.occasion || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, occasion: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="style">Style</Label>
-                      <Input
-                        id="style"
-                        placeholder="e.g., Vintage, Modern, Bohemian"
-                        value={formData.style || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, style: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="fit">Fit</Label>
-                      <Select
-                        value={formData.fit || ""}
-                        onValueChange={(value: string) => setFormData((prev) => ({ ...prev, fit: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select fit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="slim">Slim</SelectItem>
-                          <SelectItem value="regular">Regular</SelectItem>
-                          <SelectItem value="oversized">Oversized</SelectItem>
-                          <SelectItem value="crop">Crop</SelectItem>
-                          <SelectItem value="skinny">Skinny</SelectItem>
-                          <SelectItem value="tapered">Tapered</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="color">Color</Label>
-                      <Input
-                        id="color"
-                        placeholder="e.g., Navy Blue, Black, Red"
-                        value={formData.color || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="material">Material</Label>
-                      <Select
-                        value={formData.material || ""}
-                        onValueChange={(value: string) => setFormData((prev) => ({ ...prev, material: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select material" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cotton">Cotton</SelectItem>
-                          <SelectItem value="linen">Linen</SelectItem>
-                          <SelectItem value="denim">Denim</SelectItem>
-                          <SelectItem value="leather">Leather</SelectItem>
-                          <SelectItem value="knit">Knit</SelectItem>
-                          <SelectItem value="polyester">Polyester</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="season">Season</Label>
-                      <Select
-                        value={formData.season || ""}
-                        onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select season" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="spring">Spring</SelectItem>
-                          <SelectItem value="summer">Summer</SelectItem>
-                          <SelectItem value="fall">Fall</SelectItem>
-                          <SelectItem value="winter">Winter</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
             </div>
-
-            {/* Footer Actions */}
-            <div className="border-t p-6">
-              {(isSubmitting || isLoading) && (
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <span>{isSubmitting ? "Uploading..." : "Scraping..."}</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-3 justify-end">
-                <Button variant="outline" onClick={onCloseAction} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={!isFormValid() || isSubmitting} className="min-w-24">
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Item"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+    </AnimatePresence>
   );
 }

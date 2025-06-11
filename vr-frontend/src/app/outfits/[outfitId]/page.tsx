@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import {
@@ -84,50 +84,86 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null);
   const [originalCategorizedItems, setOriginalCategorizedItems] = useState<CategorizedOutfitItems | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [outfitRes, wishlistRes, closetRes] = await Promise.all([
-          axios.get(`http://localhost:8000/api/outfits/${outfitId}`, { withCredentials: true }),
-          axios.get("http://localhost:8000/api/images?mode=wishlist", { withCredentials: true }),
-          axios.get("http://localhost:8000/api/images?mode=closet", { withCredentials: true }),
-        ]);
+  const getItemCategory = useCallback((item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "others" => {
+    const type = item.type?.toLowerCase() || "";
+    if (["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)) {
+      return "top";
+    } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
+      return "bottom";
+    } else if (["jacket", "coat", "blazer", "vest"].includes(type)) {
+      return "outerwear";
+    } else if (["shoes", "boots", "sneakers", "sandals"].includes(type)) {
+      return "shoe";
+    } else {
+      return "others";
+    }
+  }, []);
 
-        const closetItems: ClothingItem[] = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
-          ...item,
-          mode: "closet",
-        }));
-        const wishlistItems: ClothingItem[] = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({
-          ...item,
-          mode: "wishlist",
-        }));
-        const allItems = [...closetItems, ...wishlistItems];
-        setAllClothingItems(allItems);
-
-        const outfitClothingItemsWithMode = (outfitRes.data.outfit.clothingItems || [])
-          .map((itemObject: { id: string }) => allItems.find((item: ClothingItem) => item.id === itemObject.id))
-          .filter((item: ClothingItem | undefined): item is ClothingItem => item !== undefined) as ClothingItem[];
-
-        const outfitWithFullItems = {
-          ...outfitRes.data.outfit,
-          clothingItems: outfitClothingItemsWithMode,
-        };
-
-        setOutfit(outfitWithFullItems);
-        setEditedOutfit(outfitWithFullItems);
-      } catch (err: any) {
-        console.error("Error fetching data:", err);
-        setError(err.message || "Failed to fetch data");
-      } finally {
-        setLoading(false);
+  const categorizeOutfitItems = useCallback((items: ClothingItem[]): CategorizedOutfitItems => {
+    const categorized: CategorizedOutfitItems = { others: [] };
+    items.forEach((item) => {
+      const category = getItemCategory(item);
+      if (category === "outerwear") {
+        categorized.outerwear = item;
+      } else if (category === "top") {
+        categorized.top = item;
+      } else if (category === "bottom") {
+        categorized.bottom = item;
+      } else if (category === "shoe") {
+        categorized.shoe = item;
+      } else {
+        categorized.others.push(item);
       }
-    };
+    });
+    return categorized;
+  }, [getItemCategory]);
 
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [outfitRes, wishlistRes, closetRes] = await Promise.all([
+        axios.get(`http://localhost:8000/api/outfits/${outfitId}`, { withCredentials: true }),
+        axios.get("http://localhost:8000/api/images?mode=wishlist", { withCredentials: true }),
+        axios.get("http://localhost:8000/api/images?mode=closet", { withCredentials: true }),
+      ]);
+
+      const closetItems: ClothingItem[] = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
+        ...item,
+        mode: "closet",
+      }));
+      const wishlistItems: ClothingItem[] = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({
+        ...item,
+        mode: "wishlist",
+      }));
+      const allItems = [...closetItems, ...wishlistItems];
+      setAllClothingItems(allItems);
+
+      const outfitClothingItemsWithMode = (outfitRes.data.outfit.clothingItems || [])
+        .map((itemObject: { id: string }) => allItems.find((item: ClothingItem) => item.id === itemObject.id))
+        .filter((item: ClothingItem | undefined): item is ClothingItem => item !== undefined) as ClothingItem[];
+
+      const outfitWithFullItems = {
+        ...outfitRes.data.outfit,
+        clothingItems: outfitClothingItemsWithMode,
+      };
+
+      setOutfit(outfitWithFullItems);
+      setEditedOutfit(outfitWithFullItems);
+      setEditedCategorizedItems(categorizeOutfitItems(outfitWithFullItems.clothingItems));
+      setOriginalCategorizedItems(categorizeOutfitItems(outfitWithFullItems.clothingItems));
+    } catch (err: any) {
+      console.error("Error fetching data:", err);
+      setError(err.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  }, [outfitId, categorizeOutfitItems]);
+
+  useEffect(() => {
     if (outfitId) {
       fetchData();
     }
-  }, [outfitId]);
+  }, [outfitId, fetchData]);
 
   const handleDeleteOutfit = async () => {
     if (!outfit) return;
@@ -147,11 +183,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   const handleEditOutfit = () => {
     setIsEditing(true);
-    if (outfit) {
-      const categorized = categorizeOutfitItems(outfit.clothingItems);
-      setEditedCategorizedItems(categorized);
-      setOriginalCategorizedItems(JSON.parse(JSON.stringify(categorized))); // Deep copy
-    }
+    // No need to set editedCategorizedItems and originalCategorizedItems here
+    // as they are already initialized in fetchData and updated on save/cancel.
   };
 
   const handleSaveEdit = async () => {
@@ -184,6 +217,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       setOutfit(updatedOutfitWithFullItems);
       setEditedOutfit(updatedOutfitWithFullItems);
       setEditedCategorizedItems(categorizeOutfitItems(clothingItemsToSave));
+      setOriginalCategorizedItems(categorizeOutfitItems(clothingItemsToSave));
       setIsEditing(false);
     } catch (err: any) {
       console.error("Error updating outfit:", err);
@@ -192,8 +226,10 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   };
 
   const handleCancelEdit = () => {
-    setEditedOutfit(outfit || {});
-    setEditedCategorizedItems(originalCategorizedItems);
+    if (outfit && originalCategorizedItems) {
+      setEditedOutfit(outfit);
+      setEditedCategorizedItems(originalCategorizedItems);
+    }
     setIsEditing(false);
   };
 
@@ -208,7 +244,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const handleSelectChange = (name: string, value: string) => {
     setEditedOutfit((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value === "none" ? undefined : value,
     }));
   };
 
@@ -219,21 +255,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-  };
-
-  const getItemCategory = (item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "others" => {
-    const type = item.type?.toLowerCase() || "";
-    if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
-      return "top";
-    } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
-      return "bottom";
-    } else if (["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(type)) {
-      return "outerwear";
-    } else if (["shoes"].includes(type)) {
-      return "shoe";
-    } else {
-      return "others";
-    }
   };
 
   const handleOpenSelectModal = (category: "outerwear" | "top" | "bottom" | "shoe") => {
@@ -259,19 +280,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
     setEditedCategorizedItems(updatedCategorizedItems);
     handleCloseSelectModal();
-  };
-
-  const categorizeOutfitItems = (items: ClothingItem[]): CategorizedOutfitItems => {
-    const categorized: CategorizedOutfitItems = { others: [] };
-    items.forEach((item) => {
-      const category = getItemCategory(item);
-      if (category === "outerwear" || category === "top" || category === "bottom" || category === "shoe") {
-        categorized[category] = item;
-      } else {
-        categorized.others.push(item);
-      }
-    });
-    return categorized;
   };
 
   if (loading) {
@@ -519,7 +527,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         Occasion
                       </Label>
                       <Select
-                        value={editedOutfit.occasion || ""}
+                        value={editedOutfit.occasion || "none"}
                         onValueChange={(value: string) => handleSelectChange("occasion", value)}
                       >
                         <SelectTrigger>
@@ -543,7 +551,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         Season
                       </Label>
                       <Select
-                        value={editedOutfit.season || ""}
+                        value={editedOutfit.season || "none"}
                         onValueChange={(value: string) => handleSelectChange("season", value)}
                       >
                         <SelectTrigger>
