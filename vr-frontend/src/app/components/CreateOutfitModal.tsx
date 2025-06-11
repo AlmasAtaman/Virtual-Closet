@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shuffle, Check, AlertTriangle, Sparkles } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Alert, AlertDescription } from '../../components/ui/alert';
+import { X, Shuffle, Check, AlertTriangle, Sparkles, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import ClothingItemSelectModal from './ClothingItemSelectModal';
 
 interface CreateOutfitModalProps {
@@ -30,6 +30,7 @@ interface CategorizedClothing {
     tops: ClothingItem[];
     bottoms: ClothingItem[];
     outerwear: ClothingItem[];
+    shoes: ClothingItem[];
     // Add other categories if needed
 }
 
@@ -37,16 +38,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null);
     const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null);
     const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null);
+    const [selectedShoe, setSelectedShoe] = useState<ClothingItem | null>(null);
 
-    const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [] });
+    const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], shoes: [] });
     const [loadingClothing, setLoadingClothing] = useState(true);
-    const [viewingCategory, setViewingCategory] = useState<"none" | "top" | "bottom" | "outerwear">("none");
     const [showTopSelectModal, setShowTopSelectModal] = useState(false);
     const [showBottomSelectModal, setShowBottomSelectModal] = useState(false);
     const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false);
-    const [randomizeFromCloset, setRandomizeFromCloset] = useState(true);
-    const [randomizeFromWishlist, setRandomizeFromWishlist] = useState(false);
+    const [showShoeSelectModal, setShowShoeSelectModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [animationKey, setAnimationKey] = useState(0);
 
     useEffect(() => {
         if (show) {
@@ -81,12 +82,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         acc.bottoms.push(item);
                     } else if (['jacket', 'sweater', 'coat', 'hoodie', 'cardigan'].includes(lowerCaseType)) {
                         acc.outerwear.push(item);
+                    } else if (['shoes'].includes(lowerCaseType)) {
+                        acc.shoes.push(item);
                     } else {
                         console.warn(`Unknown clothing type: ${item.type}`);
                     }
                 }
                 return acc;
-            }, { tops: [], bottoms: [], outerwear: [] });
+            }, { tops: [], bottoms: [], outerwear: [], shoes: [] });
 
             setClothingItems(categorized);
         } catch (error) {
@@ -106,7 +109,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     };
 
     const hasWishlistItems = () => {
-        return [selectedTop, selectedBottom, selectedOuterwear].some((item) => item && item.mode === 'wishlist');
+        return [selectedTop, selectedBottom, selectedOuterwear, selectedShoe].some((item) => item && item.mode === 'wishlist');
     };
 
     const handleCreateOutfit = async () => {
@@ -121,6 +124,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     selectedTop?.id,
                     selectedBottom?.id,
                     selectedOuterwear?.id,
+                    selectedShoe?.id,
                 ].filter(Boolean), // Filter out null/undefined ids
             };
             // console.log('Creating outfit:', newOutfitData); // Removed console log
@@ -155,254 +159,44 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         }
     };
 
-    const handleSelectItem = (item: ClothingItem, category: "top" | "bottom" | "outerwear") => {
-        if (item.id === 'none') {
-            // Handle 'Select None' option
-            if (category === "top") {
-                setSelectedTop(null);
-            } else if (category === "bottom") {
-                setSelectedBottom(null);
-            } else if (category === "outerwear") {
-                setSelectedOuterwear(null);
-            }
-        } else {
-            // Handle selecting a regular clothing item
-            if (category === "top") {
-                setSelectedTop(item);
-            } else if (category === "bottom") {
-                setSelectedBottom(item);
-            } else if (category === "outerwear") {
-                setSelectedOuterwear(item);
-            }
-        }
-        setViewingCategory("none"); // Go back to the main form after selection
-    };
-
-    // Move reset logic here so it runs on any close
     const handleCloseModal = () => {
         // Reset form state - only reset clothing selections
         setSelectedTop(null);
         setSelectedBottom(null);
         setSelectedOuterwear(null);
+        setSelectedShoe(null);
         // Reset modal visibility states
         setShowTopSelectModal(false);
         setShowBottomSelectModal(false);
         setShowOuterwearSelectModal(false);
-        setViewingCategory("none");
+        setShowShoeSelectModal(false);
         onCloseAction(); // Call the original onCloseAction prop
     };
 
-    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        // Close modal only if the click is on the overlay itself
-        if (e.target === e.currentTarget) {
-            handleCloseModal();
-        }
-    };
-
-    // Helper to get random item from array
     const getRandomItem = <T,>(arr: T[]): T | null => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
 
     const handleRandomize = () => {
-        // Filter items by selected sources
-        const sources: ('closet' | 'wishlist')[] = [];
-        if (randomizeFromCloset) sources.push('closet');
-        if (randomizeFromWishlist) sources.push('wishlist');
-        if (sources.length === 0) return; // No sources selected
+        // Always randomize from both closet and wishlist
+        const sources: ('closet' | 'wishlist')[] = ['closet', 'wishlist'];
 
         const filterBySource = (items: ClothingItem[]): ClothingItem[] => items.filter((item: ClothingItem) => sources.includes(item.mode));
         const tops = filterBySource(clothingItems.tops);
         const bottoms = filterBySource(clothingItems.bottoms);
         const outerwear = filterBySource(clothingItems.outerwear);
+        const shoes = filterBySource(clothingItems.shoes);
 
         setSelectedTop(getRandomItem(tops));
         setSelectedBottom(getRandomItem(bottoms));
         setSelectedOuterwear(getRandomItem(outerwear));
+        setSelectedShoe(getRandomItem(shoes));
+
+        // Trigger animation
+        setAnimationKey((prev) => prev + 1);
     };
 
     if (!show) {
         return null;
     }
-
-    // Render modal content based on viewingCategory state
-    const renderModalContent = () => {
-        if (viewingCategory === "top") {
-            return (
-                <div>
-                    <h4 className="text-lg font-semibold mb-4">Select a Top</h4>
-                    {/* The ClothingItemSelectModal will handle the view mode toggle and item display */}
-                    {/* Old inline item list removed */}
-                    <button onClick={() => setViewingCategory("none")} className="mt-4 px-4 py-2 bg-gray-300 rounded">Back</button>
-                </div>
-            );
-        } else if (viewingCategory === "bottom") {
-             return (
-                <div>
-                    <h4 className="text-lg font-semibold mb-4">Select a Bottom</h4>
-                    {/* The ClothingItemSelectModal will handle the view mode toggle and item display */}
-                    {/* Old inline item list removed */}
-                     <button onClick={() => setViewingCategory("none")} className="mt-4 px-4 py-2 bg-gray-300 rounded">Back</button>
-                </div>
-            );
-        } else if (viewingCategory === "outerwear") {
-             return (
-                <div>
-                    <h4 className="text-lg font-semibold mb-4">Select Outerwear (Optional)</h4>
-                    {/* The ClothingItemSelectModal will handle the view mode toggle and item display */}
-                    {/* Old inline item list removed */}
-                     <button onClick={() => setViewingCategory("none")} className="mt-4 px-4 py-2 bg-gray-300 rounded">Back</button>
-                </div>
-            );
-        } else {
-            // Main outfit creation form
-            return (
-                 <div className="mt-4 space-y-6">
-                    {/* Randomize Button and Checkboxes */}
-                    <div className="flex flex-col items-center mb-4">
-                        <button
-                            className="px-6 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                            onClick={handleRandomize}
-                        >
-                            Randomize Outfit
-                        </button>
-                        <div className="flex gap-4 mt-2">
-                            <label className="flex items-center text-gray-200">
-                                <input
-                                    type="checkbox"
-                                    checked={randomizeFromCloset}
-                                    onChange={e => setRandomizeFromCloset(e.target.checked)}
-                                    className="mr-2 accent-blue-600"
-                                />
-                                Closet
-                            </label>
-                            <label className="flex items-center text-gray-200">
-                                <input
-                                    type="checkbox"
-                                    checked={randomizeFromWishlist}
-                                    onChange={e => setRandomizeFromWishlist(e.target.checked)}
-                                    className="mr-2 accent-blue-600"
-                                />
-                                Wishlist
-                            </label>
-                        </div>
-                    </div>
-                    
-                    {/* Clothing Item Selection Area - Adjusted Layout and Sizing */}
-                    <div>
-                        <h4 className="text-md font-semibold text-gray-900 mb-4 text-center">Select Clothing Items</h4>
-                        
-                        {/* Display wishlist warning if any selected item is from wishlist */}
-                        {hasWishlistItems() && (
-                            <p className="text-red-500 text-center mb-4">Note: One or more selected items are from your wishlist.</p>
-                        )}
-
-                        {/* Flex container for the outfit layout (Outerwear left, Tops/Bottoms right) */}
-                        {/* Adjusted alignment and gap for visual balance */}
-                        {/* Further refined gap and item sizing for sketch match */}
-                        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4"> {/* Adjusted horizontal gap and items alignment */}
-                            
-                            {/* Outerwear Section (Left) */}
-                            {/* Increased size and conditional styling */}
-                            <button 
-                                className={`flex-shrink-0 w-48 h-64 flex flex-col justify-center items-center rounded-md overflow-hidden transition-all duration-200 ${selectedOuterwear ? 'border-none p-0' : 'border border-gray-600 hover:bg-gray-700 p-4'}`} // Conditional border/padding, adjusted size
-                                onClick={() => {
-                                    const initialMode = clothingItems.outerwear.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist';
-                                    setShowOuterwearSelectModal(true);
-                                }}
-                                disabled={loadingClothing}
-                            >
-                                {selectedOuterwear ? (
-                                    <img src={selectedOuterwear.url} alt={selectedOuterwear.name || 'Selected Outerwear'} className="w-full h-full object-contain rounded" />
-                                ) : (
-                                    <div className="flex flex-col items-center text-gray-400">
-                                        <p>Outerwear</p>
-                                        <p className="text-sm">(Optional)</p>
-                                    </div>
-                                )}
-                                
-                            </button>
-
-                            {/* Top and Bottom Sections (Right Column) */}
-                            {/* Adjusted gap and width for column */}
-                            {/* Reduced vertical gap and adjusted item heights for sketch match */}
-                            <div className="flex flex-col flex-grow gap-2 w-56 lg:w-64"> {/* Adjusted vertical gap, adjusted fixed width for the column */}
-                                {/* Top Section */}
-                                {/* Adjusted size and conditional styling */}
-                                <button 
-                                    className={`w-full h-56 flex flex-col justify-center items-center rounded-md overflow-hidden transition-all duration-200 ${selectedTop ? 'border-none p-0' : 'border border-gray-600 hover:bg-gray-700 p-4'}`} // Conditional border/padding, increased size
-                                    onClick={() => {
-                                        const initialMode = clothingItems.tops.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist';
-                                        setShowTopSelectModal(true);
-                                    }}
-                                    disabled={loadingClothing}
-                                >
-                                    {selectedTop ? (
-                                        <img src={selectedTop.url} alt={selectedTop.name || 'Selected Top'} className="w-full h-full object-contain rounded" />
-                                    ) : (
-                                        <div className="flex flex-col items-center text-gray-400">
-                                             <p>Tops</p>
-                                            <p className="text-sm">Select Top</p>
-                                        </div>
-                                    )}
-                                </button>
-
-                                {/* Bottom Section */}
-                                {/* Adjusted size and conditional styling */}
-                                <button 
-                                    className={`w-full h-56 flex flex-col justify-center items-center rounded-md overflow-hidden transition-all duration-200 ${selectedBottom ? 'border-none p-0' : 'border border-gray-600 hover:bg-gray-700 p-4'}`} // Conditional border/padding, increased size
-                                    onClick={() => {
-                                        const initialMode = clothingItems.bottoms.filter(item => item.mode === 'closet').length > 0 ? 'closet' : 'wishlist';
-                                        setShowBottomSelectModal(true);
-                                    }}
-                                     disabled={loadingClothing}
-                                >
-                                    {selectedBottom ? (
-                                        <img src={selectedBottom.url} alt={selectedBottom.name || 'Selected Bottom'} className="w-full h-full object-contain rounded" />
-                                    ) : (
-                                        <div className="flex flex-col items-center text-gray-400">
-                                            <p>Bottoms</p>
-                                            <p className="text-sm">Select Bottom</p>
-                                        </div>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                         {loadingClothing && <p className="mt-4 text-center">Loading clothing items...</p>}
-                    </div>
-
-                    {/* Action Buttons */}
-                    {/* Adjusted spacing and positioning */}
-                    <div className="flex justify-center items-center mt-6">
-                        <button 
-                            id="create-outfit-btn"
-                            className={`px-6 py-2 bg-green-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 ${!isFormValid() && 'opacity-50 cursor-not-allowed'}`}
-                            onClick={handleCreateOutfit}
-                            disabled={!isFormValid() || isCreating}
-                        >
-                            {isCreating ? (
-                                <>
-                                    <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                                        className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"
-                                    />
-                                    Creating...
-                                </>
-                            ) : (
-                                "Create Outfit"
-                            )}
-                        </button>
-                        <button 
-                            id="cancel-btn"
-                            className="ml-4 px-6 py-2 bg-gray-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                            onClick={handleCloseModal}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-    };
 
     return (
         <AnimatePresence>
@@ -418,186 +212,286 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 20 }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create New Outfit</h2>
-                            <p className="text-slate-600 dark:text-slate-400 mt-1">Mix and match your favorite pieces</p>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create New Outfit</h2>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
-                            <X className="w-5 h-5" />
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                onClick={handleRandomize}
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                            >
+                                <Shuffle className="w-4 h-4 mr-2" />
+                                Randomize
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
+                                <X className="w-5 h-5" />
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-                        {/* Randomize Section */}
-                        <Card className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center space-x-2">
-                                        <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Surprise Me!</h3>
-                                    </div>
-                                    <Button
-                                        onClick={handleRandomize}
-                                        disabled={!randomizeFromCloset && !randomizeFromWishlist}
-                                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        {/* Outfit Builder - Vertical Stack Layout */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Left Side - Outfit Preview */}
+                            <div className="order-2 lg:order-1">
+                                <Card className="h-[500px]">
+                                    <CardContent className="h-full p-6">
+                                        <div className="h-full relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-xl flex items-center justify-center">
+                                            {/* Outfit Preview - Same layout as OutfitCard */}
+                                            <motion.div
+                                                key={animationKey}
+                                                className="relative w-44 h-80 mx-auto"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ duration: 0.5 }}
+                                            >
+                                                {/* Bottom (pants) */}
+                                                {selectedBottom && (
+                                                    <motion.img
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.3 }}
+                                                        src={selectedBottom.url}
+                                                        alt="Bottom"
+                                                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
+                                                    />
+                                                )}
+
+                                                {/* Top (shirt) */}
+                                                {selectedTop && (
+                                                    <motion.img
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.2 }}
+                                                        src={selectedTop.url}
+                                                        alt="Top"
+                                                        className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
+                                                    />
+                                                )}
+
+                                                {/* Outerwear */}
+                                                {selectedOuterwear && (
+                                                    <motion.img
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.1 }}
+                                                        src={selectedOuterwear.url}
+                                                        alt="Outerwear"
+                                                        className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
+                                                    />
+                                                )}
+
+                                                {/* Shoe */}
+                                                {selectedShoe && (
+                                                    <motion.img
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.1 }}
+                                                        src={selectedShoe.url}
+                                                        alt="Shoe"
+                                                        className="absolute bottom-[9rem] left-[60%] w-[8rem] z-5"
+                                                    />
+                                                )}
+
+                                                {/* Empty state */}
+                                                {!selectedTop && !selectedBottom && !selectedOuterwear && !selectedShoe && (
+                                                    <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                                                        <div className="text-center">
+                                                            <p className="text-lg font-semibold mb-2">No items selected</p>
+                                                            <p className="text-sm">Select items to preview</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Right Side - Item Selection */}
+                            <div className="order-1 lg:order-2 space-y-4">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Select Your Pieces</h3>
+
+                                {/* Outerwear Selection */}
+                                <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                >
+                                    <Card
+                                        className={`cursor-pointer transition-all duration-300 ${
+                                            selectedOuterwear
+                                                ? "ring-2 ring-blue-500 shadow-lg bg-blue-50 dark:bg-blue-900/20"
+                                                : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                                        }`}
+                                        onClick={() => setShowOuterwearSelectModal(true)}
                                     >
-                                        <Shuffle className="w-4 h-4 mr-2" />
-                                        Randomize
-                                    </Button>
-                                </div>
-                                <div className="flex space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="closet"
-                                            checked={randomizeFromCloset}
-                                            onCheckedChange={(checked: boolean) => setRandomizeFromCloset(checked)}
-                                        />
-                                        <label htmlFor="closet" className="text-sm text-slate-700 dark:text-slate-300">
-                                            From Closet
-                                        </label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="wishlist"
-                                            checked={randomizeFromWishlist}
-                                            onCheckedChange={(checked: boolean) => setRandomizeFromWishlist(checked)}
-                                        />
-                                        <label htmlFor="wishlist" className="text-sm text-slate-700 dark:text-slate-300">
-                                            From Wishlist
-                                        </label>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Wishlist Warning */}
-                        {hasWishlistItems() && (
-                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
-                                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                    <AlertDescription className="text-amber-800 dark:text-amber-200">
-                                        Some selected items are from your wishlist and may not be available.
-                                    </AlertDescription>
-                                </Alert>
-                            </motion.div>
-                        )}
-
-                        {/* Outfit Builder */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Outerwear */}
-                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Card
-                                    className={`h-80 cursor-pointer transition-all duration-300 ${
-                                        selectedOuterwear
-                                            ? "ring-2 ring-blue-500 shadow-lg"
-                                            : "border-dashed border-2 hover:border-slate-400 dark:hover:border-slate-500"
-                                    }`}
-                                    onClick={() => setShowOuterwearSelectModal(true)}
-                                >
-                                    <CardContent className="h-full flex flex-col items-center justify-center p-4">
-                                        {selectedOuterwear ? (
-                                            <div className="relative w-full h-full">
-                                                <img
-                                                    src={selectedOuterwear.url || "/placeholder.svg"}
-                                                    alt={selectedOuterwear.name || "Outerwear"}
-                                                    className="w-full h-full object-contain"
-                                                />
-                                                {selectedOuterwear.mode === "wishlist" && (
-                                                    <Badge className="absolute top-2 right-2 bg-amber-500">Wishlist</Badge>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center text-slate-500 dark:text-slate-400">
-                                                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                                    <span className="text-2xl">🧥</span>
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                                    {selectedOuterwear ? (
+                                                        <img
+                                                            src={selectedOuterwear.url || "/placeholder.svg"}
+                                                            alt={selectedOuterwear.name || "Outerwear"}
+                                                            className="w-full h-full object-contain rounded-lg"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-2xl text-slate-400">🧥</span>
+                                                    )}
                                                 </div>
-                                                <h3 className="font-medium mb-1">Outerwear</h3>
-                                                <p className="text-sm opacity-75">Optional</p>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-
-                            {/* Top */}
-                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Card
-                                    className={`h-80 cursor-pointer transition-all duration-300 ${
-                                        selectedTop
-                                            ? "ring-2 ring-green-500 shadow-lg"
-                                            : "border-dashed border-2 hover:border-slate-400 dark:hover:border-slate-500"
-                                    }`}
-                                    onClick={() => setShowTopSelectModal(true)}
-                                >
-                                    <CardContent className="h-full flex flex-col items-center justify-center p-4">
-                                        {selectedTop ? (
-                                            <div className="relative w-full h-full">
-                                                <img
-                                                    src={selectedTop.url || "/placeholder.svg"}
-                                                    alt={selectedTop.name || "Top"}
-                                                    className="w-full h-full object-contain"
-                                                />
-                                                {selectedTop.mode === "wishlist" && (
-                                                    <Badge className="absolute top-2 right-2 bg-amber-500">Wishlist</Badge>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center text-slate-500 dark:text-slate-400">
-                                                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                                    <span className="text-2xl">👕</span>
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium text-slate-900 dark:text-white">
+                                                        {selectedOuterwear ? selectedOuterwear.name || "Selected Outerwear" : "Outerwear"}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                        {selectedOuterwear ? "Click to change" : "Optional - Click to select"}
+                                                    </p>
+                                                    {selectedOuterwear?.mode === "wishlist" && (
+                                                        <Badge className="mt-1 bg-amber-500">Wishlist</Badge>
+                                                    )}
                                                 </div>
-                                                <h3 className="font-medium mb-1">Top</h3>
-                                                <p className="text-sm opacity-75">Required</p>
+                                                {!selectedOuterwear && <Plus className="w-5 h-5 text-slate-400" />}
                                             </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
 
-                            {/* Bottom */}
-                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Card
-                                    className={`h-80 cursor-pointer transition-all duration-300 ${
-                                        selectedBottom
-                                            ? "ring-2 ring-purple-500 shadow-lg"
-                                            : "border-dashed border-2 hover:border-slate-400 dark:hover:border-slate-500"
-                                    }`}
-                                    onClick={() => setShowBottomSelectModal(true)}
+                                {/* Top Selection */}
+                                <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
                                 >
-                                    <CardContent className="h-full flex flex-col items-center justify-center p-4">
-                                        {selectedBottom ? (
-                                            <div className="relative w-full h-full">
-                                                <img
-                                                    src={selectedBottom.url || "/placeholder.svg"}
-                                                    alt={selectedBottom.name || "Bottom"}
-                                                    className="w-full h-full object-contain"
-                                                />
-                                                {selectedBottom.mode === "wishlist" && (
-                                                    <Badge className="absolute top-2 right-2 bg-amber-500">Wishlist</Badge>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center text-slate-500 dark:text-slate-400">
-                                                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                                    <span className="text-2xl">👖</span>
+                                    <Card
+                                        className={`cursor-pointer transition-all duration-300 ${
+                                            selectedTop
+                                                ? "ring-2 ring-green-500 shadow-lg bg-green-50 dark:bg-green-900/20"
+                                                : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50/50 dark:hover:bg-green-900/10"
+                                        }`}
+                                        onClick={() => setShowTopSelectModal(true)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                                    {selectedTop ? (
+                                                        <img
+                                                            src={selectedTop.url || "/placeholder.svg"}
+                                                            alt={selectedTop.name || "Top"}
+                                                            className="w-full h-full object-contain rounded-lg"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-2xl text-slate-400">👕</span>
+                                                    )}
                                                 </div>
-                                                <h3 className="font-medium mb-1">Bottom</h3>
-                                                <p className="text-sm opacity-75">Required</p>
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium text-slate-900 dark:text-white">
+                                                        {selectedTop ? selectedTop.name || "Selected Top" : "Top"}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                        {selectedTop ? "Click to change" : "Required - Click to select"}
+                                                    </p>
+                                                    {selectedTop?.mode === "wishlist" && <Badge className="mt-1 bg-amber-500">Wishlist</Badge>}
+                                                </div>
+                                                {!selectedTop && <Plus className="w-5 h-5 text-slate-400" />}
                                             </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Bottom Selection */}
+                                <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                >
+                                    <Card
+                                        className={`cursor-pointer transition-all duration-300 ${
+                                            selectedBottom
+                                                ? "ring-2 ring-purple-500 shadow-lg bg-purple-50 dark:bg-purple-900/20"
+                                                : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/10"
+                                        }`}
+                                        onClick={() => setShowBottomSelectModal(true)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                                    {selectedBottom ? (
+                                                        <img
+                                                            src={selectedBottom.url || "/placeholder.svg"}
+                                                            alt={selectedBottom.name || "Bottom"}
+                                                            className="w-full h-full object-contain rounded-lg"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-2xl text-slate-400">👖</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium text-slate-900 dark:text-white">
+                                                        {selectedBottom ? selectedBottom.name || "Selected Bottom" : "Bottom"}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                        {selectedBottom ? "Click to change" : "Required - Click to select"}
+                                                    </p>
+                                                    {selectedBottom?.mode === "wishlist" && <Badge className="mt-1 bg-amber-500">Wishlist</Badge>}
+                                                </div>
+                                                {!selectedBottom && <Plus className="w-5 h-5 text-slate-400" />}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Shoe Selection */}
+                                <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                >
+                                    <Card
+                                        className={`cursor-pointer transition-all duration-300 ${
+                                            selectedShoe
+                                                ? "ring-2 ring-pink-500 shadow-lg bg-pink-50 dark:bg-pink-900/20"
+                                                : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50/50 dark:hover:bg-pink-900/10"
+                                        }`}
+                                        onClick={() => setShowShoeSelectModal(true)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                                    {selectedShoe ? (
+                                                        <img
+                                                            src={selectedShoe.url || "/placeholder.svg"}
+                                                            alt={selectedShoe.name || "Shoe"}
+                                                            className="w-full h-full object-contain rounded-lg"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-2xl text-slate-400">👟</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium text-slate-900 dark:text-white">
+                                                        {selectedShoe ? selectedShoe.name || "Selected Shoe" : "Shoe"}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                        {selectedShoe ? "Click to change" : "Optional - Click to select"}
+                                                    </p>
+                                                    {selectedShoe?.mode === "wishlist" && <Badge className="mt-1 bg-pink-500">Wishlist</Badge>}
+                                                </div>
+                                                {!selectedShoe && <Plus className="w-5 h-5 text-slate-400" />}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                         <div className="text-sm text-slate-600 dark:text-slate-400">
                             {isFormValid() ? (
                                 <div className="flex items-center text-green-600 dark:text-green-400">
@@ -645,6 +539,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     onSelectItem={(item) => {
                         setSelectedOuterwear(item.id === "none" ? null : item)
                         setShowOuterwearSelectModal(false)
+                        setAnimationKey((prev) => prev + 1)
                     }}
                     viewMode={clothingItems.outerwear.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
                     selectedCategory="outerwear"
@@ -657,6 +552,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     onSelectItem={(item) => {
                         setSelectedTop(item)
                         setShowTopSelectModal(false)
+                        setAnimationKey((prev) => prev + 1)
                     }}
                     viewMode={clothingItems.tops.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
                     selectedCategory="top"
@@ -669,9 +565,23 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     onSelectItem={(item) => {
                         setSelectedBottom(item)
                         setShowBottomSelectModal(false)
+                        setAnimationKey((prev) => prev + 1)
                     }}
                     viewMode={clothingItems.bottoms.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
                     selectedCategory="bottom"
+                />
+
+                <ClothingItemSelectModal
+                    isOpen={showShoeSelectModal}
+                    onCloseAction={() => setShowShoeSelectModal(false)}
+                    clothingItems={clothingItems.shoes}
+                    onSelectItem={(item) => {
+                        setSelectedShoe(item)
+                        setShowShoeSelectModal(false)
+                        setAnimationKey((prev) => prev + 1)
+                    }}
+                    viewMode={clothingItems.shoes.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
+                    selectedCategory="shoe"
                 />
             </motion.div>
         </AnimatePresence>
