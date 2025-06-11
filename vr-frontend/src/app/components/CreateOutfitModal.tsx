@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ClothingItemSelectModal from './ClothingItemSelectModal';
+import OutfitDetailsStep from './OutfitDetailsStep';
 
 interface CreateOutfitModalProps {
     show: boolean;
@@ -48,6 +49,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const [showShoeSelectModal, setShowShoeSelectModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [animationKey, setAnimationKey] = useState(0);
+
+    const [showDetailsStep, setShowDetailsStep] = useState(false);
+    const [createdOutfitId, setCreatedOutfitId] = useState<string | null>(null);
+    const [createdOutfitItems, setCreatedOutfitItems] = useState<ClothingItem[]>([]);
 
     useEffect(() => {
         if (show) {
@@ -119,44 +124,52 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         }
         setIsCreating(true);
         try {
+            const selectedItems = [selectedTop, selectedBottom, selectedOuterwear, selectedShoe].filter(
+                Boolean,
+            ) as ClothingItem[];
             const newOutfitData = {
-                clothingItems: [
-                    selectedTop?.id,
-                    selectedBottom?.id,
-                    selectedOuterwear?.id,
-                    selectedShoe?.id,
-                ].filter(Boolean), // Filter out null/undefined ids
+                clothingItems: selectedItems.map((item) => item.id),
             };
-            // console.log('Creating outfit:', newOutfitData); // Removed console log
 
-            const res = await fetch('http://localhost:8000/api/outfits', { // Assuming POST /api/outfits is the endpoint
+            const res = await fetch('http://localhost:8000/api/outfits', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(newOutfitData),
-                credentials: 'include', // Include cookies for authentication
+                credentials: 'include',
             });
 
             if (!res.ok) {
-                 const errorData = await res.json();
-                 throw new Error(`Failed to create outfit: ${res.status} ${res.statusText} - ${errorData.message || 'Unknown error'}`);
+                const errorData = await res.json();
+                throw new Error(
+                    `Failed to create outfit: ${res.status} ${res.statusText} - ${errorData.message || 'Unknown error'}`,
+                );
             }
 
-            const createdOutfit = await res.json(); // Assuming the backend returns the created outfit
+            const createdOutfit = await res.json();
             console.log('Outfit created successfully:', createdOutfit);
 
-            // Close modal and potentially refresh outfit list on the outfits page
-            handleCloseModal(); // Use the combined close handler
-            onOutfitCreated();
-
+            // Store the created outfit info and show details step
+            setCreatedOutfitId(createdOutfit.outfit?.id || createdOutfit.id);
+            setCreatedOutfitItems(selectedItems);
+            setShowDetailsStep(true);
         } catch (error: any) {
             console.error('Error creating outfit:', error);
-            alert(`Error creating outfit: ${error.message}`); // Show error to user
-            // Keep modal open on error for user to retry/adjust
+            alert(`Error creating outfit: ${error.message}`);
         } finally {
             setIsCreating(false);
         }
+    };
+
+    const handleDetailsComplete = () => {
+        handleCloseModal();
+        onOutfitCreated();
+    };
+
+    const handleDetailsSkip = () => {
+        handleCloseModal();
+        onOutfitCreated();
     };
 
     const handleCloseModal = () => {
@@ -170,6 +183,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         setShowBottomSelectModal(false);
         setShowOuterwearSelectModal(false);
         setShowShoeSelectModal(false);
+        // Reset details step state
+        setShowDetailsStep(false);
+        setCreatedOutfitId(null);
+        setCreatedOutfitItems([]);
+        setAnimationKey(0);
         onCloseAction(); // Call the original onCloseAction prop
     };
 
@@ -526,6 +544,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             </Button>
                         </div>
                     </div>
+                    {/* Outfit Details Step */}
+                    {showDetailsStep && createdOutfitId && (
+                        <OutfitDetailsStep
+                            show={showDetailsStep}
+                            outfitId={createdOutfitId}
+                            clothingItems={createdOutfitItems}
+                            onComplete={handleDetailsComplete}
+                            onSkip={handleDetailsSkip}
+                        />
+                    )}
                 </motion.div>
 
                 {/* Selection Modals */}
