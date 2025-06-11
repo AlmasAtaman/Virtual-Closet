@@ -514,7 +514,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               <CardContent className="space-y-4">
                 {isEditing ? (
                   <div className="space-y-4">
-                    <div>
+                    <div className="min-h-[72px]">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <FileText className="w-4 h-4 inline mr-1" />
                         Name
@@ -527,7 +527,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       />
                     </div>
 
-                    <div>
+                    <div className="min-h-[72px]">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <DollarSign className="w-4 h-4 inline mr-1" />
                         Price
@@ -542,7 +542,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       />
                     </div>
 
-                    <div>
+                    <div className="min-h-[72px]">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <MapPin className="w-4 h-4 inline mr-1" />
                         Occasion
@@ -566,7 +566,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </Select>
                     </div>
 
-                    <div>
+                    <div className="min-h-[72px]">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Calendar className="w-4 h-4 inline mr-1" />
                         Season
@@ -588,7 +588,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </Select>
                     </div>
 
-                    <div>
+                    <div className="min-h-[128px]">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Notes</label>
                       <Textarea
                         name="notes"
@@ -612,51 +612,52 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {outfit.name && (
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-slate-500" />
-                        <span className="font-medium">Name:</span>
-                        <span>{outfit.name}</span>
-                      </div>
-                    )}
+                    <div className="min-h-[72px]">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <FileText className="w-4 h-4 inline mr-1" />
+                        Name
+                      </label>
+                      <span className="block h-10 flex items-center px-3 rounded-md border border-input bg-background text-slate-900 dark:text-white shadow-sm">
+                        {outfit.name || "None"}
+                      </span>
+                    </div>
 
-                    {(outfit.price != null || outfit.totalPrice != null) && (
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4 text-slate-500" />
-                        <span className="font-medium">Price:</span>
-                        <span className="text-green-600 dark:text-green-400 font-semibold">
-                          ${(outfit.price || outfit.totalPrice || 0).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
+                    <div className="min-h-[72px]">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <DollarSign className="w-4 h-4 inline mr-1" />
+                        Price
+                      </label>
+                      <span className="block h-10 flex items-center px-3 rounded-md border border-input bg-background text-green-600 dark:text-green-400 font-semibold shadow-sm">
+                        ${(outfit.price || outfit.totalPrice || 0).toFixed(2)}
+                      </span>
+                    </div>
 
-                    {outfit.occasion && (
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-slate-500" />
-                        <span className="font-medium">Occasion:</span>
-                        <Badge variant="secondary">{outfit.occasion}</Badge>
-                      </div>
-                    )}
+                    <div className="min-h-[72px]">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <MapPin className="w-4 h-4 inline mr-1" />
+                        Occasion
+                      </label>
+                      <Badge variant="secondary" className="h-10 flex items-center px-3 border border-input bg-background shadow-sm">
+                        {outfit.occasion || "None"}
+                      </Badge>
+                    </div>
 
-                    {outfit.season && (
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-slate-500" />
-                        <span className="font-medium">Season:</span>
-                        <Badge variant="outline">{outfit.season}</Badge>
-                      </div>
-                    )}
+                    <div className="min-h-[72px]">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <Calendar className="w-4 h-4 inline mr-1" />
+                        Season
+                      </label>
+                      <Badge variant="outline" className="h-10 flex items-center px-3 border border-input bg-background shadow-sm">
+                        {outfit.season || "None"}
+                      </Badge>
+                    </div>
 
-                    {outfit.notes && (
-                      <div>
-                        <div className="flex items-center space-x-2 mb-2">
-                          <FileText className="w-4 h-4 text-slate-500" />
-                          <span className="font-medium">Notes:</span>
-                        </div>
-                        <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                          {outfit.notes}
-                        </p>
-                      </div>
-                    )}
+                    <div className="min-h-[128px]">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Notes</label>
+                      <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg min-h-[96px]">
+                        {outfit.notes || "None"}
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>

@@ -44,7 +44,7 @@ interface ClothingItemSelectModalProps {
     clothingItems: ClothingItem[];
     onSelectItem: (selectedItem: ClothingItem) => void;
     viewMode: "closet" | "wishlist";
-    selectedCategory: "outerwear" | "top" | "bottom" | null;
+    selectedCategory: "outerwear" | "top" | "bottom" | "shoe" | null;
 }
 
 const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
@@ -114,7 +114,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 20 }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
@@ -178,7 +178,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                         </div>
 
                         {/* Items Grid/List */}
-                        <div className="max-h-96 overflow-y-auto">
+                        <div className="overflow-y-auto" style={{ maxHeight: "calc(95vh - 160px)" }}>
                             {viewType === "grid" ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                     {filteredItems.map((item, index) => (
