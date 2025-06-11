@@ -1,30 +1,18 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import type React from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Filter, X, ChevronDown, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import type { ClothingItem } from "../types/clothing";
 
-type Clothing = {
-  id: string;
-  key: string;
-  url: string;
-  name: string;
-  type: string;
-  brand: string;
-  price?: number | string | null;
-  occasion?: string;
-  style?: string;
-  fit?: string;
-  color?: string;
-  material?: string;
-  season?: string;
-  notes?: string;
-  mode?: "closet" | "wishlist";
-  sourceUrl?: string;
-  tags?: string[];
-};
+export type Clothing = ClothingItem;
 
-type FilterAttribute = {
-  key: keyof Clothing;
+export type FilterAttribute = {
+  key: keyof ClothingItem;
   label: string;
 };
 
@@ -60,119 +48,74 @@ const FilterSection: React.FC<FilterSectionProps> = ({
       type: true,
       advancedFilters: false,
     };
-    // Initialize all advanced filter sub-sections to be open by default
-    filterAttributes.filter(attr => attr.key !== 'type').forEach(attr => {
-      initialOpenSections[attr.key as string] = true;
-    });
+    filterAttributes
+      .filter((attr) => attr.key !== "type")
+      .forEach((attr) => {
+        initialOpenSections[attr.key as string] = true;
+      });
     return initialOpenSections;
   });
 
-  // Filter out 'type' from filterAttributes for advanced filters section
-  const advancedFilterAttributes = filterAttributes.filter(attr => attr.key !== 'type');
-
-  useEffect(() => {
-    console.log("uniqueAttributeValues:", uniqueAttributeValues);
-    console.log("advancedFilterAttributes:", advancedFilterAttributes);
-  }, [uniqueAttributeValues, advancedFilterAttributes]);
+  const advancedFilterAttributes = filterAttributes.filter((attr) => attr.key !== "type");
 
   const toggleSection = (sectionKey: string) => {
-    setOpenSections(prev => ({
+    setOpenSections((prev) => ({
       ...prev,
-      [sectionKey]: !prev[sectionKey]
+      [sectionKey]: !prev[sectionKey],
     }));
   };
 
   const priceRanges = [
-    { label: "Under $10", range: [0, 10] },
-    { label: "$10 - $20", range: [10, 20] },
-    { label: "$20 - $40", range: [20, 40] },
-    { label: "$40 - $60", range: [40, 60] },
-    { label: "$60 - $100", range: [60, 100] },
-    { label: "Over $100", range: [100, Infinity] }
+    { label: "Under $10", range: [0, 10], icon: "💸" },
+    { label: "$10 - $20", range: [10, 20], icon: "💵" },
+    { label: "$20 - $40", range: [20, 40], icon: "💴" },
+    { label: "$40 - $60", range: [40, 60], icon: "💶" },
+    { label: "$60 - $100", range: [60, 100], icon: "💷" },
+    { label: "Over $100", range: [100, Number.POSITIVE_INFINITY], icon: "💎" },
   ];
 
   const seasonOptions = [
-    { label: 'Spring', icon: '🌸' },
-    { label: 'Summer', icon: '☀️' },
-    { label: 'Fall', icon: '🍂' },
-    { label: 'Winter', icon: '❄️' },
+    { label: "Spring", icon: "🌸", color: "from-green-400 to-blue-400" },
+    { label: "Summer", icon: "☀️", color: "from-yellow-400 to-orange-400" },
+    { label: "Fall", icon: "🍂", color: "from-orange-400 to-red-400" },
+    { label: "Winter", icon: "❄️", color: "from-blue-400 to-purple-400" },
   ];
 
-  const getIcon = (key: keyof Clothing, value: string) => {
-    switch (key) {
-      case 'type':
-        switch (value) {
-          case 'T-shirt': return '👕';
-          case 'Jacket': return '🧥';
-          case 'Pants': return '👖';
-          case 'Shoes': return '👟';
-          case 'Hat': return '🧢';
-          case 'Sweater': return '🧶';
-          case 'Shorts': return '🩳';
-          case 'Dress': return '👗';
-          case 'Skirt': return ' skirt';
-          default: return '👚';
-        }
-      case 'occasion':
-        switch (value) {
-          case 'Casual': return '😎';
-          case 'Formal': return '🤵';
-          case 'Party': return '🥳';
-          case 'Athletic': return '🏃';
-          default: return '✨';
-        }
-      case 'fit':
-        switch (value) {
-          case 'Slim Fit': return '📏';
-          case 'Regular Fit': return '👕';
-          case 'Oversized Fit': return ' 🐘';
-          case 'Crop Fit': return '✂️';
-          case 'Skinny': return '👖';
-          case 'Tapered': return ' 🔻';
-          default: return '📐';
-        }
-      case 'material':
-        switch (value) {
-          case 'Cotton': return '☁️';
-          case 'Linen': return '🎋';
-          case 'Denim': return '👖';
-          case 'Leather': return '🐄';
-          case 'Knit': return '🧶';
-          case 'Polyester': return '♻️';
-          default: return '🧵';
-        }
-      case 'season':
-        switch (value) {
-          case 'Spring': return '🌸';
-          case 'Summer': return '☀️';
-          case 'Fall': return '🍂';
-          case 'Winter': return '❄️';
-          default: return '📅';
-        }
-      default: return '🏷️';
-    }
+  const getTypeIcon = (type: string) => {
+    const icons: Record<string, string> = {
+      "T-shirt": "👕",
+      Jacket: "🧥",
+      Pants: "👖",
+      Shoes: "👟",
+      Hat: "🧢",
+      Sweater: "🧶",
+      Shorts: "🩳",
+      Dress: "👗",
+      Skirt: "👗",
+    };
+    return icons[type] || "👚";
   };
 
   const mapColorToCss = (colorName: string): string => {
     const colorMap: Record<string, string> = {
-      black: "#000000",
-      white: "#FFFFFF",
-      red: "#EF4444",
-      blue: "#3B82F6",
-      green: "#22C55E",
-      yellow: "#EAB308",
-      purple: "#A855F7",
-      orange: "#F97316",
-      pink: "#EC4899",
-      gray: "#6B7280",
-      brown: "#8B4513",
-      cyan: "#06B6D4",
-      teal: "#14B8A6",
+      black: "#1f2937",
+      white: "#f9fafb",
+      red: "#ef4444",
+      blue: "#3b82f6",
+      green: "#22c55e",
+      yellow: "#eab308",
+      purple: "#a855f7",
+      orange: "#f97316",
+      pink: "#ec4899",
+      gray: "#6b7280",
+      brown: "#8b4513",
+      cyan: "#06b6d4",
+      teal: "#14b8a6",
       maroon: "#800000",
-      silver: "#C0C0C0",
-      gold: "#FFD700",
+      silver: "#c0c0c0",
+      gold: "#ffd700",
     };
-    return colorMap[colorName.toLowerCase()] || colorName.toLowerCase(); 
+    return colorMap[colorName.toLowerCase()] || colorName.toLowerCase();
   };
 
   useEffect(() => {
@@ -197,360 +140,469 @@ const FilterSection: React.FC<FilterSectionProps> = ({
     setSelectedTags([]);
     setPriceSort("none");
     setPriceRange([null, null]);
-
-    // Also reset advanced filter sections to be open by default on clear
-    setOpenSections(() => {
-      const initialOpenSections: Record<string, boolean> = {
-        priceSort: true,
-        priceRange: true,
-        type: true,
-        advancedFilters: false,
-      };
-      filterAttributes.filter(attr => attr.key !== 'type').forEach(attr => {
-        initialOpenSections[attr.key as string] = true;
-      });
-      return initialOpenSections;
-    });
   };
 
-  const handleApplyFilters = () => {
-    setIsOpen(false);
-    // The filtering logic is already applied in ClothingGallery based on selectedTags, priceSort, priceRange
-  };
+  const activeFiltersCount = (
+    selectedTags.length +
+    (priceSort !== "none" ? 1 : 0) +
+    (priceRange[0] !== null || priceRange[1] !== null ? 1 : 0)
+  );
 
   return (
     <div className="relative">
-      {/* Filter Button (always visible) */}
-      <button
+      {/* Filter Button */}
+      <Button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        variant="outline"
+        className="relative overflow-hidden group transition-all duration-300 hover:shadow-md"
       >
-        <span>🔍</span>
-        <span>Filter & Sort</span>
-      </button>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <Filter className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+        <span className="font-medium">Filter & Sort</span>
+        <AnimatePresence>
+          {activeFiltersCount > 0 && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
+            >
+              {activeFiltersCount}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Button>
 
-      {/* Selected Tags (collapsed state) */}
-      {selectedTags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mt-4">
-          {selectedTags.map((tag) => {
-            let attributeKey: keyof Clothing | undefined;
-            for (const attr of filterAttributes) {
-              if (uniqueAttributeValues[attr.key]?.includes(tag)) {
-                attributeKey = attr.key;
-                break;
-              }
-            }
-            return (
-              <div
-                key={tag}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
-              >
-                {/* {attributeKey && <span className="mr-1">{getIcon(attributeKey, tag)}</span>} */}
-                <span>{tag}</span>
-                <button
-                  onClick={() => toggleTag(tag)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  ✕
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
+      {/* Selected Tags */}
       <AnimatePresence>
-        {isOpen && (
+        {selectedTags.length > 0 && (
           <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed right-0 top-0 h-full w-full max-w-sm bg-card shadow-lg z-50 flex flex-col"
-            ref={filterRef}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex flex-wrap items-center gap-2 mt-4"
           >
-            {/* Sidebar Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Filter & Sort</h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleClearAllFilters}
-                  className="text-sm text-muted-foreground hover:underline"
-                >
-                  Clear All
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-full hover:bg-muted"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Content */}
-            <div className="flex-grow overflow-y-auto p-4 space-y-4">
-              {/* Price Sorting */}
-              <div className="border-b pb-4 last:border-b-0">
-                <button
-                  onClick={() => toggleSection('priceSort')}
-                  className="flex items-center justify-between w-full py-2 text-md font-medium"
-                >
-                  <span>SORT BY</span>
-                  <span>{openSections.priceSort ? '▲' : '▼'}</span>
-                </button>
-                <AnimatePresence>
-                  {openSections.priceSort && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="overflow-hidden"
-                    >
-                      <ul className="space-y-1 mt-2">
-                        {[
-                          { value: "none", label: "None" },
-                          { value: "asc", label: "Price (low - high)" },
-                          { value: "desc", label: "Price (high - low)" },
-                        ].map((option) => (
-                          <li key={option.value}>
-                            <button
-                              onClick={() => setPriceSort(option.value as "none" | "asc" | "desc")}
-                              className={`w-full text-left px-3 py-2 rounded-md flex justify-between items-center ${priceSort === option.value ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
-                            >
-                              <div className="flex items-center">
-                                <div className={`w-4 h-4 border border-gray-400 rounded-sm mr-2 flex items-center justify-center ${priceSort === option.value ? 'bg-blue-600 border-blue-600' : ''}`}>
-                                  {priceSort === option.value && <span className="text-white text-xs">✓</span>}
-                                </div>
-                                <span>{option.label}</span>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Price Range */}
-              <div className="border-b pb-4 last:border-b-0">
-                <button
-                  onClick={() => toggleSection('priceRange')}
-                  className="flex items-center justify-between w-full py-2 text-md font-medium"
-                >
-                  <span>PRICE RANGE</span>
-                  <span>{openSections.priceRange ? '▲' : '▼'}</span>
-                </button>
-                <AnimatePresence>
-                  {openSections.priceRange && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="overflow-hidden"
-                    >
-                      <ul className="space-y-1 mt-2">
-                        {priceRanges.map((range) => (
-                          <li key={range.label}>
-                            <button
-                              onClick={() => {
-                                if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
-                                  setPriceRange([null, null]);
-                                } else {
-                                  setPriceRange(range.range as [number, number]);
-                                }
-                              }}
-                              className={`w-full text-left px-3 py-2 rounded-md flex justify-between items-center ${priceRange[0] === range.range[0] && priceRange[1] === range.range[1] ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
-                            >
-                              <div className="flex items-center">
-                                <div className={`w-4 h-4 border border-gray-400 rounded-sm mr-2 flex items-center justify-center ${priceRange[0] === range.range[0] && priceRange[1] === range.range[1] ? 'bg-blue-600 border-blue-600' : ''}`}>
-                                  {priceRange[0] === range.range[0] && priceRange[1] === range.range[1] && <span className="text-white text-xs">✓</span>}
-                                </div>
-                                <span>{range.label}</span>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Type Filter */}
-              <div className="border-b pb-4 last:border-b-0">
-                <button
-                  onClick={() => toggleSection('type')}
-                  className="flex items-center justify-between w-full py-2 text-md font-medium"
-                >
-                  <span>TYPE</span>
-                  <span>{openSections.type ? '▲' : '▼'}</span>
-                </button>
-                <AnimatePresence>
-                  {openSections.type && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="overflow-hidden"
-                    >
-                      <ul className="space-y-1 mt-2">
-                        {uniqueAttributeValues.type?.map((value) => (
-                          <li key={value}>
-                            <button
-                              onClick={() => toggleTag(value)}
-                              className={`w-full text-left px-3 py-2 rounded-md flex justify-between items-center ${selectedTags.includes(value) ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
-                            >
-                              <div className="flex items-center">
-                                <div className={`w-4 h-4 border border-gray-400 rounded-sm mr-2 flex items-center justify-center ${selectedTags.includes(value) ? 'bg-blue-600 border-blue-600' : ''}`}>
-                                  {selectedTags.includes(value) && <span className="text-white text-xs">✓</span>}
-                                </div>
-                                <span>{value}</span>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Advanced Filters Section */}
-              <div className="border-b pb-4 last:border-b-0">
-                <button
-                  onClick={() => toggleSection('advancedFilters')}
-                  className="flex items-center justify-between w-full py-2 text-md font-medium"
-                >
-                  <span>ADVANCED FILTERS</span>
-                  <span>{openSections.advancedFilters ? '▲' : '▼'}</span>
-                </button>
-                <AnimatePresence>
-                  {openSections.advancedFilters && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="space-y-4 mt-2">
-                        {advancedFilterAttributes.map((attribute) => {
-                          const uniqueValues = uniqueAttributeValues[attribute.key];
-                          if (uniqueValues.length === 0) return null;
-
-                          return (
-                            <div key={attribute.key} className="border-b pb-4 last:border-b-0">
-                              <button
-                                onClick={() => toggleSection(attribute.key as string)}
-                                className="flex items-center justify-between w-full py-2 text-md font-medium"
-                              >
-                                <span>{attribute.label.toUpperCase()}</span>
-                                <span>{openSections[attribute.key as string] ? '▲' : '▼'}</span>
-                              </button>
-                              <AnimatePresence>
-                                {openSections[attribute.key as string] && (
-                                  <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2, ease: "easeOut" }}
-                                    className="overflow-hidden"
-                                  >
-                                    {attribute.key === 'color' ? (
-                                      <div className="grid grid-cols-5 gap-2 mt-2">
-                                        {uniqueValues.map((value) => (
-                                          <button
-                                            key={value}
-                                            onClick={() => toggleTag(value)}
-                                            className={`w-8 h-8 rounded-full border ${selectedTags.includes(value) ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`}
-                                            style={{ backgroundColor: mapColorToCss(value), borderColor: value.toLowerCase() === 'white' ? '#ccc' : 'transparent' }}
-                                            title={value}
-                                          >
-                                            {selectedTags.includes(value) && (
-                                              <span className="text-white text-xs flex items-center justify-center h-full">✓</span>
-                                            )}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    ) : attribute.key === 'season' ? (
-                                      <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 mt-2">
-                                        {seasonOptions.map((option) => (
-                                          <button
-                                            key={option.label}
-                                            onClick={() => toggleTag(option.label)}
-                                            className={`flex flex-col items-center justify-center p-3 rounded-md text-sm font-medium border aspect-square transition-colors ${selectedTags.includes(option.label) ? 'bg-blue-100 border-blue-600 shadow' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
-                                          >
-                                            <span className={`text-xl mb-1 ${selectedTags.includes(option.label) ? 'text-blue-800' : 'grayscale text-gray-700'}`}>{option.icon}</span>
-                                            {selectedTags.includes(option.label) && <span className={`mt-1 ${selectedTags.includes(option.label) ? 'text-blue-800' : 'text-gray-700'}`}>✓</span>}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <ul className="space-y-1 mt-2">
-                                        {uniqueValues.map((value) => (
-                                          <li key={value}>
-                                            <button
-                                              onClick={() => toggleTag(value)}
-                                              className={`w-full text-left px-3 py-2 rounded-md flex justify-between items-center ${selectedTags.includes(value) ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
-                                            >
-                                              <div className="flex items-center">
-                                                <div className={`w-4 h-4 border border-gray-400 rounded-sm mr-2 flex items-center justify-center ${selectedTags.includes(value) ? 'bg-blue-600 border-blue-600' : ''}`}>
-                                                  {selectedTags.includes(value) && <span className="text-white text-xs">✓</span>}
-                                                </div>
-                                                <span>{value}</span>
-                                              </div>
-                                            </button>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })}
-                        {advancedFilterAttributes.every(attr => uniqueAttributeValues[attr.key]?.length === 0) && (
-                          <p className="text-center text-muted-foreground text-sm py-4">
-                            Must fill out advanced details on clothing in order to be able to have these options.
-                          </p>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Sidebar Footer */}
-            <div className="p-4 border-t flex justify-between gap-2">
-              <button
-                onClick={handleApplyFilters}
-                className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            {selectedTags.map((tag, index) => (
+              <motion.div
+                key={tag}
+                initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.8, x: -20 }}
+                transition={{ delay: index * 0.05 }}
               >
-                Apply ({selectedTags.length})
-              </button>
-            </div>
+                <Badge
+                  variant="secondary"
+                  className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
+                  onClick={() => toggleTag(tag)}
+                >
+                  <span className="mr-1">{tag}</span>
+                  <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                </Badge>
+              </motion.div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Backdrop */}
+      {/* Filter Sidebar */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Sidebar */}
+            <motion.div
+              ref={filterRef}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed right-0 top-0 h-full w-full max-w-sm bg-background/95 backdrop-blur-xl shadow-2xl z-50 flex flex-col border-l"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-background to-muted/20">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-bold">Filter & Sort</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearAllFilters}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Clear All
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsOpen(false)}
+                    className="hover:bg-muted transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Sort Section */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => toggleSection("priceSort")}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-semibold text-sm tracking-wide">SORT BY</span>
+                      <motion.div animate={{ rotate: openSections.priceSort ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.priceSort && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="border-t"
+                        >
+                          <div className="p-4 space-y-2">
+                            {[{
+                              value: "none", label: "Default", icon: "🔄" 
+                            },
+                            {
+                              value: "asc", label: "Price: Low to High", icon: "📈" 
+                            },
+                            {
+                              value: "desc", label: "Price: High to Low", icon: "📉" 
+                            },
+                            ].map((option) => (
+                              <motion.button
+                                key={option.value}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setPriceSort(option.value as "none" | "asc" | "desc")}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+                                  priceSort === option.value
+                                    ? "bg-primary text-primary-foreground shadow-md"
+                                    : "hover:bg-muted"
+                                }`}
+                              >
+                                <span className="text-lg">{option.icon}</span>
+                                <span className="font-medium">{option.label}</span>
+                                {priceSort === option.value && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
+                                  />
+                                )}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+
+                {/* Price Range Section */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => toggleSection("priceRange")}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-semibold text-sm tracking-wide">PRICE RANGE</span>
+                      <motion.div
+                        animate={{ rotate: openSections.priceRange ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.priceRange && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="border-t"
+                        >
+                          <div className="p-4 space-y-2">
+                            {priceRanges.map((range, index) => (
+                              <motion.button
+                                key={range.label}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
+                                    setPriceRange([null, null]);
+                                  } else {
+                                    setPriceRange(range.range as [number, number]);
+                                  }
+                                }}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+                                  priceRange[0] === range.range[0] && priceRange[1] === range.range[1]
+                                    ? "bg-primary text-primary-foreground shadow-md"
+                                    : "hover:bg-muted"
+                                }`}
+                              >
+                                <span className="text-lg">{range.icon}</span>
+                                <span className="font-medium">{range.label}</span>
+                                {priceRange[0] === range.range[0] && priceRange[1] === range.range[1] && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
+                                  />
+                                )}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+
+                {/* Type Filter */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => toggleSection("type")}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-semibold text-sm tracking-wide">CLOTHING TYPE</span>
+                      <motion.div animate={{ rotate: openSections.type ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.type && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="border-t"
+                        >
+                          <div className="p-4 space-y-2">
+                            {uniqueAttributeValues.type?.map((value, index) => (
+                              <motion.button
+                                key={value}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => toggleTag(value)}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+                                  selectedTags.includes(value)
+                                    ? "bg-primary text-primary-foreground shadow-md"
+                                    : "hover:bg-muted"
+                                }`}
+                              >
+                                <span className="text-lg">{getTypeIcon(value)}</span>
+                                <span className="font-medium">{value}</span>
+                                {selectedTags.includes(value) && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
+                                  />
+                                )}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+
+                {/* Advanced Filters */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => toggleSection("advancedFilters")}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-semibold text-sm tracking-wide">ADVANCED FILTERS</span>
+                      <motion.div
+                        animate={{ rotate: openSections.advancedFilters ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.advancedFilters && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="border-t"
+                        >
+                          <div className="p-4 space-y-4">
+                            {advancedFilterAttributes.map((attribute) => {
+                              const uniqueValues = uniqueAttributeValues[attribute.key];
+                              if (uniqueValues.length === 0) return null;
+
+                              return (
+                                <div key={attribute.key} className="space-y-2">
+                                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                                    {attribute.label}
+                                  </h4>
+
+                                  {attribute.key === "color" ? (
+                                    <div className="grid grid-cols-6 gap-2">
+                                      {uniqueValues.map((value, index) => (
+                                        <motion.button
+                                          key={value}
+                                          initial={{ opacity: 0, scale: 0.8 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          transition={{ delay: index * 0.05 }}
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          onClick={() => toggleTag(value)}
+                                          className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                                            selectedTags.includes(value)
+                                              ? "ring-2 ring-primary ring-offset-2 scale-110"
+                                              : "hover:scale-105"
+                                          }`}
+                                          style={{
+                                            backgroundColor: mapColorToCss(value),
+                                            borderColor: value.toLowerCase() === "white" ? "#e5e7eb" : "transparent",
+                                          }}
+                                          title={value}
+                                        >
+                                          {selectedTags.includes(value) && (
+                                            <motion.div
+                                              initial={{ scale: 0 }}
+                                              animate={{ scale: 1 }}
+                                              className="w-full h-full flex items-center justify-center text-white text-xs font-bold"
+                                            >
+                                              ✓
+                                            </motion.div>
+                                          )}
+                                        </motion.button>
+                                      ))}
+                                    </div>
+                                  ) : attribute.key === "season" ? (
+                                    <div className="grid grid-cols-2 gap-2">
+                                      {seasonOptions.map((option, index) => (
+                                        <motion.button
+                                          key={option.label}
+                                          initial={{ opacity: 0, y: 20 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ delay: index * 0.1 }}
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                          onClick={() => toggleTag(option.label)}
+                                          className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${
+                                            selectedTags.includes(option.label)
+                                              ? "border-primary bg-primary/10 shadow-md"
+                                              : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                          }`}
+                                        >
+                                          <span className="text-2xl mb-1">{option.icon}</span>
+                                          <span className="text-xs font-medium">{option.label}</span>
+                                          {selectedTags.includes(option.label) && (
+                                            <motion.div
+                                              initial={{ scale: 0 }}
+                                              animate={{ scale: 1 }}
+                                              className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"
+                                            />
+                                          )}
+                                        </motion.button>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {uniqueValues.map((value, index) => (
+                                        <motion.button
+                                          key={value}
+                                          initial={{ opacity: 0, x: -20 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          transition={{ delay: index * 0.05 }}
+                                          whileHover={{ scale: 1.02 }}
+                                          whileTap={{ scale: 0.98 }}
+                                          onClick={() => toggleTag(value)}
+                                          className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-200 ${
+                                            selectedTags.includes(value)
+                                              ? "bg-primary text-primary-foreground shadow-md"
+                                              : "hover:bg-muted"
+                                          }`}
+                                        >
+                                          <span className="font-medium text-sm">{value}</span>
+                                          {selectedTags.includes(value) && (
+                                            <motion.div
+                                              initial={{ scale: 0 }}
+                                              animate={{ scale: 1 }}
+                                              className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
+                                            />
+                                          )}
+                                        </motion.button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+
+                            {advancedFilterAttributes.every(
+                              (attr) => uniqueAttributeValues[attr.key]?.length === 0,
+                            ) && (
+                              <div className="text-center py-8">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                                  <Sparkles className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <p className="text-muted-foreground text-sm">
+                                  Add advanced details to your clothing items to unlock more filtering options!
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t bg-gradient-to-r from-background to-muted/20 p-6">
+                <Button
+                  onClick={() => setIsOpen(false)}
+                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                  size="lg"
+                >
+                  <span className="font-medium">Apply Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-primary-foreground/20 text-primary-foreground">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

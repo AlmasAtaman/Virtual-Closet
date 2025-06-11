@@ -1,21 +1,26 @@
 "use client"
-import { useRouter } from "next/navigation";
-// import { signOut } from "next-auth/react";
-import axios from 'axios';
 
+import { useRouter } from "next/navigation"
+import axios from "axios"
+import { LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function LogOutButton() {
-    const router = useRouter();
-    
-    const handleLogout = async () => {
-        try {
-            await axios.post('http://localhost:8000/api/auth/signout', {}, { withCredentials: true });
-        } catch (error) {
-            console.error("Error signing out on backend:", error);
-        }
-        // await signOut({ callbackUrl: '/login' });
-        router.push('/login');
-    };
+  const router = useRouter()
 
-    return <button onClick={handleLogout} className="bg-blue-600 px-4 py-2 rounded">Logout</button>
+  const handleLogout = async () => {
+    try {
+      await axios.post("http://localhost:8000/api/auth/signout", {}, { withCredentials: true })
+    } catch (error) {
+      console.error("Error signing out on backend:", error)
+    }
+    router.push("/login")
+  }
+
+  return (
+    <Button onClick={handleLogout} variant="ghost" className="gap-2">
+      <LogOut className="h-4 w-4" />
+      <span className="hidden sm:inline">Logout</span>
+    </Button>
+  )
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface ClothingItem {
     id: string;
@@ -43,13 +42,13 @@ const ClothingModal: React.FC<ClothingModalProps> = ({
 
     const handlePrev = () => {
         setCurrentItemIndex(prevIndex =>
-            prevIndex === 0 ? clothingItems.length - 1 : prevIndex - 1
+            prevIndex === 0 ? 0 : prevIndex - 1
         );
     };
 
     const handleNext = () => {
         setCurrentItemIndex(prevIndex =>
-            prevIndex === clothingItems.length - 1 ? 0 : prevIndex + 1
+            prevIndex === clothingItems.length - 1 ? clothingItems.length - 1 : prevIndex + 1
         );
     };
 
@@ -60,16 +59,40 @@ const ClothingModal: React.FC<ClothingModalProps> = ({
                     onClick={onCloseAction}
                     className="absolute top-3 right-3 text-gray-400 hover:text-gray-200"
                 >
-                    <FontAwesomeIcon icon={faTimes} size="lg" />
+                    <X size={20} />
                 </button>
 
                 <h2 className="text-xl font-bold mb-4 text-center">{currentItem.name || 'Clothing Item'}</h2>
 
-                <img
-                    src={currentItem.url}
-                    alt={currentItem.name || 'Clothing Item'}
-                    className="w-full h-auto object-contain rounded mb-4 max-h-[80vh]"
-                />
+                <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden rounded mb-4 flex items-center justify-center">
+                    <img
+                        src={currentItem.url}
+                        alt={currentItem.name || 'Clothing Item'}
+                        className="w-full h-full object-contain"
+                    />
+                </div>
+
+                {/* Navigation Arrows Overlay */}
+                {clothingItems.length > 1 && (
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-2 sm:px-4 z-20">
+                        {currentItemIndex > 0 && (
+                            <button
+                                onClick={handlePrev}
+                                className="p-3 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <ChevronLeft size={28} />
+                            </button>
+                        )}
+                        {currentItemIndex < clothingItems.length - 1 && (
+                            <button
+                                onClick={handleNext}
+                                className="p-3 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <ChevronRight size={28} />
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 <div className="space-y-2 text-sm">
                     {currentItem.type && <p><span className="font-semibold">Type:</span> {currentItem.type}</p>}
@@ -79,23 +102,6 @@ const ClothingModal: React.FC<ClothingModalProps> = ({
                     {typeof currentItem.price === 'number' && currentItem.price != null && <p><span className="font-semibold">Price:</span> ${currentItem.price.toFixed(2)}</p>}
                     {currentItem.notes && <p><span className="font-semibold">Notes:</span> {currentItem.notes}</p>}
                 </div>
-
-                {clothingItems.length > 1 && (
-                    <div className="flex justify-between mt-4">
-                        <button
-                            onClick={handlePrev}
-                            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                        >
-                            <FontAwesomeIcon icon={faChevronLeft} /> Previous
-                        </button>
-                        <button
-                            onClick={handleNext}
-                            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                        >
-                            Next <FontAwesomeIcon icon={faChevronRight} />
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );
