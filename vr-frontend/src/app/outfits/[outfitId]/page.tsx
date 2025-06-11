@@ -12,13 +12,14 @@ import {
   Trash2,
   Save,
   X,
-  Plus,
   AlertTriangle,
   Shirt,
   DollarSign,
   Calendar,
   MapPin,
   FileText,
+  Tag,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,11 +27,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import LogoutButton from "../../components/LogoutButton";
+import { Label } from "@/components/ui/label";
 import ClothingModal from "../../components/ClothingModal";
 import ClothingItemSelectModal from "../../components/ClothingItemSelectModal";
-import Image from "next/image";
 
 interface ClothingItem {
   id: string;
@@ -50,6 +49,7 @@ interface CategorizedOutfitItems {
   outerwear?: ClothingItem;
   top?: ClothingItem;
   bottom?: ClothingItem;
+  shoe?: ClothingItem;
   others: ClothingItem[];
 }
 
@@ -80,9 +80,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
   const [allClothingItems, setAllClothingItems] = useState<ClothingItem[]>([]);
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
-  const [selectModalCategory, setSelectModalCategory] = useState<"outerwear" | "top" | "bottom" | null>(null);
+  const [selectModalCategory, setSelectModalCategory] = useState<"outerwear" | "top" | "bottom" | "shoe" | null>(null);
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null);
-  const [itemToReplaceFromOthers, setItemToReplaceFromOthers] = useState<ClothingItem | null>(null);
+  const [originalCategorizedItems, setOriginalCategorizedItems] = useState<CategorizedOutfitItems | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,7 +148,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const handleEditOutfit = () => {
     setIsEditing(true);
     if (outfit) {
-      setEditedCategorizedItems(categorizeOutfitItems(outfit.clothingItems));
+      const categorized = categorizeOutfitItems(outfit.clothingItems);
+      setEditedCategorizedItems(categorized);
+      setOriginalCategorizedItems(JSON.parse(JSON.stringify(categorized))); // Deep copy
     }
   };
 
@@ -160,6 +162,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
         editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
         ...editedCategorizedItems.others,
       ].filter((item) => item !== undefined) as ClothingItem[];
 
@@ -190,9 +193,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   const handleCancelEdit = () => {
     setEditedOutfit(outfit || {});
-    if (outfit) {
-      setEditedCategorizedItems(categorizeOutfitItems(outfit.clothingItems));
-    }
+    setEditedCategorizedItems(originalCategorizedItems);
     setIsEditing(false);
   };
 
@@ -220,7 +221,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setIsModalOpen(false);
   };
 
-  const getItemCategory = (item: ClothingItem): "top" | "bottom" | "outerwear" | "others" => {
+  const getItemCategory = (item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "others" => {
     const type = item.type?.toLowerCase() || "";
     if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
       return "top";
@@ -228,51 +229,32 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       return "bottom";
     } else if (["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(type)) {
       return "outerwear";
+    } else if (["shoes"].includes(type)) {
+      return "shoe";
     } else {
       return "others";
     }
   };
 
-  const handleOpenSelectModal = (param: "outerwear" | "top" | "bottom" | ClothingItem) => {
-    if (typeof param === "string") {
-      setSelectModalCategory(param);
-      setItemToReplaceFromOthers(null);
-    } else {
-      setSelectModalCategory(null);
-      setItemToReplaceFromOthers(param);
-    }
+  const handleOpenSelectModal = (category: "outerwear" | "top" | "bottom" | "shoe") => {
+    setSelectModalCategory(category);
     setIsSelectModalOpen(true);
   };
 
   const handleCloseSelectModal = () => {
     setIsSelectModalOpen(false);
     setSelectModalCategory(null);
-    setItemToReplaceFromOthers(null);
   };
 
   const handleSelectItemForOutfit = (selectedItem: ClothingItem) => {
-    if (!editedCategorizedItems) return;
+    if (!editedCategorizedItems || !selectModalCategory) return;
 
     const updatedCategorizedItems = { ...editedCategorizedItems };
 
-    if (itemToReplaceFromOthers) {
-      if (selectedItem.id === "none") {
-        updatedCategorizedItems.others = updatedCategorizedItems.others.filter(
-          (item) => item.id !== itemToReplaceFromOthers.id,
-        );
-      } else {
-        updatedCategorizedItems.others = updatedCategorizedItems.others.map((item) =>
-          item.id === itemToReplaceFromOthers.id ? selectedItem : item,
-        );
-      }
-      setItemToReplaceFromOthers(null);
-    } else if (selectModalCategory) {
-      if (selectedItem.id === "none") {
-        updatedCategorizedItems[selectModalCategory] = undefined;
-      } else {
-        updatedCategorizedItems[selectModalCategory] = selectedItem;
-      }
-      setSelectModalCategory(null);
+    if (selectedItem.id === "none") {
+      updatedCategorizedItems[selectModalCategory] = undefined;
+    } else {
+      updatedCategorizedItems[selectModalCategory] = selectedItem;
     }
 
     setEditedCategorizedItems(updatedCategorizedItems);
@@ -283,7 +265,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     const categorized: CategorizedOutfitItems = { others: [] };
     items.forEach((item) => {
       const category = getItemCategory(item);
-      if (category === "outerwear" || category === "top" || category === "bottom") {
+      if (category === "outerwear" || category === "top" || category === "bottom" || category === "shoe") {
         categorized[category] = item;
       } else {
         categorized.others.push(item);
@@ -328,70 +310,40 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     );
   }
 
-  const itemsToDisplay =
-    isEditing && editedCategorizedItems
-      ? ([
-          editedCategorizedItems.outerwear,
-          editedCategorizedItems.top,
-          editedCategorizedItems.bottom,
-          ...editedCategorizedItems.others,
-        ].filter((item) => item !== undefined) as ClothingItem[])
-      : outfit?.clothingItems || [];
-
-  const categorizedItemsForDisplay: CategorizedOutfitItems =
+  // Get current items for display (either editing or viewing)
+  const currentCategorizedItems: CategorizedOutfitItems =
     isEditing && editedCategorizedItems ? editedCategorizedItems : categorizeOutfitItems(outfit.clothingItems);
-
-  const wishlistItems = itemsToDisplay.filter((item) => item.mode === "wishlist");
 
   // Categorize items for the preview (same as OutfitCard)
   const categorizedItems = {
-    tops: outfit.clothingItems.filter((item) =>
-      ["t-shirt", "dress", "shirt", "blouse"].includes(item.type?.toLowerCase() || ""),
-    ),
-    bottoms: outfit.clothingItems.filter((item) =>
-      ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || ""),
-    ),
-    outerwear: outfit.clothingItems.filter((item) =>
-      ["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(item.type?.toLowerCase() || ""),
-    ),
-    others: outfit.clothingItems.filter(
-      (item) =>
-        ![
-          "t-shirt",
-          "dress",
-          "shirt",
-          "blouse",
-          "pants",
-          "skirt",
-          "shorts",
-          "jeans",
-          "leggings",
-          "jacket",
-          "sweater",
-          "coat",
-          "hoodie",
-          "cardigan",
-        ].includes(item.type?.toLowerCase() || ""),
-    ),
+    tops: currentCategorizedItems.top ? [currentCategorizedItems.top] : [],
+    bottoms: currentCategorizedItems.bottom ? [currentCategorizedItems.bottom] : [],
+    outerwear: currentCategorizedItems.outerwear ? [currentCategorizedItems.outerwear] : [],
+    shoes: currentCategorizedItems.shoe ? [currentCategorizedItems.shoe] : [],
+    others: currentCategorizedItems.others,
   };
+
+  const topItems = [...categorizedItems.outerwear, ...categorizedItems.tops];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Dashboard Header */}
-      <header className="border-b border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Image src="/VrClogo.png" alt="VrC Logo" width={32} height={32} className="h-8 w-8" />
-            <span className="text-xl font-semibold tracking-tight">VrC</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
-        {/* Back to Outfits Navigation Button */}
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-between items-center mb-8"
+        >
+          {/* <div>
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+              {outfit.name || "Outfit Details"}
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400">View and manage your outfit</p>
+          </div> */}
+          {/* <LogoutButton /> Commented out or removed based on user request */}
+        </motion.div>
+
+        {/* Navigation */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -405,9 +357,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Outfit Visual - Using same layout as OutfitCard */}
+          {/* Left Side - Outfit Preview */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-            <Card className="h-fit">
+            <Card className="h-[700px]">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Shirt className="w-5 h-5" />
@@ -415,77 +367,96 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-96 relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-6 flex items-center justify-center rounded-xl">
+                <div className="h-[600px] relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-6 flex items-center justify-center rounded-xl">
                   {/* Outfit Image Collage - Same as OutfitCard */}
-                  <div className="relative w-44 h-80 mx-auto">
-                    {/* Bottom (pants) */}
-                    {categorizedItems.bottoms[0] && (
-                      <motion.img
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        src={categorizedItems.bottoms[0].url}
-                        alt="Bottom"
-                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
-                      />
-                    )}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${currentCategorizedItems.outerwear?.id}-${currentCategorizedItems.top?.id}-${currentCategorizedItems.bottom?.id}-${currentCategorizedItems.shoe?.id}`}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                      className="relative w-44 h-80 mx-auto"
+                    >
+                      {/* Bottom (pants) */}
+                      {categorizedItems.bottoms[0] && (
+                        <motion.img
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
+                          src={categorizedItems.bottoms[0].url}
+                          alt="Bottom"
+                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
+                        />
+                      )}
 
-                    {/* Top (shirt) */}
-                    {categorizedItems.tops[0] && (
-                      <motion.img
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        src={categorizedItems.tops[0].url}
-                        alt="Top"
-                        className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
-                      />
-                    )}
+                      {/* Top (shirt) */}
+                      {categorizedItems.tops[0] && (
+                        <motion.img
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 }}
+                          src={categorizedItems.tops[0].url}
+                          alt="Top"
+                          className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
+                        />
+                      )}
 
-                    {/* Outerwear */}
-                    {categorizedItems.outerwear[0] && (
-                      <motion.img
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        src={categorizedItems.outerwear[0].url}
-                        alt="Outerwear"
-                        className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
-                      />
-                    )}
+                      {/* Outerwear */}
+                      {categorizedItems.outerwear[0] && (
+                        <motion.img
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 }}
+                          src={categorizedItems.outerwear[0].url}
+                          alt="Outerwear"
+                          className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
+                        />
+                      )}
 
-                    {/* Others/Accessories indicator */}
-                    {categorizedItems.others.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="absolute top-2 right-2"
-                      >
-                        <Badge variant="outline" className="text-xs">
-                          +{categorizedItems.others.length} accessories
-                        </Badge>
-                      </motion.div>
-                    )}
-                  </div>
+                      {/* Shoes */}
+                      {categorizedItems.shoes[0] && (
+                        <motion.img
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.4 }}
+                          src={categorizedItems.shoes[0].url}
+                          alt="Shoes"
+                          className="absolute bottom-[9rem] left-[60%] w-[8rem] z-5"
+                        />
+                      )}
+
+                      {/* Others/Accessories indicator */}
+                      {categorizedItems.others.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.5 }}
+                          className="absolute top-2 right-2"
+                        >
+                          <Badge variant="outline" className="text-xs">
+                            +{categorizedItems.others.length} accessories
+                          </Badge>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
 
                   {/* Fallback if no images */}
-                  {categorizedItems.tops.length === 0 &&
-                    categorizedItems.bottoms.length === 0 &&
-                    categorizedItems.outerwear.length === 0 && (
-                      <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
-                        <div className="text-center">
-                          <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No items</p>
-                        </div>
+                  {topItems.length === 0 && categorizedItems.bottoms.length === 0 && (
+                    <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                      <div className="text-center">
+                        <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No items</p>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Outfit Details */}
+          {/* Right Side - Outfit Details & Items */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -493,7 +464,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             className="space-y-6"
           >
             {/* Main Details Card */}
-            <Card>
+            <Card className="h-[700px] flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Outfit Information</CardTitle>
@@ -511,14 +482,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex-1 overflow-y-auto space-y-6">
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <FileText className="w-4 h-4 inline mr-1" />
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
+                        <Tag className="w-4 h-4 mr-1" />
                         Name
-                      </label>
+                      </Label>
                       <Input
                         name="name"
                         value={editedOutfit.name || ""}
@@ -527,11 +498,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       />
                     </div>
 
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <DollarSign className="w-4 h-4 inline mr-1" />
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
+                        <DollarSign className="w-4 h-4 mr-1" />
                         Price
-                      </label>
+                      </Label>
                       <Input
                         type="number"
                         name="price"
@@ -542,11 +513,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       />
                     </div>
 
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <MapPin className="w-4 h-4 inline mr-1" />
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
+                        <MapPin className="w-4 h-4 mr-1" />
                         Occasion
-                      </label>
+                      </Label>
                       <Select
                         value={editedOutfit.occasion || ""}
                         onValueChange={(value: string) => handleSelectChange("occasion", value)}
@@ -566,11 +537,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </Select>
                     </div>
 
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <Calendar className="w-4 h-4 inline mr-1" />
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
+                        <Calendar className="w-4 h-4 mr-1" />
                         Season
-                      </label>
+                      </Label>
                       <Select
                         value={editedOutfit.season || ""}
                         onValueChange={(value: string) => handleSelectChange("season", value)}
@@ -588,8 +559,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </Select>
                     </div>
 
-                    <div className="min-h-[128px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Notes</label>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
+                        <FileText className="w-4 h-4 mr-1" />
+                        Notes
+                      </Label>
                       <Textarea
                         name="notes"
                         value={editedOutfit.notes || ""}
@@ -597,6 +571,136 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         placeholder="Add any notes about this outfit..."
                         rows={3}
                       />
+                    </div>
+
+                    {/* Clothing Items in Edit Mode */}
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-3">
+                        <Shirt className="w-4 h-4 mr-1" />
+                        Clothing Items
+                        <span className="text-xs text-slate-400 ml-2">(click to change)</span>
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Outerwear */}
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="cursor-pointer"
+                          onClick={() => handleOpenSelectModal("outerwear")}
+                        >
+                          <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-colors">
+                            <CardContent className="h-full flex items-center justify-center p-2">
+                              {currentCategorizedItems.outerwear ? (
+                                <div className="relative w-full h-full">
+                                  <img
+                                    src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
+                                    alt="Outerwear"
+                                    className="w-full h-full object-contain"
+                                  />
+                                  {currentCategorizedItems.outerwear.mode === "wishlist" && (
+                                    <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400">
+                                  <Plus className="w-6 h-6 mx-auto mb-1" />
+                                  <p className="text-xs">Outerwear</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+
+                        {/* Top */}
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="cursor-pointer"
+                          onClick={() => handleOpenSelectModal("top")}
+                        >
+                          <Card className="h-24 border-2 border-dashed border-green-300 hover:border-green-500 transition-colors">
+                            <CardContent className="h-full flex items-center justify-center p-2">
+                              {currentCategorizedItems.top ? (
+                                <div className="relative w-full h-full">
+                                  <img
+                                    src={currentCategorizedItems.top.url || "/placeholder.svg"}
+                                    alt="Top"
+                                    className="w-full h-full object-contain"
+                                  />
+                                  {currentCategorizedItems.top.mode === "wishlist" && (
+                                    <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400">
+                                  <Plus className="w-6 h-6 mx-auto mb-1" />
+                                  <p className="text-xs">Top</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+
+                        {/* Bottom */}
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="cursor-pointer"
+                          onClick={() => handleOpenSelectModal("bottom")}
+                        >
+                          <Card className="h-24 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-colors">
+                            <CardContent className="h-full flex items-center justify-center p-2">
+                              {currentCategorizedItems.bottom ? (
+                                <div className="relative w-full h-full">
+                                  <img
+                                    src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
+                                    alt="Bottom"
+                                    className="w-full h-full object-contain"
+                                  />
+                                  {currentCategorizedItems.bottom.mode === "wishlist" && (
+                                    <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400">
+                                  <Plus className="w-6 h-6 mx-auto mb-1" />
+                                  <p className="text-xs">Bottom</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+
+                        {/* Shoes */}
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="cursor-pointer"
+                          onClick={() => handleOpenSelectModal("shoe")}
+                        >
+                          <Card className="h-24 border-2 border-dashed border-pink-300 hover:border-pink-500 transition-colors">
+                            <CardContent className="h-full flex items-center justify-center p-2">
+                              {currentCategorizedItems.shoe ? (
+                                <div className="relative w-full h-full">
+                                  <img
+                                    src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
+                                    alt="Shoes"
+                                    className="w-full h-full object-contain"
+                                  />
+                                  {currentCategorizedItems.shoe.mode === "wishlist" && (
+                                    <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center text-slate-400">
+                                  <Plus className="w-6 h-6 mx-auto mb-1" />
+                                  <p className="text-xs">Shoes</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      </div>
                     </div>
 
                     <div className="flex space-x-3 pt-4">
@@ -609,120 +713,95 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         Cancel
                       </Button>
                     </div>
-                  </div>
+                  </motion.div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <FileText className="w-4 h-4 inline mr-1" />
-                        Name
-                      </label>
-                      <span className="block h-10 flex items-center px-3 rounded-md border border-input bg-background text-slate-900 dark:text-white shadow-sm">
-                        {outfit.name || "None"}
-                      </span>
-                    </div>
+                    {outfit.name && (
+                      <div className="flex items-center space-x-2">
+                        <Tag className="w-4 h-4 text-slate-500" />
+                        <span className="font-medium">Name:</span>
+                        <span>{outfit.name}</span>
+                      </div>
+                    )}
 
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <DollarSign className="w-4 h-4 inline mr-1" />
-                        Price
-                      </label>
-                      <span className="block h-10 flex items-center px-3 rounded-md border border-input bg-background text-green-600 dark:text-green-400 font-semibold shadow-sm">
-                        ${(outfit.price || outfit.totalPrice || 0).toFixed(2)}
-                      </span>
-                    </div>
+                    {(outfit.price != null || outfit.totalPrice != null) && (
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-4 h-4 text-slate-500" />
+                        <span className="font-medium">Price:</span>
+                        <span className="text-green-600 dark:text-green-400 font-semibold">
+                          ${(outfit.price || outfit.totalPrice || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
 
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <MapPin className="w-4 h-4 inline mr-1" />
-                        Occasion
-                      </label>
-                      <Badge variant="secondary" className="h-10 flex items-center px-3 border border-input bg-background shadow-sm">
-                        {outfit.occasion || "None"}
-                      </Badge>
-                    </div>
+                    {outfit.occasion && (
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-slate-500" />
+                        <span className="font-medium">Occasion:</span>
+                        <Badge variant="secondary">{outfit.occasion}</Badge>
+                      </div>
+                    )}
 
-                    <div className="min-h-[72px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <Calendar className="w-4 h-4 inline mr-1" />
-                        Season
-                      </label>
-                      <Badge variant="outline" className="h-10 flex items-center px-3 border border-input bg-background shadow-sm">
-                        {outfit.season || "None"}
-                      </Badge>
-                    </div>
+                    {outfit.season && (
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-slate-500" />
+                        <span className="font-medium">Season:</span>
+                        <Badge variant="outline">{outfit.season}</Badge>
+                      </div>
+                    )}
 
-                    <div className="min-h-[128px]">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Notes</label>
-                      <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg min-h-[96px]">
-                        {outfit.notes || "None"}
-                      </p>
+                    {outfit.notes && (
+                      <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <FileText className="w-4 h-4 text-slate-500" />
+                          <span className="font-medium">Notes:</span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                          {outfit.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Clothing Items Display */}
+                    <div>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Shirt className="w-4 h-4 text-slate-500" />
+                        <span className="font-medium">Clothing Items:</span>
+                        <Badge variant="outline">{outfit.clothingItems.length} items</Badge>
+                      </div>
+                      <div className="grid grid-cols-4 gap-3">
+                        {outfit.clothingItems.map((item, index) => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Card
+                              className="h-20 cursor-pointer hover:shadow-md transition-shadow relative"
+                              onClick={() => handleOpenModal(index)}
+                            >
+                              <CardContent className="h-full flex items-center justify-center p-1">
+                                <img
+                                  src={item.url || "/placeholder.svg"}
+                                  alt={item.name || "Clothing Item"}
+                                  className="w-full h-full object-contain"
+                                />
+                                {item.mode === "wishlist" && (
+                                  <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Clothing Items Display */}
-            {!isEditing && itemsToDisplay.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Clothing Items ({itemsToDisplay.length})</span>
-                    <Badge variant="outline">{itemsToDisplay.length} items</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-4">
-                    {itemsToDisplay.map((item, index) => (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Card
-                          className="h-20 cursor-pointer hover:shadow-md transition-shadow relative"
-                          onClick={() => handleOpenModal(index)}
-                        >
-                          <CardContent className="h-full flex items-center justify-center p-1">
-                            <img
-                              src={item.url || "/placeholder.svg"}
-                              alt={item.name || "Clothing Item"}
-                              className="w-full h-full object-contain"
-                            />
-                            {item.mode === "wishlist" && (
-                              <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Wishlist Warning */}
-            {wishlistItems.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 mt-6">
-                    <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
-                        <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <AlertDescription className="text-amber-800 dark:text-amber-200">
-                            <div className="space-y-1">
-                                <p className="font-medium">Some items are from your wishlist:</p>
-                                {wishlistItems.map((item) => (
-                                    <p key={item.id} className="text-sm">
-                                        • {item.name || "Unnamed item"}
-                                    </p>
-                                ))}
-                            </div>
-                        </AlertDescription>
-                    </Alert>
-                </motion.div>
-            )}
           </motion.div>
         </div>
       </div>
@@ -738,21 +817,16 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           />
         )}
 
-        {isSelectModalOpen && (
+        {isSelectModalOpen && selectModalCategory && (
           <ClothingItemSelectModal
             isOpen={isSelectModalOpen}
             onCloseAction={handleCloseSelectModal}
-            clothingItems={allClothingItems}
+            clothingItems={[
+              ...allClothingItems.filter((item) => getItemCategory(item) === selectModalCategory),
+              { id: "none", url: "", name: "Select None", mode: "closet" as const },
+            ]}
             onSelectItem={handleSelectItemForOutfit}
-            viewMode={
-              selectModalCategory
-                ? allClothingItems.filter(
-                    (item) => item.mode === "closet" && getItemCategory(item) === selectModalCategory,
-                  ).length > 0
-                  ? "closet"
-                  : "wishlist"
-                : "closet"
-            }
+            viewMode="closet"
             selectedCategory={selectModalCategory}
           />
         )}
