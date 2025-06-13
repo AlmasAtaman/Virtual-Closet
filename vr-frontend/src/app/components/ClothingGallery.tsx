@@ -515,6 +515,7 @@ const ClothingGallery = forwardRef(
             setEditForm={setEditForm}
             isDeleting={isDeleting}
             isMoving={isMoving}
+            allItems={filteredItems}
           />
         )}
       </div>

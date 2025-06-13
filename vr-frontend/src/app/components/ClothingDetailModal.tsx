@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Edit, Trash2, MoveRight, Loader2, Save } from "lucide-react"
+import { X, Edit, Trash2, MoveRight, Loader2, Save, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,6 +38,7 @@ interface ClothingDetailModalProps {
   setEditForm: (value: any) => void
   isDeleting: boolean
   isMoving: boolean
+  allItems?: ClothingItem[] // Added to support navigation
 }
 
 export default function ClothingDetailModal({
@@ -53,8 +54,41 @@ export default function ClothingDetailModal({
   setEditForm,
   isDeleting,
   isMoving,
+  allItems = [],
 }: ClothingDetailModalProps) {
   const [activeTab, setActiveTab] = useState<string>("general")
+  const [currentItemIndex, setCurrentItemIndex] = useState<number>(0)
+
+  // Find the current item index in the allItems array
+  useEffect(() => {
+    if (allItems.length > 0) {
+      const index = allItems.findIndex((i) => i.id === item.id)
+      if (index !== -1) {
+        setCurrentItemIndex(index)
+      }
+    }
+  }, [item.id, allItems])
+
+  // Navigate to the next or previous item
+  const navigateItem = (direction: "next" | "prev") => {
+    if (allItems.length <= 1) return
+
+    let newIndex = currentItemIndex
+    if (direction === "next") {
+      newIndex = (currentItemIndex + 1) % allItems.length
+    } else {
+      newIndex = (currentItemIndex - 1 + allItems.length) % allItems.length
+    }
+
+    // Update the current item
+    const newItem = allItems[newIndex]
+    setCurrentItemIndex(newIndex)
+
+    // Reset editing state and update form if needed
+    if (isEditing) {
+      setIsEditing(false)
+    }
+  }
 
   // Helper function to safely format price
   const formatPrice = (price: number | string | null | undefined): string => {
@@ -66,6 +100,8 @@ export default function ClothingDetailModal({
 
   if (!isOpen) return null
 
+  const currentItem = allItems.length > 0 ? allItems[currentItemIndex] : item
+
   return (
     <AnimatePresence>
       <motion.div
@@ -76,7 +112,7 @@ export default function ClothingDetailModal({
         onClick={onClose}
       >
         <motion.div
-          className="relative w-full max-w-4xl max-h-[90vh] bg-background rounded-xl shadow-2xl flex flex-col overflow-hidden"
+          className="relative w-[900px] h-[550px] bg-background rounded-xl shadow-2xl flex flex-col overflow-hidden"
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -93,17 +129,19 @@ export default function ClothingDetailModal({
 
           <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
             {/* Image Section */}
-            <div className="md:w-1/2 p-6 flex items-center justify-center bg-muted/30">
+            <div className="md:w-1/2 p-6 flex items-center justify-center bg-muted/30 relative">
               <div className="relative w-full h-full flex items-center justify-center">
                 <motion.img
-                  src={item.url}
-                  alt={item.name}
-                  className="max-h-[400px] max-w-full object-contain rounded-lg shadow-md"
+                  key={currentItem.id} // Add key to trigger animation on item change
+                  src={currentItem.url}
+                  alt={currentItem.name}
+                  className="max-h-[400px] max-w-full object-contain"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 />
-                {item.mode === "wishlist" && (
+                {currentItem.mode === "wishlist" && (
                   <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500/90 text-white">
                     Wishlist
                   </Badge>
@@ -114,314 +152,329 @@ export default function ClothingDetailModal({
             {/* Details Section */}
             <div className="md:w-1/2 flex flex-col overflow-hidden">
               <div className="p-6 overflow-y-auto flex-grow">
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Name</label>
-                      <Input
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        placeholder="Item name"
-                      />
+                {/* Title and Source URL - always visible */}
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold">{isEditing ? "Edit Item" : currentItem.name}</h2>
+                  {currentItem.sourceUrl && (
+                    <div className="mt-1">
+                      <a
+                        href={currentItem.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        View product page
+                      </a>
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Type</label>
-                        <Select
-                          value={editForm.type}
-                          onValueChange={(value: string) => setEditForm({ ...editForm, type: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="T-shirt">T-shirt</SelectItem>
-                            <SelectItem value="Shirt">Shirt</SelectItem>
-                            <SelectItem value="Pants">Pants</SelectItem>
-                            <SelectItem value="Jeans">Jeans</SelectItem>
-                            <SelectItem value="Jacket">Jacket</SelectItem>
-                            <SelectItem value="Sweater">Sweater</SelectItem>
-                            <SelectItem value="Dress">Dress</SelectItem>
-                            <SelectItem value="Skirt">Skirt</SelectItem>
-                            <SelectItem value="Shoes">Shoes</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
 
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Brand</label>
-                        <Input
-                          value={editForm.brand}
-                          onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
-                          placeholder="Brand name"
-                        />
-                      </div>
+                {/* Tab Navigation and Content */}
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="general">General Info</TabsTrigger>
+                    <TabsTrigger value="details">Style & Details</TabsTrigger>
+                  </TabsList>
 
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Price</label>
-                        <Input
-                          type="number"
-                          value={editForm.price}
-                          onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
-                          placeholder="0.00"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Source URL</label>
-                        <Input
-                          value={editForm.sourceUrl}
-                          onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
-                          placeholder="https://..."
-                        />
-                      </div>
-                    </div>
-
-                    <Tabs defaultValue="basic" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="basic">Basic Details</TabsTrigger>
-                        <TabsTrigger value="advanced">Advanced Details</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="basic" className="space-y-4 pt-4">
+                  <TabsContent value="general" className="space-y-4">
+                    {isEditing ? (
+                      <div className="space-y-6">
+                        {/* Basic Info Section (edit fields) */}
                         <div>
-                          <label className="text-sm font-medium mb-1 block">Notes</label>
-                          <Textarea
-                            value={editForm.notes}
-                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                            placeholder="Add notes about this item..."
-                            rows={3}
-                          />
-                        </div>
-                      </TabsContent>
+                          <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Name</label>
+                              <Input
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                placeholder="Item name"
+                              />
+                            </div>
 
-                      <TabsContent value="advanced" className="space-y-4 pt-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Occasion</label>
-                            <Select
-                              value={editForm.occasion}
-                              onValueChange={(value: string) => setEditForm({ ...editForm, occasion: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select occasion" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Casual">Casual</SelectItem>
-                                <SelectItem value="Formal">Formal</SelectItem>
-                                <SelectItem value="Business">Business</SelectItem>
-                                <SelectItem value="Athletic">Athletic</SelectItem>
-                                <SelectItem value="Party">Party</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">Type</label>
+                                <Select
+                                  value={editForm.type}
+                                  onValueChange={(value: string) => setEditForm({ ...editForm, type: value })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="T-shirt">T-shirt</SelectItem>
+                                    <SelectItem value="Shirt">Shirt</SelectItem>
+                                    <SelectItem value="Pants">Pants</SelectItem>
+                                    <SelectItem value="Jeans">Jeans</SelectItem>
+                                    <SelectItem value="Jacket">Jacket</SelectItem>
+                                    <SelectItem value="Sweater">Sweater</SelectItem>
+                                    <SelectItem value="Dress">Dress</SelectItem>
+                                    <SelectItem value="Skirt">Skirt</SelectItem>
+                                    <SelectItem value="Shoes">Shoes</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Style</label>
-                            <Input
-                              value={editForm.style}
-                              onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
-                              placeholder="Style"
-                            />
-                          </div>
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">Brand</label>
+                                <Input
+                                  value={editForm.brand}
+                                  onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                                  placeholder="Brand name"
+                                />
+                              </div>
+                            </div>
 
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Fit</label>
-                            <Select
-                              value={editForm.fit}
-                              onValueChange={(value: string) => setEditForm({ ...editForm, fit: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select fit" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Slim">Slim</SelectItem>
-                                <SelectItem value="Regular">Regular</SelectItem>
-                                <SelectItem value="Oversized">Oversized</SelectItem>
-                                <SelectItem value="Skinny">Skinny</SelectItem>
-                                <SelectItem value="Relaxed">Relaxed</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">Price</label>
+                                <Input
+                                  type="number"
+                                  value={editForm.price}
+                                  onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                                  placeholder="0.00"
+                                />
+                              </div>
 
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Color</label>
-                            <Input
-                              value={editForm.color}
-                              onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                              placeholder="Color"
-                            />
-                          </div>
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">Source URL</label>
+                                <Input
+                                  value={editForm.sourceUrl}
+                                  onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
+                                  placeholder="https://..."
+                                />
+                              </div>
+                            </div>
 
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Material</label>
-                            <Select
-                              value={editForm.material}
-                              onValueChange={(value: string) => setEditForm({ ...editForm, material: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select material" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cotton">Cotton</SelectItem>
-                                <SelectItem value="Denim">Denim</SelectItem>
-                                <SelectItem value="Leather">Leather</SelectItem>
-                                <SelectItem value="Linen">Linen</SelectItem>
-                                <SelectItem value="Polyester">Polyester</SelectItem>
-                                <SelectItem value="Wool">Wool</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Season</label>
-                            <Select
-                              value={editForm.season}
-                              onValueChange={(value: string) => setEditForm({ ...editForm, season: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select season" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Spring">Spring</SelectItem>
-                                <SelectItem value="Summer">Summer</SelectItem>
-                                <SelectItem value="Fall">Fall</SelectItem>
-                                <SelectItem value="Winter">Winter</SelectItem>
-                                <SelectItem value="All Seasons">All Seasons</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Notes</label>
+                              <Textarea
+                                value={editForm.notes}
+                                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                placeholder="Add notes about this item..."
+                                rows={3}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-bold">{item.name}</h2>
-                      {item.sourceUrl && (
-                        <a
-                          href={item.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline mt-1 inline-block"
-                        >
-                          View product page
-                        </a>
-                      )}
-                    </div>
-
-                    <Tabs value={activeTab} onValueChange={setActiveTab}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="general">General Info</TabsTrigger>
-                        <TabsTrigger value="details">Style & Details</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="general" className="pt-4 space-y-4">
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          {item.type && (
+                          {currentItem.type && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Type</h4>
-                              <p className="text-base">{item.type}</p>
+                              <p className="text-base">{currentItem.type}</p>
                             </div>
                           )}
 
-                          {item.brand && (
+                          {currentItem.brand && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Brand</h4>
-                              <p className="text-base">{item.brand}</p>
+                              <p className="text-base">{currentItem.brand}</p>
                             </div>
                           )}
 
-                          {formatPrice(item.price) && (
+                          {formatPrice(currentItem.price) && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Price</h4>
-                              <p className="text-base font-medium text-primary">{formatPrice(item.price)}</p>
+                              <p className="text-base font-medium text-primary">{formatPrice(currentItem.price)}</p>
                             </div>
                           )}
                         </div>
 
-                        {item.notes && (
+                        {currentItem.notes && (
                           <div className="mt-4">
                             <h4 className="text-sm font-medium text-muted-foreground mb-1">Notes</h4>
-                            <Card>
-                              <CardContent className="p-4 text-sm">{item.notes}</CardContent>
-                            </Card>
+                            <div className="p-4 bg-muted/30 rounded-md text-sm">{currentItem.notes}</div>
                           </div>
                         )}
-                      </TabsContent>
+                      </div>
+                    )}
+                  </TabsContent>
 
-                      <TabsContent value="details" className="pt-4">
+                  <TabsContent value="details" className="space-y-4">
+                    {isEditing ? (
+                      <div className="space-y-6">
+                        {/* Style & Details Section (edit fields) */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Style & Details</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Occasion</label>
+                              <Select
+                                value={editForm.occasion}
+                                onValueChange={(value: string) => setEditForm({ ...editForm, occasion: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select occasion" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Casual">Casual</SelectItem>
+                                  <SelectItem value="Formal">Formal</SelectItem>
+                                  <SelectItem value="Business">Business</SelectItem>
+                                  <SelectItem value="Athletic">Athletic</SelectItem>
+                                  <SelectItem value="Party">Party</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Style</label>
+                              <Input
+                                value={editForm.style}
+                                onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
+                                placeholder="Style"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Fit</label>
+                              <Select
+                                value={editForm.fit}
+                                onValueChange={(value: string) => setEditForm({ ...editForm, fit: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select fit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Slim">Slim</SelectItem>
+                                  <SelectItem value="Regular">Regular</SelectItem>
+                                  <SelectItem value="Oversized">Oversized</SelectItem>
+                                  <SelectItem value="Crop">Crop</SelectItem>
+                                  <SelectItem value="Skinny">Skinny</SelectItem>
+                                  <SelectItem value="Relaxed">Relaxed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Color</label>
+                              <Input
+                                value={editForm.color}
+                                onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                                placeholder="Color"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Material</label>
+                              <Select
+                                value={editForm.material}
+                                onValueChange={(value: string) => setEditForm({ ...editForm, material: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select material" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Cotton">Cotton</SelectItem>
+                                  <SelectItem value="Denim">Denim</SelectItem>
+                                  <SelectItem value="Leather">Leather</SelectItem>
+                                  <SelectItem value="Linen">Linen</SelectItem>
+                                  <SelectItem value="Polyester">Polyester</SelectItem>
+                                  <SelectItem value="Wool">Wool</SelectItem>
+                                  <SelectItem value="Silk">Silk</SelectItem>
+                                  <SelectItem value="Cashmere">Cashmere</SelectItem>
+                                  <SelectItem value="Nylon">Nylon</SelectItem>
+                                  <SelectItem value="Spandex">Spandex</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium mb-1 block">Season</label>
+                              <Select
+                                value={editForm.season}
+                                onValueChange={(value: string) => setEditForm({ ...editForm, season: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select season" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Spring">Spring</SelectItem>
+                                  <SelectItem value="Summer">Summer</SelectItem>
+                                  <SelectItem value="Fall">Fall</SelectItem>
+                                  <SelectItem value="Winter">Winter</SelectItem>
+                                  <SelectItem value="All Seasons">All Seasons</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          {item.occasion && (
+                          {currentItem.occasion && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Occasion</h4>
-                              <p className="text-base">{item.occasion}</p>
+                              <p className="text-base">{currentItem.occasion}</p>
                             </div>
                           )}
 
-                          {item.style && (
+                          {currentItem.style && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Style</h4>
-                              <p className="text-base">{item.style}</p>
+                              <p className="text-base">{currentItem.style}</p>
                             </div>
                           )}
 
-                          {item.fit && (
+                          {currentItem.fit && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Fit</h4>
-                              <p className="text-base">{item.fit}</p>
+                              <p className="text-base">{currentItem.fit}</p>
                             </div>
                           )}
 
-                          {item.color && (
+                          {currentItem.color && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Color</h4>
                               <div className="flex items-center gap-2">
                                 <div
                                   className="w-4 h-4 rounded-full border"
-                                  style={{ backgroundColor: item.color.toLowerCase() }}
+                                  style={{ backgroundColor: currentItem.color.toLowerCase() }}
                                 ></div>
-                                <p className="text-base">{item.color}</p>
+                                <p className="text-base">{currentItem.color}</p>
                               </div>
                             </div>
                           )}
 
-                          {item.material && (
+                          {currentItem.material && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Material</h4>
-                              <p className="text-base">{item.material}</p>
+                              <p className="text-base">{currentItem.material}</p>
                             </div>
                           )}
 
-                          {item.season && (
+                          {currentItem.season && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Season</h4>
-                              <p className="text-base">{item.season}</p>
+                              <p className="text-base">{currentItem.season}</p>
                             </div>
                           )}
                         </div>
 
-                        {!item.occasion &&
-                          !item.style &&
-                          !item.fit &&
-                          !item.color &&
-                          !item.material &&
-                          !item.season && (
+                        {!currentItem.occasion &&
+                          !currentItem.style &&
+                          !currentItem.fit &&
+                          !currentItem.color &&
+                          !currentItem.material &&
+                          !currentItem.season && (
                             <div className="text-center py-8 text-muted-foreground">
                               <p>No additional details available.</p>
                               <p className="text-sm mt-1">Click Edit to add more information.</p>
                             </div>
                           )}
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                )}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
 
               {/* Action Buttons */}
-              <div className="p-4 border-t flex justify-end gap-2">
+              <div className="mt-auto flex justify-end gap-2 p-4 border-t">
                 {isEditing ? (
                   <>
                     <Button variant="outline" onClick={() => setIsEditing(false)}>
@@ -434,10 +487,10 @@ export default function ClothingDetailModal({
                   </>
                 ) : (
                   <>
-                    {item.mode === "wishlist" && (
+                    {currentItem.mode === "wishlist" && (
                       <Button
                         variant="outline"
-                        onClick={() => onMoveToCloset(item)}
+                        onClick={() => onMoveToCloset(currentItem)}
                         disabled={isMoving}
                         className="gap-2"
                       >
@@ -445,36 +498,11 @@ export default function ClothingDetailModal({
                         Move to Closet
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsEditing(true)
-                        setEditForm({
-                          name: item.name,
-                          type: item.type || "",
-                          brand: item.brand || "",
-                          price: item.price?.toString() || "",
-                          occasion: item.occasion || "",
-                          style: item.style || "",
-                          fit: item.fit || "",
-                          color: item.color || "",
-                          material: item.material || "",
-                          season: item.season || "",
-                          notes: item.notes || "",
-                          sourceUrl: item.sourceUrl || "",
-                        })
-                      }}
-                      className="gap-2"
-                    >
+                    <Button variant="outline" onClick={() => setIsEditing(true)} className="gap-2">
                       <Edit className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => onDelete(item.key)}
-                      disabled={isDeleting}
-                      className="gap-2"
-                    >
+                    <Button variant="destructive" onClick={() => onDelete(currentItem.id)} disabled={isDeleting} className="gap-2">
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       Delete
                     </Button>
@@ -484,6 +512,36 @@ export default function ClothingDetailModal({
             </div>
           </div>
         </motion.div>
+
+        {/* Left arrow */}
+        {!isEditing && allItems.length > 1 && currentItemIndex > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-1/2 top-1/2 -translate-y-1/2 -ml-[508px] rounded-full bg-background/80 hover:bg-background shadow-md z-50"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigateItem("prev")
+            }}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+        )}
+
+        {/* Right arrow */}
+        {!isEditing && allItems.length > 1 && currentItemIndex < allItems.length - 1 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1/2 top-1/2 -translate-y-1/2 -mr-[508px] rounded-full bg-background/80 hover:bg-background shadow-md z-50"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigateItem("next")
+            }}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        )}
       </motion.div>
     </AnimatePresence>
   )
