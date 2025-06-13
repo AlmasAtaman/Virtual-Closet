@@ -88,41 +88,23 @@ export default function Homepage() {
 
       {/* Main Content */}
       <main className="container px-4 py-8">
-        {/* Title and View Mode Tabs */}
-        <div className="mb-8">
-          <motion.h1
-            className="text-3xl font-bold tracking-tight mb-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+        {/* Tabs full width on top */}
+        <div className="mb-6">
+          <Tabs
+            defaultValue={viewMode}
+            onValueChange={(value) => setViewMode(value as "closet" | "wishlist")}
+            className="w-full"
           >
-            My Wardrobe
-          </motion.h1>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <Tabs
-              defaultValue={viewMode}
-              onValueChange={(value) => setViewMode(value as "closet" | "wishlist")}
-              className="w-full sm:w-auto"
-            >
-              <TabsList className="grid w-full sm:w-[300px] grid-cols-2">
-                <TabsTrigger value="closet">My Closet</TabsTrigger>
-                <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <Button
-              onClick={handleOpenUploadModal}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Clothing
-            </Button>
-          </div>
+            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm">
+              <TabsTrigger value="closet">My Closet</TabsTrigger>
+              <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Search and Filter Bar */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        {/* Controls row: Search + Buttons */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Search bar */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -141,7 +123,21 @@ export default function Homepage() {
               </button>
             )}
           </div>
+
+          {/* Control buttons */}
+          <div className="flex gap-2">
+            <Button variant="outline">Filter</Button>
+            <Button variant="outline">Select</Button>
+            <Button
+              onClick={handleOpenUploadModal}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Clothing
+            </Button>
+          </div>
         </div>
+
 
         {/* Gallery Section */}
         <AnimatePresence mode="wait">
