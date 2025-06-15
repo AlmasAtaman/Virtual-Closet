@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ClothingItemSelectModal from './ClothingItemSelectModal';
-import OutfitDetailsStep from './OutfitDetailsStep';
+import OutfitDetailsModal from './OutfitDetailsModal';
 
 interface CreateOutfitModalProps {
     show: boolean;
@@ -50,7 +50,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const [isCreating, setIsCreating] = useState(false);
     const [animationKey, setAnimationKey] = useState(0);
 
-    const [showDetailsStep, setShowDetailsStep] = useState(false);
+    const [showOutfitDetailsModal, setShowOutfitDetailsModal] = useState(false);
     const [createdOutfitId, setCreatedOutfitId] = useState<string | null>(null);
     const [createdOutfitItems, setCreatedOutfitItems] = useState<ClothingItem[]>([]);
 
@@ -153,7 +153,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             // Store the created outfit info and show details step
             setCreatedOutfitId(createdOutfit.outfit?.id || createdOutfit.id);
             setCreatedOutfitItems(selectedItems);
-            setShowDetailsStep(true);
         } catch (error: any) {
             console.error('Error creating outfit:', error);
             alert(`Error creating outfit: ${error.message}`);
@@ -184,10 +183,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         setShowOuterwearSelectModal(false);
         setShowShoeSelectModal(false);
         // Reset details step state
-        setShowDetailsStep(false);
         setCreatedOutfitId(null);
         setCreatedOutfitItems([]);
         setAnimationKey(0);
+        setShowOutfitDetailsModal(false);
         onCloseAction(); // Call the original onCloseAction prop
     };
 
@@ -223,7 +222,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                onClick={handleCloseModal}
             >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -245,6 +243,17 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             >
                                 <Shuffle className="w-4 h-4 mr-2" />
                                 Randomize
+                            </Button>
+                            <Button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log("Additional Info button clicked");
+                                    setShowOutfitDetailsModal(true);
+                                }}
+                                variant="outline"
+                                className="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900/20"
+                            >
+                                Additional Info
                             </Button>
                             <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
                                 <X className="w-5 h-5" />
@@ -544,17 +553,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             </Button>
                         </div>
                     </div>
-                    {/* Outfit Details Step */}
-                    {showDetailsStep && createdOutfitId && (
-                        <OutfitDetailsStep
-                            show={showDetailsStep}
-                            outfitId={createdOutfitId}
-                            clothingItems={createdOutfitItems}
-                            onComplete={handleDetailsComplete}
-                            onSkip={handleDetailsSkip}
-                        />
-                    )}
                 </motion.div>
+                {/* Outfit Details Step */}
+                {showOutfitDetailsModal && (
+                    <OutfitDetailsModal
+                        isOpen={showOutfitDetailsModal}
+                        onClose={() => setShowOutfitDetailsModal(false)}
+                        outfitId={createdOutfitId}
+                        clothingItems={createdOutfitItems}
+                        onComplete={handleDetailsComplete}
+                        onSkip={handleDetailsSkip}
+                    />
+                )}
 
                 {/* Selection Modals */}
                 <ClothingItemSelectModal
