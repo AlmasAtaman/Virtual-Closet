@@ -121,7 +121,7 @@ export default function LandingPage() {
                   </h1>
                   <div className="flex items-center gap-2">
                     <span className="inline-block bg-orange-100 text-orange-600 font-extrabold text-2xl sm:text-3xl md:text-4xl px-4 py-1 rounded-lg shadow-sm uppercase tracking-wide mt-2 mb-2">
-                      Only For Serious Fashion Lovers
+                      Only For Fashion Mandem
                     </span>
                   </div>
                   <p className="max-w-[600px] text-muted-foreground md:text-lg lg:text-xl">
