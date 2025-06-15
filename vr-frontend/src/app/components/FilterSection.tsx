@@ -158,7 +158,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
       >
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <Filter className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
-        <span className="font-medium">Filter & Sort</span>
+        <span className="font-medium">Filter</span>
         <AnimatePresence>
           {activeFiltersCount > 0 && (
             <motion.div
