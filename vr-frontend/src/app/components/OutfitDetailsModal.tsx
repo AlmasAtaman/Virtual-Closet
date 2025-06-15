@@ -30,7 +30,7 @@ interface ClothingItem {
 interface OutfitDetailsStepProps {
   isOpen: boolean
   onClose: () => void
-  outfitId: string
+  outfitId: string | null
   clothingItems: ClothingItem[]
   onComplete: () => void
   onSkip: () => void
@@ -75,6 +75,10 @@ export default function OutfitDetailsModal({
   }
 
   const handleSaveDetails = async () => {
+    if (!outfitId) {
+      alert("Please create an outfit first before saving additional details.")
+      return
+    }
     setIsSaving(true)
     try {
       const response = await fetch(`http://localhost:8000/api/outfits/${outfitId}`, {
@@ -136,6 +140,11 @@ export default function OutfitDetailsModal({
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                 Totally optional! You can always edit these later.
               </p>
+              {!outfitId && (
+                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
+                  Note: Details will be saved once an outfit is created.
+                </p>
+              )}
             </CardHeader>
 
             <CardContent className="space-y-4">
@@ -285,7 +294,7 @@ export default function OutfitDetailsModal({
               <Button
                 onClick={handleSaveDetails}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white gap-2 order-1 sm:order-2"
-                disabled={isSaving}
+                disabled={isSaving || !outfitId}
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
