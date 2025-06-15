@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Trash2, MoveRight, Loader2, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import FilterSection, { Clothing, FilterAttribute } from "./FilterSection";
+import { Clothing, FilterAttribute } from "./FilterSection";
 import ClothingCard from "./ClothingCard";
 import ClothingDetailModal from "./ClothingDetailModal";
 import type { ClothingItem } from "../types/clothing";
@@ -23,11 +23,13 @@ type ClothingGalleryProps = {
   priceRange: [number | null, number | null];
   clothingItems: ClothingItem[];
   setClothingItems: React.Dispatch<React.SetStateAction<ClothingItem[]>>;
+  isMultiSelecting: boolean;
+  setIsMultiSelecting: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, priceRange, clothingItems, setClothingItems, }: ClothingGalleryProps, ref ) => {
+  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting,}: ClothingGalleryProps, ref ) => {
     const [selectedItem, setSelectedItem] = useState<Clothing | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +52,6 @@ const ClothingGallery = forwardRef(
     const [showFilters, setShowFilters] = useState(false);
     const [filterAcrossModes, setFilterAcrossModes] = useState(false);
     const [searchAcrossModes, setSearchAcrossModes] = useState(false);
-    const [isMultiSelecting, setIsMultiSelecting] = useState(false);
     const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
     const [clickedItemRect, setClickedItemRect] = useState<DOMRect | null>(null);
     const [selectedTab, setSelectedTab] = useState<"general" | "details">("general");
@@ -347,64 +348,11 @@ const ClothingGallery = forwardRef(
 
     return (
       <div className="space-y-6">
-        {/* Filter Section */}
-
-
-        {/* Selected Tags */}
-        {selectedTags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <AnimatePresence>
-              {selectedTags.map((tag) => (
-                <motion.div
-                  key={tag}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
-                >
-                  <span>{tag}</span>
-                  <button
-                    onClick={() => toggleTag(tag)}
-                    className="ml-1 rounded-full p-0.5 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-muted-foreground hover:text-foreground"
-              onClick={() => setSelectedTags([])}
-            >
-              Clear all
-            </motion.button>
-          </div>
-        )}
 
         {/* Multi-select Controls */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button
-              variant={isMultiSelecting ? "destructive" : "outline"}
-              size="sm"
-              onClick={toggleMultiSelect}
-              className="gap-2"
-            >
-              {isMultiSelecting ? (
-                <>
-                  <X className="h-4 w-4" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4" />
-                  Select Items
-                </>
-              )}
-            </Button>
+
 
             {isMultiSelecting && selectedItemIds.length > 0 && (
               <span className="text-sm font-medium">{selectedItemIds.length} selected</span>
