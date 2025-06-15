@@ -6,9 +6,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function extractProductData(html) {
-  const model = genAI.getGenerativeModel({
-    model: 'models/gemini-1.5-flash-001',
-  });
+  
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
     You are a product metadata extractor for fashion e-commerce.
@@ -35,7 +34,7 @@ export async function extractProductData(html) {
     - Analyze the HTML to identify a single clothing item if present.
     - Set "isClothing" to true if a single clothing item is clearly identified, otherwise set to false.
     - If "isClothing" is true, fill in the following fields based on the clothing item:
-      - "name": a short descriptive name.
+      - "name": a short descriptive name,
       - "brand": guessed brand name (e.g. "Nike", "Adidas"), or null if unknown
       - "type": one of ["T-shirt", "Jacket", "Pants", "Shoes", "Hat", "Sweater", "Shorts", "Dress", "Skirt"], or null.
       - "price": numeric string or number only, e.g. "39.99" or 39.99. Null if not found.
@@ -56,16 +55,21 @@ export async function extractProductData(html) {
     \`\`\`
     `.trim();
 
-
-  const result = await model.generateContent(prompt);
-  const text = await result.response.text();
-
   try {
-    const match = text.match(/{[\s\S]*}/);
+    const result = await model.generateContent(prompt);
+    const text = (await result.response.text()).trim();
+
+    console.log("Raw Gemini response:", text); // DEBUG
+
+    const cleaned = text.replace(/```json|```/g, "").trim();
+    const match = cleaned.match(/\{[\s\S]*?\}/);
     if (!match) throw new Error("No JSON found in Gemini response");
+
     return JSON.parse(match[0]);
   } catch (err) {
-    console.error("Failed to parse Gemini response:", text);
+    console.error("‼️ Gemini crashed or returned bad JSON:", err);
+
+
     return {
       isClothing: false,
       name: null,
