@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, useMemo  } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Search, X } from "lucide-react"
 import LogOutButton from "../components/LogoutButton"
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ClothingItem } from "../types/clothing"
+import FilterSection, { Clothing, FilterAttribute } from "../components/FilterSection";
 
 export default function Homepage() {
   const [username, setUsername] = useState<string | null>(null)
@@ -22,6 +23,35 @@ export default function Homepage() {
   const galleryRef = useRef<any>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
+  const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
+
+
+  const filterAttributes: FilterAttribute[] = [
+  { key: "type", label: "Type" },
+  { key: "occasion", label: "Occasion" },
+  { key: "style", label: "Style" },
+  { key: "fit", label: "Fit" },
+  { key: "color", label: "Color" },
+  { key: "material", label: "Material" },
+  { key: "season", label: "Season" },
+];
+
+
+  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
+
+  const uniqueAttributeValues: Record<string, string[]> = useMemo(() => {
+    const values: Record<string, string[]> = {};
+    filterAttributes.forEach((attr) => {
+      values[attr.key] = Array.from(
+        new Set(clothingItems.map((item) => item[attr.key as keyof ClothingItem]).filter(Boolean))
+      ) as string[];
+    });
+    return values;
+  }, [clothingItems]);
+
+
 
   const handleCloseModal = useCallback(() => {
     setShowModal(false)
@@ -126,7 +156,18 @@ export default function Homepage() {
 
           {/* Control buttons */}
           <div className="flex gap-2">
-            <Button variant="outline">Filter</Button>
+            <FilterSection
+            clothingItems={clothingItems}
+            selectedTags={selectedTags}
+            setSelectedTags={setSelectedTags}
+            filterAttributes={filterAttributes}
+            uniqueAttributeValues={uniqueAttributeValues}
+            priceSort={priceSort}
+            setPriceSort={setPriceSort}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+          />
+
             <Button variant="outline">Select</Button>
             <Button
               onClick={handleOpenUploadModal}
@@ -148,13 +189,20 @@ export default function Homepage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <ClothingGallery
-              ref={galleryRef}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              openUploadModal={handleOpenUploadModal}
-              searchQuery={searchQuery}
-            />
+        <ClothingGallery
+          ref={galleryRef}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          openUploadModal={handleOpenUploadModal}
+          searchQuery={searchQuery}
+          selectedTags={selectedTags}
+          setSelectedTags={setSelectedTags}
+          priceSort={priceSort}
+          priceRange={priceRange}
+          clothingItems={clothingItems}
+          setClothingItems={setClothingItems}
+        />
+
           </motion.div>
         </AnimatePresence>
       </main>

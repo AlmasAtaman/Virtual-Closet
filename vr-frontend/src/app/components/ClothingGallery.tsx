@@ -17,14 +17,19 @@ type ClothingGalleryProps = {
   setViewMode: (mode: "closet" | "wishlist") => void;
   openUploadModal: () => void;
   searchQuery?: string;
+  selectedTags: string[];
+  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
+  priceSort: "none" | "asc" | "desc";
+  priceRange: [number | null, number | null];
+  clothingItems: ClothingItem[];
+  setClothingItems: React.Dispatch<React.SetStateAction<ClothingItem[]>>;
 };
 
+
 const ClothingGallery = forwardRef(
-  ({ viewMode, setViewMode, openUploadModal, searchQuery = "" }: ClothingGalleryProps, ref) => {
-    const [clothingItems, setClothingItems] = useState<Clothing[]>([]);
+  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, priceRange, clothingItems, setClothingItems, }: ClothingGalleryProps, ref ) => {
     const [selectedItem, setSelectedItem] = useState<Clothing | null>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [autocompleteEnabled, setAutocompleteEnabled] = useState(true);
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -42,8 +47,6 @@ const ClothingGallery = forwardRef(
       notes: "",
       sourceUrl: "",
     });
-    const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
-    const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
     const [showFilters, setShowFilters] = useState(false);
     const [filterAcrossModes, setFilterAcrossModes] = useState(false);
     const [searchAcrossModes, setSearchAcrossModes] = useState(false);
@@ -345,17 +348,7 @@ const ClothingGallery = forwardRef(
     return (
       <div className="space-y-6">
         {/* Filter Section */}
-        <FilterSection
-          clothingItems={clothingItems}
-          selectedTags={selectedTags}
-          setSelectedTags={setSelectedTags}
-          filterAttributes={filterAttributes}
-          uniqueAttributeValues={uniqueAttributeValues}
-          priceSort={priceSort}
-          setPriceSort={setPriceSort}
-          priceRange={priceRange}
-          setPriceRange={setPriceRange}
-        />
+
 
         {/* Selected Tags */}
         {selectedTags.length > 0 && (
