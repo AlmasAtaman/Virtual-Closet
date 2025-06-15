@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo  } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Search, X } from "lucide-react"
+import { Plus, Search, X, Check } from "lucide-react"
 import LogOutButton from "../components/LogoutButton"
 import UploadForm from "../components/UploadForm"
 import { useRouter } from "next/navigation"
@@ -26,6 +26,7 @@ export default function Homepage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
   const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
+  const [isMultiSelecting, setIsMultiSelecting] = useState(false);
 
 
   const filterAttributes: FilterAttribute[] = [
@@ -98,6 +99,13 @@ export default function Homepage() {
   // Conditional return statements must come AFTER all hooks have been called.
   if (!hasMounted || loading) return null
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
@@ -168,7 +176,22 @@ export default function Homepage() {
             setPriceRange={setPriceRange}
           />
 
-            <Button variant="outline">Select</Button>
+          <Button
+            variant={isMultiSelecting ? "destructive" : "outline"}
+            onClick={() => setIsMultiSelecting((prev) => !prev)}
+          >
+            {isMultiSelecting ? (
+              <>
+                <X className="h-4 w-4 mr-1" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4 mr-1" />
+                Select
+              </>
+            )}
+          </Button>
             <Button
               onClick={handleOpenUploadModal}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2"
@@ -189,19 +212,58 @@ export default function Homepage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-        <ClothingGallery
-          ref={galleryRef}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          openUploadModal={handleOpenUploadModal}
-          searchQuery={searchQuery}
-          selectedTags={selectedTags}
-          setSelectedTags={setSelectedTags}
-          priceSort={priceSort}
-          priceRange={priceRange}
-          clothingItems={clothingItems}
-          setClothingItems={setClothingItems}
-        />
+
+          {/* Selected Tags */}
+        {selectedTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <AnimatePresence>
+              {selectedTags.map((tag) => (  
+                <motion.div
+                  key={tag}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                >
+                  <span>{tag}</span>
+                  <button
+                    onClick={() => toggleTag(tag)}
+                    className="ml-1 rounded-full p-0.5 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => setSelectedTags([])}
+            >
+              Clear all
+            </motion.button>
+          </div>
+        )}
+
+
+      <ClothingGallery
+        ref={galleryRef}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        openUploadModal={handleOpenUploadModal}
+        searchQuery={searchQuery}
+        selectedTags={selectedTags}
+        setSelectedTags={setSelectedTags}
+        priceSort={priceSort}
+        priceRange={priceRange}
+        clothingItems={clothingItems}
+        setClothingItems={setClothingItems}
+        isMultiSelecting={isMultiSelecting}
+        setIsMultiSelecting={setIsMultiSelecting}
+      />
+
 
           </motion.div>
         </AnimatePresence>
