@@ -23,6 +23,16 @@ export default function Homepage() {
   const galleryRef = useRef<any>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
   const [searchQuery, setSearchQuery] = useState("")
+
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
   const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
@@ -143,24 +153,36 @@ export default function Homepage() {
         {/* Controls row: Search + Buttons */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           {/* Search bar */}
-          <div className="relative flex-1">
+          <motion.div
+            layout
+            layoutId="search-bar-container"
+            transition={{ type: "spring", stiffness: 80, damping: 12 }}
+            className="relative flex-1"
+          >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search by name, type, brand..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full"
+              className="pl-9 w-full pr-9"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+            <AnimatePresence mode="wait">
+              {searchQuery && (
+                <motion.button
+                  key="clear-search-button"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
           {/* Control buttons */}
           <div className="flex gap-2">
@@ -253,7 +275,7 @@ export default function Homepage() {
         viewMode={viewMode}
         setViewMode={setViewMode}
         openUploadModal={handleOpenUploadModal}
-        searchQuery={searchQuery}
+        searchQuery={debouncedQuery}
         selectedTags={selectedTags}
         setSelectedTags={setSelectedTags}
         priceSort={priceSort}

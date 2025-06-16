@@ -420,33 +420,42 @@ const ClothingGallery = forwardRef(
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             <AnimatePresence>
               {filteredItems.map((item) => (
-                <ClothingCard
+                <motion.div
                   key={item.id}
-                  item={item}
-                  onClick={(item, rect) => {
-                    setClickedItemRect(rect);
-                    setSelectedItem(item);
-                    setEditForm({
-                      name: item.name || "",
-                      type: item.type || "",
-                      brand: item.brand || "",
-                      price: item.price?.toString() || "",
-                      occasion: item.occasion || "",
-                      style: item.style || "",
-                      fit: item.fit || "",
-                      color: item.color || "",
-                      material: item.material || "",
-                      season: item.season || "",
-                      notes: item.notes || "",
-                      sourceUrl: item.sourceUrl || "",
-                    });
-                    setIsEditing(false);
-                  }}
+                  layout
+                  layoutId={`clothing-card-${item.id}`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                >
+                  <ClothingCard
+                    item={item}
+                    onClick={(item, rect) => {
+                      setClickedItemRect(rect);
+                      setSelectedItem(item);
+                      setEditForm({
+                        name: item.name || "",
+                        type: item.type || "",
+                        brand: item.brand || "",
+                        price: item.price?.toString() || "",
+                        occasion: item.occasion || "",
+                        style: item.style || "",
+                        fit: item.fit || "",
+                        color: item.color || "",
+                        material: item.material || "",
+                        season: item.season || "",
+                        notes: item.notes || "",
+                        sourceUrl: item.sourceUrl || "",
+                      });
+                      setIsEditing(false);
+                    }}
 
-                  isSelected={selectedItemIds.includes(item.id)}
-                  isMultiSelecting={isMultiSelecting}
-                  onToggleSelect={toggleItemSelection}
-                />
+                    isSelected={selectedItemIds.includes(item.id)}
+                    isMultiSelecting={isMultiSelecting}
+                    onToggleSelect={toggleItemSelection}
+                  />
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>
