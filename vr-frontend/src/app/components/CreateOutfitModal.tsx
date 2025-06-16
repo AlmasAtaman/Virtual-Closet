@@ -530,10 +530,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 onCloseAction={() => setShowOuterwearSelectModal(false)}
                 clothingItems={[
                     ...clothingItems.outerwear,
-                    { id: "none", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
+                    { id: "__none-outerwear__", url: "/placeholder.svg", name: "Select None", mode: "closet", type: "none" },
                 ]}
                 onSelectItem={(item) => {
-                    setSelectedOuterwear(item.id === "none" ? null : item)
+                    setSelectedOuterwear(item.id.startsWith("__none") ? null : item)
                     setShowOuterwearSelectModal(false)
                     setAnimationKey((prev) => prev + 1)
                 }}
@@ -546,10 +546,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 onCloseAction={() => setShowTopSelectModal(false)}
                 clothingItems={[
                     ...clothingItems.tops,
-                    { id: "none", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
+                    { id: "__none-top__", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
                 ]}
                 onSelectItem={(item) => {
-                    setSelectedTop(item.id === "none" ? null : item)
+                    setSelectedTop(item.id.startsWith("__none") ? null : item)
                     setShowTopSelectModal(false)
                     setAnimationKey((prev) => prev + 1)
                 }}
@@ -562,10 +562,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 onCloseAction={() => setShowBottomSelectModal(false)}
                 clothingItems={[
                     ...clothingItems.bottoms,
-                    { id: "none", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
+                    { id: "__none-bottom__", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
                 ]}
                 onSelectItem={(item) => {
-                    setSelectedBottom(item.id === "none" ? null : item)
+                    setSelectedBottom(item.id.startsWith("__none") ? null : item)
                     setShowBottomSelectModal(false)
                     setAnimationKey((prev) => prev + 1)
                 }}
@@ -578,10 +578,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 onCloseAction={() => setShowShoeSelectModal(false)}
                 clothingItems={[
                     ...clothingItems.shoes,
-                    { id: "none", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
+                    { id: "__none-shoe__", url: "/placeholder.svg", name: "Select None", mode: "closet" as const, type: "none" },
                 ]}
                 onSelectItem={(item) => {
-                    setSelectedShoe(item.id === "none" ? null : item)
+                    setSelectedShoe(item.id.startsWith("__none") ? null : item)
                     setShowShoeSelectModal(false)
                     setAnimationKey((prev) => prev + 1)
                 }}

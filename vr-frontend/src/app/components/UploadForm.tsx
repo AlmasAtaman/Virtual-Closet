@@ -100,14 +100,43 @@ export default function UploadForm({
     return true;
   };
 
-  const handleFileUpload = useCallback((file: File) => {
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  }, []);
+const handleFileUpload = useCallback((file: File) => {
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    const result = e.target?.result;
+    if (!result) return;
+
+    // Convert AVIF to PNG using canvas
+    if (file.type === "image/avif") {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const convertedFile = new File([blob], file.name.replace(/\.avif$/, ".png"), {
+            type: "image/png",
+          });
+          setSelectedFile(convertedFile);
+          setImagePreview(URL.createObjectURL(convertedFile));
+        }, "image/png");
+      };
+      img.src = result as string;
+    } else {
+      setSelectedFile(file);
+      setImagePreview(result as string);
+    }
+  };
+
+  reader.readAsDataURL(file);
+}, []);
+
 
   useEffect(() => {
     if (!isOpen) return;
