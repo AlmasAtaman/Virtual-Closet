@@ -426,8 +426,23 @@ const ClothingGallery = forwardRef(
                   onClick={(item, rect) => {
                     setClickedItemRect(rect);
                     setSelectedItem(item);
+                    setEditForm({
+                      name: item.name || "",
+                      type: item.type || "",
+                      brand: item.brand || "",
+                      price: item.price?.toString() || "",
+                      occasion: item.occasion || "",
+                      style: item.style || "",
+                      fit: item.fit || "",
+                      color: item.color || "",
+                      material: item.material || "",
+                      season: item.season || "",
+                      notes: item.notes || "",
+                      sourceUrl: item.sourceUrl || "",
+                    });
                     setIsEditing(false);
                   }}
+
                   isSelected={selectedItemIds.includes(item.id)}
                   isMultiSelecting={isMultiSelecting}
                   onToggleSelect={toggleItemSelection}
