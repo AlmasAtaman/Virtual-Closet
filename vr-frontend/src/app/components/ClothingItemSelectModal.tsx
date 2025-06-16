@@ -71,7 +71,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
             clothingItems.filter(item => {
                 const category = getItemCategory(item);
                 // Explicitly include "Select None" item if its ID is "none"
-                if (item.id === "none") {
+                if (item.id?.startsWith("__none")) {
                     return true;
                 }
                 console.log(`  Checking item: ${item.name} (Type: ${item.type}, Category: ${category}, Mode: ${item.mode}). Matches selectedCategory (${selectedCategory})? ${category === selectedCategory}`);
@@ -88,7 +88,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
         const noneOption = clothingItems.find(item => item.id === "none");
 
         const itemsWithoutNone = itemsToFilter.filter(item => 
-            item.id !== "none" && (
+            !item.id?.startsWith("__none") && (
                 item.name?.toLowerCase().includes(filterText.toLowerCase()) ||
                 item.type?.toLowerCase().includes(filterText.toLowerCase()) ||
                 item.brand?.toLowerCase().includes(filterText.toLowerCase()) ||
@@ -215,7 +215,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                                     onClick={() => handleItemClick(item)}
                                                 >
                                                     <CardContent className="p-3">
-                                                    {item.id === "none" ? (
+                                                    {item.id?.startsWith("__none") ? (
                                                         <>
                                                             <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center">
                                                             <X className="w-10 h-10 text-slate-400 dark:text-slate-500" />
@@ -268,7 +268,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                                 >
                                                     <CardContent className="p-4">
                                                         <div className="flex items-center space-x-4">
-                                                            {item.id === "none" ? (
+                                                            {item.id?.startsWith("__none") ? (
                                                                 <div className="w-16 h-16 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
                                                                     <X className="w-6 h-6 text-slate-400" />
                                                                 </div>
@@ -288,7 +288,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                                                 {item.type && <p className="text-sm text-slate-500 dark:text-slate-400">{item.type}</p>}
                                                                 {item.brand && <p className="text-xs text-slate-400 dark:text-slate-500">{item.brand}</p>}
                                                             </div>
-                                                            {item.mode === "wishlist" && item.id !== "none" && (
+                                                            {item.mode === "wishlist" && !item.id?.startsWith("__none") && (
                                                                 <Badge className="bg-amber-500">Wishlist</Badge>
                                                             )}
                                                         </div>
