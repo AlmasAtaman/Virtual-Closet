@@ -597,51 +597,54 @@ const handleFileUpload = useCallback((file: File) => {
                           </CardContent>
                         </Card>
 
-                        <AnimatePresence>
-                          {scrapedProducts.length > 0 && (
+                <AnimatePresence>
+                  {scrapedProducts.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-3"
+                    >
+                      <Label className="text-sm font-medium">Select Product Image</Label>
+                      <div className="max-h-[300px] overflow-y-auto pr-1">
+                        <div className="grid grid-cols-2 gap-3">
+                          {scrapedProducts[0].images.map((image, index) => (
                             <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="space-y-3"
+                              key={index}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.05 }}
+                              className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                                selectedScrapedImage === image
+                                  ? "border-primary shadow-lg scale-[1.02]"
+                                  : "border-border hover:border-primary/50 hover:scale-[1.01]"
+                              }`}
+                              onClick={() => setSelectedScrapedImage(image)}
                             >
-                              <Label className="text-sm font-medium">Select Product Image</Label>
-                              <div className="grid grid-cols-2 gap-3">
-                                {scrapedProducts[0].images.map((image, index) => (
+                              <img
+                                src={image || "/placeholder.svg"}
+                                alt={`Product ${index + 1}`}
+                                className="w-full h-32 object-cover"
+                              />
+                              <AnimatePresence>
+                                {selectedScrapedImage === image && (
                                   <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    initial={{ opacity: 0, scale: 0.5 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                                      selectedScrapedImage === image
-                                        ? "border-primary shadow-lg scale-[1.02]"
-                                        : "border-border hover:border-primary/50 hover:scale-[1.01]"
-                                    }`}
-                                    onClick={() => setSelectedScrapedImage(image)}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                    className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg"
                                   >
-                                    <img
-                                      src={image || "/placeholder.svg"}
-                                      alt={`Product ${index + 1}`}
-                                      className="w-full h-32 object-cover"
-                                    />
-                                    <AnimatePresence>
-                                      {selectedScrapedImage === image && (
-                                        <motion.div
-                                          initial={{ opacity: 0, scale: 0.5 }}
-                                          animate={{ opacity: 1, scale: 1 }}
-                                          exit={{ opacity: 0, scale: 0.5 }}
-                                          className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg"
-                                        >
-                                          <Check className="w-3 h-3" />
-                                        </motion.div>
-                                      )}
-                                    </AnimatePresence>
+                                    <Check className="w-3 h-3" />
                                   </motion.div>
-                                ))}
-                              </div>
+                                )}
+                              </AnimatePresence>
                             </motion.div>
-                          )}
-                        </AnimatePresence>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                       </motion.div>
                     )}
                   </AnimatePresence>
