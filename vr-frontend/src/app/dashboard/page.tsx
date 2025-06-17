@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ClothingItem } from "../types/clothing"
 import FilterSection, { Clothing, FilterAttribute } from "../components/FilterSection";
+import { Badge } from "@/components/ui/badge";
+
 
 export default function Homepage() {
   const [username, setUsername] = useState<string | null>(null)
@@ -236,42 +238,67 @@ export default function Homepage() {
           >
 
           {/* Selected Tags */}
-        {selectedTags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <AnimatePresence>
-              {selectedTags.map((tag) => (  
+          {(selectedTags.length > 0 || priceSort !== "none") && (
+            <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
+              {/* Always show priceSort badge first if active */}
+              {priceSort !== "none" && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: 0.05 }}
+                >
+                  <Badge
+                    variant="secondary"
+                    className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
+                    onClick={() => setPriceSort("none")}
+                  >
+                    <span className="mr-1">
+                      {priceSort === "asc" ? "Price: Low → High" : "Price: High → Low"}
+                    </span>
+                    <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  </Badge>
+                </motion.div>
+              )}
+
+              {/* Then show selected tags */}
+              {selectedTags.map((tag, index) => (
                 <motion.div
                   key={tag}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                  initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: (index + 1) * 0.05 }}
                 >
-                  <span>{tag}</span>
-                  <button
+                  <Badge
+                    variant="secondary"
+                    className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
                     onClick={() => toggleTag(tag)}
-                    className="ml-1 rounded-full p-0.5 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
+                    <span className="mr-1">{tag}</span>
+                    <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  </Badge>
                 </motion.div>
               ))}
-            </AnimatePresence>
 
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-muted-foreground hover:text-foreground"
-              onClick={() => setSelectedTags([])}
-            >
-              Clear all
-            </motion.button>
-          </div>
-        )}
+              {/* Clear all */}
+              {(selectedTags.length > 0 || priceSort !== "none") && (
+                <button
+                  onClick={() => {
+                    setSelectedTags([]);
+                    setPriceSort("none");
+                  }}
+                  className="text-xs text-muted-foreground hover:text-primary underline ml-2"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+
+
 
 
       <ClothingGallery
-        ref={galleryRef}
         viewMode={viewMode}
         setViewMode={setViewMode}
         openUploadModal={handleOpenUploadModal}
@@ -279,11 +306,13 @@ export default function Homepage() {
         selectedTags={selectedTags}
         setSelectedTags={setSelectedTags}
         priceSort={priceSort}
+        setPriceSort={setPriceSort}
         priceRange={priceRange}
         clothingItems={clothingItems}
         setClothingItems={setClothingItems}
         isMultiSelecting={isMultiSelecting}
         setIsMultiSelecting={setIsMultiSelecting}
+        ref={galleryRef}
       />
 
 

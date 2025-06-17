@@ -16,10 +16,7 @@ const getDerivedEncryptionKey = async (secret, salt) => {
 };
 
 const authMiddleware = async (req, res, next) => {
-  console.log("Received cookies in authMiddleware:", req.cookies);
   const token = req.cookies.accessToken;
-  console.log("Value of token variable:", token);
-  console.log("Type of accessToken:", typeof req.cookies.accessToken);
 
   if (!token) {
     return res.status(401).json({ message: "Unauthorized: No token provided!" });
@@ -34,7 +31,6 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, secret);
     req.user = decoded; // The decoded payload contains user information
-    console.log("Decoded JWT payload:", decoded);
     next();
   } catch (err) {
     console.error("Authentication error:", err);

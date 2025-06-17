@@ -11,6 +11,7 @@ import { Clothing, FilterAttribute } from "./FilterSection";
 import ClothingCard from "./ClothingCard";
 import ClothingDetailModal from "./ClothingDetailModal";
 import type { ClothingItem } from "../types/clothing";
+import { Badge } from "@/components/ui/badge";
 
 type ClothingGalleryProps = {
   viewMode: "closet" | "wishlist";
@@ -20,6 +21,7 @@ type ClothingGalleryProps = {
   selectedTags: string[];
   setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
   priceSort: "none" | "asc" | "desc";
+  setPriceSort: (mode: "none" | "asc" | "desc") => void;
   priceRange: [number | null, number | null];
   clothingItems: ClothingItem[];
   setClothingItems: React.Dispatch<React.SetStateAction<ClothingItem[]>>;
@@ -29,7 +31,7 @@ type ClothingGalleryProps = {
 
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting,}: ClothingGalleryProps, ref ) => {
+  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, setPriceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting,}: ClothingGalleryProps, ref ) => {
     const [selectedItem, setSelectedItem] = useState<Clothing | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -483,6 +485,7 @@ const ClothingGallery = forwardRef(
             allItems={filteredItems}
           />
         )}
+
       </div>
     );
   },

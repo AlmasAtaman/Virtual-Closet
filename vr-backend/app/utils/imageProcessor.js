@@ -3,11 +3,14 @@ import fs from 'fs';
 import { removeBackground } from './removeBackground.js';
 import { getClothingInfoFromImage } from './geminiLabeler.js';
 import { uploadToS3 } from '../../s3.mjs';
+import { standardizeImage } from './standardizeImage.js';
+
 
 export async function processImage(imageData, userId) {
   const { type, data, originalname } = imageData;
   let tempImagePath;
   let cleanedImagePath;
+  let standardizedPath;
 
   try {
     // Handle both direct uploads and URL-based uploads
@@ -44,10 +47,19 @@ export async function processImage(imageData, userId) {
     cleanedImagePath = await removeBackground(tempImagePath);
 
     // 2. Read cleaned image buffer
-    const cleanedBuffer = fs.readFileSync(cleanedImagePath);
+    let cleanedBuffer = fs.readFileSync(cleanedImagePath);
 
     // 3. Get clothing info
     const clothingData = await getClothingInfoFromImage(cleanedImagePath);
+
+    // 3.5 Resize to standard canvas based on clothing type
+    const standardizedPath = `standardized_${Date.now()}_${originalname || 'clothing.png'}`;
+    console.log("→ Clothing type detected:", clothingData?.type);
+    await standardizeImage(cleanedImagePath, clothingData?.type, standardizedPath);
+
+    // Replace cleanedBuffer with standardized image buffer
+    cleanedBuffer = fs.readFileSync(standardizedPath);
+
 
     if (!clothingData?.isClothing) {
       throw new Error('Image is not valid clothing');
@@ -69,6 +81,8 @@ export async function processImage(imageData, userId) {
     // Clean up temporary files
     fs.unlinkSync(tempImagePath);
     fs.unlinkSync(cleanedImagePath);
+    fs.unlinkSync(standardizedPath);
+    
 
     return {
       success: true,
@@ -95,6 +109,10 @@ export async function processImage(imageData, userId) {
     if (cleanedImagePath && fs.existsSync(cleanedImagePath)) {
       fs.unlinkSync(cleanedImagePath);
     }
+    if (standardizedPath && fs.existsSync(standardizedPath)) {
+      fs.unlinkSync(standardizedPath);
+    }
+    
     throw error;
   }
 } 
