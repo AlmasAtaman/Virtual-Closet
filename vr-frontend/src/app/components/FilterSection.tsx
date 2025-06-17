@@ -7,6 +7,9 @@ import { Filter, X, ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { ClothingItem } from "../types/clothing";
 
 export type Clothing = ClothingItem;
@@ -44,7 +47,6 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initialOpenSections: Record<string, boolean> = {
       priceSort: true,
-      priceRange: true,
       type: true,
       advancedFilters: false,
     };
@@ -64,15 +66,6 @@ const FilterSection: React.FC<FilterSectionProps> = ({
       [sectionKey]: !prev[sectionKey],
     }));
   };
-
-  const priceRanges = [
-    { label: "Under $10", range: [0, 10], icon: "💸" },
-    { label: "$10 - $20", range: [10, 20], icon: "💵" },
-    { label: "$20 - $40", range: [20, 40], icon: "💴" },
-    { label: "$40 - $60", range: [40, 60], icon: "💶" },
-    { label: "$60 - $100", range: [60, 100], icon: "💷" },
-    { label: "Over $100", range: [100, Number.POSITIVE_INFINITY], icon: "💎" },
-  ];
 
   const seasonOptions = [
     { label: "Spring", icon: "🌸", color: "from-green-400 to-blue-400" },
@@ -142,6 +135,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
     setPriceRange([null, null]);
   };
 
+  const handlePriceRangeChange = (type: 'min' | 'max', value: string) => {
+    const numValue = value === '' ? null : Number(value);
+    setPriceRange(prev => type === 'min' ? [numValue, prev[1]] : [prev[0], numValue]);
+  };
+
   const activeFiltersCount = (
     selectedTags.length +
     (priceSort !== "none" ? 1 : 0) +
@@ -159,50 +157,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <Filter className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
         <span className="font-medium">Filter</span>
-        <AnimatePresence>
-          {activeFiltersCount > 0 && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
-            >
-              {activeFiltersCount}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </Button>
-
-      {/* Selected Tags */}
-      <AnimatePresence>
-        {selectedTags.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="flex flex-wrap items-center gap-2 mt-4"
-          >
-            {selectedTags.map((tag, index) => (
-              <motion.div
-                key={tag}
-                initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.8, x: -20 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Badge
-                  variant="secondary"
-                  className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                  onClick={() => toggleTag(tag)}
-                >
-                  <span className="mr-1">{tag}</span>
-                  <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                </Badge>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Filter Sidebar */}
       <AnimatePresence>
@@ -276,103 +231,59 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           transition={{ duration: 0.2 }}
                           className="border-t"
                         >
-                          <div className="p-4 space-y-2">
+                          <div className="p-4 space-y-4">
+                            {/* Sort Options */}
                             {[{
-                              value: "none", label: "Default", icon: "🔄" 
+                              value: "none", label: "Default"
                             },
                             {
-                              value: "asc", label: "Price: Low to High", icon: "📈" 
+                              value: "asc", label: "Price: Low to High"
                             },
                             {
-                              value: "desc", label: "Price: High to Low", icon: "📉" 
-                            },
-                            ].map((option) => (
-                              <motion.button
+                              value: "desc", label: "Price: High to Low"
+                            }].map((option) => (
+                              <button
                                 key={option.value}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setPriceSort(option.value as "none" | "asc" | "desc")}
+                                onClick={() => setPriceSort(priceSort === option.value ? "none" as "none" : option.value as "asc" | "desc")}
                                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
                                   priceSort === option.value
                                     ? "bg-primary text-primary-foreground shadow-md"
                                     : "hover:bg-muted"
                                 }`}
                               >
-                                <span className="text-lg">{option.icon}</span>
                                 <span className="font-medium">{option.label}</span>
                                 {priceSort === option.value && (
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
-                                  />
+                                  <span className="ml-auto w-2 h-2 bg-primary-foreground rounded-full" />
                                 )}
-                              </motion.button>
+                              </button>
                             ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </CardContent>
-                </Card>
 
-                {/* Price Range Section */}
-                <Card className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <button
-                      onClick={() => toggleSection("priceRange")}
-                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-                    >
-                      <span className="font-semibold text-sm tracking-wide">PRICE RANGE</span>
-                      <motion.div
-                        animate={{ rotate: openSections.priceRange ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown className="w-4 h-4" />
-                      </motion.div>
-                    </button>
-                    <AnimatePresence>
-                      {openSections.priceRange && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="border-t"
-                        >
-                          <div className="p-4 space-y-2">
-                            {priceRanges.map((range, index) => (
-                              <motion.button
-                                key={range.label}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => {
-                                  if (priceRange[0] === range.range[0] && priceRange[1] === range.range[1]) {
-                                    setPriceRange([null, null]);
-                                  } else {
-                                    setPriceRange(range.range as [number, number]);
-                                  }
-                                }}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                                  priceRange[0] === range.range[0] && priceRange[1] === range.range[1]
-                                    ? "bg-primary text-primary-foreground shadow-md"
-                                    : "hover:bg-muted"
-                                }`}
-                              >
-                                <span className="text-lg">{range.icon}</span>
-                                <span className="font-medium">{range.label}</span>
-                                {priceRange[0] === range.range[0] && priceRange[1] === range.range[1] && (
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
+                            {/* Custom Price Range */}
+                            <div className="space-y-2 pt-2 border-t">
+                              <Label className="text-sm text-muted-foreground">Custom Price Range</Label>
+                              <div className="flex gap-2">
+                                <div className="flex-1">
+                                  <Input
+                                    type="number"
+                                    placeholder="Min"
+                                    value={priceRange[0] ?? ''}
+                                    onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                                    min="0"
+                                    className="h-9"
                                   />
-                                )}
-                              </motion.button>
-                            ))}
+                                </div>
+                                <div className="flex-1">
+                                  <Input
+                                    type="number"
+                                    placeholder="Max"
+                                    value={priceRange[1] ?? ''}
+                                    onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                                    min="0"
+                                    className="h-9"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -387,7 +298,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                       onClick={() => toggleSection("type")}
                       className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                     >
-                      <span className="font-semibold text-sm tracking-wide">CLOTHING TYPE</span>
+                      <span className="text-lg font-bold mb-2">CLOTHING TYPE</span>
                       <motion.div animate={{ rotate: openSections.type ? 180 : 0 }} transition={{ duration: 0.2 }}>
                         <ChevronDown className="w-4 h-4" />
                       </motion.div>
@@ -401,32 +312,16 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           transition={{ duration: 0.2 }}
                           className="border-t"
                         >
-                          <div className="p-4 space-y-2">
-                            {uniqueAttributeValues.type?.map((value, index) => (
-                              <motion.button
-                                key={value}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => toggleTag(value)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                                  selectedTags.includes(value)
-                                    ? "bg-primary text-primary-foreground shadow-md"
-                                    : "hover:bg-muted"
-                                }`}
-                              >
-                                <span className="text-lg">{getTypeIcon(value)}</span>
-                                <span className="font-medium">{value}</span>
-                                {selectedTags.includes(value) && (
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
-                                  />
-                                )}
-                              </motion.button>
+                          <div className="p-6 space-y-4">
+                            {uniqueAttributeValues.type?.map((value) => (
+                              <label key={value} className="flex items-center gap-3 cursor-pointer select-none py-2 text-base font-medium">
+                                <Checkbox
+                                  checked={selectedTags.includes(value)}
+                                  onCheckedChange={() => toggleTag(value)}
+                                  className="border border-gray-400"
+                                />
+                                <span>{value}</span>
+                              </label>
                             ))}
                           </div>
                         </motion.div>
@@ -442,11 +337,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                       onClick={() => toggleSection("advancedFilters")}
                       className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                     >
-                      <span className="font-semibold text-sm tracking-wide">ADVANCED FILTERS</span>
-                      <motion.div
-                        animate={{ rotate: openSections.advancedFilters ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      <span className="text-lg font-bold mb-2">ADVANCED FILTERS</span>
+                      <motion.div animate={{ rotate: openSections.advancedFilters ? 180 : 0 }} transition={{ duration: 0.2 }}>
                         <ChevronDown className="w-4 h-4" />
                       </motion.div>
                     </button>
@@ -459,125 +351,30 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           transition={{ duration: 0.2 }}
                           className="border-t"
                         >
-                          <div className="p-4 space-y-4">
+                          <div className="p-6 space-y-6">
                             {advancedFilterAttributes.map((attribute) => {
                               const uniqueValues = uniqueAttributeValues[attribute.key];
                               if (uniqueValues.length === 0) return null;
-
                               return (
-                                <div key={attribute.key} className="space-y-2">
-                                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                                <div key={attribute.key} className="space-y-3">
+                                  <h4 className="text-base font-semibold mb-1 text-muted-foreground uppercase tracking-wide">
                                     {attribute.label}
                                   </h4>
-
-                                  {attribute.key === "color" ? (
-                                    <div className="grid grid-cols-6 gap-2">
-                                      {uniqueValues.map((value, index) => (
-                                        <motion.button
-                                          key={value}
-                                          initial={{ opacity: 0, scale: 0.8 }}
-                                          animate={{ opacity: 1, scale: 1 }}
-                                          transition={{ delay: index * 0.05 }}
-                                          whileHover={{ scale: 1.1 }}
-                                          whileTap={{ scale: 0.9 }}
-                                          onClick={() => toggleTag(value)}
-                                          className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                                            selectedTags.includes(value)
-                                              ? "ring-2 ring-primary ring-offset-2 scale-110"
-                                              : "hover:scale-105"
-                                          }`}
-                                          style={{
-                                            backgroundColor: mapColorToCss(value),
-                                            borderColor: value.toLowerCase() === "white" ? "#e5e7eb" : "transparent",
-                                          }}
-                                          title={value}
-                                        >
-                                          {selectedTags.includes(value) && (
-                                            <motion.div
-                                              initial={{ scale: 0 }}
-                                              animate={{ scale: 1 }}
-                                              className="w-full h-full flex items-center justify-center text-white text-xs font-bold"
-                                            >
-                                              ✓
-                                            </motion.div>
-                                          )}
-                                        </motion.button>
-                                      ))}
-                                    </div>
-                                  ) : attribute.key === "season" ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                      {seasonOptions.map((option, index) => (
-                                        <motion.button
-                                          key={option.label}
-                                          initial={{ opacity: 0, y: 20 }}
-                                          animate={{ opacity: 1, y: 0 }}
-                                          transition={{ delay: index * 0.1 }}
-                                          whileHover={{ scale: 1.05 }}
-                                          whileTap={{ scale: 0.95 }}
-                                          onClick={() => toggleTag(option.label)}
-                                          className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${
-                                            selectedTags.includes(option.label)
-                                              ? "border-primary bg-primary/10 shadow-md"
-                                              : "border-border hover:border-primary/50 hover:bg-muted/50"
-                                          }`}
-                                        >
-                                          <span className="text-2xl mb-1">{option.icon}</span>
-                                          <span className="text-xs font-medium">{option.label}</span>
-                                          {selectedTags.includes(option.label) && (
-                                            <motion.div
-                                              initial={{ scale: 0 }}
-                                              animate={{ scale: 1 }}
-                                              className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"
-                                            />
-                                          )}
-                                        </motion.button>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="space-y-1">
-                                      {uniqueValues.map((value, index) => (
-                                        <motion.button
-                                          key={value}
-                                          initial={{ opacity: 0, x: -20 }}
-                                          animate={{ opacity: 1, x: 0 }}
-                                          transition={{ delay: index * 0.05 }}
-                                          whileHover={{ scale: 1.02 }}
-                                          whileTap={{ scale: 0.98 }}
-                                          onClick={() => toggleTag(value)}
-                                          className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-200 ${
-                                            selectedTags.includes(value)
-                                              ? "bg-primary text-primary-foreground shadow-md"
-                                              : "hover:bg-muted"
-                                          }`}
-                                        >
-                                          <span className="font-medium text-sm">{value}</span>
-                                          {selectedTags.includes(value) && (
-                                            <motion.div
-                                              initial={{ scale: 0 }}
-                                              animate={{ scale: 1 }}
-                                              className="ml-auto w-2 h-2 bg-primary-foreground rounded-full"
-                                            />
-                                          )}
-                                        </motion.button>
-                                      ))}
-                                    </div>
-                                  )}
+                                  <div className="space-y-3">
+                                    {uniqueValues.map((value) => (
+                                      <label key={value} className="flex items-center gap-3 cursor-pointer select-none py-2 text-base font-medium">
+                                        <Checkbox
+                                          checked={selectedTags.includes(value)}
+                                          onCheckedChange={() => toggleTag(value)}
+                                          className="border border-gray-400"
+                                        />
+                                        <span>{value}</span>
+                                      </label>
+                                    ))}
+                                  </div>
                                 </div>
                               );
                             })}
-
-                            {advancedFilterAttributes.every(
-                              (attr) => uniqueAttributeValues[attr.key]?.length === 0,
-                            ) && (
-                              <div className="text-center py-8">
-                                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                                  <Sparkles className="w-8 h-8 text-muted-foreground" />
-                                </div>
-                                <p className="text-muted-foreground text-sm">
-                                  Add advanced details to your clothing items to unlock more filtering options!
-                                </p>
-                              </div>
-                            )}
                           </div>
                         </motion.div>
                       )}
