@@ -227,42 +227,55 @@ export default function UploadForm({
   }
 
   const handleGeminiMetadata = async () => {
-    if (!scrapingUrl.trim() || !fetchGeminiMetadata) return
+    if (!scrapingUrl.trim()) return;
 
-    setIsLoading(true)
-    setUploadProgress(0)
+    setIsLoading(true);
+    setUploadProgress(0);
 
     try {
       // Quick progress animation for Gemini
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
+            clearInterval(progressInterval);
+            return 90;
           }
-          return prev + 30
-        })
-      }, 100)
+          return prev + 30;
+        });
+      }, 100);
 
-      const metadata = await fetchGeminiMetadata(scrapingUrl)
+      // Call the new quick-scrape backend endpoint
+      const res = await axios.post("http://localhost:8000/api/quick-scrape", {
+        url: scrapingUrl,
+      });
+      const data = res.data;
 
-      clearInterval(progressInterval)
-      setUploadProgress(100)
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
       setFormData((prev: Partial<ClothingItem>) => ({
         ...prev,
-        ...metadata,
+        name: data.name || prev.name,
+        brand: data.brand || prev.brand,
+        price: data.price || prev.price,
+        type: data.type || prev.type,
+        occasion: data.occasion || prev.occasion,
+        style: data.style || prev.style,
+        fit: data.fit || prev.fit,
+        color: data.color || prev.color,
+        material: data.material || prev.material,
+        season: data.season || prev.season,
         sourceUrl: scrapingUrl,
-      }))
+      }));
 
-      setTimeout(() => setUploadProgress(0), 1000)
+      setTimeout(() => setUploadProgress(0), 1000);
     } catch (error) {
-      console.error("Gemini metadata fetch failed:", error)
-      alert("Failed to fetch metadata. Please try again.")
+      console.error("Gemini metadata fetch failed:", error);
+      alert("Failed to fetch metadata. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleUrlScraping = async () => {
     if (!scrapingUrl.trim()) return
