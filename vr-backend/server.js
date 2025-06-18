@@ -8,6 +8,7 @@ import userRoutes from './app/routes/user.routes.js';
 import uploadRoutes from './app/routes/upload.js';
 import outfitRoutes from './app/routes/outfit.routes.js';
 import { scrapeProduct } from './app/scrape/scrape.controller.js';
+import { scrapeProduct as quickScrapeProduct } from './app/scrape/quick.scrape.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use(cookieParser());
 app.use('/api/images', uploadRoutes); // So POST /images works
 
 app.post('/api/scrape', scrapeProduct);
+app.post('/api/quick-scrape', quickScrapeProduct);
 
 
 // Routes
