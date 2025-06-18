@@ -490,7 +490,7 @@ const handleFileUpload = useCallback((file: File) => {
                                     <img
                                       src={imagePreview || "/placeholder.svg"}
                                       alt="Preview"
-                                      className="max-w-full max-h-64 mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                      className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
                                     />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
                                   </div>
@@ -519,10 +519,10 @@ const handleFileUpload = useCallback((file: File) => {
                                   </div>
                                   <div>
                                     <p className="text-lg font-medium text-foreground">
-                                      Drop an image here or click to browse
+                                      Upload or Copy, Paste a Image
                                     </p>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                      PNG, JPG up to 10MB • Paste from clipboard
+                                      Up to 10MB • Paste from clipboard
                                     </p>
                                   </div>
                                 </motion.div>
