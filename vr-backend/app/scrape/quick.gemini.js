@@ -6,10 +6,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function extractProductData(html) {
-  
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  console.log("Gemini key is:", process.env.GEMINI_API_KEY);
 
-    const prompt = `
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const prompt = `
     You are a product metadata extractor for fashion e-commerce.
 
     From the provided HTML, return only a pure JSON object in the following format:
@@ -26,7 +27,7 @@ export async function extractProductData(html) {
     "color": "...",
     "material": "...",
     "season": "...",
-    "sourceUrl": "...",
+    "sourceUrl": "..."
     }
 
     Guidelines:
@@ -55,19 +56,15 @@ export async function extractProductData(html) {
 
   try {
     const result = await model.generateContent(prompt);
-    const text = (await result.response.text()).trim();
+    const text = await result.response.text();
 
-    console.log("Raw Gemini response:", text); // DEBUG
-
-    const cleaned = text.replace(/```json|```/g, "").trim();
-    const match = cleaned.match(/\{[\s\S]*?\}/);
-    if (!match) throw new Error("No JSON found in Gemini response");
-
-    return JSON.parse(match[0]);
+    // Robust JSON extraction logic from demo
+    const jsonStart = text.indexOf('{');
+    const jsonEnd = text.lastIndexOf('}') + 1;
+    const jsonText = text.slice(jsonStart, jsonEnd);
+    return JSON.parse(jsonText);
   } catch (err) {
     console.error("‼️ Gemini crashed or returned bad JSON:", err);
-
-
     return {
       isClothing: false,
       name: null,
