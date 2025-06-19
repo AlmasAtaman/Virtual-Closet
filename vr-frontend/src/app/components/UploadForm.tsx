@@ -310,39 +310,40 @@ export default function UploadForm({
         throw new Error(data.error)
       }
 
-      if (data.imageGallery && data.imageGallery.length > 0) {
-        setScrapedProducts([
-          {
-            name: data.name,
-            brand: data.brand,
-            price: data.price,
-            images: data.imageGallery,
-            sourceUrl: data.sourceUrl,
-          },
-        ])
-        setSelectedScrapedImage(data.imageGallery[0])
-        setFormData((prev: Partial<ClothingItem>) => ({
-          ...prev,
-          name: data.name,
-          brand: data.brand,
-          price: data.price,
-          sourceUrl: data.sourceUrl,
-          type: data.type,
-          occasion: data.occasion,
-          style: data.style,
-          fit: data.fit?.toLowerCase() || "",
-          color: data.color,
-          material: data.material?.toLowerCase() || "",
-          season: data.season?.toLowerCase() || "",
-        }))
-      } else {
-        alert("No product images found at this URL.")
+      if (!data.imageGallery || !Array.isArray(data.imageGallery) || data.imageGallery.length === 0) {
+        throw new Error("No product images found at this URL.")
       }
+
+      setScrapedProducts([
+        {
+          name: data.name || "",
+          brand: data.brand || "",
+          price: data.price || null,
+          images: data.imageGallery,
+          sourceUrl: data.sourceUrl || scrapingUrl,
+        },
+      ])
+      setSelectedScrapedImage(data.imageGallery[0])
+      setFormData((prev: Partial<ClothingItem>) => ({
+        ...prev,
+        name: data.name || prev.name,
+        brand: data.brand || prev.brand,
+        price: data.price || prev.price,
+        sourceUrl: data.sourceUrl || scrapingUrl,
+        type: data.type || prev.type,
+        occasion: data.occasion || prev.occasion,
+        style: data.style || prev.style,
+        fit: data.fit?.toLowerCase() || "",
+        color: data.color || prev.color,
+        material: data.material?.toLowerCase() || "",
+        season: data.season?.toLowerCase() || "",
+      }))
 
       if (progressInterval) {
         clearInterval(progressInterval)
       }
       setUploadProgress(100)
+      setHasFetched(true)
     } catch (error) {
       console.error("Scraping failed:", error)
       alert(error instanceof Error ? error.message : "Scraping failed. Please try a different URL.")
@@ -440,6 +441,7 @@ export default function UploadForm({
         mode: newItem.mode,
         sourceUrl: newItem.sourceUrl,
         tags: newItem.tags,
+        isFavorite: newItem.isFavorite || false
       }
 
       if (onUploadComplete) {
@@ -640,71 +642,88 @@ export default function UploadForm({
                       className="space-y-4"
                     >
                       {/* Before metadata fetch: show only URL input, fetch button, and extraction mode toggle */}
-                      {urlExtractionMode === "quick" && !quickMetadataFetched && (
-                        <>
+                      {((urlExtractionMode === "quick" && !quickMetadataFetched) || (urlExtractionMode === "full" && scrapedProducts.length === 0)) && !isFetching && (
+                        <motion.div
+                          key="url-input-step"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="space-y-4"
+                        >
                           <div className="space-y-2">
                             <Label className="text-sm font-medium">Product URL</Label>
                             <div className="flex gap-2 w-full">
                               <Input
                                 placeholder="Enter product URL..."
                                 value={scrapingUrl}
-                                onChange={e => { setScrapingUrl(e.target.value); setHasFetched(false); setFetchError(null); }}
+                                onChange={e => { 
+                                  setScrapingUrl(e.target.value); 
+                                  setHasFetched(false); 
+                                  setFetchError(null);
+                                  setQuickMetadataFetched(false);
+                                  setScrapedProducts([]);
+                                }}
                                 className="flex-1"
-                                disabled={isFetching}
+                                disabled={isLoading}
                               />
                               <Button
-                                onClick={async () => {
-                                  setIsFetching(true)
-                                  setFetchError(null)
-                                  setHasFetched(false)
-                                  try {
-                                    await handleGeminiMetadata()
-                                    setHasFetched(true)
-                                  } catch (err) {
-                                    setFetchError("Failed to fetch info. Try another URL.")
-                                  } finally {
-                                    setIsFetching(false)
-                                  }
-                                }}
-                                disabled={!scrapingUrl.trim() || isFetching}
-                                className="px-6"
+                                onClick={
+                                  urlExtractionMode === "quick" 
+                                    ? handleGeminiMetadata 
+                                    : handleUrlScraping
+                                }
+                                disabled={!scrapingUrl.trim() || isLoading}
+                                className="px-6 w-[140px]"
                               >
-                                {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Fetch Info"}
+                                {isLoading ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  "Fetch Info"
+                                )}
                               </Button>
                             </div>
                           </div>
                           {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
-                          <div>
-                            <div className="flex w-full justify-center gap-2">
-                              <Button
-                                variant={urlExtractionMode === "quick" ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => { setUrlExtractionMode("quick"); setHasFetched(false); setIsFetching(false); }}
-                                className="flex-1 flex items-center gap-2"
-                                disabled={isFetching}
-                              >
-                                <Zap className="w-4 h-4" /> Quick Metadata
-                              </Button>
-                              <Button
-                                variant={isFullMode(urlExtractionMode) ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => { setUrlExtractionMode("full"); setHasFetched(false); setIsFetching(false); }}
-                                className="flex-1 flex items-center gap-2"
-                                disabled={isFetching}
-                              >
-                                <Clock className="w-4 h-4" /> Full Scrape
-                              </Button>
+                          
+                          <div className="relative pt-4">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                              <div className="w-full border-t" />
                             </div>
-                            <div className="text-xs text-muted-foreground text-center mt-2">
-                              {urlExtractionMode === "quick"
-                                ? "Fast (~2s) • you upload image manually"
-                                : "Takes longer (~10s) • auto-extracts images (beta—may not work on all sites)"}
+                            <div className="relative flex justify-center">
+                              <span className="bg-background px-2 text-xs text-muted-foreground">Extraction Mode</span>
                             </div>
                           </div>
-                        </>
+
+                          <div className="flex w-full justify-center gap-2">
+                            <Button
+                              variant={urlExtractionMode === "quick" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => { setUrlExtractionMode("quick"); }}
+                              className="flex-1 flex items-center gap-2"
+                              disabled={isLoading}
+                            >
+                              <Zap className="w-4 h-4" /> Quick Metadata
+                            </Button>
+                            <Button
+                              variant={urlExtractionMode === "full" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => { setUrlExtractionMode("full"); }}
+                              className="flex-1 flex items-center gap-2"
+                              disabled={isLoading}
+                            >
+                              <Clock className="w-4 h-4" /> Full Scrape
+                            </Button>
+                          </div>
+                          <div className="text-xs text-muted-foreground text-center mt-2">
+                            {urlExtractionMode === "quick"
+                              ? "Fast (~2s) • you upload image manually"
+                              : "Takes longer (~10s) • auto-extracts images (beta—may not work on all sites)"}
+                          </div>
+                        </motion.div>
                       )}
-                      {/* After metadata fetch: show only image upload area, no form fields */}
-                      {urlExtractionMode === "quick" && quickMetadataFetched && (
+                      
+                      {/* After quick metadata fetch: show only image upload area, no form fields */}
+                      {urlExtractionMode === "quick" && quickMetadataFetched && hasFetched && (
                         <Card className="p-4 bg-background/50 backdrop-blur-sm border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer overflow-hidden">
                           <CardContent className="flex flex-col items-center justify-center">
                             <div className="w-full text-center mb-4">
@@ -760,7 +779,7 @@ export default function UploadForm({
                         </Card>
                       )}
                       {/* Full Scrape and other flows remain unchanged */}
-                      {urlExtractionMode === "full" && !isFetching && !hasFetched && (
+                      {urlExtractionMode === "full" && scrapedProducts.length > 0 && !isLoading &&(
                         <motion.div
                           key="step3-full"
                           initial={{ opacity: 0, y: 20 }}
@@ -772,7 +791,7 @@ export default function UploadForm({
                           <Label className="text-sm font-medium mb-2 block">Select Product Image</Label>
                           <div className="w-full max-h-[420px] overflow-y-auto pr-1">
                             <div className="grid grid-cols-2 gap-4">
-                              {scrapedProducts[0].images.map((image, index) => (
+                              {scrapedProducts.length > 0 && scrapedProducts[0].images?.map((image, index) => (
                                 <motion.div
                                   key={index}
                                   initial={{ opacity: 0, scale: 0.8 }}
@@ -805,6 +824,11 @@ export default function UploadForm({
                                   </AnimatePresence>
                                 </motion.div>
                               ))}
+                              {scrapedProducts.length === 0 && (
+                                <div className="col-span-2 text-center py-8 text-muted-foreground">
+                                  Enter a URL and click "Full Scrape" to view product images
+                                </div>
+                              )}
                             </div>
                           </div>
                         </motion.div>
@@ -1006,6 +1030,7 @@ export default function UploadForm({
                               <SelectItem value="slim">Slim</SelectItem>
                               <SelectItem value="regular">Regular</SelectItem>
                               <SelectItem value="oversized">Oversized</SelectItem>
+                              <SelectItem value="baggy">Baggy</SelectItem>
                               <SelectItem value="crop">Crop</SelectItem>
                               <SelectItem value="skinny">Skinny</SelectItem>
                               <SelectItem value="tapered">Tapered</SelectItem>

@@ -37,12 +37,15 @@ export async function getClothingInfoFromImage(imagePath) {
     - "type": one of ["T-shirt", "Jacket", "Pants", "Shoes", "Hat", "Sweater", "Shorts", "Dress", "Skirt"]
     - "occasion": one of ["Casual", "Formal", "Party", "Athletic"]
     - "style": one of ["Streetwear", "Minimalist", "Old Money", "Y2K", "Preppy"]
-    - "fit": one of ["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"]
+    - "fit": one of ["slim", "regular", "oversized", "baggy", "crop", "skinny", "tapered"]
     - "color": one of basic colors like ["Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink"]
-    - "material": one of ["Cotton", "Linen", "Denim", "Leather", "Knit", "Polyester"]
-    - "season": one of ["Spring", "Summer", "Fall", "Winter"]
+    - "material": one of ["cotton", "linen", "denim", "leather", "knit", "polyester"]
+    - "season": one of ["spring", "summer", "fall", "winter"]
 
     ---
+
+    **IMPORTANT**: You MUST provide a value for every field if "isClothing" is true.
+    If you are unsure about a field, make a reasonable guess based on the visual information. Do not use null.
 
     Examples:
 
@@ -55,10 +58,10 @@ export async function getClothingInfoFromImage(imagePath) {
       "type": "Sweater",
       "occasion": "Casual",
       "style": "Streetwear",
-      "fit": "Slim Fit",
+      "fit": "slim",
       "color": "Black",
-      "material": "Cotton",
-      "season": "Fall"
+      "material": "cotton",
+      "season": "fall"
     }
 
     2. Not clothing:
