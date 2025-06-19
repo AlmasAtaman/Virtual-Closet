@@ -502,7 +502,7 @@ export default function ClothingDetailModal({
                       <Edit className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button variant="destructive" onClick={() => onDelete(currentItem.id)} disabled={isDeleting} className="gap-2">
+                    <Button variant="destructive" onClick={() => onDelete(currentItem.key)} disabled={isDeleting} className="gap-2">
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       Delete
                     </Button>
