@@ -392,15 +392,14 @@ export default function UploadForm({
       submitFormData.append("mode", uploadTarget)
       submitFormData.append("sourceUrl", formData.sourceUrl || "")
 
-      if (mode === "advanced") {
-        submitFormData.append("occasion", formData.occasion || "")
-        submitFormData.append("style", formData.style || "")
-        submitFormData.append("fit", formData.fit || "")
-        submitFormData.append("color", formData.color || "")
-        submitFormData.append("material", formData.material || "")
-        submitFormData.append("season", formData.season || "")
-        submitFormData.append("notes", formData.notes || "")
-      }
+      // Always append all fields from formData, as auto-fill populates them regardless of mode
+      submitFormData.append("occasion", formData.occasion || "")
+      submitFormData.append("style", formData.style || "")
+      submitFormData.append("fit", formData.fit || "")
+      submitFormData.append("color", formData.color || "")
+      submitFormData.append("material", formData.material || "")
+      submitFormData.append("season", formData.season || "")
+      submitFormData.append("notes", formData.notes || "")
 
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {

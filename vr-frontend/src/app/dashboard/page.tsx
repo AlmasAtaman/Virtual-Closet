@@ -73,13 +73,15 @@ export default function Homepage() {
 
   const handleUploadComplete = useCallback(
     (target: "closet" | "wishlist", newItem: ClothingItem) => {
-      setShowModal(false)
-      console.log("Dashboard: onUploadComplete received - target:", target, "newItem:", newItem)
-      setViewMode(target)
-      console.log("Dashboard: viewMode after setViewMode:", viewMode)
-      galleryRef.current?.addClothingItem(newItem)
+      setClothingItems((prevItems) => [newItem, ...prevItems]);
+
+      if (viewMode !== target) {
+        setViewMode(target);
+      }
+
+      setShowModal(false);
     },
-    [galleryRef, viewMode],
+    [viewMode],
   )
 
   const handleOpenUploadModal = useCallback(() => {
