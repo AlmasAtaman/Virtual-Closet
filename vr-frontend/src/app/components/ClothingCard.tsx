@@ -15,6 +15,7 @@ interface ClothingCardProps {
   onToggleSelect?: (id: string) => void
   toggleFavorite: (id: string, newState: boolean) => void
   viewMode?: 'closet' | 'wishlist';
+  onDelete?: () => void
 }
 
 // Helper to scale image by clothing type
@@ -42,6 +43,7 @@ export default function ClothingCard({
   onToggleSelect,
   toggleFavorite,
   viewMode,
+  onDelete,
 }: ClothingCardProps) {
   const [isHovering, setIsHovering] = useState(false)
 
