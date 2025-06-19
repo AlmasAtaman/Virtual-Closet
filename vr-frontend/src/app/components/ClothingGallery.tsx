@@ -484,6 +484,7 @@ const ClothingGallery = forwardRef(
                     isMultiSelecting={isMultiSelecting}
                     onToggleSelect={toggleItemSelection}
                     toggleFavorite={toggleFavorite}
+                    viewMode={viewMode}
                   />
                 </motion.div>
               ))}

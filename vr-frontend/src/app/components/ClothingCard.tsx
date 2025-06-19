@@ -14,6 +14,7 @@ interface ClothingCardProps {
   isMultiSelecting?: boolean
   onToggleSelect?: (id: string) => void
   toggleFavorite: (id: string, newState: boolean) => void
+  viewMode?: 'closet' | 'wishlist';
 }
 
 export default function ClothingCard({
@@ -23,6 +24,7 @@ export default function ClothingCard({
   isMultiSelecting = false,
   onToggleSelect,
   toggleFavorite,
+  viewMode,
 }: ClothingCardProps) {
   const [isHovering, setIsHovering] = useState(false)
 
@@ -84,8 +86,8 @@ export default function ClothingCard({
             </div>
           )}
 
-          {/* Mode badge */}
-          {item.mode === "wishlist" && (
+          {/* Mode badge: Only show if item is wishlist and not in wishlist view */}
+          {item.mode === "wishlist" && viewMode !== "wishlist" && (
             <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500/90 text-white backdrop-blur-sm">
               Wishlist
             </Badge>
@@ -117,9 +119,9 @@ export default function ClothingCard({
             </motion.div>
           )}
 
-          {/* Favorite Heart Icon - bottom right, always visible, styled */}
+          {/* Favorite Heart Icon - top right, always visible, styled */}
           <motion.button
-            className="absolute bottom-2 right-2 z-10 p-1 rounded-full bg-white/80 backdrop-blur-sm"
+            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 backdrop-blur-sm"
             whileHover={{ scale: 1.15 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={(e) => {
@@ -139,13 +141,20 @@ export default function ClothingCard({
         <CardContent className="p-4">
           <h3 className="font-medium line-clamp-1 mb-1 text-base">{item.name}</h3>
           <div className="mb-2 flex flex-wrap gap-1">
-            {[item.type, item.brand].filter(Boolean).map((tag, index) => (
-              <Badge key={`${tag}-${index}`} variant="secondary" className="text-xs font-normal">
-                {tag}
+            {item.type && (
+              <Badge variant="secondary" className="text-xs font-normal">
+                {item.type}
               </Badge>
-            ))}
+            )}
+            {item.brand && item.brand !== 'No brand' && item.brand.trim() !== '' && (
+              <Badge variant="secondary" className="text-xs font-normal">
+                {item.brand}
+              </Badge>
+            )}
           </div>
-          {formatPrice(item.price) && <p className="text-sm font-medium text-primary">{formatPrice(item.price)}</p>}
+          {viewMode !== 'closet' && formatPrice(item.price) && (
+            <p className="text-sm font-medium text-primary">{formatPrice(item.price)}</p>
+          )}
         </CardContent>
       </Card>
     </motion.div>

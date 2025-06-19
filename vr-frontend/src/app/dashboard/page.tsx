@@ -192,7 +192,7 @@ export default function Homepage() {
             {/* Show Favorites Only Toggle */}
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`p-2 rounded-full ${showFavoritesOnly ? 'bg-red-100' : 'bg-slate-200'}`}
+              className={`p-2 rounded-full mr-2 ${showFavoritesOnly ? 'bg-red-100' : 'bg-slate-200'}`}
               aria-label={showFavoritesOnly ? "Show All" : "Show Favorites Only"}
             >
               <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black'} />
