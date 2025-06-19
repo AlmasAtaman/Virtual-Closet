@@ -46,30 +46,26 @@ export async function processImage(imageData, userId) {
     // 1. Remove background
     cleanedImagePath = await removeBackground(tempImagePath);
 
-    // 2. Read cleaned image buffer
-    let cleanedBuffer = fs.readFileSync(cleanedImagePath);
-
-    // 3. Get clothing info
+    // 2. Get clothing info
     const clothingData = await getClothingInfoFromImage(cleanedImagePath);
 
     // 3.5 Resize to standard canvas based on clothing type
-    const standardizedPath = `standardized_${Date.now()}_${originalname || 'clothing.png'}`;
+    standardizedPath = `standardized_${Date.now()}_${originalname || 'clothing.png'}`;
     console.log("→ Clothing type detected:", clothingData?.type);
     await standardizeImage(cleanedImagePath, clothingData?.type, standardizedPath);
 
-    // Replace cleanedBuffer with standardized image buffer
-    cleanedBuffer = fs.readFileSync(standardizedPath);
-
+    // 4. Read standardized image buffer (this is the one to upload and return)
+    let standardizedBuffer = fs.readFileSync(standardizedPath);
 
     if (!clothingData?.isClothing) {
       throw new Error('Image is not valid clothing');
     }
 
-    // 4. Upload to S3 if userId is provided
+    // 5. Upload to S3 if userId is provided
     let s3Key = null;
     if (userId) {
       const file = {
-        buffer: cleanedBuffer,
+        buffer: standardizedBuffer,
         originalname: originalname || 'processed.png',
         mimetype: 'image/png'
       };
@@ -98,7 +94,7 @@ export async function processImage(imageData, userId) {
         season: clothingData?.season?.toLowerCase() || "",
         isClothing: true,
       },
-      imageBuffer: cleanedBuffer.toString('base64'),
+      imageBuffer: standardizedBuffer.toString('base64'),
       s3Key
     };
   } catch (error) {
