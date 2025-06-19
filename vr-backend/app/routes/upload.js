@@ -99,7 +99,8 @@ router.get("/", authMiddleware, async (req, res) => {
         notes: item.notes || "",
         mode: item.mode || "closet",
         sourceUrl: item.sourceUrl || "",
-        price: item.price || ""
+        price: item.price || "",
+        isFavorite: item.isFavorite || false
       };
     });
 
@@ -280,6 +281,36 @@ router.patch("/move-to-closet/:id", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Failed to move item:", error);
     res.status(500).json({ error: "Failed to move item" });
+  }
+});
+
+// Add favorite toggle endpoint
+router.patch("/:id/favorite", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { isFavorite } = req.body;
+  const userId = req.user.id;
+
+  if (typeof isFavorite !== "boolean") {
+    return res.status(400).json({ error: "isFavorite must be a boolean" });
+  }
+
+  try {
+    const item = await prisma.clothing.findFirst({
+      where: { id, userId }
+    });
+    if (!item) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    const updated = await prisma.clothing.update({
+      where: { id },
+      data: { isFavorite }
+    });
+
+    res.json({ message: "Favorite status updated", item: updated });
+  } catch (error) {
+    console.error("Failed to update favorite:", error);
+    res.status(500).json({ error: "Failed to update favorite" });
   }
 });
 

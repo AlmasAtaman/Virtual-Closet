@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo  } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Search, X, Check } from "lucide-react"
+import { Plus, Search, X, Check, Heart } from "lucide-react"
 import LogOutButton from "../components/LogoutButton"
 import UploadForm from "../components/UploadForm"
 import { useRouter } from "next/navigation"
@@ -39,6 +39,7 @@ export default function Homepage() {
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
   const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
   const [isMultiSelecting, setIsMultiSelecting] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
 
   const filterAttributes: FilterAttribute[] = [
@@ -159,7 +160,7 @@ export default function Homepage() {
             layout
             layoutId="search-bar-container"
             transition={{ type: "spring", stiffness: 80, damping: 12 }}
-            className="relative flex-1"
+            className="relative flex-1 min-w-0"
           >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -167,7 +168,7 @@ export default function Homepage() {
               placeholder="Search by name, type, brand..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full pr-9"
+              className="pl-9 w-full pr-9 min-w-0"
             />
             <AnimatePresence mode="wait">
               {searchQuery && (
@@ -187,7 +188,15 @@ export default function Homepage() {
           </motion.div>
 
           {/* Control buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* Show Favorites Only Toggle */}
+            <button
+              onClick={() => setShowFavoritesOnly((prev) => !prev)}
+              className={`p-2 rounded-full ${showFavoritesOnly ? 'bg-red-100' : 'bg-slate-200'}`}
+              aria-label={showFavoritesOnly ? "Show All" : "Show Favorites Only"}
+            >
+              <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black'} />
+            </button>
             <FilterSection
             clothingItems={clothingItems}
             selectedTags={selectedTags}
@@ -312,7 +321,8 @@ export default function Homepage() {
         setClothingItems={setClothingItems}
         isMultiSelecting={isMultiSelecting}
         setIsMultiSelecting={setIsMultiSelecting}
-        ref={galleryRef}
+        showFavoritesOnly={showFavoritesOnly}
+        setShowFavoritesOnly={setShowFavoritesOnly}
       />
 
 

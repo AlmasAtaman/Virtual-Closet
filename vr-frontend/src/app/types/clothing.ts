@@ -19,6 +19,7 @@ export interface ClothingItem {
   tags?: string[];
   createdAt?: string;
   updatedAt?: string;
+  isFavorite: boolean;
 }
 
 export interface ScrapedProduct {
