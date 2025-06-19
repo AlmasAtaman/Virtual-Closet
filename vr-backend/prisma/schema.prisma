@@ -52,6 +52,7 @@ model Clothing {
   user      User     @relation(fields: [userId], references: [id])
   userId    String
   mode       String   @default("closet")
+  isFavorite Boolean @default(false)
   outfits     OutfitClothing[]
 }
 
