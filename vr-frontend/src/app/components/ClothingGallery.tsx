@@ -27,11 +27,13 @@ type ClothingGalleryProps = {
   setClothingItems: React.Dispatch<React.SetStateAction<ClothingItem[]>>;
   isMultiSelecting: boolean;
   setIsMultiSelecting: React.Dispatch<React.SetStateAction<boolean>>;
+  showFavoritesOnly: boolean;
+  setShowFavoritesOnly: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, setPriceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting,}: ClothingGalleryProps, ref ) => {
+  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, setPriceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly,}: ClothingGalleryProps, ref ) => {
     const [selectedItem, setSelectedItem] = useState<Clothing | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -323,6 +325,7 @@ const ClothingGallery = forwardRef(
         }
         return true;
       })
+      .filter((item) => (showFavoritesOnly ? item.isFavorite : true))
       .sort((a, b) => {
         if (priceSort === "none") return 0;
         
@@ -348,14 +351,38 @@ const ClothingGallery = forwardRef(
       setSelectedItemIds((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
     };
 
+    // Toggle favorite handler
+    const toggleFavorite = async (id: string, isFavorite: boolean) => {
+      // Optimistically update UI
+      setClothingItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, isFavorite } : item
+        )
+      );
+      try {
+        await axios.patch(
+          `http://localhost:8000/api/images/${id}/favorite`,
+          { isFavorite },
+          { withCredentials: true }
+        );
+        // No need to refetch, UI already updated
+      } catch (err) {
+        // Revert UI if error
+        setClothingItems(prev =>
+          prev.map(item =>
+            item.id === id ? { ...item, isFavorite: !isFavorite } : item
+          )
+        );
+        console.error("Failed to toggle favorite:", err);
+      }
+    };
+
     return (
       <div className="space-y-6">
 
         {/* Multi-select Controls */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-
-
             {isMultiSelecting && selectedItemIds.length > 0 && (
               <span className="text-sm font-medium">{selectedItemIds.length} selected</span>
             )}
@@ -456,6 +483,7 @@ const ClothingGallery = forwardRef(
                     isSelected={selectedItemIds.includes(item.id)}
                     isMultiSelecting={isMultiSelecting}
                     onToggleSelect={toggleItemSelection}
+                    toggleFavorite={toggleFavorite}
                   />
                 </motion.div>
               ))}

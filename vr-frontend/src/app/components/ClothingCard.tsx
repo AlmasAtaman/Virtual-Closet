@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
+import { Heart } from "lucide-react"
 
 interface ClothingCardProps {
   item: ClothingItem
@@ -12,6 +13,7 @@ interface ClothingCardProps {
   isSelected?: boolean
   isMultiSelecting?: boolean
   onToggleSelect?: (id: string) => void
+  toggleFavorite: (id: string, newState: boolean) => void
 }
 
 export default function ClothingCard({
@@ -20,6 +22,7 @@ export default function ClothingCard({
   isSelected = false,
   isMultiSelecting = false,
   onToggleSelect,
+  toggleFavorite,
 }: ClothingCardProps) {
   const [isHovering, setIsHovering] = useState(false)
 
@@ -113,6 +116,24 @@ export default function ClothingCard({
               </div>
             </motion.div>
           )}
+
+          {/* Favorite Heart Icon - bottom right, always visible, styled */}
+          <motion.button
+            className="absolute bottom-2 right-2 z-10 p-1 rounded-full bg-white/80 backdrop-blur-sm"
+            whileHover={{ scale: 1.15 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(item.id, !item.isFavorite);
+            }}
+            aria-label={item.isFavorite ? "Unfavorite" : "Favorite"}
+          >
+            {item.isFavorite ? (
+              <Heart className="fill-red-500 text-red-500 w-6 h-6" />
+            ) : (
+              <Heart className="text-gray-600 w-6 h-6" />
+            )}
+          </motion.button>
         </div>
 
         <CardContent className="p-4">
