@@ -512,6 +512,7 @@ const ClothingGallery = forwardRef(
             isDeleting={isDeleting}
             isMoving={isMoving}
             allItems={filteredItems}
+            onToggleFavorite={toggleFavorite}
           />
         )}
 

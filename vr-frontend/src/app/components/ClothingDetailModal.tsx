@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Edit, Trash2, MoveRight, Loader2, Save, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, Edit, Trash2, MoveRight, Loader2, Save, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -39,6 +39,7 @@ interface ClothingDetailModalProps {
   isDeleting: boolean
   isMoving: boolean
   allItems?: ClothingItem[] // Added to support navigation
+  onToggleFavorite?: (id: string, newState: boolean) => void
 }
 
 export default function ClothingDetailModal({
@@ -55,6 +56,7 @@ export default function ClothingDetailModal({
   isDeleting,
   isMoving,
   allItems = [],
+  onToggleFavorite,
 }: ClothingDetailModalProps) {
   const [activeTab, setActiveTab] = useState<string>("general")
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(0)
@@ -122,30 +124,50 @@ export default function ClothingDetailModal({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="text-xl font-semibold">{isEditing ? "Edit Item" : "Clothing Details"}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
             {/* Image Section */}
-            <div className="md:w-1/2 p-6 flex items-center justify-center bg-muted/30 relative">
-              <div className="relative w-full h-full flex items-center justify-center">
+            <div className="md:w-1/2 p-6 flex items-center justify-center bg-muted/30">
+              <div className="relative w-full h-full flex flex-col items-center justify-center">
+                {/* Heart icon in top-right */}
+                <div className="absolute top-4 right-4 z-30">
+                  <button
+                    className="p-1 rounded-full bg-white/80 backdrop-blur-sm hover:scale-110 transition"
+                    onClick={() => onToggleFavorite?.(currentItem.id, !currentItem.isFavorite)}
+                    aria-label={currentItem.isFavorite ? 'Unfavorite' : 'Favorite'}
+                    type="button"
+                  >
+                    {currentItem.isFavorite ? (
+                      <Heart className="fill-red-500 text-red-500 w-6 h-6" />
+                    ) : (
+                      <Heart className="text-gray-600 w-6 h-6" />
+                    )}
+                  </button>
+                </div>
+                {/* Wishlist badge in top-left */}
+                {currentItem.mode === 'wishlist' && (
+                  <div className="absolute top-4 left-4 z-30">
+                    <Badge variant="secondary" className="bg-amber-500/90 text-white">
+                      Wishlist
+                    </Badge>
+                  </div>
+                )}
                 <motion.img
-                  key={currentItem.id} // Add key to trigger animation on item change
+                  key={currentItem.id}
                   src={currentItem.url}
                   alt={currentItem.name}
-                  className="max-h-[400px] max-w-full object-contain"
+                  className="max-h-[400px] max-w-full object-contain p-2"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 />
-                {currentItem.mode === "wishlist" && (
-                  <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500/90 text-white">
-                    Wishlist
-                  </Badge>
-                )}
               </div>
             </div>
 
