@@ -17,6 +17,23 @@ interface ClothingCardProps {
   viewMode?: 'closet' | 'wishlist';
 }
 
+// Helper to scale image by clothing type
+const getImageScaleClass = (type?: string) => {
+  switch ((type || "").toLowerCase()) {
+    case "pants":
+      return "scale-110";
+    case "hoodie":
+    case "sweater":
+    case "jacket":
+      return "scale-115";
+    case "t-shirt":
+    case "shirt":
+      return "scale-130";
+    default:
+      return "scale-120";
+  }
+};
+
 export default function ClothingCard({
   item,
   onClick,
@@ -61,7 +78,7 @@ export default function ClothingCard({
         }`}
       >
         <div
-          className="relative aspect-square cursor-pointer overflow-hidden"
+          className="relative w-full h-[320px] flex items-center justify-center bg-white cursor-pointer overflow-hidden"
           onClick={(e) => {
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
@@ -71,17 +88,13 @@ export default function ClothingCard({
           }}
         >
           {item.url ? (
-            <motion.img
+            <img
               src={item.url}
-              alt={item.name}
-              className="h-full w-full object-cover transition-transform duration-500"
-              style={{
-                objectFit: "cover",
-                scale: isHovering && !isMultiSelecting ? 1.05 : 1,
-              }}
+              alt={item.name || "Clothing item"}
+              className={`object-contain w-full h-full p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-muted">
+            <div className="flex items-center justify-center w-full h-full">
               <span className="text-3xl">👕</span>
             </div>
           )}
