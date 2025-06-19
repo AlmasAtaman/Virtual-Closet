@@ -40,13 +40,16 @@ export async function extractProductData(html) {
       - "price": numeric string or number only, e.g. "39.99" or 39.99. Null if not found.
       - "occasion": one of ["Casual", "Formal", "Party", "Athletic"], or null.
       - "style": one of ["Streetwear", "Minimalist", "Old Money", "Y2K", "Preppy"], or null.
-      - "fit": one of ["Slim Fit", "Regular Fit", "Oversized Fit", "Crop Fit", "Skinny", "Tapered"]
+      - "fit": one of ["slim", "regular", "oversized", "baggy", "crop", "skinny", "tapered"]
       - "color": one of basic colors like ["Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink"]
-      - "material": one of ["Cotton", "Linen", "Denim", "Leather", "Knit", "Polyester"]
-      - "season": one of ["Spring", "Summer", "Fall", "Winter"]
+      - "material": one of ["cotton", "linen", "denim", "leather", "knit", "polyester"]
+      - "season": one of ["spring", "summer", "fall", "winter"]
       - "sourceUrl": the URL of the product page.
     - If "isClothing" is false, all other fields should be null or empty arrays.
     - Only return the specified JSON object. Do not include any other text, explanations, or fields.
+
+    **IMPORTANT**: You MUST provide a value for every field if "isClothing" is true (except 'price' if not found).
+    If you are unsure about a field, make a reasonable guess based on the HTML content. Do not use null.
 
     HTML:
     \`\`\`html
