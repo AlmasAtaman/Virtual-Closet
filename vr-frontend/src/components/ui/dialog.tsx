@@ -3,8 +3,10 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
+import { useState } from "react"
 
 import { cn } from "@/lib/utils"
+import { Button } from "./button"
 
 const Dialog = DialogPrimitive.Root
 
@@ -101,6 +103,67 @@ const DialogDescription = React.forwardRef<React.ElementRef<typeof DialogPrimiti
   )
 )
 DialogDescription.displayName = DialogPrimitive.Description.displayName
+
+// Reusable confirmation dialog
+interface ConfirmDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: string
+  onConfirm: () => void
+  onCancel?: () => void
+  confirmLabel?: string
+  cancelLabel?: string
+  confirmVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+}
+
+export function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  onConfirm,
+  onCancel,
+  confirmLabel = "Delete",
+  cancelLabel = "Cancel",
+  confirmVariant = "destructive",
+}: ConfirmDialogProps) {
+  const [loading, setLoading] = useState(false)
+
+  const handleConfirm = async () => {
+    setLoading(true)
+    try {
+      await onConfirm()
+      onOpenChange(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    if (onCancel) onCancel()
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={handleCancel} disabled={loading}>
+            {cancelLabel}
+          </Button>
+          <Button variant={confirmVariant} onClick={handleConfirm} disabled={loading}>
+            {loading ? "Deleting..." : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export {
   Dialog,

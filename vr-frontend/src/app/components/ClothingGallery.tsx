@@ -12,6 +12,7 @@ import ClothingCard from "./ClothingCard";
 import ClothingDetailModal from "./ClothingDetailModal";
 import type { ClothingItem } from "../types/clothing";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/dialog";
 
 type ClothingGalleryProps = {
   viewMode: "closet" | "wishlist";
@@ -61,6 +62,11 @@ const ClothingGallery = forwardRef(
     const [selectedTab, setSelectedTab] = useState<"general" | "details">("general");
     const [isDeleting, setIsDeleting] = useState(false);
     const [isMoving, setIsMoving] = useState(false);
+    const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
+    const [outfitsUsingSelectedItems, setOutfitsUsingSelectedItems] = useState<{count: number, outfits: any[]}>({count: 0, outfits: []});
+    const [showSingleDeleteDialog, setShowSingleDeleteDialog] = useState(false);
+    const [singleDeleteKey, setSingleDeleteKey] = useState<string | null>(null);
+    const [outfitsUsingSingleItem, setOutfitsUsingSingleItem] = useState<{count: number, outfits: any[]}>({count: 0, outfits: []});
 
     // Define the filterable attributes
     const filterAttributes: FilterAttribute[] = [
@@ -119,8 +125,7 @@ const ClothingGallery = forwardRef(
     };
 
     const handleDelete = async (key: string) => {
-      if (!confirm("Are you sure you want to delete this item?")) return;
-
+      setShowSingleDeleteDialog(false);
       try {
         setIsDeleting(true);
         await axios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`, {
@@ -186,10 +191,25 @@ const ClothingGallery = forwardRef(
       }
     };
 
-    const handleDeleteSelected = async () => {
-      if (!confirm(`Are you sure you want to delete ${selectedItemIds.length} item(s)?`)) {
-        return;
+    // Fetch all outfits and count how many unique outfits contain any of the selected items
+    const fetchOutfitsUsingSelectedItems = async (selectedIds: string[]) => {
+      try {
+        const res = await fetch("http://localhost:8000/api/outfits", { credentials: "include" });
+        if (!res.ok) return { count: 0, outfits: [] };
+        const data = await res.json();
+        const outfits = data.outfits || [];
+        // Find outfits that contain any of the selected items
+        const usedIn = outfits.filter((outfit: any) =>
+          Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci: any) => selectedIds.includes(ci.id))
+        );
+        return { count: usedIn.length, outfits: usedIn };
+      } catch (e) {
+        return { count: 0, outfits: [] };
       }
+    };
+
+    const handleDeleteSelected = async () => {
+      setShowMultiDeleteDialog(false);
 
       try {
         setIsDeleting(true);
@@ -377,6 +397,22 @@ const ClothingGallery = forwardRef(
       }
     };
 
+    // Fetch outfits for a single item
+    const fetchOutfitsUsingSingleItem = async (itemId: string) => {
+      try {
+        const res = await fetch("http://localhost:8000/api/outfits", { credentials: "include" });
+        if (!res.ok) return { count: 0, outfits: [] };
+        const data = await res.json();
+        const outfits = data.outfits || [];
+        const usedIn = outfits.filter((outfit: any) =>
+          Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci: any) => ci.id === itemId)
+        );
+        return { count: usedIn.length, outfits: usedIn };
+      } catch (e) {
+        return { count: 0, outfits: [] };
+      }
+    };
+
     return (
       <div className="space-y-6">
 
@@ -405,13 +441,32 @@ const ClothingGallery = forwardRef(
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleDeleteSelected}
+                onClick={async () => {
+                  // Before showing dialog, fetch outfits using selected items
+                  const result = await fetchOutfitsUsingSelectedItems(selectedItemIds);
+                  setOutfitsUsingSelectedItems(result);
+                  setShowMultiDeleteDialog(true);
+                }}
                 disabled={isDeleting}
                 className="gap-2"
               >
                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 Delete
               </Button>
+              <ConfirmDialog
+                open={showMultiDeleteDialog}
+                onOpenChange={setShowMultiDeleteDialog}
+                title="Delete Selected Clothing Items"
+                description={
+                  outfitsUsingSelectedItems.count > 0
+                    ? `${selectedItemIds.length} of the selected items are used in ${outfitsUsingSelectedItems.count} outfit${outfitsUsingSelectedItems.count > 1 ? 's' : ''}. Deleting them will leave empty spaces in those outfits. This action cannot be undone.`
+                    : `Are you sure you want to delete ${selectedItemIds.length} item(s)? This action cannot be undone.`
+                }
+                onConfirm={handleDeleteSelected}
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                confirmVariant="destructive"
+              />
             </div>
           )}
         </div>
@@ -485,6 +540,12 @@ const ClothingGallery = forwardRef(
                     onToggleSelect={toggleItemSelection}
                     toggleFavorite={toggleFavorite}
                     viewMode={viewMode}
+                    onDelete={async () => {
+                      setSingleDeleteKey(item.key);
+                      const result = await fetchOutfitsUsingSingleItem(item.id);
+                      setOutfitsUsingSingleItem(result);
+                      setShowSingleDeleteDialog(true);
+                    }}
                   />
                 </motion.div>
               ))}
@@ -515,6 +576,21 @@ const ClothingGallery = forwardRef(
             onToggleFavorite={toggleFavorite}
           />
         )}
+
+        <ConfirmDialog
+          open={showSingleDeleteDialog}
+          onOpenChange={setShowSingleDeleteDialog}
+          title="Delete Clothing Item"
+          description={
+            outfitsUsingSingleItem.count > 0
+              ? `This item is used in ${outfitsUsingSingleItem.count} outfit${outfitsUsingSingleItem.count > 1 ? 's' : ''}. Deleting it will leave an empty space in those outfits. This action cannot be undone.`
+              : "Are you sure you want to delete this item? This action cannot be undone."
+          }
+          onConfirm={() => singleDeleteKey && handleDelete(singleDeleteKey)}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          confirmVariant="destructive"
+        />
 
       </div>
     );
