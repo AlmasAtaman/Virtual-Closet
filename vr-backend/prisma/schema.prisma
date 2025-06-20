@@ -23,6 +23,7 @@ model User {
   resetPasswordExpires  DateTime?
   clothing Clothing[]
   outfits  Outfit[]
+  occasions Occasion[] 
 }
 
 model Role {
@@ -60,10 +61,10 @@ model Outfit {
   id          String    @id @default(uuid())
   name        String?   // optional
   totalPrice  Float?    // optional
-  season      String?   // optional
-  occasion    String?   // optional
   notes       String?   // optional
   createdAt   DateTime  @default(now())
+
+  occasions Occasion[] @relation("OutfitOccasions")
   
   userId       String
   user        User      @relation(fields: [userId], references: [id])
@@ -79,4 +80,16 @@ model OutfitClothing {
   clothing   Clothing @relation(fields: [clothingId], references: [id])
 
   @@id([outfitId, clothingId])
+}
+
+
+model Occasion {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+
+  outfits   Outfit[]  @relation("OutfitOccasions")
 }
