@@ -259,15 +259,16 @@ export default function ClothingDetailModal({
                                     <SelectValue placeholder="Select type" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="T-shirt">T-shirt</SelectItem>
-                                    <SelectItem value="Shirt">Shirt</SelectItem>
-                                    <SelectItem value="Pants">Pants</SelectItem>
-                                    <SelectItem value="Jeans">Jeans</SelectItem>
+                                    <SelectItem value="T-Shirt">T-Shirt</SelectItem>
                                     <SelectItem value="Jacket">Jacket</SelectItem>
+                                    <SelectItem value="Pants">Pants</SelectItem>
+                                    <SelectItem value="Shoes">Shoes</SelectItem>
+                                    <SelectItem value="Hat">Hat</SelectItem>
                                     <SelectItem value="Sweater">Sweater</SelectItem>
+                                    <SelectItem value="Shorts">Shorts</SelectItem>
                                     <SelectItem value="Dress">Dress</SelectItem>
                                     <SelectItem value="Skirt">Skirt</SelectItem>
-                                    <SelectItem value="Shoes">Shoes</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -358,30 +359,24 @@ export default function ClothingDetailModal({
                           <h3 className="text-lg font-semibold mb-4">Style & Details</h3>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-sm font-medium mb-1 block">Occasion</label>
-                              <Select
-                                value={editForm.occasion}
-                                onValueChange={(value: string) => setEditForm({ ...editForm, occasion: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select occasion" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Casual">Casual</SelectItem>
-                                  <SelectItem value="Formal">Formal</SelectItem>
-                                  <SelectItem value="Business">Business</SelectItem>
-                                  <SelectItem value="Athletic">Athletic</SelectItem>
-                                  <SelectItem value="Party">Party</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <Label htmlFor="occasion" className="text-sm font-medium">
+                                Occasion
+                              </Label>
+                              <Input
+                                value={editForm.occasion || ""}
+                                onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
+                                placeholder="e.g., Casual, Formal, Work"
+                              />
                             </div>
 
                             <div>
-                              <label className="text-sm font-medium mb-1 block">Style</label>
+                              <Label htmlFor="style" className="text-sm font-medium">
+                                Style
+                              </Label>
                               <Input
-                                value={editForm.style}
+                                value={editForm.style || ""}
                                 onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
-                                placeholder="Style"
+                                placeholder="e.g., Vintage, Modern, Bohemian"
                               />
                             </div>
 
@@ -397,13 +392,14 @@ export default function ClothingDetailModal({
                                   <SelectValue placeholder="Select fit" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="slim">Slim</SelectItem>
-                                  <SelectItem value="regular">Regular</SelectItem>
-                                  <SelectItem value="oversized">Oversized</SelectItem>
-                                  <SelectItem value="baggy">Baggy</SelectItem>
-                                  <SelectItem value="crop">Crop</SelectItem>
-                                  <SelectItem value="skinny">Skinny</SelectItem>
-                                  <SelectItem value="tapered">Tapered</SelectItem>
+                                  <SelectItem value="Slim">Slim</SelectItem>
+                                  <SelectItem value="Regular">Regular</SelectItem>
+                                  <SelectItem value="Oversized">Oversized</SelectItem>
+                                  <SelectItem value="Baggy">Baggy</SelectItem>
+                                  <SelectItem value="Crop">Crop</SelectItem>
+                                  <SelectItem value="Skinny">Skinny</SelectItem>
+                                  <SelectItem value="Tapered">Tapered</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -413,9 +409,9 @@ export default function ClothingDetailModal({
                                 Color
                               </Label>
                               <Input
-                                value={editForm.color}
+                                value={editForm.color || ""}
                                 onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                                placeholder="Color"
+                                placeholder="e.g., Navy Blue, Black, Red"
                               />
                             </div>
 
@@ -431,12 +427,13 @@ export default function ClothingDetailModal({
                                   <SelectValue placeholder="Select material" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="cotton">Cotton</SelectItem>
-                                  <SelectItem value="linen">Linen</SelectItem>
-                                  <SelectItem value="denim">Denim</SelectItem>
-                                  <SelectItem value="leather">Leather</SelectItem>
-                                  <SelectItem value="knit">Knit</SelectItem>
-                                  <SelectItem value="polyester">Polyester</SelectItem>
+                                  <SelectItem value="Cotton">Cotton</SelectItem>
+                                  <SelectItem value="Linen">Linen</SelectItem>
+                                  <SelectItem value="Denim">Denim</SelectItem>
+                                  <SelectItem value="Leather">Leather</SelectItem>
+                                  <SelectItem value="Knit">Knit</SelectItem>
+                                  <SelectItem value="Polyester">Polyester</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -453,10 +450,10 @@ export default function ClothingDetailModal({
                                   <SelectValue placeholder="Select season" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="spring">🌸 Spring</SelectItem>
-                                  <SelectItem value="summer">☀️ Summer</SelectItem>
-                                  <SelectItem value="fall">🍂 Fall</SelectItem>
-                                  <SelectItem value="winter">❄️ Winter</SelectItem>
+                                  <SelectItem value="Spring">Spring</SelectItem>
+                                  <SelectItem value="Summer">Summer</SelectItem>
+                                  <SelectItem value="Fall">Fall</SelectItem>
+                                  <SelectItem value="Winter">Winter</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -464,52 +461,77 @@ export default function ClothingDetailModal({
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-500">Occasion</label>
-                            <p className="text-base">{currentItem.occasion}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-500">Style</label>
-                            <p className="text-base">{currentItem.style}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-500">Fit</label>
-                            <p className="text-base">{capitalize(currentItem.fit)}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-500">Color</label>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-4 h-4 rounded-full border"
-                                style={{ backgroundColor: currentItem.color?.toLowerCase() }}
-                              />
-                              <p className="text-base">{currentItem.color}</p>
+                      (!isEditing ? (
+                        (() => {
+                          const hasDetails = !!(
+                            currentItem.occasion ||
+                            currentItem.style ||
+                            currentItem.fit ||
+                            currentItem.color ||
+                            currentItem.material ||
+                            currentItem.season
+                          );
+                          if (!hasDetails) {
+                            return (
+                              <div className="text-center text-muted-foreground mt-8 mb-4">
+                                <div className="text-base font-medium">No additional details available.</div>
+                                <div className="text-sm mt-1">Click Edit to add more information.</div>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-6">
+                              {currentItem.occasion && (
+                                <div className="space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Occasion</label>
+                                  <p className="text-base">{currentItem.occasion}</p>
+                                </div>
+                              )}
+                              {currentItem.style && (
+                                <div className="space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Style</label>
+                                  <p className="text-base">{currentItem.style}</p>
+                                </div>
+                              )}
+                              {currentItem.fit && (
+                                <div className="space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Fit</label>
+                                  <p className="text-base">{capitalize(currentItem.fit)}</p>
+                                </div>
+                              )}
+                              {currentItem.color && (
+                                <div className="space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Color</label>
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className="w-4 h-4 rounded-full border"
+                                      style={{ backgroundColor: currentItem.color?.toLowerCase() }}
+                                    />
+                                    <p className="text-base">{currentItem.color}</p>
+                                  </div>
+                                </div>
+                              )}
+                              {currentItem.material && (
+                                <div className="space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Material</label>
+                                  <p className="text-base">{capitalize(currentItem.material)}</p>
+                                </div>
+                              )}
+                              {currentItem.season && (
+                                <div className="space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Season</label>
+                                  <p className="text-base">{capitalize(currentItem.season)}</p>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-500">Material</label>
-                            <p className="text-base">{capitalize(currentItem.material)}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-500">Season</label>
-                            <p className="text-base">{capitalize(currentItem.season)}</p>
-                          </div>
+                          );
+                        })()
+                      ) : (
+                        <div className="text-center text-muted-foreground mt-8 mb-4">
+                          <div className="text-base font-medium">No additional details available.</div>
+                          <div className="text-sm mt-1">Click Edit to add more information.</div>
                         </div>
-
-                        {!currentItem.occasion &&
-                          !currentItem.style &&
-                          !currentItem.fit &&
-                          !currentItem.color &&
-                          !currentItem.material &&
-                          !currentItem.season && (
-                            <div className="text-center py-8 text-muted-foreground">
-                              <p>No additional details available.</p>
-                              <p className="text-sm mt-1">Click Edit to add more information.</p>
-                            </div>
-                          )}
-                      </div>
+                      ))
                     )}
                   </TabsContent>
                 </Tabs>
