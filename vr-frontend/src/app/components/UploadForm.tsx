@@ -900,13 +900,26 @@ export default function UploadForm({
                           <Label htmlFor="type" className="text-sm font-medium">
                             Type *
                           </Label>
-                          <Input
-                            id="type"
-                            placeholder="e.g., Jacket, T-Shirt, Jeans"
+                          <Select
                             value={formData.type || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
+                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="T-Shirt">T-Shirt</SelectItem>
+                              <SelectItem value="Jacket">Jacket</SelectItem>
+                              <SelectItem value="Pants">Pants</SelectItem>
+                              <SelectItem value="Shoes">Shoes</SelectItem>
+                              <SelectItem value="Hat">Hat</SelectItem>
+                              <SelectItem value="Sweater">Sweater</SelectItem>
+                              <SelectItem value="Shorts">Shorts</SelectItem>
+                              <SelectItem value="Dress">Dress</SelectItem>
+                              <SelectItem value="Skirt">Skirt</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="space-y-2">
@@ -1026,13 +1039,14 @@ export default function UploadForm({
                               <SelectValue placeholder="Select fit" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="slim">Slim</SelectItem>
-                              <SelectItem value="regular">Regular</SelectItem>
-                              <SelectItem value="oversized">Oversized</SelectItem>
-                              <SelectItem value="baggy">Baggy</SelectItem>
-                              <SelectItem value="crop">Crop</SelectItem>
-                              <SelectItem value="skinny">Skinny</SelectItem>
-                              <SelectItem value="tapered">Tapered</SelectItem>
+                              <SelectItem value="Slim">Slim</SelectItem>
+                              <SelectItem value="Regular">Regular</SelectItem>
+                              <SelectItem value="Oversized">Oversized</SelectItem>
+                              <SelectItem value="Baggy">Baggy</SelectItem>
+                              <SelectItem value="Crop">Crop</SelectItem>
+                              <SelectItem value="Skinny">Skinny</SelectItem>
+                              <SelectItem value="Tapered">Tapered</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1062,12 +1076,13 @@ export default function UploadForm({
                               <SelectValue placeholder="Select material" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="cotton">Cotton</SelectItem>
-                              <SelectItem value="linen">Linen</SelectItem>
-                              <SelectItem value="denim">Denim</SelectItem>
-                              <SelectItem value="leather">Leather</SelectItem>
-                              <SelectItem value="knit">Knit</SelectItem>
-                              <SelectItem value="polyester">Polyester</SelectItem>
+                              <SelectItem value="Cotton">Cotton</SelectItem>
+                              <SelectItem value="Linen">Linen</SelectItem>
+                              <SelectItem value="Denim">Denim</SelectItem>
+                              <SelectItem value="Leather">Leather</SelectItem>
+                              <SelectItem value="Knit">Knit</SelectItem>
+                              <SelectItem value="Polyester">Polyester</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1084,10 +1099,10 @@ export default function UploadForm({
                               <SelectValue placeholder="Select season" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="spring">🌸 Spring</SelectItem>
-                              <SelectItem value="summer">☀️ Summer</SelectItem>
-                              <SelectItem value="fall">🍂 Fall</SelectItem>
-                              <SelectItem value="winter">❄️ Winter</SelectItem>
+                              <SelectItem value="Spring">Spring</SelectItem>
+                              <SelectItem value="Summer">Summer</SelectItem>
+                              <SelectItem value="Fall">Fall</SelectItem>
+                              <SelectItem value="Winter">Winter</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
