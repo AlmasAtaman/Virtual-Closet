@@ -31,7 +31,6 @@ interface CategorizedClothing {
     tops: ClothingItem[];
     bottoms: ClothingItem[];
     outerwear: ClothingItem[];
-    shoes: ClothingItem[];
     // Add other categories if needed
 }
 
@@ -39,9 +38,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null);
     const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null);
     const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null);
-    const [selectedShoe, setSelectedShoe] = useState<ClothingItem | null>(null);
-
-    const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], shoes: [] });
+    const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [] });
     const [loadingClothing, setLoadingClothing] = useState(true);
     const [showTopSelectModal, setShowTopSelectModal] = useState(false);
     const [showBottomSelectModal, setShowBottomSelectModal] = useState(false);
@@ -95,20 +92,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             const categorized = allItems.reduce<CategorizedClothing>((acc, item) => {
                 if (item.type) {
                     const lowerCaseType = item.type.toLowerCase();
-                    if (['t-shirt', 'dress', 'shirt', 'blouse'].includes(lowerCaseType)) {
+                    if (["t-shirt", "dress", "shirt", "blouse"].includes(lowerCaseType)) {
                         acc.tops.push(item);
-                    } else if (['pants', 'skirt', 'shorts', 'jeans', 'leggings'].includes(lowerCaseType)) {
+                    } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(lowerCaseType)) {
                         acc.bottoms.push(item);
-                    } else if (['jacket', 'sweater', 'coat', 'hoodie', 'cardigan'].includes(lowerCaseType)) {
+                    } else if (["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(lowerCaseType)) {
                         acc.outerwear.push(item);
-                    } else if (['shoes'].includes(lowerCaseType)) {
-                        acc.shoes.push(item);
                     } else {
                         console.warn(`Unknown clothing type: ${item.type}`);
                     }
                 }
                 return acc;
-            }, { tops: [], bottoms: [], outerwear: [], shoes: [] });
+            }, { tops: [], bottoms: [], outerwear: [] });
 
             setClothingItems(categorized);
         } catch (error) {
@@ -128,7 +123,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     };
 
     const hasWishlistItems = () => {
-        return [selectedTop, selectedBottom, selectedOuterwear, selectedShoe].some((item) => item && item.mode === 'wishlist');
+        return [selectedTop, selectedBottom, selectedOuterwear].some((item) => item && item.mode === 'wishlist');
     };
 
     const handleCreateOutfit = async () => {
@@ -143,7 +138,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     selectedTop?.id,
                     selectedBottom?.id,
                     selectedOuterwear?.id,
-                    selectedShoe?.id,
                 ].filter(Boolean), // Filter out null/undefined ids
             };
             // console.log('Creating outfit:', newOutfitData); // Removed console log
@@ -183,7 +177,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         setSelectedTop(null);
         setSelectedBottom(null);
         setSelectedOuterwear(null);
-        setSelectedShoe(null);
         // Reset modal visibility states
         setShowTopSelectModal(false);
         setShowBottomSelectModal(false);
@@ -202,12 +195,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         const tops = filterBySource(clothingItems.tops);
         const bottoms = filterBySource(clothingItems.bottoms);
         const outerwear = filterBySource(clothingItems.outerwear);
-        const shoes = filterBySource(clothingItems.shoes);
 
         setSelectedTop(getRandomItem(tops));
         setSelectedBottom(getRandomItem(bottoms));
         setSelectedOuterwear(getRandomItem(outerwear));
-        setSelectedShoe(getRandomItem(shoes));
 
         // Trigger animation
         setAnimationKey((prev) => prev + 1);
@@ -358,20 +349,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                                     />
                                                 )}
 
-                                                {/* Shoe */}
-                                                {selectedShoe && (
-                                                    <motion.img
-                                                        initial={{ opacity: 0, y: 20 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ delay: 0.1 }}
-                                                        src={selectedShoe.url}
-                                                        alt="Shoe"
-                                                        className="absolute bottom-[9rem] left-[60%] w-[8rem] z-5"
-                                                    />
-                                                )}
-
                                                 {/* Empty state */}
-                                                {!selectedTop && !selectedBottom && !selectedOuterwear && !selectedShoe && (
+                                                {!selectedTop && !selectedBottom && !selectedOuterwear && (
                                                     <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
                                                         <div className="text-center">
                                                             <p className="text-lg font-semibold mb-2">No items selected</p>
@@ -714,48 +693,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                         </CardContent>
                                     </Card>
                                 </motion.div>
-
-                                {/* Shoe Selection */}
-                                <motion.div
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                >
-                                    <Card
-                                        className={`cursor-pointer transition-all duration-300 ${
-                                            selectedShoe
-                                                ? "ring-2 ring-pink-500 shadow-lg bg-pink-50 dark:bg-pink-900/20"
-                                                : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50/50 dark:hover:bg-pink-900/10"
-                                        }`}
-                                        onClick={() => setShowShoeSelectModal(true)}
-                                    >
-                                        <CardContent className="p-4">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                                                    {selectedShoe ? (
-                                                        <img
-                                                            src={selectedShoe.url || "/placeholder.svg"}
-                                                            alt={selectedShoe.name || "Shoe"}
-                                                            className="w-full h-full object-contain rounded-lg"
-                                                        />
-                                                    ) : (
-                                                        <span className="text-2xl text-slate-400">👟</span>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-medium text-slate-900 dark:text-white">
-                                                        {selectedShoe ? selectedShoe.name || "Selected Shoe" : "Shoe"}
-                                                    </h4>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                        {selectedShoe ? "Click to change" : "Optional - Click to select"}
-                                                    </p>
-                                                    {selectedShoe?.mode === "wishlist" && <Badge className="mt-1 bg-pink-500">Wishlist</Badge>}
-                                                </div>
-                                                {!selectedShoe && <Plus className="w-5 h-5 text-slate-400" />}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
                             </div>
                         </div>
                     </div>
@@ -842,19 +779,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     }}
                     viewMode={clothingItems.bottoms.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
                     selectedCategory="bottom"
-                />
-
-                <ClothingItemSelectModal
-                    isOpen={showShoeSelectModal}
-                    onCloseAction={() => setShowShoeSelectModal(false)}
-                    clothingItems={clothingItems.shoes}
-                    onSelectItem={(item) => {
-                        setSelectedShoe(item);
-                        setShowShoeSelectModal(false);
-                        setAnimationKey((prev) => prev + 1);
-                    }}
-                    viewMode={clothingItems.shoes.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
-                    selectedCategory="shoe"
                 />
             </motion.div>
         </AnimatePresence>
