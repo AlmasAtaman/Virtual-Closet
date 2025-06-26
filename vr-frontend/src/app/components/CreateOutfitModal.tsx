@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Shuffle, Check, AlertTriangle, Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ClothingItemSelectModal from './ClothingItemSelectModal';
+import { Slider } from '@/components/ui/slider';
 
 interface CreateOutfitModalProps {
     show: boolean;
@@ -48,6 +49,24 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const [showShoeSelectModal, setShowShoeSelectModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [animationKey, setAnimationKey] = useState(0);
+    const [activeAdjust, setActiveAdjust] = useState<string | null>(null);
+    const [topControls, setTopControls] = useState<{ left: number; bottom: number; width: number } | null>(null);
+    const [bottomControls, setBottomControls] = useState<{ left: number; bottom: number; width: number } | null>(null);
+    const [outerwearControls, setOuterwearControls] = useState<{ left: number; bottom: number; width: number } | null>(null);
+    const [activeItem, setActiveItem] = useState<"top" | "bottom" | "outerwear" | null>(null);
+
+
+    const DEFAULT_LAYOUT = {
+        top: { left: 10, bottom: 8.4, width: 9 },
+        bottom: { left: 6, bottom: 0, width: 10 },
+        outerwear: { left: 50, bottom: 9, width: 8 },
+    };
+
+
+    // Add refs for each preview image
+    const topImgRef = useRef<HTMLImageElement>(null);
+    const bottomImgRef = useRef<HTMLImageElement>(null);
+    const outerwearImgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
         if (show) {
@@ -194,6 +213,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         setAnimationKey((prev) => prev + 1);
     };
 
+    console.log('activeAdjust:', activeAdjust);
+
     if (!show) {
         return null;
     }
@@ -253,36 +274,87 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                                 {/* Bottom (pants) */}
                                                 {selectedBottom && (
                                                     <motion.img
+                                                        ref={bottomImgRef}
                                                         initial={{ opacity: 0, y: 20 }}
                                                         animate={{ opacity: 1, y: 0 }}
                                                         transition={{ delay: 0.3 }}
                                                         src={selectedBottom.url}
                                                         alt="Bottom"
-                                                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
+                                                        {...(
+                                                            bottomControls
+                                                                ? { style: { left: `${bottomControls.left}%`, bottom: `${bottomControls.bottom}rem`, width: `${bottomControls.width}rem`, position: 'absolute', transform: 'translateX(-50%)', zIndex: 10, cursor: 'pointer', boxShadow: activeAdjust === 'bottom' ? '0 0 0 3px #a78bfa' : undefined, borderRadius: '0.5rem' } }
+                                                                : {
+                                                                style: {
+                                                                    left: `${DEFAULT_LAYOUT.bottom.left}%`,
+                                                                    bottom: `${DEFAULT_LAYOUT.bottom.bottom}rem`,
+                                                                    width: `${DEFAULT_LAYOUT.bottom.width}rem`,
+                                                                    position: 'absolute',
+                                                                    transform: 'translateX(-50%)',
+                                                                    zIndex: 10,
+                                                                    cursor: 'pointer',
+                                                                    borderRadius: '0.5rem'
+                                                                }
+                                                                }
+                                                        )}
+                                                        onClick={() => setActiveAdjust(activeAdjust === 'bottom' ? null : 'bottom')}
                                                     />
                                                 )}
 
                                                 {/* Top (shirt) */}
                                                 {selectedTop && (
                                                     <motion.img
+                                                        ref={topImgRef}
                                                         initial={{ opacity: 0, y: 20 }}
                                                         animate={{ opacity: 1, y: 0 }}
                                                         transition={{ delay: 0.2 }}
                                                         src={selectedTop.url}
                                                         alt="Top"
-                                                        className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
+                                                        {...(
+                                                            topControls
+                                                                ? { style: { left: `${topControls.left}%`, bottom: `${topControls.bottom}rem`, width: `${topControls.width}rem`, position: 'absolute', transform: 'translateX(-50%)', zIndex: 20, cursor: 'pointer', boxShadow: activeAdjust === 'top' ? '0 0 0 3px #22d3ee' : undefined, borderRadius: '0.5rem' } }
+                                                                : {
+                                                                    style: {
+                                                                        left: `${DEFAULT_LAYOUT.top.left}%`,
+                                                                        bottom: `${DEFAULT_LAYOUT.top.bottom}rem`,
+                                                                        width: `${DEFAULT_LAYOUT.top.width}rem`,
+                                                                        position: 'absolute',
+                                                                        transform: 'translateX(-50%)',
+                                                                        zIndex: 20,
+                                                                        cursor: 'pointer',
+                                                                        borderRadius: '0.5rem'
+                                                                    }
+                                                                    }
+                                                        )}
+                                                        onClick={() => setActiveAdjust(activeAdjust === 'top' ? null : 'top')}
                                                     />
                                                 )}
 
                                                 {/* Outerwear */}
                                                 {selectedOuterwear && (
                                                     <motion.img
+                                                        ref={outerwearImgRef}
                                                         initial={{ opacity: 0, y: 20 }}
                                                         animate={{ opacity: 1, y: 0 }}
                                                         transition={{ delay: 0.1 }}
                                                         src={selectedOuterwear.url}
                                                         alt="Outerwear"
-                                                        className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
+                                                        {...(
+                                                            outerwearControls
+                                                                ? { style: { left: `${outerwearControls.left}%`, bottom: `${outerwearControls.bottom}rem`, width: `${outerwearControls.width}rem`, position: 'absolute', transform: 'translateX(-50%)', zIndex: 5, cursor: 'pointer', boxShadow: activeAdjust === 'outerwear' ? '0 0 0 3px #fbbf24' : undefined, borderRadius: '0.5rem' } }
+                                                                : {
+                                                                style: {
+                                                                    left: `${DEFAULT_LAYOUT.outerwear.left}%`,
+                                                                    bottom: `${DEFAULT_LAYOUT.outerwear.bottom}rem`,
+                                                                    width: `${DEFAULT_LAYOUT.outerwear.width}rem`,
+                                                                    position: 'absolute',
+                                                                    transform: 'translateX(-50%)',
+                                                                    zIndex: 5,
+                                                                    cursor: 'pointer',
+                                                                    borderRadius: '0.5rem'
+                                                                }
+                                                                }
+                                                        )}
+                                                        onClick={() => setActiveAdjust(activeAdjust === 'outerwear' ? null : 'outerwear')}
                                                     />
                                                 )}
 
@@ -583,6 +655,202 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     viewMode={clothingItems.shoes.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
                     selectedCategory="shoe"
                 />
+
+                {/* Directly below the preview, render the adjustment panel if activeAdjust is set */}
+                {activeAdjust && (
+                    <div className="mt-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow p-4 w-full max-w-md mx-auto">
+                        <div className="font-semibold mb-2 text-slate-700 dark:text-slate-200">
+                            {activeAdjust === 'top' && 'Adjust Top Position & Size'}
+                            {activeAdjust === 'bottom' && 'Adjust Bottom Position & Size'}
+                            {activeAdjust === 'outerwear' && 'Adjust Outerwear Position & Size'}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            {activeAdjust === 'top' && (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Left</span>
+                                        <Slider min={0} max={100} step={1} value={[topControls?.left ?? 50]} onValueChange={([v]) => {
+                                            if (topControls) setTopControls({ ...topControls, left: v });
+                                            else if (topImgRef.current) {
+                                                const style = window.getComputedStyle(topImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = topImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setTopControls({ left: v, bottom, width });
+                                            } else {
+                                                setTopControls({ left: v, bottom: 8.4, width: 9 });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{topControls?.left ?? 50}%</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Bottom</span>
+                                        <Slider min={0} max={20} step={0.1} value={[topControls?.bottom ?? 8.4]} onValueChange={([v]) => {
+                                            if (topControls) setTopControls({ ...topControls, bottom: v });
+                                            else if (topImgRef.current) {
+                                                const style = window.getComputedStyle(topImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = topImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setTopControls({ left, bottom: v, width });
+                                            } else {
+                                                setTopControls({ left: 50, bottom: v, width: 9 });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{topControls?.bottom ?? 8.4}rem</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Width</span>
+                                        <Slider min={4} max={20} step={0.1} value={[topControls?.width ?? 9]} onValueChange={([v]) => {
+                                            if (topControls) setTopControls({ ...topControls, width: v });
+                                            else if (topImgRef.current) {
+                                                const style = window.getComputedStyle(topImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = topImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setTopControls({ left, bottom, width: v });
+                                            } else {
+                                                setTopControls({ left: 50, bottom: 8.4, width: v });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{topControls?.width ?? 9}rem</span>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button size="sm" variant="outline" onClick={() => setTopControls(null)}>Reset</Button>
+                                    </div>
+                                </>
+                            )}
+                            {activeAdjust === 'bottom' && (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Left</span>
+                                        <Slider min={0} max={100} step={1} value={[bottomControls?.left ?? 50]} onValueChange={([v]) => {
+                                            if (bottomControls) setBottomControls({ ...bottomControls, left: v });
+                                            else if (bottomImgRef.current) {
+                                                const style = window.getComputedStyle(bottomImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = bottomImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setBottomControls({ left: v, bottom, width });
+                                            } else {
+                                                setBottomControls({ left: v, bottom: 0, width: 10 });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{bottomControls?.left ?? 50}%</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Bottom</span>
+                                        <Slider min={0} max={20} step={0.1} value={[bottomControls?.bottom ?? 0]} onValueChange={([v]) => {
+                                            if (bottomControls) setBottomControls({ ...bottomControls, bottom: v });
+                                            else if (bottomImgRef.current) {
+                                                const style = window.getComputedStyle(bottomImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = bottomImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setBottomControls({ left, bottom: v, width });
+                                            } else {
+                                                setBottomControls({ left: 50, bottom: v, width: 10 });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{bottomControls?.bottom ?? 0}rem</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Width</span>
+                                        <Slider min={4} max={16} step={0.1} value={[bottomControls?.width ?? 10]} onValueChange={([v]) => {
+                                            if (bottomControls) setBottomControls({ ...bottomControls, width: v });
+                                            else if (bottomImgRef.current) {
+                                                const style = window.getComputedStyle(bottomImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = bottomImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setBottomControls({ left, bottom, width: v });
+                                            } else {
+                                                setBottomControls({ left: 50, bottom: 0, width: v });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{bottomControls?.width ?? 10}rem</span>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button size="sm" variant="outline" onClick={() => setBottomControls(null)}>Reset</Button>
+                                    </div>
+                                </>
+                            )}
+                            {activeAdjust === 'outerwear' && (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Left</span>
+                                        <Slider min={0} max={100} step={1} value={[outerwearControls?.left ?? 40]} onValueChange={([v]) => {
+                                            if (outerwearControls) setOuterwearControls({ ...outerwearControls, left: v });
+                                            else if (outerwearImgRef.current) {
+                                                const style = window.getComputedStyle(outerwearImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = outerwearImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setOuterwearControls({ left: v, bottom, width });
+                                            } else {
+                                                setOuterwearControls({ left: v, bottom: 9, width: 8 });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{outerwearControls?.left ?? 40}%</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Bottom</span>
+                                        <Slider min={0} max={20} step={0.1} value={[outerwearControls?.bottom ?? 9]} onValueChange={([v]) => {
+                                            if (outerwearControls) setOuterwearControls({ ...outerwearControls, bottom: v });
+                                            else if (outerwearImgRef.current) {
+                                                const style = window.getComputedStyle(outerwearImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = outerwearImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setOuterwearControls({ left, bottom: v, width });
+                                            } else {
+                                                setOuterwearControls({ left: 40, bottom: v, width: 8 });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{outerwearControls?.bottom ?? 9}rem</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-16">Width</span>
+                                        <Slider min={4} max={16} step={0.1} value={[outerwearControls?.width ?? 8]} onValueChange={([v]) => {
+                                            if (outerwearControls) setOuterwearControls({ ...outerwearControls, width: v });
+                                            else if (outerwearImgRef.current) {
+                                                const style = window.getComputedStyle(outerwearImgRef.current);
+                                                const leftPx = parseFloat(style.left);
+                                                const parentWidth = outerwearImgRef.current.parentElement?.offsetWidth || 1;
+                                                const left = (leftPx / parentWidth) * 100;
+                                                const bottom = parseFloat(style.bottom) / 16;
+                                                const width = parseFloat(style.width) / 16;
+                                                setOuterwearControls({ left, bottom, width: v });
+                                            } else {
+                                                setOuterwearControls({ left: 40, bottom: 9, width: v });
+                                            }
+                                        }} className="flex-1" />
+                                        <span className="w-12 text-right">{outerwearControls?.width ?? 8}rem</span>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button size="sm" variant="outline" onClick={() => setOuterwearControls(null)}>Reset</Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </motion.div>
         </AnimatePresence>
     );
