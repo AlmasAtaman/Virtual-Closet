@@ -76,6 +76,11 @@ model OutfitClothing {
   outfitId   String
   clothingId String
 
+  x          Float    @default(0)
+  y          Float    @default(0)
+  scale      Float    @default(1)
+
+
   outfit     Outfit   @relation(fields: [outfitId], references: [id])
   clothing   Clothing @relation(fields: [clothingId], references: [id])
 
