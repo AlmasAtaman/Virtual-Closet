@@ -55,7 +55,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const DEFAULT_LAYOUT = {
     top: { left: 50, bottom: 8.4, width: 9 }, // Centered, middle height
     bottom: { left: 50, bottom: 0, width: 10 }, // Centered, at bottom
-    outerwear: { left: 50, bottom: 9, width: 8 }, // Centered, slightly above top
+    outerwear: { left: 65, bottom: 10, width: 8 }, // Right side, slightly above top
   }
 
   const topImgRef = useRef<HTMLImageElement>(null)
@@ -308,7 +308,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.5 }}
                       >
-                        {/* Bottom (pants) - Using the original positioning logic */}
+                        {/* Bottom (pants) - Layer 1 (bottom layer) */}
                         {selectedBottom && (
                           <motion.img
                             ref={bottomImgRef}
@@ -341,40 +341,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           />
                         )}
 
-                        {/* Top (shirt) - Using the original positioning logic */}
-                        {selectedTop && (
-                          <motion.img
-                            ref={topImgRef}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            src={selectedTop.url}
-                            alt="Top"
-                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
-                            style={
-                              topControls
-                                ? {
-                                    left: `${topControls.left}%`,
-                                    bottom: `${topControls.bottom}rem`,
-                                    width: `${topControls.width}rem`,
-                                    position: "absolute",
-                                    transform: "translateX(-50%)",
-                                    zIndex: 20,
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "top" ? "0 0 0 3px #22d3ee" : undefined,
-                                    borderRadius: "0.5rem",
-                                  }
-                                : {
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "top" ? "0 0 0 3px #22d3ee" : undefined,
-                                    borderRadius: "0.5rem",
-                                  }
-                            }
-                            onClick={() => setActiveAdjust(activeAdjust === "top" ? null : "top")}
-                          />
-                        )}
-
-                        {/* Outerwear - Using the original positioning logic */}
+                        {/* Outerwear - Layer 2 (middle layer - behind shirt) */}
                         {selectedOuterwear && (
                           <motion.img
                             ref={outerwearImgRef}
@@ -383,7 +350,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             transition={{ delay: 0.1 }}
                             src={selectedOuterwear.url}
                             alt="Outerwear"
-                            className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
+                            className="absolute bottom-[10rem] left-[65%] -translate-x-1/2 w-32 z-20"
                             style={
                               outerwearControls
                                 ? {
@@ -392,7 +359,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                     width: `${outerwearControls.width}rem`,
                                     position: "absolute",
                                     transform: "translateX(-50%)",
-                                    zIndex: 5,
+                                    zIndex: 20,
                                     cursor: "pointer",
                                     boxShadow: activeAdjust === "outerwear" ? "0 0 0 3px #fbbf24" : undefined,
                                     borderRadius: "0.5rem",
@@ -404,6 +371,39 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                   }
                             }
                             onClick={() => setActiveAdjust(activeAdjust === "outerwear" ? null : "outerwear")}
+                          />
+                        )}
+
+                        {/* Top (shirt) - Layer 3 (top layer - on top of everything) */}
+                        {selectedTop && (
+                          <motion.img
+                            ref={topImgRef}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            src={selectedTop.url}
+                            alt="Top"
+                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-30"
+                            style={
+                              topControls
+                                ? {
+                                    left: `${topControls.left}%`,
+                                    bottom: `${topControls.bottom}rem`,
+                                    width: `${topControls.width}rem`,
+                                    position: "absolute",
+                                    transform: "translateX(-50%)",
+                                    zIndex: 30,
+                                    cursor: "pointer",
+                                    boxShadow: activeAdjust === "top" ? "0 0 0 3px #22d3ee" : undefined,
+                                    borderRadius: "0.5rem",
+                                  }
+                                : {
+                                    cursor: "pointer",
+                                    boxShadow: activeAdjust === "top" ? "0 0 0 3px #22d3ee" : undefined,
+                                    borderRadius: "0.5rem",
+                                  }
+                            }
+                            onClick={() => setActiveAdjust(activeAdjust === "top" ? null : "top")}
                           />
                         )}
 
