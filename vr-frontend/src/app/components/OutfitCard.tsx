@@ -11,6 +11,9 @@ interface ClothingItem {
   name?: string
   url: string
   type?: string
+  brand?: string
+  price?: number
+  mode: "closet" | "wishlist"
   x?: number
   y?: number
   scale?: number
@@ -19,15 +22,22 @@ interface ClothingItem {
   width?: number
 }
 
+interface Outfit {
+  id: string
+  name?: string
+  occasion?: string
+  season?: string
+  notes?: string
+  price?: number
+  totalPrice?: number
+  clothingItems: ClothingItem[]
+  isFavorite?: boolean
+}
+
 interface OutfitCardProps {
-  outfit: {
-    id: string
-    clothingItems: ClothingItem[]
-    name?: string
-    season?: string
-    occasion?: string
-    totalPrice?: number
-  }
+  outfit: Outfit
+  onDelete?: (outfitId: string) => void
+  onUpdate?: () => void
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
@@ -147,12 +157,12 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                       className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
                     />
                   )}
-                  {/* Outerwear */}
+                  {/* Outerwear - Fixed positioning to be centered and layered properly */}
                   {categorizedItems.outerwear[0] && (
                     <img
                       src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
                       alt="Outerwear"
-                      className="absolute bottom-[9rem] left-[40%] w-[8rem] z-5"
+                      className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-40 z-30"
                     />
                   )}
                 </>
