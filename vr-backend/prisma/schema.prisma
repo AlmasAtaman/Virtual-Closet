@@ -50,7 +50,7 @@ model Clothing {
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   mode       String   @default("closet")
   isFavorite Boolean @default(false)
@@ -60,41 +60,36 @@ model Clothing {
 model Outfit {
   id          String    @id @default(uuid())
   name        String?   // optional
+  occasion    String?   // optional - added this field
+  season      String?   // optional - added this field
+  notes       String?   // optional - added this field
   totalPrice  Float?    // optional
-  notes       String?   // optional
   createdAt   DateTime  @default(now())
-
   occasions Occasion[] @relation("OutfitOccasions")
-  
   userId       String
-  user        User      @relation(fields: [userId], references: [id])
-
-  outfitClothing OutfitClothing[] 
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfitClothing OutfitClothing[]
 }
 
 model OutfitClothing {
   outfitId   String
   clothingId String
-
   x          Float    @default(0)
   y          Float    @default(0)
   scale      Float    @default(1)
-
-
-  outfit     Outfit   @relation(fields: [outfitId], references: [id])
-  clothing   Clothing @relation(fields: [clothingId], references: [id])
-
+  left       Float    @default(50)   // Added this field
+  bottom     Float    @default(0)    // Added this field
+  width      Float    @default(10)   // Added this field
+  outfit     Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
   @@id([outfitId, clothingId])
 }
-
 
 model Occasion {
   id        String    @id @default(uuid())
   name      String
   createdAt DateTime  @default(now())
-
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
-
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   outfits   Outfit[]  @relation("OutfitOccasions")
 }
