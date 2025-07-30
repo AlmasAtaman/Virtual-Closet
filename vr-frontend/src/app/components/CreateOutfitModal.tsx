@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Shuffle, Check, Plus } from "lucide-react"
+import { X, Shuffle, Check, Plus, Move, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -51,11 +51,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [bottomTransform, setBottomTransform] = useState({ x: 0, y: 0, scale: 1 })
   const [outerwearTransform, setOuterwearTransform] = useState({ x: 0, y: 0, scale: 1 })
 
-  // Updated default layout to match the original positioning from the previous working version
+  // Standardized sizing for consistent appearance
   const DEFAULT_LAYOUT = {
-    top: { left: 50, bottom: 8.4, width: 9 }, // Centered, middle height
-    bottom: { left: 50, bottom: 0, width: 10 }, // Centered, at bottom
-    outerwear: { left: 65, bottom: 10, width: 8 }, // Right side, slightly above top
+    top: { left: 50, bottom: 8.4, width: 8.5 },
+    bottom: { left: 50, bottom: 0, width: 9 },
+    outerwear: { left: 65, bottom: 10, width: 8.5 },
   }
 
   const topImgRef = useRef<HTMLImageElement>(null)
@@ -86,6 +86,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         ...item,
         mode: "closet",
       }))
+
       const wishlistItems: ClothingItem[] = (wishlistData.clothingItems || []).map((item: ClothingItem) => ({
         ...item,
         mode: "wishlist",
@@ -250,7 +251,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setSelectedTop(getRandomItem(tops))
     setSelectedBottom(getRandomItem(bottoms))
     setSelectedOuterwear(getRandomItem(outerwear))
-
     setAnimationKey((prev) => prev + 1)
   }
 
@@ -272,7 +272,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
+          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -308,7 +308,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.5 }}
                       >
-                        {/* Bottom (pants) - Layer 1 (bottom layer) */}
+                        {/* Bottom (pants) - Standardized size */}
                         {selectedBottom && (
                           <motion.img
                             ref={bottomImgRef}
@@ -317,7 +317,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             transition={{ delay: 0.3 }}
                             src={selectedBottom.url}
                             alt="Bottom"
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:ring-2 hover:ring-slate-400 rounded-lg transition-all"
                             style={
                               bottomControls
                                 ? {
@@ -327,21 +327,20 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                     position: "absolute",
                                     transform: "translateX(-50%)",
                                     zIndex: 10,
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "bottom" ? "0 0 0 3px #a78bfa" : undefined,
-                                    borderRadius: "0.5rem",
+                                    objectFit: "contain",
+                                    boxShadow: activeAdjust === "bottom" ? "0 0 0 2px #64748b" : undefined,
                                   }
                                 : {
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "bottom" ? "0 0 0 3px #a78bfa" : undefined,
-                                    borderRadius: "0.5rem",
+                                    width: `${DEFAULT_LAYOUT.bottom.width}rem`,
+                                    objectFit: "contain",
+                                    boxShadow: activeAdjust === "bottom" ? "0 0 0 2px #64748b" : undefined,
                                   }
                             }
                             onClick={() => setActiveAdjust(activeAdjust === "bottom" ? null : "bottom")}
                           />
                         )}
 
-                        {/* Outerwear - Layer 2 (middle layer - behind shirt) */}
+                        {/* Outerwear - Standardized size */}
                         {selectedOuterwear && (
                           <motion.img
                             ref={outerwearImgRef}
@@ -350,7 +349,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             transition={{ delay: 0.1 }}
                             src={selectedOuterwear.url}
                             alt="Outerwear"
-                            className="absolute bottom-[10rem] left-[65%] -translate-x-1/2 w-32 z-20"
+                            className="absolute bottom-[10rem] left-[65%] -translate-x-1/2 z-20 cursor-pointer hover:ring-2 hover:ring-slate-400 rounded-lg transition-all"
                             style={
                               outerwearControls
                                 ? {
@@ -360,21 +359,20 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                     position: "absolute",
                                     transform: "translateX(-50%)",
                                     zIndex: 20,
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "outerwear" ? "0 0 0 3px #fbbf24" : undefined,
-                                    borderRadius: "0.5rem",
+                                    objectFit: "contain",
+                                    boxShadow: activeAdjust === "outerwear" ? "0 0 0 2px #64748b" : undefined,
                                   }
                                 : {
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "outerwear" ? "0 0 0 3px #fbbf24" : undefined,
-                                    borderRadius: "0.5rem",
+                                    width: `${DEFAULT_LAYOUT.outerwear.width}rem`,
+                                    objectFit: "contain",
+                                    boxShadow: activeAdjust === "outerwear" ? "0 0 0 2px #64748b" : undefined,
                                   }
                             }
                             onClick={() => setActiveAdjust(activeAdjust === "outerwear" ? null : "outerwear")}
                           />
                         )}
 
-                        {/* Top (shirt) - Layer 3 (top layer - on top of everything) */}
+                        {/* Top (shirt) - Standardized size */}
                         {selectedTop && (
                           <motion.img
                             ref={topImgRef}
@@ -383,7 +381,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             transition={{ delay: 0.2 }}
                             src={selectedTop.url}
                             alt="Top"
-                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-30"
+                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 z-30 cursor-pointer hover:ring-2 hover:ring-slate-400 rounded-lg transition-all"
                             style={
                               topControls
                                 ? {
@@ -393,14 +391,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                     position: "absolute",
                                     transform: "translateX(-50%)",
                                     zIndex: 30,
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "top" ? "0 0 0 3px #22d3ee" : undefined,
-                                    borderRadius: "0.5rem",
+                                    objectFit: "contain",
+                                    boxShadow: activeAdjust === "top" ? "0 0 0 2px #64748b" : undefined,
                                   }
                                 : {
-                                    cursor: "pointer",
-                                    boxShadow: activeAdjust === "top" ? "0 0 0 3px #22d3ee" : undefined,
-                                    borderRadius: "0.5rem",
+                                    width: `${DEFAULT_LAYOUT.top.width}rem`,
+                                    objectFit: "contain",
+                                    boxShadow: activeAdjust === "top" ? "0 0 0 2px #64748b" : undefined,
                                   }
                             }
                             onClick={() => setActiveAdjust(activeAdjust === "top" ? null : "top")}
@@ -417,243 +414,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           </div>
                         )}
                       </motion.div>
-
-                      {/* Adjustment Panel */}
-                      {activeAdjust && (
-                        <div
-                          className="absolute left-1/2 top-full -translate-x-1/2 mt-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow p-4 w-full max-w-md z-50"
-                          style={{ minWidth: 320 }}
-                        >
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setActiveAdjust(null)}
-                            className="absolute top-2 right-2"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <div className="font-semibold mb-2 text-slate-700 dark:text-slate-200">
-                            {activeAdjust === "top" && "Adjust Top Position & Size"}
-                            {activeAdjust === "bottom" && "Adjust Bottom Position & Size"}
-                            {activeAdjust === "outerwear" && "Adjust Outerwear Position & Size"}
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            {activeAdjust === "top" && (
-                              <>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Left</span>
-                                  <Slider
-                                    min={0}
-                                    max={100}
-                                    step={1}
-                                    value={[topControls?.left ?? DEFAULT_LAYOUT.top.left]}
-                                    onValueChange={([v]) => {
-                                      setTopControls((prev) => ({
-                                        left: v,
-                                        bottom: prev?.bottom ?? DEFAULT_LAYOUT.top.bottom,
-                                        width: prev?.width ?? DEFAULT_LAYOUT.top.width,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {topControls?.left ?? DEFAULT_LAYOUT.top.left}%
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Bottom</span>
-                                  <Slider
-                                    min={0}
-                                    max={20}
-                                    step={0.1}
-                                    value={[topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom]}
-                                    onValueChange={([v]) => {
-                                      setTopControls((prev) => ({
-                                        left: prev?.left ?? DEFAULT_LAYOUT.top.left,
-                                        bottom: v,
-                                        width: prev?.width ?? DEFAULT_LAYOUT.top.width,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom}rem
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Width</span>
-                                  <Slider
-                                    min={4}
-                                    max={20}
-                                    step={0.1}
-                                    value={[topControls?.width ?? DEFAULT_LAYOUT.top.width]}
-                                    onValueChange={([v]) => {
-                                      setTopControls((prev) => ({
-                                        left: prev?.left ?? DEFAULT_LAYOUT.top.left,
-                                        bottom: prev?.bottom ?? DEFAULT_LAYOUT.top.bottom,
-                                        width: v,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {topControls?.width ?? DEFAULT_LAYOUT.top.width}rem
-                                  </span>
-                                </div>
-                                <div className="flex justify-end">
-                                  <Button size="sm" variant="outline" onClick={() => setTopControls(null)}>
-                                    Reset
-                                  </Button>
-                                </div>
-                              </>
-                            )}
-                            {activeAdjust === "bottom" && (
-                              <>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Left</span>
-                                  <Slider
-                                    min={0}
-                                    max={100}
-                                    step={1}
-                                    value={[bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left]}
-                                    onValueChange={([v]) => {
-                                      setBottomControls((prev) => ({
-                                        left: v,
-                                        bottom: prev?.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
-                                        width: prev?.width ?? DEFAULT_LAYOUT.bottom.width,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left}%
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Bottom</span>
-                                  <Slider
-                                    min={0}
-                                    max={20}
-                                    step={0.1}
-                                    value={[bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom]}
-                                    onValueChange={([v]) => {
-                                      setBottomControls((prev) => ({
-                                        left: prev?.left ?? DEFAULT_LAYOUT.bottom.left,
-                                        bottom: v,
-                                        width: prev?.width ?? DEFAULT_LAYOUT.bottom.width,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom}rem
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Width</span>
-                                  <Slider
-                                    min={4}
-                                    max={16}
-                                    step={0.1}
-                                    value={[bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width]}
-                                    onValueChange={([v]) => {
-                                      setBottomControls((prev) => ({
-                                        left: prev?.left ?? DEFAULT_LAYOUT.bottom.left,
-                                        bottom: prev?.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
-                                        width: v,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width}rem
-                                  </span>
-                                </div>
-                                <div className="flex justify-end">
-                                  <Button size="sm" variant="outline" onClick={() => setBottomControls(null)}>
-                                    Reset
-                                  </Button>
-                                </div>
-                              </>
-                            )}
-                            {activeAdjust === "outerwear" && (
-                              <>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Left</span>
-                                  <Slider
-                                    min={0}
-                                    max={100}
-                                    step={1}
-                                    value={[outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left]}
-                                    onValueChange={([v]) => {
-                                      setOuterwearControls((prev) => ({
-                                        left: v,
-                                        bottom: prev?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
-                                        width: prev?.width ?? DEFAULT_LAYOUT.outerwear.width,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left}%
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Bottom</span>
-                                  <Slider
-                                    min={0}
-                                    max={20}
-                                    step={0.1}
-                                    value={[outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom]}
-                                    onValueChange={([v]) => {
-                                      setOuterwearControls((prev) => ({
-                                        left: prev?.left ?? DEFAULT_LAYOUT.outerwear.left,
-                                        bottom: v,
-                                        width: prev?.width ?? DEFAULT_LAYOUT.outerwear.width,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom}rem
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-16">Width</span>
-                                  <Slider
-                                    min={4}
-                                    max={16}
-                                    step={0.1}
-                                    value={[outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width]}
-                                    onValueChange={([v]) => {
-                                      setOuterwearControls((prev) => ({
-                                        left: prev?.left ?? DEFAULT_LAYOUT.outerwear.left,
-                                        bottom: prev?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
-                                        width: v,
-                                      }))
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <span className="w-12 text-right">
-                                    {outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width}rem
-                                  </span>
-                                </div>
-                                <div className="flex justify-end">
-                                  <Button size="sm" variant="outline" onClick={() => setOuterwearControls(null)}>
-                                    Reset
-                                  </Button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Right Side - Item Selection */}
+              {/* Right Side - Item Selection & Adjustment Panel */}
               <div className="order-1 lg:order-2 space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Select Your Pieces</h3>
 
@@ -784,6 +550,275 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     </CardContent>
                   </Card>
                 </motion.div>
+
+                {/* Adjustment Panel - Now positioned here */}
+                {activeAdjust && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
+                    <Card className="border-2 border-slate-300 dark:border-slate-600">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-2">
+                            <Move className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                            <span className="font-medium text-slate-900 dark:text-white">
+                              Adjust{" "}
+                              {activeAdjust === "top" ? "Top" : activeAdjust === "bottom" ? "Bottom" : "Outerwear"}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (activeAdjust === "top") setTopControls(null)
+                                if (activeAdjust === "bottom") setBottomControls(null)
+                                if (activeAdjust === "outerwear") setOuterwearControls(null)
+                              }}
+                              className="h-8 px-2"
+                            >
+                              <RotateCcw className="w-3 h-3 mr-1" />
+                              Reset
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setActiveAdjust(null)}
+                              className="h-8 px-2"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          {activeAdjust === "top" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Position
+                                  </label>
+                                  <span className="text-xs text-slate-500">
+                                    {topControls?.left ?? DEFAULT_LAYOUT.top.left}%
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  value={[topControls?.left ?? DEFAULT_LAYOUT.top.left]}
+                                  onValueChange={([v]) => {
+                                    setTopControls((prev) => ({
+                                      left: v,
+                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.top.bottom,
+                                      width: prev?.width ?? DEFAULT_LAYOUT.top.width,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Height
+                                  </label>
+                                  <span className="text-xs text-slate-500">
+                                    {topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom}rem
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={20}
+                                  step={0.1}
+                                  value={[topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom]}
+                                  onValueChange={([v]) => {
+                                    setTopControls((prev) => ({
+                                      left: prev?.left ?? DEFAULT_LAYOUT.top.left,
+                                      bottom: v,
+                                      width: prev?.width ?? DEFAULT_LAYOUT.top.width,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Size</label>
+                                  <span className="text-xs text-slate-500">
+                                    {topControls?.width ?? DEFAULT_LAYOUT.top.width}rem
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={6}
+                                  max={12}
+                                  step={0.1}
+                                  value={[topControls?.width ?? DEFAULT_LAYOUT.top.width]}
+                                  onValueChange={([v]) => {
+                                    setTopControls((prev) => ({
+                                      left: prev?.left ?? DEFAULT_LAYOUT.top.left,
+                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.top.bottom,
+                                      width: v,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {activeAdjust === "bottom" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Position
+                                  </label>
+                                  <span className="text-xs text-slate-500">
+                                    {bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left}%
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  value={[bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left]}
+                                  onValueChange={([v]) => {
+                                    setBottomControls((prev) => ({
+                                      left: v,
+                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
+                                      width: prev?.width ?? DEFAULT_LAYOUT.bottom.width,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Height
+                                  </label>
+                                  <span className="text-xs text-slate-500">
+                                    {bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom}rem
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={20}
+                                  step={0.1}
+                                  value={[bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom]}
+                                  onValueChange={([v]) => {
+                                    setBottomControls((prev) => ({
+                                      left: prev?.left ?? DEFAULT_LAYOUT.bottom.left,
+                                      bottom: v,
+                                      width: prev?.width ?? DEFAULT_LAYOUT.bottom.width,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Size</label>
+                                  <span className="text-xs text-slate-500">
+                                    {bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width}rem
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={6}
+                                  max={12}
+                                  step={0.1}
+                                  value={[bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width]}
+                                  onValueChange={([v]) => {
+                                    setBottomControls((prev) => ({
+                                      left: prev?.left ?? DEFAULT_LAYOUT.bottom.left,
+                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
+                                      width: v,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {activeAdjust === "outerwear" && (
+                            <>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Position
+                                  </label>
+                                  <span className="text-xs text-slate-500">
+                                    {outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left}%
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  value={[outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left]}
+                                  onValueChange={([v]) => {
+                                    setOuterwearControls((prev) => ({
+                                      left: v,
+                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
+                                      width: prev?.width ?? DEFAULT_LAYOUT.outerwear.width,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Height
+                                  </label>
+                                  <span className="text-xs text-slate-500">
+                                    {outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom}rem
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={20}
+                                  step={0.1}
+                                  value={[outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom]}
+                                  onValueChange={([v]) => {
+                                    setOuterwearControls((prev) => ({
+                                      left: prev?.left ?? DEFAULT_LAYOUT.outerwear.left,
+                                      bottom: v,
+                                      width: prev?.width ?? DEFAULT_LAYOUT.outerwear.width,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Size</label>
+                                  <span className="text-xs text-slate-500">
+                                    {outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width}rem
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={6}
+                                  max={12}
+                                  step={0.1}
+                                  value={[outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width]}
+                                  onValueChange={([v]) => {
+                                    setOuterwearControls((prev) => ({
+                                      left: prev?.left ?? DEFAULT_LAYOUT.outerwear.left,
+                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
+                                      width: v,
+                                    }))
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
               </div>
             </div>
           </div>
