@@ -135,34 +135,38 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                       transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
                       zIndex: index,
                       borderRadius: "0.5rem",
+                      objectFit: "contain",
                     }}
                     className="object-contain"
                   />
                 ))
               ) : (
                 <>
-                  {/* Bottom (pants) */}
+                  {/* Bottom (pants) - Standardized size */}
                   {categorizedItems.bottoms[0] && (
                     <img
                       src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
                       alt="Bottom"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 z-10"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10"
+                      style={{ objectFit: "contain" }}
                     />
                   )}
-                  {/* Top (shirt) */}
+                  {/* Top (shirt) - Standardized size */}
                   {topItems[0] && (
                     <img
                       src={topItems[0].url || "/placeholder.svg"}
                       alt="Top"
-                      className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-36 z-20"
+                      className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20"
+                      style={{ objectFit: "contain" }}
                     />
                   )}
-                  {/* Outerwear - Fixed positioning to be centered and layered properly */}
+                  {/* Outerwear - Standardized size */}
                   {categorizedItems.outerwear[0] && (
                     <img
                       src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
                       alt="Outerwear"
-                      className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-40 z-30"
+                      className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30"
+                      style={{ objectFit: "contain" }}
                     />
                   )}
                 </>
