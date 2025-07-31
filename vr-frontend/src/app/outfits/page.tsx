@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Plus } from "lucide-react"
+import { ArrowLeft, Plus, Check, X, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import CreateOutfitModal from "../components/CreateOutfitModal"
 import OutfitCard from "../components/OutfitCard"
 import LogOutButton from "../components/LogoutButton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
+import { ConfirmDialog } from "@/components/ui/dialog"
 
 interface ClothingItem {
   id: string
@@ -45,6 +45,10 @@ export default function OutfitsPage() {
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [activeTab, setActiveTab] = useState<"outfits" | "occasions">("outfits")
+  const [isMultiSelecting, setIsMultiSelecting] = useState(false)
+  const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -85,6 +89,49 @@ export default function OutfitsPage() {
     router.push("/dashboard")
   }
 
+  const toggleMultiSelect = () => {
+    setIsMultiSelecting((prev) => !prev)
+    if (isMultiSelecting) {
+      setSelectedOutfitIds([])
+    }
+  }
+
+  const toggleOutfitSelection = (outfitId: string) => {
+    setSelectedOutfitIds((prev) => 
+      prev.includes(outfitId) 
+        ? prev.filter((id) => id !== outfitId) 
+        : [...prev, outfitId]
+    )
+  }
+
+  const handleDeleteSelected = async () => {
+    setShowDeleteDialog(false)
+
+    try {
+      setIsDeleting(true)
+      
+      // Delete outfits in parallel
+      await Promise.all(
+        selectedOutfitIds.map((outfitId) =>
+          fetch(`http://localhost:8000/api/outfits/${outfitId}`, {
+            method: "DELETE",
+            credentials: "include",
+          })
+        )
+      )
+
+      // Update frontend state
+      setOutfits((prev) => prev.filter((outfit) => !selectedOutfitIds.includes(outfit.id)))
+      setSelectedOutfitIds([])
+      setIsMultiSelecting(false) // Exit multi-select mode after deletion
+    } catch (error) {
+      console.error("Error deleting selected outfits:", error)
+      alert("Failed to delete selected outfits.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Navbar */}
@@ -95,12 +142,10 @@ export default function OutfitsPage() {
             <span className="text-xl font-semibold tracking-tight">VrC</span>
           </div>
           <div className="flex items-center gap-4">
-            {/* Removed View Outfits button intentionally */}
             <LogOutButton />
           </div>
         </div>
       </header>
-
 
       <div className="px-6 py-6">
         {/* Back Button */}
@@ -108,9 +153,9 @@ export default function OutfitsPage() {
           <Button
             variant="ghost"
             onClick={handleBackToDashboard}
-            className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 p-0 h-auto font-normal hover:bg-transparent"
+            className="flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Closet
           </Button>
         </div>
@@ -139,7 +184,68 @@ export default function OutfitsPage() {
           </Tabs>
         </div>
 
+        {/* Multi-select Controls */}
+        {activeTab === "outfits" && (
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              {isMultiSelecting && selectedOutfitIds.length > 0 && (
+                <span className="text-sm font-medium">{selectedOutfitIds.length} selected</span>
+              )}
+            </div>
 
+            <div className="flex gap-2 items-center">
+              <Button
+                variant={isMultiSelecting ? "destructive" : "outline"}
+                onClick={toggleMultiSelect}
+              >
+                {isMultiSelecting ? (
+                  <>
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-1" />
+                    Select
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Toolbar - Slide up from bottom when items selected */}
+        <AnimatePresence>
+          {isMultiSelecting && selectedOutfitIds.length > 0 && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4">
+                <span className="text-sm font-medium">
+                  {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? 's' : ''} selected
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={isDeleting}
+                  className="gap-2"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Delete
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Content */}
         <AnimatePresence mode="wait">
@@ -182,7 +288,6 @@ export default function OutfitsPage() {
                     </div>
                   </motion.div>
 
-
                   {/* Existing Outfits */}
                   {outfits.map((outfit, index) => (
                     <motion.div
@@ -191,7 +296,14 @@ export default function OutfitsPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2, delay: (index + 1) * 0.05 }}
                     >
-                      <OutfitCard outfit={outfit} onDelete={handleOutfitDeleted} onUpdate={handleOutfitUpdated} />
+                      <OutfitCard
+                        outfit={outfit}
+                        onDelete={handleOutfitDeleted}
+                        onUpdate={handleOutfitUpdated}
+                        isSelected={selectedOutfitIds.includes(outfit.id)}
+                        isMultiSelecting={isMultiSelecting}
+                        onToggleSelect={toggleOutfitSelection}
+                      />
                     </motion.div>
                   ))}
                 </div>
@@ -223,6 +335,18 @@ export default function OutfitsPage() {
         show={showCreateModal}
         onCloseAction={() => setShowCreateModal(false)}
         onOutfitCreated={handleOutfitCreated}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Selected Outfits"
+        description={`Are you sure you want to delete ${selectedOutfitIds.length} outfit${selectedOutfitIds.length > 1 ? 's' : ''}? This will only delete the outfit records - your clothing items will remain in your closet. This action cannot be undone.`}
+        onConfirm={handleDeleteSelected}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmVariant="destructive"
       />
     </div>
   )
