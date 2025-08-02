@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Plus, Check, X, Trash2, Loader2 } from "lucide-react"
+import { ArrowLeft, Plus, Check, X, Trash2, Loader2, Folder } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import CreateOutfitModal from "../components/CreateOutfitModal"
 import CreateOccasionModal from "../components/CreateOccasionModal"
+import AddToFolderModal from "../components/AddToFolderModal"
 import OutfitCard from "../components/OutfitCard"
 import OccasionCard from "../components/OccasionCard"
 import OccasionOutfits from "../components/OccasionOutfits"
@@ -66,6 +67,7 @@ export default function OutfitsPage() {
   const [selectedOccasionIds, setSelectedOccasionIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showAddToFolderModal, setShowAddToFolderModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -240,6 +242,16 @@ export default function OutfitsPage() {
     }
   }
 
+  const handleAddToFolderSuccess = () => {
+    // Exit multi-select mode and clear selections
+    setSelectedOutfitIds([])
+    setIsMultiSelecting(false)
+    // Refresh occasions data if we're on the occasions tab
+    if (activeTab === "occasions") {
+      fetchOccasions()
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Navbar */}
@@ -366,6 +378,15 @@ export default function OutfitsPage() {
                 <span className="text-sm font-medium">
                   {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? 's' : ''} selected
                 </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddToFolderModal(true)}
+                  className="gap-2"
+                >
+                  <Folder className="h-4 w-4" />
+                  Add to Folder
+                </Button>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -579,6 +600,14 @@ export default function OutfitsPage() {
         confirmLabel="Delete"
         cancelLabel="Cancel"
         confirmVariant="destructive"
+      />
+
+      {/* Add to Folder Modal */}
+      <AddToFolderModal
+        show={showAddToFolderModal}
+        onCloseAction={() => setShowAddToFolderModal(false)}
+        selectedOutfitIds={selectedOutfitIds}
+        onSuccess={handleAddToFolderSuccess}
       />
     </div>
   )
