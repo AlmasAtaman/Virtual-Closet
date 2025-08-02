@@ -62,6 +62,8 @@ export default function OutfitsPage() {
   const [selectedOccasionId, setSelectedOccasionId] = useState<string | null>(null)
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
+  const [isMultiSelectingOccasions, setIsMultiSelectingOccasions] = useState(false)
+  const [selectedOccasionIds, setSelectedOccasionIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
@@ -163,6 +165,21 @@ export default function OutfitsPage() {
     )
   }
 
+  const toggleMultiSelectOccasions = () => {
+    setIsMultiSelectingOccasions((prev) => !prev)
+    if (isMultiSelectingOccasions) {
+      setSelectedOccasionIds([])
+    }
+  }
+
+  const toggleOccasionSelection = (occasionId: string) => {
+    setSelectedOccasionIds((prev) => 
+      prev.includes(occasionId) 
+        ? prev.filter((id) => id !== occasionId) 
+        : [...prev, occasionId]
+    )
+  }
+
   const handleDeleteSelected = async () => {
     setShowDeleteDialog(false)
 
@@ -186,6 +203,38 @@ export default function OutfitsPage() {
     } catch (error) {
       console.error("Error deleting selected outfits:", error)
       alert("Failed to delete selected outfits.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteSelectedOccasions = async () => {
+    if (selectedOccasionIds.length === 0) return
+
+    if (!confirm(`Are you sure you want to delete ${selectedOccasionIds.length} folder${selectedOccasionIds.length > 1 ? 's' : ''}? This will remove the folders but keep your outfits.`)) {
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      
+      // Delete occasions in parallel
+      await Promise.all(
+        selectedOccasionIds.map((occasionId) =>
+          fetch(`http://localhost:8000/api/occasions/${occasionId}`, {
+            method: "DELETE",
+            credentials: "include",
+          })
+        )
+      )
+
+      // Update frontend state
+      setOccasions((prev) => prev.filter((occasion) => !selectedOccasionIds.includes(occasion.id)))
+      setSelectedOccasionIds([])
+      setIsMultiSelectingOccasions(false) // Exit multi-select mode after deletion
+    } catch (error) {
+      console.error("Error deleting selected occasions:", error)
+      alert("Failed to delete selected folders.")
     } finally {
       setIsDeleting(false)
     }
@@ -273,6 +322,36 @@ export default function OutfitsPage() {
           </div>
         )}
 
+        {/* Multi-select Controls for Occasions */}
+        {activeTab === "occasions" && !selectedOccasionId && occasions.length > 0 && (
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              {isMultiSelectingOccasions && selectedOccasionIds.length > 0 && (
+                <span className="text-sm font-medium">{selectedOccasionIds.length} selected</span>
+              )}
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <Button
+                variant={isMultiSelectingOccasions ? "destructive" : "outline"}
+                onClick={toggleMultiSelectOccasions}
+              >
+                {isMultiSelectingOccasions ? (
+                  <>
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-1" />
+                    Select
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Delete Toolbar - Slide up from bottom when items selected */}
         <AnimatePresence>
           {isMultiSelecting && selectedOutfitIds.length > 0 && (
@@ -300,6 +379,35 @@ export default function OutfitsPage() {
                     <Trash2 className="h-4 w-4" />
                   )}
                   Delete
+                </Button>
+              </div>
+            </motion.div>
+          )}
+          {isMultiSelectingOccasions && selectedOccasionIds.length > 0 && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4">
+                <span className="text-sm font-medium">
+                  {selectedOccasionIds.length} folder{selectedOccasionIds.length > 1 ? 's' : ''} selected
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelectedOccasions}
+                  disabled={isDeleting}
+                  className="gap-2"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Delete Folders
                 </Button>
               </div>
             </motion.div>
@@ -432,6 +540,9 @@ export default function OutfitsPage() {
                             onClick={() => handleOccasionClick(occasion.id)}
                             onDelete={handleOccasionDeleted}
                             onUpdate={handleOccasionUpdated}
+                            isSelected={selectedOccasionIds.includes(occasion.id)}
+                            isMultiSelecting={isMultiSelectingOccasions}
+                            onToggleSelect={toggleOccasionSelection}
                           />
                         </motion.div>
                       ))}

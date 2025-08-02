@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Folder, MoreVertical, Trash2, Edit2 } from "lucide-react"
+import { Folder, MoreVertical, Trash2, Edit2, Check } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -49,9 +49,20 @@ interface OccasionCardProps {
   onClick?: () => void
   onDelete?: (occasionId: string) => void
   onUpdate?: () => void
+  isSelected?: boolean
+  isMultiSelecting?: boolean
+  onToggleSelect?: (occasionId: string) => void
 }
 
-export default function OccasionCard({ occasion, onClick, onDelete, onUpdate }: OccasionCardProps) {
+export default function OccasionCard({ 
+  occasion, 
+  onClick, 
+  onDelete, 
+  onUpdate, 
+  isSelected = false, 
+  isMultiSelecting = false, 
+  onToggleSelect 
+}: OccasionCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -86,14 +97,57 @@ export default function OccasionCard({ occasion, onClick, onDelete, onUpdate }: 
   const outfitCount = occasion.outfits?.length || 0
   const previewOutfits = (occasion.outfits || []).slice(0, 4)
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isMultiSelecting) {
+      e.preventDefault()
+      e.stopPropagation()
+      onToggleSelect?.(occasion.id)
+    } else {
+      onClick?.()
+    }
+  }
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onToggleSelect?.(occasion.id)
+  }
+
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whileHover={{ y: isMultiSelecting ? 0 : -2 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="relative"
     >
+      {/* Selection Checkbox - positioned absolutely */}
+      {isMultiSelecting && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="absolute top-3 left-3 z-20"
+        >
+          <button
+            onClick={handleCheckboxClick}
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+              isSelected
+                ? "bg-blue-600 border-blue-600 text-white shadow-lg"
+                : "bg-white border-slate-300 hover:border-blue-400 shadow-md"
+            }`}
+          >
+            {isSelected && <Check className="w-4 h-4" />}
+          </button>
+        </motion.div>
+      )}
+
       <Card 
-        className="cursor-pointer group hover:shadow-lg transition-all duration-200 hover:border-purple-200 dark:hover:border-purple-800 overflow-hidden"
-        onClick={onClick}
+        className={`cursor-pointer group hover:shadow-lg transition-all duration-200 hover:border-purple-200 dark:hover:border-purple-800 overflow-hidden border-0 ring-1 ${
+          isSelected
+            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900"
+            : "ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
+        }`}
+        onClick={handleCardClick}
       >
         <CardContent className="p-0">
           {/* Preview Section */}
