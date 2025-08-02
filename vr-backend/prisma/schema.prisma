@@ -85,11 +85,9 @@ model OutfitClothing {
   @@id([outfitId, clothingId])
 }
 
-model Occasion {
-  id        String    @id @default(uuid())
+model OccasionFolder {
+  id        String   @id @default(uuid())
   name      String
-  createdAt DateTime  @default(now())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  outfits   Outfit[]  @relation("OutfitOccasions")
+  outfits   Outfit[] @relation("OccasionOutfits")
+  createdAt DateTime @default(now())
 }
