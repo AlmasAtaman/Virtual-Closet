@@ -56,16 +56,16 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     outerwear: ClothingItem[]
     others: ClothingItem[]
   } = {
-    tops: outfit.clothingItems.filter((item) =>
+    tops: (outfit.clothingItems || []).filter((item) =>
       ["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(item.type?.toLowerCase() || ""),
     ),
-    bottoms: outfit.clothingItems.filter((item) =>
+    bottoms: (outfit.clothingItems || []).filter((item) =>
       ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || ""),
     ),
-    outerwear: outfit.clothingItems.filter((item) =>
+    outerwear: (outfit.clothingItems || []).filter((item) =>
       ["jacket", "coat", "blazer", "vest"].includes(item.type?.toLowerCase() || ""),
     ),
-    others: outfit.clothingItems.filter(
+    others: (outfit.clothingItems || []).filter(
       (item) =>
         ![
           "t-shirt",
@@ -100,7 +100,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   }
 
   // Helper to check if any item has custom layout
-  const hasCustomLayout = outfit.clothingItems.some(
+  const hasCustomLayout = (outfit.clothingItems || []).some(
     (item) =>
       (item.x !== undefined && item.x !== DEFAULTS.x) ||
       (item.y !== undefined && item.y !== DEFAULTS.y) ||
@@ -169,7 +169,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             {/* Outfit Image Collage */}
             <div className="relative w-44 h-80 mx-auto">
               {hasCustomLayout ? (
-                outfit.clothingItems.map((item, index) => (
+                (outfit.clothingItems || []).map((item, index) => (
                   <motion.img
                     key={item.id || index}
                     src={item.url}
@@ -239,7 +239,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
               </h3>
               <div className="flex items-center space-x-1">
                 <Shirt className="w-4 h-4 text-slate-400" />
-                <span className="text-xs text-slate-500">{outfit.clothingItems.length}</span>
+                <span className="text-xs text-slate-500">{(outfit.clothingItems || []).length}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">

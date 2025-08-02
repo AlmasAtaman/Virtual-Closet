@@ -1,0 +1,11 @@
+# Claude Code files
+.claude/
+CLAUDE.md
+claude-*.md
+*.claude.md
+
+# Other common excludes you might want
+.env.local
+.env
+node_modules/
+.next/

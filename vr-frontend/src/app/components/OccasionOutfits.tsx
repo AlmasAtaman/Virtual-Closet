@@ -73,6 +73,8 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
       if (!response.ok) throw new Error("Failed to fetch occasion outfits")
 
       const data = await response.json()
+      console.log('Occasion outfits data:', data)
+      console.log('First outfit clothingItems:', data.outfits?.[0]?.clothingItems)
       setOccasion(data.occasion)
       setOutfits(data.outfits || [])
     } catch (error) {

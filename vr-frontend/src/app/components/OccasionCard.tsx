@@ -84,7 +84,7 @@ export default function OccasionCard({ occasion, onClick, onDelete, onUpdate }: 
   }
 
   const outfitCount = occasion.outfits?.length || 0
-  const previewOutfits = occasion.outfits?.slice(0, 4) || []
+  const previewOutfits = (occasion.outfits || []).slice(0, 4)
 
   return (
     <motion.div
@@ -105,10 +105,10 @@ export default function OccasionCard({ occasion, onClick, onDelete, onUpdate }: 
                     key={outfit.id}
                     className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden relative flex items-center justify-center"
                   >
-                    {outfit.clothingItems.length > 0 ? (
+                    {outfit.clothingItems && outfit.clothingItems.length > 0 ? (
                       <div className="relative w-full h-full">
                         {/* Show first few clothing items as a mini preview */}
-                        {outfit.clothingItems.slice(0, 2).map((item, itemIndex) => (
+                        {(outfit.clothingItems || []).slice(0, 2).map((item, itemIndex) => (
                           <img
                             key={item.id}
                             src={item.url}

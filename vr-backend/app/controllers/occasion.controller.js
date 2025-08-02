@@ -1,4 +1,44 @@
 import prisma from '../utils/prismaClient.js';
+import { getPresignedUrl } from '../../s3.mjs';
+
+// Helper function to transform outfit data with presigned URLs and layout
+async function transformOutfitData(outfit) {
+  return {
+    id: outfit.id,
+    name: outfit.name,
+    occasion: outfit.occasion,
+    season: outfit.season,
+    notes: outfit.notes,
+    price: outfit.totalPrice,
+    totalPrice: outfit.totalPrice,
+    clothingItems: await Promise.all(
+      outfit.outfitClothing.map(async (oc) => {
+        const { url: presignedUrl, error: presignError } = await getPresignedUrl(oc.clothing.key);
+        if (presignError) {
+          console.error(`Error generating presigned URL for key ${oc.clothing.key}:`, presignError);
+        }
+
+        return {
+          id: oc.clothing.id,
+          name: oc.clothing.name,
+          url: presignedUrl || "",
+          type: oc.clothing.type,
+          brand: oc.clothing.brand,
+          price: oc.clothing.price,
+          key: oc.clothing.key,
+          mode: oc.clothing.mode,
+          // Include layout data
+          x: oc.x,
+          y: oc.y,
+          scale: oc.scale,
+          left: oc.left,
+          bottom: oc.bottom,
+          width: oc.width,
+        };
+      }),
+    ),
+  };
+}
 
 // Get all occasions for the current user, including their outfits
 export const getOccasions = async (req, res) => {
@@ -16,7 +56,13 @@ export const getOccasions = async (req, res) => {
         }
       }
     });
-    res.json({ occasions });
+    // Transform occasions to match frontend expectations
+    const transformedOccasions = await Promise.all(occasions.map(async occasion => ({
+      ...occasion,
+      outfits: await Promise.all(occasion.outfits.map(outfit => transformOutfitData(outfit)))
+    })));
+
+    res.json({ occasions: transformedOccasions });
   } catch (error) {
     console.error('Error fetching occasions:', error);
     res.status(500).json({ message: 'Failed to fetch occasions' });
@@ -99,7 +145,10 @@ export const getOccasionOutfits = async (req, res) => {
       return res.status(404).json({ message: 'Occasion not found' });
     }
     
-    res.json({ occasion, outfits: occasion.outfits });
+    // Transform outfits to match frontend expectations
+    const transformedOutfits = await Promise.all(occasion.outfits.map(outfit => transformOutfitData(outfit)));
+
+    res.json({ occasion: { ...occasion, outfits: transformedOutfits }, outfits: transformedOutfits });
   } catch (error) {
     console.error('Error fetching occasion outfits:', error);
     res.status(500).json({ message: 'Failed to fetch occasion outfits' });
