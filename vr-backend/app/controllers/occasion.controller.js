@@ -27,10 +27,29 @@ export const getOccasions = async (req, res) => {
 export const createOccasion = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name } = req.body;
+    const { name, outfitIds = [] } = req.body;
     if (!name) return res.status(400).json({ message: 'Name is required' });
+    
+    // Create occasion with optional outfit connections
     const occasion = await prisma.occasion.create({
-      data: { name, userId }
+      data: { 
+        name, 
+        userId,
+        ...(outfitIds.length > 0 && {
+          outfits: {
+            connect: outfitIds.map(id => ({ id }))
+          }
+        })
+      },
+      include: {
+        outfits: {
+          include: {
+            outfitClothing: {
+              include: { clothing: true }
+            }
+          }
+        }
+      }
     });
     res.status(201).json(occasion);
   } catch (error) {
@@ -54,6 +73,36 @@ export const deleteOccasion = async (req, res) => {
   } catch (error) {
     console.error('Error deleting occasion:', error);
     res.status(500).json({ message: 'Failed to delete occasion' });
+  }
+};
+
+// Get outfits for a specific occasion
+export const getOccasionOutfits = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    
+    const occasion = await prisma.occasion.findUnique({
+      where: { id },
+      include: {
+        outfits: {
+          include: {
+            outfitClothing: {
+              include: { clothing: true }
+            }
+          }
+        }
+      }
+    });
+    
+    if (!occasion || occasion.userId !== userId) {
+      return res.status(404).json({ message: 'Occasion not found' });
+    }
+    
+    res.json({ occasion, outfits: occasion.outfits });
+  } catch (error) {
+    console.error('Error fetching occasion outfits:', error);
+    res.status(500).json({ message: 'Failed to fetch occasion outfits' });
   }
 };
 

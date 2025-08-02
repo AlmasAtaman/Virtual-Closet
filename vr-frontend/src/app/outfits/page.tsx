@@ -6,7 +6,10 @@ import { ArrowLeft, Plus, Check, X, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import CreateOutfitModal from "../components/CreateOutfitModal"
+import CreateOccasionModal from "../components/CreateOccasionModal"
 import OutfitCard from "../components/OutfitCard"
+import OccasionCard from "../components/OccasionCard"
+import OccasionOutfits from "../components/OccasionOutfits"
 import LogOutButton from "../components/LogoutButton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ConfirmDialog } from "@/components/ui/dialog"
@@ -40,11 +43,23 @@ interface Outfit {
   createdAt?: string
 }
 
+interface Occasion {
+  id: string
+  name: string
+  userId: string
+  createdAt?: string
+  outfits: Outfit[]
+}
+
 export default function OutfitsPage() {
   const [outfits, setOutfits] = useState<Outfit[]>([])
+  const [occasions, setOccasions] = useState<Occasion[]>([])
   const [loading, setLoading] = useState(true)
+  const [occasionsLoading, setOccasionsLoading] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCreateOccasionModal, setShowCreateOccasionModal] = useState(false)
   const [activeTab, setActiveTab] = useState<"outfits" | "occasions">("outfits")
+  const [selectedOccasionId, setSelectedOccasionId] = useState<string | null>(null)
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
@@ -54,6 +69,12 @@ export default function OutfitsPage() {
   useEffect(() => {
     fetchOutfits()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === "occasions") {
+      fetchOccasions()
+    }
+  }, [activeTab])
 
   const fetchOutfits = async () => {
     setLoading(true)
@@ -73,6 +94,24 @@ export default function OutfitsPage() {
     }
   }
 
+  const fetchOccasions = async () => {
+    setOccasionsLoading(true)
+    try {
+      const response = await fetch("http://localhost:8000/api/occasions", {
+        credentials: "include",
+      })
+      if (!response.ok) throw new Error("Failed to fetch occasions")
+
+      const data = await response.json()
+      setOccasions(data.occasions || [])
+    } catch (error) {
+      console.error("Failed to fetch occasions:", error)
+      setOccasions([])
+    } finally {
+      setOccasionsLoading(false)
+    }
+  }
+
   const handleOutfitCreated = () => {
     fetchOutfits()
   }
@@ -83,6 +122,26 @@ export default function OutfitsPage() {
 
   const handleOutfitUpdated = () => {
     fetchOutfits()
+  }
+
+  const handleOccasionCreated = () => {
+    fetchOccasions()
+  }
+
+  const handleOccasionDeleted = (occasionId: string) => {
+    setOccasions((prev) => prev.filter((occasion) => occasion.id !== occasionId))
+  }
+
+  const handleOccasionUpdated = () => {
+    fetchOccasions()
+  }
+
+  const handleOccasionClick = (occasionId: string) => {
+    setSelectedOccasionId(occasionId)
+  }
+
+  const handleBackToOccasions = () => {
+    setSelectedOccasionId(null)
   }
 
   const handleBackToDashboard = () => {
@@ -318,13 +377,68 @@ export default function OutfitsPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="text-center py-16"
             >
-              <div className="text-6xl mb-4">🎉</div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Occasions Coming Soon</h3>
-              <p className="text-slate-600 dark:text-slate-400">
-                We're working on organizing your outfits by occasions!
-              </p>
+              {selectedOccasionId ? (
+                <OccasionOutfits
+                  occasionId={selectedOccasionId}
+                  onBack={handleBackToOccasions}
+                  onOccasionUpdated={handleOccasionUpdated}
+                />
+              ) : (
+                <>
+                  {/* Create Folder Button */}
+                  <div className="mb-6 flex justify-center">
+                    <Button
+                      onClick={() => setShowCreateOccasionModal(true)}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create Folder
+                    </Button>
+                  </div>
+
+                  {occasionsLoading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <div key={index} className="aspect-square bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                      ))}
+                    </div>
+                  ) : occasions.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="text-6xl mb-4">📁</div>
+                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Occasion Folders Yet</h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-4">
+                        Create your first occasion folder to organize your outfits by events, seasons, or activities.
+                      </p>
+                      <Button
+                        onClick={() => setShowCreateOccasionModal(true)}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Create Your First Folder
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {occasions.map((occasion, index) => (
+                        <motion.div
+                          key={occasion.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.2, delay: index * 0.05 }}
+                        >
+                          <OccasionCard
+                            occasion={occasion}
+                            onClick={() => handleOccasionClick(occasion.id)}
+                            onDelete={handleOccasionDeleted}
+                            onUpdate={handleOccasionUpdated}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -335,6 +449,13 @@ export default function OutfitsPage() {
         show={showCreateModal}
         onCloseAction={() => setShowCreateModal(false)}
         onOutfitCreated={handleOutfitCreated}
+      />
+
+      {/* Create Occasion Modal */}
+      <CreateOccasionModal
+        show={showCreateOccasionModal}
+        onCloseAction={() => setShowCreateOccasionModal(false)}
+        onOccasionCreated={handleOccasionCreated}
       />
 
       {/* Delete Confirmation Dialog */}

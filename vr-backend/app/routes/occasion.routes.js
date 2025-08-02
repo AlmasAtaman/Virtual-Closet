@@ -4,6 +4,7 @@ import {
   getOccasions,
   createOccasion,
   deleteOccasion,
+  getOccasionOutfits,
   assignOutfitsToOccasion
 } from '../controllers/occasion.controller.js';
 
@@ -14,6 +15,9 @@ router.get('/', authMiddleware, getOccasions);
 
 // Create a new occasion
 router.post('/', authMiddleware, createOccasion);
+
+// Get outfits for a specific occasion
+router.get('/:id/outfits', authMiddleware, getOccasionOutfits);
 
 // Delete an occasion
 router.delete('/:id', authMiddleware, deleteOccasion);
