@@ -161,7 +161,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -182,7 +182,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
             </Button>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 flex-1 overflow-y-auto">
             <AnimatePresence mode="wait">
               {step === "name" && (
                 <motion.div
@@ -275,7 +275,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                   </div>
 
                   {/* Outfits Grid */}
-                  <div className="max-h-[400px] overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
                     {loading ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {Array.from({ length: 8 }).map((_, index) => (
@@ -375,7 +375,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
 
           {/* Footer */}
           {step === "selection" && (
-            <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
               <div className="text-sm text-slate-600 dark:text-slate-400">
                 {selectedOutfitIds.length === 0 ? (
                   "You can create an empty folder and add outfits later"
