@@ -152,46 +152,28 @@ export default function OccasionCard({
         <CardContent className="p-0">
           {/* Preview Section */}
           <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 relative overflow-hidden">
-            {previewOutfits.length > 0 ? (
-              <div className="grid grid-cols-2 gap-1 p-3 h-full">
-                {previewOutfits.map((outfit, index) => (
-                  <div
-                    key={outfit.id}
-                    className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden relative flex items-center justify-center"
-                  >
-                    {outfit.clothingItems && outfit.clothingItems.length > 0 ? (
-                      <div className="relative w-full h-full">
-                        {/* Show first few clothing items as a mini preview */}
-                        {(outfit.clothingItems || []).slice(0, 2).map((item, itemIndex) => (
-                          <img
-                            key={item.id}
-                            src={item.url}
-                            alt={item.name || `Item ${itemIndex + 1}`}
-                            className="absolute object-contain max-w-[70%] max-h-[70%]"
-                            style={{
-                              left: "50%",
-                              top: "50%",
-                              transform: "translate(-50%, -50%)",
-                              zIndex: itemIndex,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-slate-300 dark:text-slate-600 text-lg">👗</div>
-                    )}
-                  </div>
-                ))}
-                
-                {/* Fill empty slots with placeholders */}
-                {Array.from({ length: 4 - previewOutfits.length }).map((_, index) => (
-                  <div
-                    key={`empty-${index}`}
-                    className="bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-600"
-                  >
-                    <div className="text-slate-300 dark:text-slate-600 text-lg">📂</div>
-                  </div>
-                ))}
+            {previewOutfits.length > 0 && previewOutfits[0].clothingItems.length > 0 ? (
+              <div className="relative w-full h-full flex items-center justify-center">
+                {/* Show first outfit as main thumbnail */}
+                <div className="relative w-56 h-64">
+                  {previewOutfits[0].clothingItems.map((item, index) => (
+                    <img
+                      key={item.id}
+                      src={item.url}
+                      alt={item.name || `Item ${index + 1}`}
+                      className="absolute object-contain"
+                      style={{
+                        left: `${item.left || 50}%`,
+                        bottom: `${(item.bottom || 0) * 0.6}rem`,
+                        width: `${(item.width || 8) * 0.5}rem`,
+                        maxWidth: "80%",
+                        maxHeight: "60%",
+                        transform: "translateX(-50%)",
+                        zIndex: index,
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
