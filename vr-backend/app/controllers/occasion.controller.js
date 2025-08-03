@@ -104,6 +104,44 @@ export const createOccasion = async (req, res) => {
   }
 };
 
+// Update an occasion by ID (only if it belongs to the user)
+export const updateOccasion = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { name, customThumbnail } = req.body;
+
+    // Check ownership
+    const occasion = await prisma.occasion.findUnique({ where: { id } });
+    if (!occasion || occasion.userId !== userId) {
+      return res.status(404).json({ message: 'Occasion not found' });
+    }
+
+    // Update the occasion
+    const updatedOccasion = await prisma.occasion.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(customThumbnail !== undefined && { customThumbnail }),
+      },
+      include: {
+        outfits: {
+          include: {
+            outfitClothing: {
+              include: { clothing: true }
+            }
+          }
+        }
+      }
+    });
+
+    res.json(updatedOccasion);
+  } catch (error) {
+    console.error('Error updating occasion:', error);
+    res.status(500).json({ message: 'Failed to update occasion' });
+  }
+};
+
 // Delete an occasion by ID (only if it belongs to the user)
 export const deleteOccasion = async (req, res) => {
   try {
