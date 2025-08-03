@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Folder, MoreVertical, Trash2, Edit2, Check } from "lucide-react"
+import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -42,6 +42,7 @@ interface Occasion {
   userId: string
   createdAt?: string
   outfits: Outfit[]
+  customThumbnail?: string
 }
 
 interface OccasionCardProps {
@@ -65,6 +66,9 @@ export default function OccasionCard({
 }: OccasionCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showThumbnailInput, setShowThumbnailInput] = useState(false)
+  const [thumbnailUrl, setThumbnailUrl] = useState("")
+  const [isUpdatingThumbnail, setIsUpdatingThumbnail] = useState(false)
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -94,10 +98,73 @@ export default function OccasionCard({
     }
   }
 
+  const handleUpdateThumbnail = async () => {
+    if (!thumbnailUrl.trim()) return
+
+    setIsUpdatingThumbnail(true)
+    try {
+      const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          customThumbnail: thumbnailUrl.trim(),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update thumbnail")
+      }
+
+      onUpdate?.()
+      setShowThumbnailInput(false)
+      setThumbnailUrl("")
+    } catch (error) {
+      console.error("Failed to update thumbnail:", error)
+      alert("Failed to update thumbnail. Please try again.")
+    } finally {
+      setIsUpdatingThumbnail(false)
+    }
+  }
+
+  const handleRemoveThumbnail = async () => {
+    setIsUpdatingThumbnail(true)
+    try {
+      const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          customThumbnail: null,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to remove thumbnail")
+      }
+
+      onUpdate?.()
+    } catch (error) {
+      console.error("Failed to remove thumbnail:", error)
+      alert("Failed to remove thumbnail. Please try again.")
+    } finally {
+      setIsUpdatingThumbnail(false)
+    }
+  }
+
   const outfitCount = occasion.outfits?.length || 0
   const previewOutfits = (occasion.outfits || []).slice(0, 4)
 
   const handleCardClick = (e: React.MouseEvent) => {
+    // Don't handle card clicks when menu is open
+    if (showMenu) {
+      return
+    }
+    
     if (isMultiSelecting) {
       e.preventDefault()
       e.stopPropagation()
@@ -152,7 +219,15 @@ export default function OccasionCard({
         <CardContent className="p-0">
           {/* Preview Section */}
           <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 relative overflow-hidden">
-            {previewOutfits.length > 0 && previewOutfits[0].clothingItems.length > 0 ? (
+            {occasion.customThumbnail ? (
+              <div className="relative w-full h-full">
+                <img
+                  src={occasion.customThumbnail}
+                  alt={`${occasion.name} thumbnail`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : previewOutfits.length > 0 && previewOutfits[0].clothingItems.length > 0 ? (
               <div className="relative w-full h-full flex items-center justify-center">
                 {/* Show first outfit as main thumbnail */}
                 <div className="relative w-56 h-64">
@@ -185,15 +260,20 @@ export default function OccasionCard({
             )}
 
             {/* Floating action menu */}
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className={`absolute top-2 right-2 transition-opacity ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800"
-                  onClick={(e) => {
+                  className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-600"
+                  onMouseDown={(e) => {
+                    e.preventDefault()
                     e.stopPropagation()
-                    setShowMenu(!showMenu)
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowMenu(true)
                   }}
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -203,7 +283,8 @@ export default function OccasionCard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -5 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    className="absolute right-0 top-9 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[120px] z-10"
+                    className="absolute right-0 top-9 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[140px] z-50"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Button
                       variant="ghost"
@@ -218,6 +299,35 @@ export default function OccasionCard({
                       <Edit2 className="h-3 w-3 mr-2" />
                       Rename
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-8 px-3 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowMenu(false)
+                        setShowThumbnailInput(true)
+                      }}
+                    >
+                      <Camera className="h-3 w-3 mr-2" />
+                      {occasion.customThumbnail ? "Change Thumbnail" : "Set Thumbnail"}
+                    </Button>
+                    {occasion.customThumbnail && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-8 px-3 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setShowMenu(false)
+                          handleRemoveThumbnail()
+                        }}
+                        disabled={isUpdatingThumbnail}
+                      >
+                        <Upload className="h-3 w-3 mr-2" />
+                        Remove Thumbnail
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -271,9 +381,75 @@ export default function OccasionCard({
       {/* Click outside to close menu */}
       {showMenu && (
         <div
-          className="fixed inset-0 z-0"
-          onClick={() => setShowMenu(false)}
+          className="fixed inset-0 z-40"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowMenu(false)
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+          }}
         />
+      )}
+
+      {/* Thumbnail Input Modal */}
+      {showThumbnailInput && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md"
+          >
+            <h3 className="text-lg font-semibold mb-4">Set Custom Thumbnail</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Enter an image URL from the web (e.g., from Google Images)
+            </p>
+            <div className="space-y-4">
+              <input
+                type="url"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && thumbnailUrl.trim()) {
+                    handleUpdateThumbnail()
+                  }
+                }}
+              />
+              {thumbnailUrl && (
+                <div className="mt-2">
+                  <p className="text-xs text-slate-500 mb-2">Preview:</p>
+                  <img
+                    src={thumbnailUrl}
+                    alt="Thumbnail preview"
+                    className="w-20 h-20 object-cover rounded-md border"
+                    onError={() => {}}
+                  />
+                </div>
+              )}
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowThumbnailInput(false)
+                    setThumbnailUrl("")
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUpdateThumbnail}
+                  disabled={!thumbnailUrl.trim() || isUpdatingThumbnail}
+                  className="flex-1"
+                >
+                  {isUpdatingThumbnail ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </motion.div>
   )
