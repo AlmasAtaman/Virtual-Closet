@@ -156,16 +156,16 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       )}
 
       <Card
-        className={`h-[32rem] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 ${
+        className={`h-[32rem] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
           isSelected
-            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900"
+            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
             : "ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
         }`}
         onClick={handleCardClick}
       >
         <CardContent className="p-0 h-full flex flex-col">
           {/* Outfit Visual Area */}
-          <div className="flex-1 relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-6 flex items-center justify-center">
+          <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-6 flex items-center justify-center">
             {/* Outfit Image Collage */}
             <div className="relative w-44 h-80 mx-auto">
               {hasCustomLayout ? (
@@ -234,29 +234,29 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
           {/* Outfit Info */}
           <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+              <h3 className="font-semibold text-slate-900 dark:text-white truncate text-base">
                 {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
               </h3>
-              <div className="flex items-center space-x-1">
-                <Shirt className="w-4 h-4 text-slate-400" />
-                <span className="text-xs text-slate-500">{(outfit.clothingItems || []).length}</span>
+              <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">
+                <Shirt className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{(outfit.clothingItems || []).length}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex space-x-1">
+              <div className="flex space-x-2 flex-wrap">
                 {outfit.occasion && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                     {outfit.occasion}
                   </Badge>
                 )}
                 {outfit.season && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs font-medium border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400">
                     {outfit.season}
                   </Badge>
                 )}
               </div>
               {outfit.totalPrice && (
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">
                   ${outfit.totalPrice.toFixed(2)}
                 </span>
               )}
