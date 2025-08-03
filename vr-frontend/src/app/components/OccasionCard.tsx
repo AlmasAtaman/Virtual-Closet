@@ -109,7 +109,7 @@ export default function OccasionCard({
     }
   }
 
-  const compressImage = (file: File, maxWidth: number = 200, quality: number = 0.3): Promise<string> => {
+  const compressImage = (file: File, maxWidth: number = 500, quality: number = 0.8): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
@@ -139,8 +139,8 @@ export default function OccasionCard({
 
     setIsUpdatingThumbnail(true)
     try {
-      // Compress image before sending - very small size
-      const compressedBase64 = await compressImage(selectedFile, 150, 0.2)
+      // Compress image before sending - better quality
+      const compressedBase64 = await compressImage(selectedFile, 600, 0.85)
 
       const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
         method: "PATCH",
