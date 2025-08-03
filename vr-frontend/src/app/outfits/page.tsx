@@ -50,6 +50,7 @@ interface Occasion {
   userId: string
   createdAt?: string
   outfits: Outfit[]
+  customThumbnail?: string
 }
 
 export default function OutfitsPage() {
