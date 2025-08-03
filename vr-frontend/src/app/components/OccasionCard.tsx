@@ -67,7 +67,8 @@ export default function OccasionCard({
   const [showMenu, setShowMenu] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showThumbnailInput, setShowThumbnailInput] = useState(false)
-  const [thumbnailUrl, setThumbnailUrl] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>("")
   const [isUpdatingThumbnail, setIsUpdatingThumbnail] = useState(false)
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -98,11 +99,49 @@ export default function OccasionCard({
     }
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setSelectedFile(file)
+      // Create preview URL
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+    }
+  }
+
+  const compressImage = (file: File, maxWidth: number = 200, quality: number = 0.3): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // Calculate new dimensions while maintaining aspect ratio - much smaller
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height)
+        canvas.width = img.width * ratio
+        canvas.height = img.height * ratio
+        
+        // Draw and compress aggressively
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
+        
+        console.log('Compressed image size:', compressedBase64.length, 'characters')
+        resolve(compressedBase64)
+      }
+      
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handleUpdateThumbnail = async () => {
-    if (!thumbnailUrl.trim()) return
+    if (!selectedFile) return
 
     setIsUpdatingThumbnail(true)
     try {
+      // Compress image before sending - very small size
+      const compressedBase64 = await compressImage(selectedFile, 150, 0.2)
+
       const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
         method: "PATCH",
         headers: {
@@ -110,7 +149,7 @@ export default function OccasionCard({
         },
         credentials: "include",
         body: JSON.stringify({
-          customThumbnail: thumbnailUrl.trim(),
+          customThumbnail: compressedBase64,
         }),
       })
 
@@ -120,7 +159,11 @@ export default function OccasionCard({
 
       onUpdate?.()
       setShowThumbnailInput(false)
-      setThumbnailUrl("")
+      setSelectedFile(null)
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+        setPreviewUrl("")
+      }
     } catch (error) {
       console.error("Failed to update thumbnail:", error)
       alert("Failed to update thumbnail. Please try again.")
@@ -402,38 +445,55 @@ export default function OccasionCard({
           >
             <h3 className="text-lg font-semibold mb-4">Set Custom Thumbnail</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Enter an image URL from the web (e.g., from Google Images)
+              Upload an image from your device to use as the folder thumbnail
             </p>
             <div className="space-y-4">
-              <input
-                type="url"
-                value={thumbnailUrl}
-                onChange={(e) => setThumbnailUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && thumbnailUrl.trim()) {
-                    handleUpdateThumbnail()
-                  }
-                }}
-              />
-              {thumbnailUrl && (
-                <div className="mt-2">
+              <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="thumbnail-upload"
+                />
+                <label
+                  htmlFor="thumbnail-upload"
+                  className="cursor-pointer flex flex-col items-center"
+                >
+                  <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    Click to select an image
+                  </span>
+                  <span className="text-xs text-slate-500 mt-1">
+                    JPG, PNG, GIF up to 10MB
+                  </span>
+                </label>
+              </div>
+              
+              {previewUrl && (
+                <div className="mt-4">
                   <p className="text-xs text-slate-500 mb-2">Preview:</p>
                   <img
-                    src={thumbnailUrl}
+                    src={previewUrl}
                     alt="Thumbnail preview"
-                    className="w-20 h-20 object-cover rounded-md border"
-                    onError={() => {}}
+                    className="w-20 h-20 object-cover rounded-md border mx-auto"
                   />
+                  <p className="text-xs text-slate-600 dark:text-slate-400 text-center mt-2">
+                    {selectedFile?.name}
+                  </p>
                 </div>
               )}
+              
               <div className="flex space-x-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setShowThumbnailInput(false)
-                    setThumbnailUrl("")
+                    setSelectedFile(null)
+                    if (previewUrl) {
+                      URL.revokeObjectURL(previewUrl)
+                      setPreviewUrl("")
+                    }
                   }}
                   className="flex-1"
                 >
@@ -441,10 +501,10 @@ export default function OccasionCard({
                 </Button>
                 <Button
                   onClick={handleUpdateThumbnail}
-                  disabled={!thumbnailUrl.trim() || isUpdatingThumbnail}
+                  disabled={!selectedFile || isUpdatingThumbnail}
                   className="flex-1"
                 >
-                  {isUpdatingThumbnail ? "Saving..." : "Save"}
+                  {isUpdatingThumbnail ? "Uploading..." : "Save"}
                 </Button>
               </div>
             </div>

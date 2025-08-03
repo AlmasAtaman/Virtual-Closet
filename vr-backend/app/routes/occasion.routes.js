@@ -3,6 +3,7 @@ import authMiddleware from '../middlewares/auth.middleware.js';
 import {
   getOccasions,
   createOccasion,
+  updateOccasion,
   deleteOccasion,
   getOccasionOutfits,
   assignOutfitsToOccasion
@@ -18,6 +19,9 @@ router.post('/', authMiddleware, createOccasion);
 
 // Get outfits for a specific occasion
 router.get('/:id/outfits', authMiddleware, getOccasionOutfits);
+
+// Update an occasion (including thumbnail)
+router.patch('/:id', authMiddleware, updateOccasion);
 
 // Delete an occasion
 router.delete('/:id', authMiddleware, deleteOccasion);

@@ -86,10 +86,11 @@ model OutfitClothing {
 }
 
 model Occasion {
-  id        String    @id @default(uuid())
-  name      String
-  createdAt DateTime  @default(now())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  outfits   Outfit[]  @relation("OutfitOccasions")
+  id              String    @id @default(uuid())
+  name            String
+  customThumbnail String?   // Base64 encoded image data
+  createdAt       DateTime  @default(now())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfits         Outfit[]  @relation("OutfitOccasions")
 }
