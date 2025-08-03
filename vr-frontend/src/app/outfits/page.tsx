@@ -446,13 +446,13 @@ export default function OutfitsPage() {
               transition={{ duration: 0.2 }}
             >
               {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
                   {Array.from({ length: 10 }).map((_, index) => (
-                    <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                    <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shadow-lg" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
                   {/* Create Outfit Button - Same size as outfit cards */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -462,14 +462,17 @@ export default function OutfitsPage() {
                   >
                     <div
                       onClick={() => setShowCreateModal(true)}
-                      className="h-full flex flex-col justify-between bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer group"
+                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:via-white hover:to-purple-50 dark:hover:from-slate-800 dark:hover:via-slate-700 dark:hover:to-slate-800 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
                     >
                       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors">
-                          <Plus className="w-8 h-8 text-slate-600 dark:text-slate-400" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                          <Plus className="w-10 h-10 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100">
+                        <span className="text-base font-semibold text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
                           Create Outfit
+                        </span>
+                        <span className="text-sm text-slate-500 dark:text-slate-500 mt-1">
+                          Design your look
                         </span>
                       </div>
                       <div className="h-[42px]" /> {/* matches height of footer in OutfitCard */}
@@ -515,46 +518,40 @@ export default function OutfitsPage() {
                 />
               ) : (
                 <>
-                  {/* Create Folder Button */}
-                  <div className="mb-6 flex justify-center">
-                    <Button
-                      onClick={() => setShowCreateOccasionModal(true)}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Create Folder
-                    </Button>
-                  </div>
-
                   {occasionsLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                       {Array.from({ length: 6 }).map((_, index) => (
-                        <div key={index} className="aspect-square bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                        <div key={index} className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shadow-lg" />
                       ))}
                     </div>
-                  ) : occasions.length === 0 ? (
-                    <div className="text-center py-16">
-                      <div className="text-6xl mb-4">📁</div>
-                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Occasion Folders Yet</h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-4">
-                        Create your first occasion folder to organize your outfits by events, seasons, or activities.
-                      </p>
-                      <Button
-                        onClick={() => setShowCreateOccasionModal(true)}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Create Your First Folder
-                      </Button>
-                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                      {/* Create Folder Button - First item in grid */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div
+                          onClick={() => setShowCreateOccasionModal(true)}
+                          className="h-full bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950 dark:via-slate-900 dark:to-pink-950 border-2 border-dashed border-purple-300 dark:border-purple-600 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-100 hover:via-white hover:to-pink-100 dark:hover:from-purple-900 dark:hover:via-slate-800 dark:hover:to-pink-900 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
+                        >
+                          <div className="w-20 h-20 bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-800 dark:to-pink-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                            <Plus className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="text-lg font-semibold text-purple-700 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors text-center">
+                            Create New Folder
+                          </span>
+                        </div>
+                      </motion.div>
+
+                      {/* Existing Occasions */}
                       {occasions.map((occasion, index) => (
                         <motion.div
                           key={occasion.id}
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.2, delay: index * 0.05 }}
+                          transition={{ duration: 0.2, delay: (index + 1) * 0.05 }}
                         >
                           <OccasionCard
                             occasion={occasion}
@@ -567,6 +564,17 @@ export default function OutfitsPage() {
                           />
                         </motion.div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Empty state - only show when no occasions and not loading */}
+                  {!occasionsLoading && occasions.length === 0 && (
+                    <div className="text-center py-16 mt-8">
+                      <div className="text-6xl mb-4">📁</div>
+                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Occasion Folders Yet</h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                        Create your first occasion folder to organize your outfits by events, seasons, or activities.
+                      </p>
                     </div>
                   )}
                 </>

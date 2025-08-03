@@ -142,10 +142,10 @@ export default function OccasionCard({
       )}
 
       <Card 
-        className={`cursor-pointer group hover:shadow-lg transition-all duration-200 hover:border-purple-200 dark:hover:border-purple-800 overflow-hidden border-0 ring-1 ${
+        className={`cursor-pointer group hover:shadow-xl transition-all duration-300 hover:border-purple-200 dark:hover:border-purple-800 overflow-hidden border-0 ring-1 rounded-xl ${
           isSelected
-            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900"
-            : "ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
+            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
+            : "ring-slate-200 dark:ring-slate-700 hover:ring-purple-300 dark:hover:ring-purple-600"
         }`}
         onClick={handleCardClick}
       >
@@ -256,7 +256,7 @@ export default function OccasionCard({
               <div className="absolute bottom-2 left-2">
                 <Badge 
                   variant="secondary" 
-                  className="bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs px-2 py-1"
+                  className="bg-white/95 dark:bg-slate-800/95 text-purple-700 dark:text-purple-300 text-xs px-3 py-1 font-medium shadow-sm"
                 >
                   {outfitCount} outfit{outfitCount !== 1 ? "s" : ""}
                 </Badge>
@@ -268,18 +268,18 @@ export default function OccasionCard({
           <div className="p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-white truncate text-sm mb-1">
+                <h3 className="font-semibold text-slate-900 dark:text-white truncate text-base mb-1">
                   {occasion.name}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                   {outfitCount === 0 
                     ? "Empty folder" 
                     : `${outfitCount} outfit${outfitCount !== 1 ? "s" : ""}`
                   }
                 </p>
               </div>
-              <div className="flex items-center gap-1 ml-2">
-                <Folder className="w-4 h-4 text-purple-500" />
+              <div className="flex items-center gap-1 ml-2 bg-purple-100 dark:bg-purple-900 p-2 rounded-full">
+                <Folder className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
