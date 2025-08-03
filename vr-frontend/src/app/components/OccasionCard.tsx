@@ -1,11 +1,15 @@
 "use client"
 
+import type React from "react"
+
 import { motion } from "framer-motion"
 import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useState } from "react"
+import ThumbnailEditorModal from "./ThumbnailEditorModal"
 
 interface ClothingItem {
   id: string
@@ -55,26 +59,28 @@ interface OccasionCardProps {
   onToggleSelect?: (occasionId: string) => void
 }
 
-export default function OccasionCard({ 
-  occasion, 
-  onClick, 
-  onDelete, 
-  onUpdate, 
-  isSelected = false, 
-  isMultiSelecting = false, 
-  onToggleSelect 
+export default function OccasionCard({
+  occasion,
+  onClick,
+  onDelete,
+  onUpdate,
+  isSelected = false,
+  isMultiSelecting = false,
+  onToggleSelect,
 }: OccasionCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showThumbnailInput, setShowThumbnailInput] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string>("")
+  const [showThumbnailEditor, setShowThumbnailEditor] = useState(false)
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>("")
   const [isUpdatingThumbnail, setIsUpdatingThumbnail] = useState(false)
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    
-    if (!confirm(`Are you sure you want to delete "${occasion.name}"? This will remove the folder but keep your outfits.`)) {
+
+    if (
+      !confirm(`Are you sure you want to delete "${occasion.name}"? This will remove the folder but keep your outfits.`)
+    ) {
       return
     }
 
@@ -101,47 +107,20 @@ export default function OccasionCard({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file)
-      // Create preview URL
+    if (file && file.type.startsWith("image/")) {
+      // Create image URL and open editor modal
       const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
+      setSelectedImageUrl(url)
+      setShowThumbnailInput(false)
+      setShowThumbnailEditor(true)
     }
+    // Reset the input
+    e.target.value = ""
   }
 
-  const compressImage = (file: File, maxWidth: number = 500, quality: number = 0.8): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      const img = new Image()
-      
-      img.onload = () => {
-        // Calculate new dimensions while maintaining aspect ratio - much smaller
-        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height)
-        canvas.width = img.width * ratio
-        canvas.height = img.height * ratio
-        
-        // Draw and compress aggressively
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
-        
-        console.log('Compressed image size:', compressedBase64.length, 'characters')
-        resolve(compressedBase64)
-      }
-      
-      img.onerror = reject
-      img.src = URL.createObjectURL(file)
-    })
-  }
-
-  const handleUpdateThumbnail = async () => {
-    if (!selectedFile) return
-
+  const handleSaveThumbnail = async (thumbnailBase64: string) => {
     setIsUpdatingThumbnail(true)
     try {
-      // Compress image before sending - better quality
-      const compressedBase64 = await compressImage(selectedFile, 600, 0.85)
-
       const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
         method: "PATCH",
         headers: {
@@ -149,7 +128,7 @@ export default function OccasionCard({
         },
         credentials: "include",
         body: JSON.stringify({
-          customThumbnail: compressedBase64,
+          customThumbnail: thumbnailBase64,
         }),
       })
 
@@ -158,17 +137,19 @@ export default function OccasionCard({
       }
 
       onUpdate?.()
-      setShowThumbnailInput(false)
-      setSelectedFile(null)
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl)
-        setPreviewUrl("")
-      }
     } catch (error) {
       console.error("Failed to update thumbnail:", error)
-      alert("Failed to update thumbnail. Please try again.")
+      throw error // Re-throw to let the modal handle the error
     } finally {
       setIsUpdatingThumbnail(false)
+    }
+  }
+
+  const handleCloseThumbnailEditor = () => {
+    setShowThumbnailEditor(false)
+    if (selectedImageUrl) {
+      URL.revokeObjectURL(selectedImageUrl)
+      setSelectedImageUrl("")
     }
   }
 
@@ -200,14 +181,14 @@ export default function OccasionCard({
   }
 
   const outfitCount = occasion.outfits?.length || 0
-  const previewOutfits = (occasion.outfits || []).slice(0, 4)
+  const firstOutfit = occasion.outfits?.[0]
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't handle card clicks when menu is open
     if (showMenu) {
       return
     }
-    
+
     if (isMultiSelecting) {
       e.preventDefault()
       e.stopPropagation()
@@ -225,8 +206,9 @@ export default function OccasionCard({
 
   return (
     <motion.div
-      whileHover={{ y: isMultiSelecting ? 0 : -2 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      whileHover={{ scale: isMultiSelecting ? 1 : 1.02 }}
+      whileTap={{ scale: isMultiSelecting ? 1 : 0.98 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="relative"
     >
       {/* Selection Checkbox - positioned absolutely */}
@@ -251,64 +233,75 @@ export default function OccasionCard({
         </motion.div>
       )}
 
-      <Card 
-        className={`cursor-pointer group hover:shadow-xl transition-all duration-300 hover:border-purple-200 dark:hover:border-purple-800 overflow-hidden border-0 ring-1 rounded-xl ${
+      <Card
+        className={`aspect-[3/4] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 group ${
           isSelected
-            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
-            : "ring-slate-200 dark:ring-slate-700 hover:ring-purple-300 dark:hover:ring-purple-600"
+            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900"
+            : "ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
         }`}
         onClick={handleCardClick}
       >
-        <CardContent className="p-0">
-          {/* Preview Section */}
-          <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 relative overflow-hidden">
+        <CardContent className="p-0 h-full flex flex-col">
+          {/* Folder Preview Area */}
+          <div className="flex-1 relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 overflow-hidden">
             {occasion.customThumbnail ? (
               <div className="relative w-full h-full">
                 <img
-                  src={occasion.customThumbnail}
+                  src={occasion.customThumbnail || "/placeholder.svg"}
                   alt={`${occasion.name} thumbnail`}
                   className="w-full h-full object-cover"
                 />
               </div>
-            ) : previewOutfits.length > 0 && previewOutfits[0].clothingItems.length > 0 ? (
-              <div className="relative w-full h-full flex items-center justify-center">
-                {/* Show first outfit as main thumbnail */}
-                <div className="relative w-56 h-64">
-                  {previewOutfits[0].clothingItems.map((item, index) => (
+            ) : firstOutfit && firstOutfit.clothingItems.length > 0 ? (
+              <div className="relative w-full h-full p-4">
+                {/* Main outfit preview */}
+                <div className="relative w-full h-full">
+                  {firstOutfit.clothingItems.slice(0, 3).map((item, index) => (
                     <img
                       key={item.id}
-                      src={item.url}
+                      src={item.url || "/placeholder.svg"}
                       alt={item.name || `Item ${index + 1}`}
                       className="absolute object-contain"
                       style={{
-                        left: `${item.left || 50}%`,
-                        bottom: `${(item.bottom || 0) * 0.6}rem`,
-                        width: `${(item.width || 8) * 0.5}rem`,
-                        maxWidth: "80%",
-                        maxHeight: "60%",
+                        left: `${(item.left || 50) - 10 + index * 2}%`,
+                        bottom: `${(item.bottom || 0) * 0.8 + index * 0.5}rem`,
+                        width: `${(item.width || 8) * 0.7}rem`,
                         transform: "translateX(-50%)",
-                        zIndex: index,
+                        zIndex: 10 - index,
+                        filter: index > 0 ? "brightness(0.9)" : "none",
                       }}
                     />
                   ))}
                 </div>
+
+                {/* Stacked card effect for multiple outfits */}
+                {outfitCount > 1 && (
+                  <>
+                    <div className="absolute inset-2 bg-white/60 dark:bg-slate-700/60 rounded-lg -z-10 transform rotate-1" />
+                    {outfitCount > 2 && (
+                      <div className="absolute inset-1 bg-white/40 dark:bg-slate-600/40 rounded-lg -z-20 transform rotate-2" />
+                    )}
+                  </>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <Folder className="w-12 h-12 text-purple-300 dark:text-purple-700 mx-auto mb-2" />
-                  <p className="text-xs text-purple-400 dark:text-purple-600">Empty Folder</p>
+                  <Folder className="w-16 h-16 text-purple-300 dark:text-purple-700 mx-auto mb-3" />
+                  <p className="text-sm text-purple-400 dark:text-purple-600 font-medium">Empty Folder</p>
                 </div>
               </div>
             )}
 
             {/* Floating action menu */}
-            <div className={`absolute top-2 right-2 transition-opacity ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            <div
+              className={`absolute top-3 right-3 transition-opacity ${showMenu ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+            >
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-600"
+                  className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-sm"
                   onMouseDown={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
@@ -388,10 +381,10 @@ export default function OccasionCard({
 
             {/* Outfit count badge */}
             {outfitCount > 0 && (
-              <div className="absolute bottom-2 left-2">
-                <Badge 
-                  variant="secondary" 
-                  className="bg-white/95 dark:bg-slate-800/95 text-purple-700 dark:text-purple-300 text-xs px-3 py-1 font-medium shadow-sm"
+              <div className="absolute bottom-3 left-3">
+                <Badge
+                  variant="secondary"
+                  className="bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs px-2 py-1 backdrop-blur-sm"
                 >
                   {outfitCount} outfit{outfitCount !== 1 ? "s" : ""}
                 </Badge>
@@ -399,22 +392,17 @@ export default function OccasionCard({
             )}
           </div>
 
-          {/* Info Section */}
-          <div className="p-4">
-            <div className="flex items-start justify-between">
+          {/* Folder Info */}
+          <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+            <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-white truncate text-base mb-1">
-                  {occasion.name}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                  {outfitCount === 0 
-                    ? "Empty folder" 
-                    : `${outfitCount} outfit${outfitCount !== 1 ? "s" : ""}`
-                  }
+                <h3 className="font-semibold text-slate-900 dark:text-white truncate text-sm mb-1">{occasion.name}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {outfitCount === 0 ? "Empty folder" : `${outfitCount} outfit${outfitCount !== 1 ? "s" : ""}`}
                 </p>
               </div>
-              <div className="flex items-center gap-1 ml-2 bg-purple-100 dark:bg-purple-900 p-2 rounded-full">
-                <Folder className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <div className="flex items-center gap-1 ml-2">
+                <Folder className="w-4 h-4 text-purple-500" />
               </div>
             </div>
           </div>
@@ -436,13 +424,9 @@ export default function OccasionCard({
       )}
 
       {/* Thumbnail Input Modal */}
-      {showThumbnailInput && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md"
-          >
+      <Dialog open={showThumbnailInput} onOpenChange={setShowThumbnailInput}>
+        <DialogContent className="max-w-md">
+          <div className="p-2">
             <h3 className="text-lg font-semibold mb-4">Set Custom Thumbnail</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Upload an image from your device to use as the folder thumbnail
@@ -456,61 +440,31 @@ export default function OccasionCard({
                   className="hidden"
                   id="thumbnail-upload"
                 />
-                <label
-                  htmlFor="thumbnail-upload"
-                  className="cursor-pointer flex flex-col items-center"
-                >
+                <label htmlFor="thumbnail-upload" className="cursor-pointer flex flex-col items-center">
                   <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    Click to select an image
-                  </span>
-                  <span className="text-xs text-slate-500 mt-1">
-                    JPG, PNG, GIF up to 10MB
-                  </span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Click to select an image</span>
+                  <span className="text-xs text-slate-500 mt-1">JPG, PNG, GIF up to 10MB</span>
                 </label>
               </div>
-              
-              {previewUrl && (
-                <div className="mt-4">
-                  <p className="text-xs text-slate-500 mb-2">Preview:</p>
-                  <img
-                    src={previewUrl}
-                    alt="Thumbnail preview"
-                    className="w-20 h-20 object-cover rounded-md border mx-auto"
-                  />
-                  <p className="text-xs text-slate-600 dark:text-slate-400 text-center mt-2">
-                    {selectedFile?.name}
-                  </p>
-                </div>
-              )}
-              
+
               <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowThumbnailInput(false)
-                    setSelectedFile(null)
-                    if (previewUrl) {
-                      URL.revokeObjectURL(previewUrl)
-                      setPreviewUrl("")
-                    }
-                  }}
-                  className="flex-1"
-                >
+                <Button variant="outline" onClick={() => setShowThumbnailInput(false)} className="flex-1">
                   Cancel
-                </Button>
-                <Button
-                  onClick={handleUpdateThumbnail}
-                  disabled={!selectedFile || isUpdatingThumbnail}
-                  className="flex-1"
-                >
-                  {isUpdatingThumbnail ? "Uploading..." : "Save"}
                 </Button>
               </div>
             </div>
-          </motion.div>
-        </div>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Thumbnail Editor Modal */}
+      <ThumbnailEditorModal
+        isOpen={showThumbnailEditor}
+        onClose={handleCloseThumbnailEditor}
+        imageUrl={selectedImageUrl}
+        onSave={handleSaveThumbnail}
+        title="Edit Folder Thumbnail"
+      />
     </motion.div>
   )
 }
