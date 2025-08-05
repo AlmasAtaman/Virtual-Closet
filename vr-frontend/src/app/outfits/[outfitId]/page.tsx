@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import ClothingModal from "../../components/ClothingModal"
 import ClothingItemSelectModal from "../../components/ClothingItemSelectModal"
 
@@ -416,6 +417,36 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setDraggedItem(null)
   }
 
+  // Scale change handler for resize sliders
+  const handleScaleChange = useCallback((itemId: string, newScale: number) => {
+    console.log("Scale change:", itemId, newScale)
+    
+    setEditedCategorizedItems(prevItems => {
+      if (!prevItems) return prevItems
+
+      const updatedItems = { ...prevItems }
+      const updateItemScale = (item: ClothingItem | undefined) => {
+        if (item && item.id === itemId) {
+          console.log("Updating item scale:", item.name, "from", item.scale, "to", newScale)
+          return {
+            ...item,
+            scale: newScale,
+          }
+        }
+        return item
+      }
+
+      updatedItems.outerwear = updateItemScale(updatedItems.outerwear)
+      updatedItems.top = updateItemScale(updatedItems.top)
+      updatedItems.bottom = updateItemScale(updatedItems.bottom)
+      updatedItems.shoe = updateItemScale(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemScale).filter(Boolean) as ClothingItem[]
+
+      console.log("Updated items:", updatedItems)
+      return updatedItems
+    })
+  }, [])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
@@ -464,6 +495,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     ...currentCategorizedItems.others,
   ].filter(Boolean) as ClothingItem[]
 
+  // console.log("Current items for rendering:", allCurrentItems.map(item => ({ id: item.id, name: item.name, scale: item.scale })))
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
@@ -490,7 +523,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   <span>Outfit Preview</span>
                   {isEditing && (
                     <Badge variant="secondary" className="ml-2">
-                      Drag to reposition
+                      Drag to reposition • Use sliders to resize
                     </Badge>
                   )}
                 </CardTitle>
@@ -513,28 +546,62 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                     >
                       {/* Use custom layout if any item has custom positioning, otherwise use default layout like OutfitCard */}
                       {hasCustomLayout(allCurrentItems) || isEditing ? (
-                        allCurrentItems.map((item, index) => (
-                          <motion.img
-                            key={item.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            src={item.url}
-                            alt={item.name || ""}
-                            className={`absolute object-contain rounded-lg ${
-                              isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-                            } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""}`}
-                            style={{
-                              left: `${item.left ?? 50}%`,
-                              bottom: `${item.bottom ?? 0}rem`,
-                              width: `${item.width ?? 10}rem`,
-                              transform: `translateX(-50%) scale(${item.scale ?? 1})`,
-                              zIndex: draggedItem === item.id ? 50 : index,
-                            }}
-                            onMouseDown={(e) => handleMouseDown(e, item.id)}
-                            draggable={false}
-                          />
-                        ))
+                        <>
+                          {allCurrentItems.map((item, index) => (
+                            <motion.img
+                              key={`${item.id}-${item.scale ?? 1}`}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              src={item.url}
+                              alt={item.name || ""}
+                              className={`absolute object-contain rounded-lg ${
+                                isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
+                              } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""}`}
+                              style={{
+                                left: `${item.left ?? 50}%`,
+                                bottom: `${item.bottom ?? 0}rem`,
+                                width: `${item.width ?? 10}rem`,
+                                transform: `translateX(-50%) scale(${item.scale ?? 1})`,
+                                zIndex: draggedItem === item.id ? 50 : index,
+                              }}
+                              onMouseDown={(e) => handleMouseDown(e, item.id)}
+                              draggable={false}
+                            />
+                          ))}
+                          
+                          {/* Resize sliders - only visible in edit mode */}
+                          {isEditing && allCurrentItems.map((item, index) => (
+                            <div
+                              key={`slider-${item.id}`}
+                              className="absolute bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3 border border-slate-200 dark:border-slate-700"
+                              style={{
+                                left: `${item.left ?? 50}%`,
+                                bottom: `${(item.bottom ?? 0) + (item.width ?? 10) * 0.0625 + 1}rem`, // Position above the item
+                                transform: "translateX(-50%)",
+                                zIndex: 100,
+                                minWidth: "140px"
+                              }}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 w-8">
+                                  Size
+                                </span>
+                                <Slider
+                                  value={[item.scale ?? 1]}
+                                  onValueChange={(value) => handleScaleChange(item.id, value[0])}
+                                  min={0.3}
+                                  max={2.0}
+                                  step={0.1}
+                                  className="flex-1"
+                                />
+                                <span className="text-xs text-slate-500 dark:text-slate-400 w-10 text-right">
+                                  {Math.round((item.scale ?? 1) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </>
                       ) : (
                         /* Default layout matching OutfitCard - centered in the container */
                         <div className="relative w-44 h-80 mx-auto">
@@ -872,6 +939,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                     </div>
                   )}
                 </div>
+
 
                 {/* Occasion Folder */}
                 {outfit.occasion && (
