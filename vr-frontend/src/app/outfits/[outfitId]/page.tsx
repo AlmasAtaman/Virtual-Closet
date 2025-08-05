@@ -417,30 +417,30 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setDraggedItem(null)
   }
 
-  // Scale change handler for resize sliders
-  const handleScaleChange = useCallback((itemId: string, newScale: number) => {
-    console.log("Scale change:", itemId, newScale)
+  // Width change handler for resize sliders
+  const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
+    console.log("Width change:", itemId, newWidth)
     
     setEditedCategorizedItems(prevItems => {
       if (!prevItems) return prevItems
 
       const updatedItems = { ...prevItems }
-      const updateItemScale = (item: ClothingItem | undefined) => {
+      const updateItemWidth = (item: ClothingItem | undefined) => {
         if (item && item.id === itemId) {
-          console.log("Updating item scale:", item.name, "from", item.scale, "to", newScale)
+          console.log("Updating item width:", item.name, "from", item.width, "to", newWidth)
           return {
             ...item,
-            scale: newScale,
+            width: newWidth,
           }
         }
         return item
       }
 
-      updatedItems.outerwear = updateItemScale(updatedItems.outerwear)
-      updatedItems.top = updateItemScale(updatedItems.top)
-      updatedItems.bottom = updateItemScale(updatedItems.bottom)
-      updatedItems.shoe = updateItemScale(updatedItems.shoe)
-      updatedItems.others = updatedItems.others.map(updateItemScale).filter(Boolean) as ClothingItem[]
+      updatedItems.outerwear = updateItemWidth(updatedItems.outerwear)
+      updatedItems.top = updateItemWidth(updatedItems.top)
+      updatedItems.bottom = updateItemWidth(updatedItems.bottom)
+      updatedItems.shoe = updateItemWidth(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
 
       console.log("Updated items:", updatedItems)
       return updatedItems
@@ -549,7 +549,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         <>
                           {allCurrentItems.map((item, index) => (
                             <motion.img
-                              key={`${item.id}-${item.scale ?? 1}`}
+                              key={`${item.id}-${item.width ?? 10}`}
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.1 }}
@@ -562,7 +562,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                                 left: `${item.left ?? 50}%`,
                                 bottom: `${item.bottom ?? 0}rem`,
                                 width: `${item.width ?? 10}rem`,
-                                transform: `translateX(-50%) scale(${item.scale ?? 1})`,
+                                transform: `translateX(-50%)`,
                                 zIndex: draggedItem === item.id ? 50 : index,
                               }}
                               onMouseDown={(e) => handleMouseDown(e, item.id)}
@@ -588,15 +588,15 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                                   Size
                                 </span>
                                 <Slider
-                                  value={[item.scale ?? 1]}
-                                  onValueChange={(value) => handleScaleChange(item.id, value[0])}
-                                  min={0.3}
-                                  max={2.0}
+                                  value={[item.width ?? 10]}
+                                  onValueChange={(value) => handleWidthChange(item.id, value[0])}
+                                  min={6}
+                                  max={15}
                                   step={0.1}
                                   className="flex-1"
                                 />
                                 <span className="text-xs text-slate-500 dark:text-slate-400 w-10 text-right">
-                                  {Math.round((item.scale ?? 1) * 100)}%
+                                  {(item.width ?? 10).toFixed(1)}rem
                                 </span>
                               </div>
                             </div>
