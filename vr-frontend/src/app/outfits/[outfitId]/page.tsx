@@ -112,6 +112,28 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     [getItemCategory],
   )
 
+  // Helper to check if any item has custom layout (same logic as OutfitCard)
+  const hasCustomLayout = useCallback((items: ClothingItem[]): boolean => {
+    const DEFAULTS = {
+      x: 0,
+      y: 0,
+      scale: 1,
+      left: 50,
+      bottom: 0,
+      width: 10,
+    }
+
+    return items.some(
+      (item) =>
+        (item.x !== undefined && item.x !== DEFAULTS.x) ||
+        (item.y !== undefined && item.y !== DEFAULTS.y) ||
+        (item.scale !== undefined && item.scale !== DEFAULTS.scale) ||
+        (item.left !== undefined && item.left !== DEFAULTS.left) ||
+        (item.bottom !== undefined && item.bottom !== DEFAULTS.bottom) ||
+        (item.width !== undefined && item.width !== DEFAULTS.width),
+    )
+  }, [])
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
@@ -134,8 +156,23 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       setAllClothingItems(allItems)
 
       const outfitClothingItemsWithMode = (outfitRes.data.outfit.clothingItems || [])
-        .map((itemObject: { id: string }) => allItems.find((item: ClothingItem) => item.id === itemObject.id))
-        .filter((item: ClothingItem | undefined): item is ClothingItem => item !== undefined) as ClothingItem[]
+        .map((outfitItem: ClothingItem) => {
+          const baseItem = allItems.find((item: ClothingItem) => item.id === outfitItem.id)
+          if (baseItem) {
+            return {
+              ...baseItem,
+              // Preserve coordinate data from the outfit
+              x: outfitItem.x,
+              y: outfitItem.y,
+              scale: outfitItem.scale,
+              left: outfitItem.left,
+              bottom: outfitItem.bottom,
+              width: outfitItem.width,
+            }
+          }
+          return null
+        })
+        .filter((item: ClothingItem | null): item is ClothingItem => item !== null)
 
       const outfitWithFullItems = {
         ...outfitRes.data.outfit,
@@ -176,6 +213,63 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }
 
   const handleEditOutfit = () => {
+    // When entering edit mode, ensure items without custom coordinates get proper default positions
+    if (editedCategorizedItems && !hasCustomLayout(Object.values(editedCategorizedItems).flat().filter(Boolean) as ClothingItem[])) {
+      const updatedItems = { ...editedCategorizedItems }
+      
+      // Set default positions matching the default layout
+      if (updatedItems.bottom) {
+        updatedItems.bottom = {
+          ...updatedItems.bottom,
+          left: 50,
+          bottom: 0,
+          width: 14.4, // 36 units / 2.5 ratio for responsive scaling
+          scale: 1,
+        }
+      }
+      
+      if (updatedItems.top) {
+        updatedItems.top = {
+          ...updatedItems.top,
+          left: 50,
+          bottom: 8.4,
+          width: 12.8, // 32 units / 2.5 ratio
+          scale: 1,
+        }
+      }
+      
+      if (updatedItems.outerwear) {
+        updatedItems.outerwear = {
+          ...updatedItems.outerwear,
+          left: 50,
+          bottom: 8.8,
+          width: 12.8, // 32 units / 2.5 ratio
+          scale: 1,
+        }
+      }
+      
+      if (updatedItems.shoe) {
+        updatedItems.shoe = {
+          ...updatedItems.shoe,
+          left: 50,
+          bottom: 0,
+          width: 11.2, // 28 units / 2.5 ratio
+          scale: 1,
+        }
+      }
+      
+      // Position other items around the outfit
+      updatedItems.others = updatedItems.others.map((item, index) => ({
+        ...item,
+        left: index % 2 === 0 ? 20 : 80,
+        bottom: 5 + index * 3,
+        width: 4,
+        scale: 1,
+      }))
+      
+      setEditedCategorizedItems(updatedItems)
+    }
+    
     setIsEditing(true)
   }
 
@@ -417,28 +511,98 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       transition={{ duration: 0.3 }}
                       className="relative w-full h-full"
                     >
-                      {allCurrentItems.map((item, index) => (
-                        <motion.img
-                          key={item.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          src={item.url}
-                          alt={item.name || ""}
-                          className={`absolute object-contain rounded-lg ${
-                            isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-                          } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""}`}
-                          style={{
-                            left: `${item.left ?? 50}%`,
-                            bottom: `${item.bottom ?? 0}rem`,
-                            width: `${item.width ?? 10}rem`,
-                            transform: `translateX(-50%) scale(${item.scale ?? 1})`,
-                            zIndex: draggedItem === item.id ? 50 : index,
-                          }}
-                          onMouseDown={(e) => handleMouseDown(e, item.id)}
-                          draggable={false}
-                        />
-                      ))}
+                      {/* Use custom layout if any item has custom positioning, otherwise use default layout like OutfitCard */}
+                      {hasCustomLayout(allCurrentItems) || isEditing ? (
+                        allCurrentItems.map((item, index) => (
+                          <motion.img
+                            key={item.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            src={item.url}
+                            alt={item.name || ""}
+                            className={`absolute object-contain rounded-lg ${
+                              isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
+                            } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""}`}
+                            style={{
+                              left: `${item.left ?? 50}%`,
+                              bottom: `${item.bottom ?? 0}rem`,
+                              width: `${item.width ?? 10}rem`,
+                              transform: `translateX(-50%) scale(${item.scale ?? 1})`,
+                              zIndex: draggedItem === item.id ? 50 : index,
+                            }}
+                            onMouseDown={(e) => handleMouseDown(e, item.id)}
+                            draggable={false}
+                          />
+                        ))
+                      ) : (
+                        /* Default layout matching OutfitCard - centered in the container */
+                        <div className="relative w-44 h-80 mx-auto">
+                          {/* Bottom (pants) - Standardized size */}
+                          {currentCategorizedItems.bottom && (
+                            <motion.img
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.1 }}
+                              src={currentCategorizedItems.bottom.url}
+                              alt={currentCategorizedItems.bottom.name || "Bottom"}
+                              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10 object-contain rounded-lg"
+                            />
+                          )}
+                          {/* Top (shirt) - Standardized size */}
+                          {currentCategorizedItems.top && (
+                            <motion.img
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.2 }}
+                              src={currentCategorizedItems.top.url}
+                              alt={currentCategorizedItems.top.name || "Top"}
+                              className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20 object-contain rounded-lg"
+                            />
+                          )}
+                          {/* Outerwear - Standardized size */}
+                          {currentCategorizedItems.outerwear && (
+                            <motion.img
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.3 }}
+                              src={currentCategorizedItems.outerwear.url}
+                              alt={currentCategorizedItems.outerwear.name || "Outerwear"}
+                              className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30 object-contain rounded-lg"
+                            />
+                          )}
+                          {/* Shoes */}
+                          {currentCategorizedItems.shoe && (
+                            <motion.img
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.4 }}
+                              src={currentCategorizedItems.shoe.url}
+                              alt={currentCategorizedItems.shoe.name || "Shoes"}
+                              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 z-5 object-contain rounded-lg"
+                            />
+                          )}
+                          {/* Other items - positioned around the outfit */}
+                          {currentCategorizedItems.others.map((item, index) => (
+                            <motion.img
+                              key={item.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.5 + index * 0.1 }}
+                              src={item.url}
+                              alt={item.name || "Accessory"}
+                              className="absolute object-contain rounded-lg"
+                              style={{
+                                left: index % 2 === 0 ? '10%' : '80%',
+                                top: `${20 + index * 30}%`,
+                                width: '4rem',
+                                zIndex: 40 + index,
+                                transform: 'translateX(-50%)',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   </AnimatePresence>
 
