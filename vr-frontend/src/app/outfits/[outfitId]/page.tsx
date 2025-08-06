@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState, use, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import axios from "axios"
-import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, Shirt, DollarSign, Tag, Folder, Plus } from "lucide-react"
+import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, Shirt, DollarSign, Tag, Folder, Plus, Settings } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -75,6 +75,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const [originalCategorizedItems, setOriginalCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
 
   const getItemCategory = useCallback((item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "others" => {
     const type = item.type?.toLowerCase() || ""
@@ -123,7 +124,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       bottom: 0,
       width: 10,
     }
-
     return items.some(
       (item) =>
         (item.x !== undefined && item.x !== DEFAULTS.x) ||
@@ -312,6 +312,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       setEditedCategorizedItems(categorizeOutfitItems(clothingItemsToSave))
       setOriginalCategorizedItems(categorizeOutfitItems(clothingItemsToSave))
       setIsEditing(false)
+      setSelectedItemForResize(null)
     } catch (err: any) {
       console.error("Error updating outfit:", err)
       alert(`Failed to update outfit: ${err.message || "Unknown error"}`)
@@ -324,6 +325,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       setEditedCategorizedItems(originalCategorizedItems)
     }
     setIsEditing(false)
+    setSelectedItemForResize(null)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,10 +359,34 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     if (!editedCategorizedItems || !selectModalCategory) return
 
     const updatedCategorizedItems = { ...editedCategorizedItems }
+    
+    // Get the current item's position to preserve it
+    const currentItem = updatedCategorizedItems[selectModalCategory]
+    const preservedPosition = currentItem ? {
+      left: currentItem.left,
+      bottom: currentItem.bottom,
+      width: currentItem.width,
+      scale: currentItem.scale,
+    } : {
+      // Default positions based on category
+      left: 50,
+      bottom: selectModalCategory === "bottom" || selectModalCategory === "shoe" ? 0 : 
+             selectModalCategory === "top" ? 8.4 : 
+             selectModalCategory === "outerwear" ? 8.8 : 5,
+      width: selectModalCategory === "bottom" ? 14.4 :
+             selectModalCategory === "top" || selectModalCategory === "outerwear" ? 12.8 :
+             selectModalCategory === "shoe" ? 11.2 : 10,
+      scale: 1,
+    }
+
     if (selectedItem.id === "none") {
       updatedCategorizedItems[selectModalCategory] = undefined
     } else {
-      updatedCategorizedItems[selectModalCategory] = selectedItem
+      // Apply preserved position to new item
+      updatedCategorizedItems[selectModalCategory] = {
+        ...selectedItem,
+        ...preservedPosition
+      }
     }
 
     setEditedCategorizedItems(updatedCategorizedItems)
@@ -495,8 +521,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     ...currentCategorizedItems.others,
   ].filter(Boolean) as ClothingItem[]
 
-  // console.log("Current items for rendering:", allCurrentItems.map(item => ({ id: item.id, name: item.name, scale: item.scale })))
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
@@ -513,18 +537,30 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           </Button>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Side - Outfit Preview */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-2">
             <Card className="h-[700px]">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shirt className="w-5 h-5" />
-                  <span>Outfit Preview</span>
-                  {isEditing && (
-                    <Badge variant="secondary" className="ml-2">
-                      Drag to reposition • Use sliders to resize
-                    </Badge>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Shirt className="w-5 h-5" />
+                    <span>Outfit Preview</span>
+                    {isEditing && (
+                      <Badge variant="secondary" className="ml-2">
+                        Drag to reposition • Click to resize
+                      </Badge>
+                    )}
+                  </div>
+                  {isEditing && selectedItemForResize && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedItemForResize(null)}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Close Resize
+                    </Button>
                   )}
                 </CardTitle>
               </CardHeader>
@@ -548,58 +584,48 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       {hasCustomLayout(allCurrentItems) || isEditing ? (
                         <>
                           {allCurrentItems.map((item, index) => (
-                            <motion.img
+                            <motion.div
                               key={`${item.id}-${item.width ?? 10}`}
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.1 }}
-                              src={item.url}
-                              alt={item.name || ""}
-                              className={`absolute object-contain rounded-lg ${
+                              className={`absolute ${
                                 isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-                              } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""}`}
+                              } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""} ${
+                                selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
+                              }`}
                               style={{
                                 left: `${item.left ?? 50}%`,
                                 bottom: `${item.bottom ?? 0}rem`,
                                 width: `${item.width ?? 10}rem`,
                                 transform: `translateX(-50%)`,
-                                zIndex: draggedItem === item.id ? 50 : index,
+                                zIndex: draggedItem === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
                               }}
                               onMouseDown={(e) => handleMouseDown(e, item.id)}
-                              draggable={false}
-                            />
-                          ))}
-                          
-                          {/* Resize sliders - only visible in edit mode */}
-                          {isEditing && allCurrentItems.map((item, index) => (
-                            <div
-                              key={`slider-${item.id}`}
-                              className="absolute bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3 border border-slate-200 dark:border-slate-700"
-                              style={{
-                                left: `${item.left ?? 50}%`,
-                                bottom: `${(item.bottom ?? 0) + (item.width ?? 10) * 0.0625 + 1}rem`, // Position above the item
-                                transform: "translateX(-50%)",
-                                zIndex: 100,
-                                minWidth: "140px"
-                              }}
+                              onClick={() => isEditing && setSelectedItemForResize(item.id)}
                             >
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 w-8">
-                                  Size
-                                </span>
-                                <Slider
-                                  value={[item.width ?? 10]}
-                                  onValueChange={(value) => handleWidthChange(item.id, value[0])}
-                                  min={6}
-                                  max={15}
-                                  step={0.1}
-                                  className="flex-1"
-                                />
-                                <span className="text-xs text-slate-500 dark:text-slate-400 w-10 text-right">
-                                  {(item.width ?? 10).toFixed(1)}rem
-                                </span>
-                              </div>
-                            </div>
+                              <img
+                                src={item.url || "/placeholder.svg"}
+                                alt={item.name || ""}
+                                className="w-full h-auto object-contain rounded-lg"
+                                draggable={false}
+                              />
+                              {isEditing && (
+                                <div className="absolute -top-2 -right-2">
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="h-6 w-6 p-0 rounded-full"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
+                                    }}
+                                  >
+                                    <Settings className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </motion.div>
                           ))}
                         </>
                       ) : (
@@ -687,14 +713,53 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             </Card>
           </motion.div>
 
-          {/* Right Side - Outfit Details */}
+          {/* Right Side - Controls and Details */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
             className="space-y-6"
           >
-            <Card className="h-[700px] flex flex-col">
+            {/* Resize Controls Panel - Only show when item is selected for resize */}
+            {isEditing && selectedItemForResize && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <Settings className="w-5 h-5" />
+                    <span>Resize Item</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {(() => {
+                    const selectedItem = allCurrentItems.find(item => item.id === selectedItemForResize)
+                    if (!selectedItem) return null
+                    
+                    return (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">
+                          {selectedItem.name || "Item"} - Size: {(selectedItem.width ?? 10).toFixed(1)}rem
+                        </Label>
+                        <Slider
+                          value={[selectedItem.width ?? 10]}
+                          onValueChange={([value]) => handleWidthChange(selectedItem.id, value)}
+                          min={6}
+                          max={20}
+                          step={0.1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-slate-500 mt-1">
+                          <span>6rem</span>
+                          <span>20rem</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Main Details Card */}
+            <Card className="flex-1">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Outfit Details</CardTitle>
@@ -726,7 +791,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1 overflow-y-auto space-y-6">
+              <CardContent className="space-y-6">
                 {/* Name */}
                 <div>
                   {isEditing ? (
@@ -909,7 +974,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </motion.div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {allCurrentItems.map((item, index) => (
                         <motion.div
                           key={item.id}
@@ -940,10 +1005,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   )}
                 </div>
 
-
                 {/* Occasion Folder */}
                 {outfit.occasion && (
-                  <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                     <div className="flex items-center space-x-2">
                       <Folder className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       <span className="font-medium text-slate-700 dark:text-slate-300">Occasion:</span>
