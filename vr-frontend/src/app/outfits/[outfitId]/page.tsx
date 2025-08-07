@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, use, useCallback } from "react"
+import { useEffect, useState, use, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import axios from "axios"
 import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, Shirt, DollarSign, Tag, Folder, Plus, Settings } from 'lucide-react'
@@ -73,9 +73,21 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const [selectModalCategory, setSelectModalCategory] = useState<"outerwear" | "top" | "bottom" | "shoe" | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [originalCategorizedItems, setOriginalCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
-  const [draggedItem, setDraggedItem] = useState<string | null>(null)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
+
+  // Drag state
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
+
+  const DEFAULTS = {
+    x: 0,
+    y: 0,
+    scale: 1,
+    left: 50,
+    bottom: 0,
+    width: 10,
+  }
 
   const getItemCategory = useCallback((item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "others" => {
     const type = item.type?.toLowerCase() || ""
@@ -114,16 +126,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     [getItemCategory],
   )
 
-  // Helper to check if any item has custom layout (same logic as OutfitCard)
   const hasCustomLayout = useCallback((items: ClothingItem[]): boolean => {
-    const DEFAULTS = {
-      x: 0,
-      y: 0,
-      scale: 1,
-      left: 50,
-      bottom: 0,
-      width: 10,
-    }
     return items.some(
       (item) =>
         (item.x !== undefined && item.x !== DEFAULTS.x) ||
@@ -162,7 +165,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           if (baseItem) {
             return {
               ...baseItem,
-              // Preserve coordinate data from the outfit
               x: outfitItem.x,
               y: outfitItem.y,
               scale: outfitItem.scale,
@@ -214,17 +216,15 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }
 
   const handleEditOutfit = () => {
-    // When entering edit mode, ensure items without custom coordinates get proper default positions
     if (editedCategorizedItems && !hasCustomLayout(Object.values(editedCategorizedItems).flat().filter(Boolean) as ClothingItem[])) {
       const updatedItems = { ...editedCategorizedItems }
       
-      // Set default positions matching the default layout
       if (updatedItems.bottom) {
         updatedItems.bottom = {
           ...updatedItems.bottom,
           left: 50,
           bottom: 0,
-          width: 14.4, // 36 units / 2.5 ratio for responsive scaling
+          width: 14.4,
           scale: 1,
         }
       }
@@ -234,7 +234,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           ...updatedItems.top,
           left: 50,
           bottom: 8.4,
-          width: 12.8, // 32 units / 2.5 ratio
+          width: 12.8,
           scale: 1,
         }
       }
@@ -244,7 +244,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           ...updatedItems.outerwear,
           left: 50,
           bottom: 8.8,
-          width: 12.8, // 32 units / 2.5 ratio
+          width: 12.8,
           scale: 1,
         }
       }
@@ -254,12 +254,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           ...updatedItems.shoe,
           left: 50,
           bottom: 0,
-          width: 11.2, // 28 units / 2.5 ratio
+          width: 11.2,
           scale: 1,
         }
       }
       
-      // Position other items around the outfit
       updatedItems.others = updatedItems.others.map((item, index) => ({
         ...item,
         left: index % 2 === 0 ? 20 : 80,
@@ -336,6 +335,90 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     }))
   }
 
+  // Perfect drag and drop system
+  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
+    if (!isEditing || !editedCategorizedItems) return
+
+    e.preventDefault()
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    // Get current item position
+    const allItems = [
+      editedCategorizedItems.outerwear,
+      editedCategorizedItems.top,
+      editedCategorizedItems.bottom,
+      editedCategorizedItems.shoe,
+      ...editedCategorizedItems.others,
+    ].filter(Boolean) as ClothingItem[]
+
+    const currentItem = allItems.find(item => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: e.clientX,
+        y: e.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+      }
+    }
+  }
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || !draggedItemId || !editedCategorizedItems) return
+
+    const deltaX = e.clientX - dragStartPos.current.x
+    const deltaY = e.clientY - dragStartPos.current.y
+
+    // Convert delta to outfit container coordinates
+    // w-44 = 176px, h-80 = 320px
+    const containerWidth = 176
+    const containerHeight = 320
+
+    const leftDelta = (deltaX / containerWidth) * 100
+    const bottomDelta = -(deltaY / containerHeight) * 20
+
+    const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
+    const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
+
+    // Update item position
+    const updatedItems = { ...editedCategorizedItems }
+    const updateItemPosition = (item: ClothingItem | undefined) => {
+      if (item && item.id === draggedItemId) {
+        return {
+          ...item,
+          left: newLeft,
+          bottom: newBottom,
+        }
+      }
+      return item
+    }
+
+    updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+    updatedItems.top = updateItemPosition(updatedItems.top)
+    updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+    updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+    updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+    setEditedCategorizedItems(updatedItems)
+  }, [isDragging, draggedItemId, editedCategorizedItems])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse events
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
   const handleOpenModal = (index: number) => {
     setSelectedItemIndex(index)
     setIsModalOpen(true)
@@ -360,7 +443,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
     const updatedCategorizedItems = { ...editedCategorizedItems }
     
-    // Get the current item's position to preserve it
     const currentItem = updatedCategorizedItems[selectModalCategory]
     const preservedPosition = currentItem ? {
       left: currentItem.left,
@@ -368,7 +450,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       width: currentItem.width,
       scale: currentItem.scale,
     } : {
-      // Default positions based on category
       left: 50,
       bottom: selectModalCategory === "bottom" || selectModalCategory === "shoe" ? 0 : 
              selectModalCategory === "top" ? 8.4 : 
@@ -382,7 +463,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     if (selectedItem.id === "none") {
       updatedCategorizedItems[selectModalCategory] = undefined
     } else {
-      // Apply preserved position to new item
       updatedCategorizedItems[selectModalCategory] = {
         ...selectedItem,
         ...preservedPosition
@@ -393,67 +473,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     handleCloseSelectModal()
   }
 
-  // Drag handlers for canvas editing
-  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
-    if (!isEditing) return
-
-    setDraggedItem(itemId)
-    const rect = e.currentTarget.getBoundingClientRect()
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    })
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggedItem || !isEditing || !editedCategorizedItems) return
-
-    const canvas = e.currentTarget as HTMLElement
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left - dragOffset.x
-    const y = e.clientY - rect.top - dragOffset.y
-
-    // Convert to percentage-based positioning
-    const leftPercent = (x / rect.width) * 100
-    const bottomRem = ((rect.height - y) / rect.height) * 20 // Assuming 20rem max height
-
-    // Update the item position
-    const updatedItems = { ...editedCategorizedItems }
-    const updateItemPosition = (item: ClothingItem | undefined) => {
-      if (item && item.id === draggedItem) {
-        return {
-          ...item,
-          left: Math.max(0, Math.min(100, leftPercent)),
-          bottom: Math.max(0, Math.min(20, bottomRem)),
-        }
-      }
-      return item
-    }
-
-    updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
-    updatedItems.top = updateItemPosition(updatedItems.top)
-    updatedItems.bottom = updateItemPosition(updatedItems.bottom)
-    updatedItems.shoe = updateItemPosition(updatedItems.shoe)
-    updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
-
-    setEditedCategorizedItems(updatedItems)
-  }
-
-  const handleMouseUp = () => {
-    setDraggedItem(null)
-  }
-
-  // Width change handler for resize sliders
   const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
-    console.log("Width change:", itemId, newWidth)
-    
     setEditedCategorizedItems(prevItems => {
       if (!prevItems) return prevItems
 
       const updatedItems = { ...prevItems }
       const updateItemWidth = (item: ClothingItem | undefined) => {
         if (item && item.id === itemId) {
-          console.log("Updating item width:", item.name, "from", item.width, "to", newWidth)
           return {
             ...item,
             width: newWidth,
@@ -468,7 +494,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       updatedItems.shoe = updateItemWidth(updatedItems.shoe)
       updatedItems.others = updatedItems.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
 
-      console.log("Updated items:", updatedItems)
       return updatedItems
     })
   }, [])
@@ -509,7 +534,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     )
   }
 
-  // Get current items for display
   const currentCategorizedItems: CategorizedOutfitItems =
     isEditing && editedCategorizedItems ? editedCategorizedItems : categorizeOutfitItems(outfit.clothingItems)
 
@@ -538,9 +562,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Side - Outfit Preview */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-2">
-            <Card className="h-[700px]">
+          {/* Outfit Preview - Same size as OutfitCard */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            transition={{ delay: 0.2 }} 
+            className="lg:col-span-2"
+          >
+            <Card className="h-[32rem] overflow-hidden bg-white dark:bg-slate-800 shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -564,142 +593,106 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div
-                  className="h-[600px] relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-6 flex items-center justify-center rounded-xl overflow-hidden"
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={`preview-${allCurrentItems.map((i) => i.id).join("-")}`}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.3 }}
-                      className="relative w-full h-full"
-                    >
-                      {/* Use custom layout if any item has custom positioning, otherwise use default layout like OutfitCard */}
-                      {hasCustomLayout(allCurrentItems) || isEditing ? (
-                        <>
-                          {allCurrentItems.map((item, index) => (
-                            <motion.div
-                              key={`${item.id}-${item.width ?? 10}`}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              className={`absolute ${
-                                isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-                              } ${draggedItem === item.id ? "z-50 shadow-2xl" : ""} ${
-                                selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
-                              }`}
-                              style={{
-                                left: `${item.left ?? 50}%`,
-                                bottom: `${item.bottom ?? 0}rem`,
-                                width: `${item.width ?? 10}rem`,
-                                transform: `translateX(-50%)`,
-                                zIndex: draggedItem === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
-                              }}
-                              onMouseDown={(e) => handleMouseDown(e, item.id)}
-                              onClick={() => isEditing && setSelectedItemForResize(item.id)}
-                            >
-                              <img
-                                src={item.url || "/placeholder.svg"}
-                                alt={item.name || ""}
-                                className="w-full h-auto object-contain rounded-lg"
-                                draggable={false}
-                              />
-                              {isEditing && (
-                                <div className="absolute -top-2 -right-2">
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="h-6 w-6 p-0 rounded-full"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
-                                    }}
-                                  >
-                                    <Settings className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              )}
-                            </motion.div>
-                          ))}
-                        </>
-                      ) : (
-                        /* Default layout matching OutfitCard - centered in the container */
-                        <div className="relative w-44 h-80 mx-auto">
-                          {/* Bottom (pants) - Standardized size */}
-                          {currentCategorizedItems.bottom && (
-                            <motion.img
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.1 }}
-                              src={currentCategorizedItems.bottom.url}
-                              alt={currentCategorizedItems.bottom.name || "Bottom"}
-                              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10 object-contain rounded-lg"
+              <CardContent className="p-0 h-full flex flex-col">
+                <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-6 flex items-center justify-center">
+                  {/* Outfit container - exactly like OutfitCard */}
+                  <div className="relative w-44 h-80 mx-auto">
+                    {hasCustomLayout(allCurrentItems) || isEditing ? (
+                      <>
+                        {allCurrentItems.map((item, index) => (
+                          <motion.div
+                            key={`${item.id}-${item.width ?? 10}`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`absolute ${
+                              isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
+                            } ${draggedItemId === item.id ? "z-50 shadow-2xl" : ""} ${
+                              selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
+                            }`}
+                            style={{
+                              left: `${item.left ?? DEFAULTS.left}%`,
+                              bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
+                              width: `${item.width ?? DEFAULTS.width}rem`,
+                              transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
+                              zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+                            }}
+                            onMouseDown={(e) => handleMouseDown(e, item.id)}
+                            onClick={() => isEditing && setSelectedItemForResize(item.id)}
+                          >
+                            <img
+                              src={item.url || "/placeholder.svg"}
+                              alt={item.name || ""}
+                              className="w-full h-auto object-contain rounded-lg"
+                              draggable={false}
                             />
-                          )}
-                          {/* Top (shirt) - Standardized size */}
-                          {currentCategorizedItems.top && (
-                            <motion.img
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.2 }}
-                              src={currentCategorizedItems.top.url}
-                              alt={currentCategorizedItems.top.name || "Top"}
-                              className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20 object-contain rounded-lg"
-                            />
-                          )}
-                          {/* Outerwear - Standardized size */}
-                          {currentCategorizedItems.outerwear && (
-                            <motion.img
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3 }}
-                              src={currentCategorizedItems.outerwear.url}
-                              alt={currentCategorizedItems.outerwear.name || "Outerwear"}
-                              className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30 object-contain rounded-lg"
-                            />
-                          )}
-                          {/* Shoes */}
-                          {currentCategorizedItems.shoe && (
-                            <motion.img
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.4 }}
-                              src={currentCategorizedItems.shoe.url}
-                              alt={currentCategorizedItems.shoe.name || "Shoes"}
-                              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 z-5 object-contain rounded-lg"
-                            />
-                          )}
-                          {/* Other items - positioned around the outfit */}
-                          {currentCategorizedItems.others.map((item, index) => (
-                            <motion.img
-                              key={item.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.5 + index * 0.1 }}
-                              src={item.url}
-                              alt={item.name || "Accessory"}
-                              className="absolute object-contain rounded-lg"
-                              style={{
-                                left: index % 2 === 0 ? '10%' : '80%',
-                                top: `${20 + index * 30}%`,
-                                width: '4rem',
-                                zIndex: 40 + index,
-                                transform: 'translateX(-50%)',
-                              }}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
+                            {isEditing && (
+                              <div className="absolute -top-2 -right-2">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-6 w-6 p-0 rounded-full"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
+                                  }}
+                                >
+                                  <Settings className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {currentCategorizedItems.bottom && (
+                          <img
+                            src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
+                            alt="Bottom"
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10 object-contain"
+                          />
+                        )}
+                        {currentCategorizedItems.top && (
+                          <img
+                            src={currentCategorizedItems.top.url || "/placeholder.svg"}
+                            alt="Top"
+                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20 object-contain"
+                          />
+                        )}
+                        {currentCategorizedItems.outerwear && (
+                          <img
+                            src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
+                            alt="Outerwear"
+                            className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30 object-contain"
+                          />
+                        )}
+                        {currentCategorizedItems.shoe && (
+                          <img
+                            src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
+                            alt="Shoes"
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 z-5 object-contain"
+                          />
+                        )}
+                        {currentCategorizedItems.others.map((item, index) => (
+                          <img
+                            key={item.id}
+                            src={item.url}
+                            alt={item.name || "Accessory"}
+                            className="absolute object-contain"
+                            style={{
+                              left: index % 2 === 0 ? '10%' : '80%',
+                              top: `${20 + index * 30}%`,
+                              width: '4rem',
+                              zIndex: 40 + index,
+                              transform: 'translateX(-50%)',
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
 
-                  {/* Fallback if no items */}
                   {allCurrentItems.length === 0 && (
                     <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
                       <div className="text-center">
@@ -713,14 +706,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             </Card>
           </motion.div>
 
-          {/* Right Side - Controls and Details */}
+          {/* Right Side - Details */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
             className="space-y-6"
           >
-            {/* Resize Controls Panel - Only show when item is selected for resize */}
+            {/* Resize Controls */}
             {isEditing && selectedItemForResize && (
               <Card>
                 <CardHeader>
