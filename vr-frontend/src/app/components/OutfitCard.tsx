@@ -1,10 +1,14 @@
 "use client"
 
 import type React from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState, useCallback, useRef, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Shirt, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { Shirt, Check, Settings, X, Plus } from "lucide-react"
 
 interface ClothingItem {
   id: string
@@ -34,6 +38,14 @@ interface Outfit {
   isFavorite?: boolean
 }
 
+interface CategorizedOutfitItems {
+  outerwear?: ClothingItem
+  top?: ClothingItem
+  bottom?: ClothingItem
+  shoe?: ClothingItem
+  others: ClothingItem[]
+}
+
 interface OutfitCardProps {
   outfit: Outfit
   onDelete?: (outfitId: string) => void
@@ -41,15 +53,53 @@ interface OutfitCardProps {
   isSelected?: boolean
   isMultiSelecting?: boolean
   onToggleSelect?: (outfitId: string) => void
+  // NEW: Detail view props
+  isDetailView?: boolean
+  isEditing?: boolean
+  onEdit?: () => void
+  onSave?: (updatedOutfit: Outfit) => void
+  onCancel?: () => void
+  onItemSelect?: (category: "outerwear" | "top" | "bottom" | "shoe") => void
+  allClothingItems?: ClothingItem[]
+  enableDragDrop?: boolean
+  enableResize?: boolean
+  editedCategorizedItems?: CategorizedOutfitItems | null
+  setEditedCategorizedItems?: (items: CategorizedOutfitItems) => void
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({ 
   outfit, 
   isSelected = false, 
   isMultiSelecting = false, 
-  onToggleSelect 
+  onToggleSelect,
+  // Detail view props
+  isDetailView = false,
+  isEditing = false,
+  onEdit,
+  onSave,
+  onCancel,
+  onItemSelect,
+  enableDragDrop = false,
+  enableResize = false,
+  editedCategorizedItems,
+  setEditedCategorizedItems
 }) => {
-  // Categorize clothing items
+  // Drag state for detail view
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
+  const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
+
+  const DEFAULTS = {
+    x: 0,
+    y: 0,
+    scale: 1,
+    left: 50,
+    bottom: 0,
+    width: 10,
+  }
+
+  // Categorize clothing items (EXACT same logic as original OutfitCard)
   const categorizedItems: {
     tops: ClothingItem[]
     bottoms: ClothingItem[]
@@ -68,49 +118,162 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     others: (outfit.clothingItems || []).filter(
       (item) =>
         ![
-          "t-shirt",
-          "dress",
-          "shirt",
-          "blouse",
-          "sweater",
-          "hoodie",
-          "cardigan",
-          "pants",
-          "skirt",
-          "shorts",
-          "jeans",
-          "leggings",
-          "jacket",
-          "coat",
-          "blazer",
-          "vest",
+          "t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan",
+          "pants", "skirt", "shorts", "jeans", "leggings",
+          "jacket", "coat", "blazer", "vest",
         ].includes(item.type?.toLowerCase() || ""),
     ),
   }
 
   const topItems = categorizedItems.tops
 
-  const DEFAULTS = {
-    x: 0,
-    y: 0,
-    scale: 1,
-    left: 50,
-    bottom: 0,
-    width: 10,
+  // Helper to check if any item has custom layout - ONLY detect truly custom positioned items
+const hasCustomLayout = (outfit.clothingItems || []).some(
+  (item) => {
+    // Default values that should NOT trigger custom layout
+    const isDefaultLeft = item.left === undefined || item.left === 50
+    const isDefaultBottom = item.bottom === undefined || item.bottom === 0  
+    const isDefaultWidth = item.width === undefined || item.width === 10
+    const isDefaultX = item.x === undefined || item.x === 0
+    const isDefaultY = item.y === undefined || item.y === 0
+    
+    // Only use custom layout if items have been meaningfully moved from defaults
+    return (
+      (!isDefaultLeft && Math.abs(item.left! - 50) > 5) ||
+      (!isDefaultBottom && Math.abs(item.bottom!) > 1) ||
+      (!isDefaultWidth && Math.abs(item.width! - 10) > 2) ||
+      (!isDefaultX && Math.abs(item.x!) > 5) ||
+      (!isDefaultY && Math.abs(item.y!) > 5)
+    )
+  }
+)
+
+  // Get current items for display (detail view logic)
+  const getCurrentCategorizedItems = (): CategorizedOutfitItems => {
+    if (isDetailView && isEditing && editedCategorizedItems) {
+      return editedCategorizedItems
+    }
+    
+    // Convert regular categorized items to detail view format
+    return {
+      top: topItems[0] || undefined,
+      bottom: categorizedItems.bottoms[0] || undefined,
+      outerwear: categorizedItems.outerwear[0] || undefined,
+      others: categorizedItems.others
+    }
   }
 
-  // Helper to check if any item has custom layout
-  const hasCustomLayout = (outfit.clothingItems || []).some(
-    (item) =>
-      (item.x !== undefined && item.x !== DEFAULTS.x) ||
-      (item.y !== undefined && item.y !== DEFAULTS.y) ||
-      (item.scale !== undefined && item.scale !== DEFAULTS.scale) ||
-      (item.left !== undefined && item.left !== DEFAULTS.left) ||
-      (item.bottom !== undefined && item.bottom !== DEFAULTS.bottom) ||
-      (item.width !== undefined && item.width !== DEFAULTS.width),
-  )
+  const currentCategorizedItems = getCurrentCategorizedItems()
+  const allCurrentItems = [
+    currentCategorizedItems.outerwear,
+    currentCategorizedItems.top,
+    currentCategorizedItems.bottom,
+    currentCategorizedItems.shoe,
+    ...currentCategorizedItems.others,
+  ].filter(Boolean) as ClothingItem[]
 
+  // DRAG AND DROP SYSTEM
+  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
+    if (!isDetailView || !isEditing || !enableDragDrop || !setEditedCategorizedItems) return
+
+    e.preventDefault()
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const currentItem = allCurrentItems.find(item => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: e.clientX,
+        y: e.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+      }
+    }
+  }
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+
+    const deltaX = e.clientX - dragStartPos.current.x
+    const deltaY = e.clientY - dragStartPos.current.y
+
+    // Container size: w-44 = 176px, h-80 = 320px
+    const containerWidth = 176
+    const containerHeight = 320
+
+    const leftDelta = (deltaX / containerWidth) * 100
+    const bottomDelta = -(deltaY / containerHeight) * 20
+
+    const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
+    const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
+
+    // Update item position
+    const updatedItems = { ...editedCategorizedItems }
+    const updateItemPosition = (item: ClothingItem | undefined) => {
+      if (item && item.id === draggedItemId) {
+        return {
+          ...item,
+          left: newLeft,
+          bottom: newBottom,
+        }
+      }
+      return item
+    }
+
+    updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+    updatedItems.top = updateItemPosition(updatedItems.top)
+    updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+    updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+    updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+    setEditedCategorizedItems(updatedItems)
+  }, [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse events for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
+  // RESIZE SYSTEM
+  const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
+    if (!setEditedCategorizedItems || !editedCategorizedItems) return
+
+    const updatedItems = { ...editedCategorizedItems }
+    const updateItemWidth = (item: ClothingItem | undefined) => {
+      if (item && item.id === itemId) {
+        return {
+          ...item,
+          width: newWidth,
+        }
+      }
+      return item
+    }
+
+    updatedItems.outerwear = updateItemWidth(updatedItems.outerwear)
+    updatedItems.top = updateItemWidth(updatedItems.top)
+    updatedItems.bottom = updateItemWidth(updatedItems.bottom)
+    updatedItems.shoe = updateItemWidth(updatedItems.shoe)
+    updatedItems.others = updatedItems.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
+
+    setEditedCategorizedItems(updatedItems)
+  }, [editedCategorizedItems, setEditedCategorizedItems])
+
+  // Regular card click handler
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isDetailView) return // Don't handle clicks in detail view
+    
     if (isMultiSelecting) {
       e.preventDefault()
       e.stopPropagation()
@@ -126,6 +289,315 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     onToggleSelect?.(outfit.id)
   }
 
+  // RENDER OUTFIT DISPLAY (improved centering for default layout)
+  const renderOutfitDisplay = () => (
+    <div className="relative w-44 h-80 mx-auto">
+      {(hasCustomLayout || (isDetailView && isEditing)) ? (
+        // Custom layout or editing mode
+        allCurrentItems.map((item, index) => (
+          <motion.div
+            key={`${item.id}-${item.width ?? 10}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className={`absolute ${
+              isDetailView && isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
+            } ${draggedItemId === item.id ? "z-50 shadow-2xl" : ""} ${
+              selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
+            }`}
+            style={{
+              left: `${item.left ?? DEFAULTS.left}%`,
+              bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
+              width: `${item.width ?? DEFAULTS.width}rem`,
+              transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
+              zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+            }}
+            onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
+            onClick={() => enableResize && setSelectedItemForResize(item.id)}
+          >
+            <img
+              src={item.url}
+              alt={item.name || ""}
+              className="w-full h-auto object-contain rounded-lg"
+              draggable={false}
+            />
+            {isDetailView && isEditing && enableResize && (
+              <div className="absolute -top-2 -right-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-6 w-6 p-0 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
+                  }}
+                >
+                  <Settings className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+          </motion.div>
+        ))
+      ) : (
+        // Default layout - PROPERLY CENTERED
+        <>
+          {/* Bottom (pants) - Standardized size and positioning */}
+          {categorizedItems.bottoms[0] && (
+            <img
+              src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
+              alt="Bottom"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10"
+              style={{ objectFit: "contain" }}
+            />
+          )}
+          {/* Top (shirt) - Standardized size and positioning */}
+          {topItems[0] && (
+            <img
+              src={topItems[0].url || "/placeholder.svg"}
+              alt="Top"
+              className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20"
+              style={{ objectFit: "contain" }}
+            />
+          )}
+          {/* Outerwear - Standardized size and positioning */}
+          {categorizedItems.outerwear[0] && (
+            <img
+              src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
+              alt="Outerwear"
+              className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30"
+              style={{ objectFit: "contain" }}
+            />
+          )}
+        </>
+      )}
+      
+      {/* Fallback if no images */}
+      {allCurrentItems.length === 0 && (
+        <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+          <div className="text-center">
+            <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No items</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  // DETAIL VIEW LAYOUT
+  if (isDetailView) {
+    return (
+      <div className="space-y-6">
+        {/* Resize Controls */}
+        {isEditing && selectedItemForResize && enableResize && (
+          <Card className="border-blue-200 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                <Settings className="w-4 h-4" />
+                <span>Resize Item</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(() => {
+                const selectedItem = allCurrentItems.find(item => item.id === selectedItemForResize)
+                if (!selectedItem) return null
+                
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {selectedItem.name || "Item"}
+                      </Label>
+                      <Badge variant="outline" className="text-xs">
+                        {(selectedItem.width ?? 10).toFixed(1)}rem
+                      </Badge>
+                    </div>
+                    <Slider
+                      value={[selectedItem.width ?? 10]}
+                      onValueChange={([value]) => handleWidthChange(selectedItem.id, value)}
+                      min={6}
+                      max={20}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-slate-500 mt-1">
+                      <span>Small</span>
+                      <span>Large</span>
+                    </div>
+                  </div>
+                )
+              })()}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Enhanced Outfit Card for Detail View */}
+        <Card className="w-full max-w-md mx-auto h-[500px] overflow-hidden bg-white dark:bg-slate-800 shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center space-x-2">
+                <Shirt className="w-5 h-5" />
+                <span>Outfit Preview</span>
+                {isEditing && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    Drag to reposition • Click to resize
+                  </Badge>
+                )}
+              </div>
+              {isEditing && selectedItemForResize && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedItemForResize(null)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Close Resize
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 flex items-center justify-center">
+            <div className="relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
+              {renderOutfitDisplay()}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Item Category Selection (only when editing) */}
+        {isEditing && onItemSelect && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Change Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Outerwear */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="cursor-pointer"
+                  onClick={() => onItemSelect("outerwear")}
+                >
+                  <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="h-full flex items-center justify-center p-2">
+                      {currentCategorizedItems.outerwear ? (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
+                            alt="Outerwear"
+                            className="w-full h-full object-contain rounded"
+                          />
+                          {currentCategorizedItems.outerwear.mode === "wishlist" && (
+                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-slate-400">
+                          <Plus className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs font-medium">Outerwear</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Top */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="cursor-pointer"
+                  onClick={() => onItemSelect("top")}
+                >
+                  <Card className="h-24 border-2 border-dashed border-green-300 hover:border-green-500 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="h-full flex items-center justify-center p-2">
+                      {currentCategorizedItems.top ? (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={currentCategorizedItems.top.url || "/placeholder.svg"}
+                            alt="Top"
+                            className="w-full h-full object-contain rounded"
+                          />
+                          {currentCategorizedItems.top.mode === "wishlist" && (
+                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-slate-400">
+                          <Plus className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs font-medium">Top</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Bottom */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="cursor-pointer"
+                  onClick={() => onItemSelect("bottom")}
+                >
+                  <Card className="h-24 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="h-full flex items-center justify-center p-2">
+                      {currentCategorizedItems.bottom ? (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
+                            alt="Bottom"
+                            className="w-full h-full object-contain rounded"
+                          />
+                          {currentCategorizedItems.bottom.mode === "wishlist" && (
+                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-slate-400">
+                          <Plus className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs font-medium">Bottom</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Shoes */}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="cursor-pointer"
+                  onClick={() => onItemSelect("shoe")}
+                >
+                  <Card className="h-24 border-2 border-dashed border-pink-300 hover:border-pink-500 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="h-full flex items-center justify-center p-2">
+                      {currentCategorizedItems.shoe ? (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
+                            alt="Shoes"
+                            className="w-full h-full object-contain rounded"
+                          />
+                          {currentCategorizedItems.shoe.mode === "wishlist" && (
+                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-slate-400">
+                          <Plus className="w-6 h-6 mx-auto mb-1" />
+                          <p className="text-xs font-medium">Shoes</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    )
+  }
+
+  // REGULAR CARD LAYOUT - FIXED DEFAULT LAYOUT
   return (
     <motion.div
       whileHover={{ scale: isMultiSelecting ? 1 : 1.02 }}
@@ -166,69 +638,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         <CardContent className="p-0 h-full flex flex-col">
           {/* Outfit Visual Area */}
           <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-6 flex items-center justify-center">
-            {/* Outfit Image Collage */}
-            <div className="relative w-44 h-80 mx-auto">
-              {hasCustomLayout ? (
-                (outfit.clothingItems || []).map((item, index) => (
-                  <motion.img
-                    key={item.id || index}
-                    src={item.url}
-                    alt={item.name || ""}
-                    style={{
-                      left: `${item.left ?? item.x ?? DEFAULTS.left}%`,
-                      bottom: `${item.bottom ?? item.y ?? DEFAULTS.bottom}rem`,
-                      width: `${item.width ?? DEFAULTS.width}rem`,
-                      position: "absolute",
-                      transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
-                      zIndex: index,
-                      borderRadius: "0.5rem",
-                      objectFit: "contain",
-                    }}
-                    className="object-contain"
-                  />
-                ))
-              ) : (
-                <>
-                  {/* Bottom (pants) - Standardized size */}
-                  {categorizedItems.bottoms[0] && (
-                    <img
-                      src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
-                      alt="Bottom"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10"
-                      style={{ objectFit: "contain" }}
-                    />
-                  )}
-                  {/* Top (shirt) - Standardized size */}
-                  {topItems[0] && (
-                    <img
-                      src={topItems[0].url || "/placeholder.svg"}
-                      alt="Top"
-                      className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20"
-                      style={{ objectFit: "contain" }}
-                    />
-                  )}
-                  {/* Outerwear - Standardized size */}
-                  {categorizedItems.outerwear[0] && (
-                    <img
-                      src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
-                      alt="Outerwear"
-                      className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30"
-                      style={{ objectFit: "contain" }}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Fallback if no images */}
-            {topItems.length === 0 && categorizedItems.bottoms.length === 0 && (
-              <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
-                <div className="text-center">
-                  <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No items</p>
-                </div>
-              </div>
-            )}
+            {renderOutfitDisplay()}
           </div>
 
           {/* Outfit Info */}

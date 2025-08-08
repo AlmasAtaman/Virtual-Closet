@@ -2,16 +2,16 @@
 
 import type React from "react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, use, useCallback, useRef } from "react"
+import { useEffect, useState, use, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import axios from "axios"
-import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, Shirt, DollarSign, Tag, Folder, Plus, Settings } from 'lucide-react'
+import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, DollarSign, Tag, Folder } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
+import OutfitCard from "../../components/OutfitCard" // Import the enhanced OutfitCard
 import ClothingModal from "../../components/ClothingModal"
 import ClothingItemSelectModal from "../../components/ClothingItemSelectModal"
 
@@ -73,21 +73,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const [selectModalCategory, setSelectModalCategory] = useState<"outerwear" | "top" | "bottom" | "shoe" | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [originalCategorizedItems, setOriginalCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
-  const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
-
-  // Drag state
-  const [isDragging, setIsDragging] = useState(false)
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
-  const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
-
-  const DEFAULTS = {
-    x: 0,
-    y: 0,
-    scale: 1,
-    left: 50,
-    bottom: 0,
-    width: 10,
-  }
 
   const getItemCategory = useCallback((item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "others" => {
     const type = item.type?.toLowerCase() || ""
@@ -107,36 +92,36 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const categorizeOutfitItems = useCallback(
     (items: ClothingItem[]): CategorizedOutfitItems => {
       const categorized: CategorizedOutfitItems = { others: [] }
-      items.forEach((item) => {
-        const category = getItemCategory(item)
-        if (category === "outerwear") {
-          categorized.outerwear = item
-        } else if (category === "top") {
-          categorized.top = item
-        } else if (category === "bottom") {
-          categorized.bottom = item
-        } else if (category === "shoe") {
-          categorized.shoe = item
-        } else {
-          categorized.others.push(item)
-        }
-      })
+      
+      // Match OutfitCard logic exactly
+      const tops = items.filter((item) =>
+        ["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(item.type?.toLowerCase() || "")
+      )
+      const bottoms = items.filter((item) =>
+        ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
+      )
+      const outerwear = items.filter((item) =>
+        ["jacket", "coat", "blazer", "vest"].includes(item.type?.toLowerCase() || "")
+      )
+      const others = items.filter(
+        (item) =>
+          ![
+            "t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan",
+            "pants", "skirt", "shorts", "jeans", "leggings",
+            "jacket", "coat", "blazer", "vest"
+          ].includes(item.type?.toLowerCase() || "")
+      )
+
+      // Use first item from each category like OutfitCard
+      categorized.top = tops[0] || undefined
+      categorized.bottom = bottoms[0] || undefined  
+      categorized.outerwear = outerwear[0] || undefined
+      categorized.others = others
+      
       return categorized
     },
-    [getItemCategory],
+    [],
   )
-
-  const hasCustomLayout = useCallback((items: ClothingItem[]): boolean => {
-    return items.some(
-      (item) =>
-        (item.x !== undefined && item.x !== DEFAULTS.x) ||
-        (item.y !== undefined && item.y !== DEFAULTS.y) ||
-        (item.scale !== undefined && item.scale !== DEFAULTS.scale) ||
-        (item.left !== undefined && item.left !== DEFAULTS.left) ||
-        (item.bottom !== undefined && item.bottom !== DEFAULTS.bottom) ||
-        (item.width !== undefined && item.width !== DEFAULTS.width),
-    )
-  }, [])
 
   const fetchData = useCallback(async () => {
     try {
@@ -216,10 +201,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }
 
   const handleEditOutfit = () => {
-    if (editedCategorizedItems && !hasCustomLayout(Object.values(editedCategorizedItems).flat().filter(Boolean) as ClothingItem[])) {
+    if (editedCategorizedItems) {
+      // Set default positions for items that don't have custom coordinates
       const updatedItems = { ...editedCategorizedItems }
       
-      if (updatedItems.bottom) {
+      if (updatedItems.bottom && !updatedItems.bottom.left) {
         updatedItems.bottom = {
           ...updatedItems.bottom,
           left: 50,
@@ -229,7 +215,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         }
       }
       
-      if (updatedItems.top) {
+      if (updatedItems.top && !updatedItems.top.left) {
         updatedItems.top = {
           ...updatedItems.top,
           left: 50,
@@ -239,7 +225,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         }
       }
       
-      if (updatedItems.outerwear) {
+      if (updatedItems.outerwear && !updatedItems.outerwear.left) {
         updatedItems.outerwear = {
           ...updatedItems.outerwear,
           left: 50,
@@ -249,7 +235,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         }
       }
       
-      if (updatedItems.shoe) {
+      if (updatedItems.shoe && !updatedItems.shoe.left) {
         updatedItems.shoe = {
           ...updatedItems.shoe,
           left: 50,
@@ -258,14 +244,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           scale: 1,
         }
       }
-      
-      updatedItems.others = updatedItems.others.map((item, index) => ({
-        ...item,
-        left: index % 2 === 0 ? 20 : 80,
-        bottom: 5 + index * 3,
-        width: 4,
-        scale: 1,
-      }))
       
       setEditedCategorizedItems(updatedItems)
     }
@@ -311,7 +289,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       setEditedCategorizedItems(categorizeOutfitItems(clothingItemsToSave))
       setOriginalCategorizedItems(categorizeOutfitItems(clothingItemsToSave))
       setIsEditing(false)
-      setSelectedItemForResize(null)
     } catch (err: any) {
       console.error("Error updating outfit:", err)
       alert(`Failed to update outfit: ${err.message || "Unknown error"}`)
@@ -324,7 +301,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       setEditedCategorizedItems(originalCategorizedItems)
     }
     setIsEditing(false)
-    setSelectedItemForResize(null)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,90 +310,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       [name]: name === "price" ? Number.parseFloat(value) || 0 : value,
     }))
   }
-
-  // Perfect drag and drop system
-  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
-    if (!isEditing || !editedCategorizedItems) return
-
-    e.preventDefault()
-    setIsDragging(true)
-    setDraggedItemId(itemId)
-
-    // Get current item position
-    const allItems = [
-      editedCategorizedItems.outerwear,
-      editedCategorizedItems.top,
-      editedCategorizedItems.bottom,
-      editedCategorizedItems.shoe,
-      ...editedCategorizedItems.others,
-    ].filter(Boolean) as ClothingItem[]
-
-    const currentItem = allItems.find(item => item.id === itemId)
-    if (currentItem) {
-      dragStartPos.current = {
-        x: e.clientX,
-        y: e.clientY,
-        itemLeft: currentItem.left ?? DEFAULTS.left,
-        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
-      }
-    }
-  }
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !draggedItemId || !editedCategorizedItems) return
-
-    const deltaX = e.clientX - dragStartPos.current.x
-    const deltaY = e.clientY - dragStartPos.current.y
-
-    // Convert delta to outfit container coordinates
-    // w-44 = 176px, h-80 = 320px
-    const containerWidth = 176
-    const containerHeight = 320
-
-    const leftDelta = (deltaX / containerWidth) * 100
-    const bottomDelta = -(deltaY / containerHeight) * 20
-
-    const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
-    const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
-
-    // Update item position
-    const updatedItems = { ...editedCategorizedItems }
-    const updateItemPosition = (item: ClothingItem | undefined) => {
-      if (item && item.id === draggedItemId) {
-        return {
-          ...item,
-          left: newLeft,
-          bottom: newBottom,
-        }
-      }
-      return item
-    }
-
-    updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
-    updatedItems.top = updateItemPosition(updatedItems.top)
-    updatedItems.bottom = updateItemPosition(updatedItems.bottom)
-    updatedItems.shoe = updateItemPosition(updatedItems.shoe)
-    updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
-
-    setEditedCategorizedItems(updatedItems)
-  }, [isDragging, draggedItemId, editedCategorizedItems])
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
-    setDraggedItemId(null)
-  }, [])
-
-  // Global mouse events
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp])
 
   const handleOpenModal = (index: number) => {
     setSelectedItemIndex(index)
@@ -473,31 +365,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     handleCloseSelectModal()
   }
 
-  const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
-    setEditedCategorizedItems(prevItems => {
-      if (!prevItems) return prevItems
-
-      const updatedItems = { ...prevItems }
-      const updateItemWidth = (item: ClothingItem | undefined) => {
-        if (item && item.id === itemId) {
-          return {
-            ...item,
-            width: newWidth,
-          }
-        }
-        return item
-      }
-
-      updatedItems.outerwear = updateItemWidth(updatedItems.outerwear)
-      updatedItems.top = updateItemWidth(updatedItems.top)
-      updatedItems.bottom = updateItemWidth(updatedItems.bottom)
-      updatedItems.shoe = updateItemWidth(updatedItems.shoe)
-      updatedItems.others = updatedItems.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
-
-      return updatedItems
-    })
-  }, [])
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
@@ -534,15 +401,12 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     )
   }
 
-  const currentCategorizedItems: CategorizedOutfitItems =
-    isEditing && editedCategorizedItems ? editedCategorizedItems : categorizeOutfitItems(outfit.clothingItems)
-
   const allCurrentItems = [
-    currentCategorizedItems.outerwear,
-    currentCategorizedItems.top,
-    currentCategorizedItems.bottom,
-    currentCategorizedItems.shoe,
-    ...currentCategorizedItems.others,
+    editedCategorizedItems?.outerwear,
+    editedCategorizedItems?.top,
+    editedCategorizedItems?.bottom,
+    editedCategorizedItems?.shoe,
+    ...(editedCategorizedItems?.others || []),
   ].filter(Boolean) as ClothingItem[]
 
   return (
@@ -562,204 +426,52 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Outfit Preview - Same size as OutfitCard */}
+          {/* Left Side - Enhanced OutfitCard in Detail View Mode */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }} 
             animate={{ opacity: 1, x: 0 }} 
             transition={{ delay: 0.2 }} 
             className="lg:col-span-2"
           >
-            <Card className="h-[32rem] overflow-hidden bg-white dark:bg-slate-800 shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Shirt className="w-5 h-5" />
-                    <span>Outfit Preview</span>
-                    {isEditing && (
-                      <Badge variant="secondary" className="ml-2">
-                        Drag to reposition • Click to resize
-                      </Badge>
-                    )}
-                  </div>
-                  {isEditing && selectedItemForResize && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedItemForResize(null)}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Close Resize
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 h-full flex flex-col">
-                <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-6 flex items-center justify-center">
-                  {/* Outfit container - exactly like OutfitCard */}
-                  <div className="relative w-44 h-80 mx-auto">
-                    {hasCustomLayout(allCurrentItems) || isEditing ? (
-                      <>
-                        {allCurrentItems.map((item, index) => (
-                          <motion.div
-                            key={`${item.id}-${item.width ?? 10}`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`absolute ${
-                              isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-                            } ${draggedItemId === item.id ? "z-50 shadow-2xl" : ""} ${
-                              selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
-                            }`}
-                            style={{
-                              left: `${item.left ?? DEFAULTS.left}%`,
-                              bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
-                              width: `${item.width ?? DEFAULTS.width}rem`,
-                              transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
-                              zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
-                            }}
-                            onMouseDown={(e) => handleMouseDown(e, item.id)}
-                            onClick={() => isEditing && setSelectedItemForResize(item.id)}
-                          >
-                            <img
-                              src={item.url || "/placeholder.svg"}
-                              alt={item.name || ""}
-                              className="w-full h-auto object-contain rounded-lg"
-                              draggable={false}
-                            />
-                            {isEditing && (
-                              <div className="absolute -top-2 -right-2">
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="h-6 w-6 p-0 rounded-full"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
-                                  }}
-                                >
-                                  <Settings className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </>
-                    ) : (
-                      <>
-                        {currentCategorizedItems.bottom && (
-                          <img
-                            src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
-                            alt="Bottom"
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10 object-contain"
-                          />
-                        )}
-                        {currentCategorizedItems.top && (
-                          <img
-                            src={currentCategorizedItems.top.url || "/placeholder.svg"}
-                            alt="Top"
-                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20 object-contain"
-                          />
-                        )}
-                        {currentCategorizedItems.outerwear && (
-                          <img
-                            src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
-                            alt="Outerwear"
-                            className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30 object-contain"
-                          />
-                        )}
-                        {currentCategorizedItems.shoe && (
-                          <img
-                            src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
-                            alt="Shoes"
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-28 z-5 object-contain"
-                          />
-                        )}
-                        {currentCategorizedItems.others.map((item, index) => (
-                          <img
-                            key={item.id}
-                            src={item.url}
-                            alt={item.name || "Accessory"}
-                            className="absolute object-contain"
-                            style={{
-                              left: index % 2 === 0 ? '10%' : '80%',
-                              top: `${20 + index * 30}%`,
-                              width: '4rem',
-                              zIndex: 40 + index,
-                              transform: 'translateX(-50%)',
-                            }}
-                          />
-                        ))}
-                      </>
-                    )}
-                  </div>
-
-                  {allCurrentItems.length === 0 && (
-                    <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
-                      <div className="text-center">
-                        <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No items</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <OutfitCard 
+              outfit={outfit}
+              isDetailView={true}
+              isEditing={isEditing}
+              enableDragDrop={isEditing}
+              enableResize={isEditing}
+              editedCategorizedItems={editedCategorizedItems}
+              setEditedCategorizedItems={setEditedCategorizedItems}
+              onItemSelect={handleOpenSelectModal}
+              allClothingItems={allClothingItems}
+            />
           </motion.div>
 
-          {/* Right Side - Details */}
+          {/* Right Side - Details Panel */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="space-y-6"
+            className="space-y-4"
           >
-            {/* Resize Controls */}
-            {isEditing && selectedItemForResize && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center space-x-2">
-                    <Settings className="w-5 h-5" />
-                    <span>Resize Item</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {(() => {
-                    const selectedItem = allCurrentItems.find(item => item.id === selectedItemForResize)
-                    if (!selectedItem) return null
-                    
-                    return (
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">
-                          {selectedItem.name || "Item"} - Size: {(selectedItem.width ?? 10).toFixed(1)}rem
-                        </Label>
-                        <Slider
-                          value={[selectedItem.width ?? 10]}
-                          onValueChange={([value]) => handleWidthChange(selectedItem.id, value)}
-                          min={6}
-                          max={20}
-                          step={0.1}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-slate-500 mt-1">
-                          <span>6rem</span>
-                          <span>20rem</span>
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </CardContent>
-              </Card>
-            )}
-
             {/* Main Details Card */}
-            <Card className="flex-1">
-              <CardHeader>
+            <Card className="shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Outfit Details</CardTitle>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                      <Tag className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Outfit Details</CardTitle>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        {isEditing ? "Edit your outfit" : "View outfit information"}
+                      </p>
+                    </div>
+                  </div>
                   <div className="flex space-x-2">
                     {isEditing ? (
                       <>
-                        <Button onClick={handleSaveEdit} size="sm">
+                        <Button onClick={handleSaveEdit} size="sm" className="bg-green-600 hover:bg-green-700">
                           <Save className="w-4 h-4 mr-2" />
                           Save
                         </Button>
@@ -770,7 +482,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </>
                     ) : (
                       <>
-                        <Button onClick={handleEditOutfit} variant="outline" size="sm">
+                        <Button onClick={handleEditOutfit} variant="outline" size="sm" className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
                           <Edit3 className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
@@ -785,36 +497,41 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               </CardHeader>
 
               <CardContent className="space-y-6">
-                {/* Name */}
-                <div>
+                {/* Name Section */}
+                <div className="space-y-3">
                   {isEditing ? (
                     <div>
                       <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
-                        <Tag className="w-4 h-4 mr-1" />
-                        Name
+                        <Tag className="w-4 h-4 mr-2" />
+                        Outfit Name
                       </Label>
                       <Input
                         name="name"
                         value={editedOutfit.name || ""}
                         onChange={handleInputChange}
                         placeholder="Enter outfit name"
+                        className="text-lg font-semibold"
                       />
                     </div>
                   ) : (
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
                         {outfit.name || "Untitled Outfit"}
                       </h2>
+                      <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
+                        <Tag className="w-4 h-4" />
+                        <span>Created outfit</span>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {/* Price */}
-                <div>
+                {/* Price Section */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4">
                   {isEditing ? (
                     <div>
-                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center mb-2">
-                        <DollarSign className="w-4 h-4 mr-1" />
+                      <Label className="text-sm font-medium text-green-700 dark:text-green-300 flex items-center mb-2">
+                        <DollarSign className="w-4 h-4 mr-2" />
                         Price
                       </Label>
                       <Input
@@ -824,149 +541,37 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         onChange={handleInputChange}
                         placeholder="0.00"
                         step="0.01"
+                        className="text-lg font-semibold"
                       />
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      <span className="text-xl font-semibold text-green-600 dark:text-green-400">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-300">Total Value</span>
+                      </div>
+                      <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                         ${(outfit.price || outfit.totalPrice || 0).toFixed(2)}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Clothing Items */}
+                {/* Items Overview */}
                 <div>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Shirt className="w-5 h-5 text-slate-500" />
-                    <span className="font-medium text-lg">Clothing Items</span>
-                    <Badge variant="outline">{allCurrentItems.length} items</Badge>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-md">
+                        <Tag className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="font-semibold text-lg">Items</span>
+                      <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                        {allCurrentItems.length} pieces
+                      </Badge>
+                    </div>
                   </div>
 
-                  {isEditing ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Outerwear */}
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="cursor-pointer"
-                        onClick={() => handleOpenSelectModal("outerwear")}
-                      >
-                        <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-colors">
-                          <CardContent className="h-full flex items-center justify-center p-2">
-                            {currentCategorizedItems.outerwear ? (
-                              <div className="relative w-full h-full">
-                                <img
-                                  src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
-                                  alt="Outerwear"
-                                  className="w-full h-full object-contain"
-                                />
-                                {currentCategorizedItems.outerwear.mode === "wishlist" && (
-                                  <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-center text-slate-400">
-                                <Plus className="w-6 h-6 mx-auto mb-1" />
-                                <p className="text-xs">Outerwear</p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-
-                      {/* Top */}
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="cursor-pointer"
-                        onClick={() => handleOpenSelectModal("top")}
-                      >
-                        <Card className="h-24 border-2 border-dashed border-green-300 hover:border-green-500 transition-colors">
-                          <CardContent className="h-full flex items-center justify-center p-2">
-                            {currentCategorizedItems.top ? (
-                              <div className="relative w-full h-full">
-                                <img
-                                  src={currentCategorizedItems.top.url || "/placeholder.svg"}
-                                  alt="Top"
-                                  className="w-full h-full object-contain"
-                                />
-                                {currentCategorizedItems.top.mode === "wishlist" && (
-                                  <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-center text-slate-400">
-                                <Plus className="w-6 h-6 mx-auto mb-1" />
-                                <p className="text-xs">Top</p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-
-                      {/* Bottom */}
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="cursor-pointer"
-                        onClick={() => handleOpenSelectModal("bottom")}
-                      >
-                        <Card className="h-24 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-colors">
-                          <CardContent className="h-full flex items-center justify-center p-2">
-                            {currentCategorizedItems.bottom ? (
-                              <div className="relative w-full h-full">
-                                <img
-                                  src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
-                                  alt="Bottom"
-                                  className="w-full h-full object-contain"
-                                />
-                                {currentCategorizedItems.bottom.mode === "wishlist" && (
-                                  <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-center text-slate-400">
-                                <Plus className="w-6 h-6 mx-auto mb-1" />
-                                <p className="text-xs">Bottom</p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-
-                      {/* Shoes */}
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="cursor-pointer"
-                        onClick={() => handleOpenSelectModal("shoe")}
-                      >
-                        <Card className="h-24 border-2 border-dashed border-pink-300 hover:border-pink-500 transition-colors">
-                          <CardContent className="h-full flex items-center justify-center p-2">
-                            {currentCategorizedItems.shoe ? (
-                              <div className="relative w-full h-full">
-                                <img
-                                  src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
-                                  alt="Shoes"
-                                  className="w-full h-full object-contain"
-                                />
-                                {currentCategorizedItems.shoe.mode === "wishlist" && (
-                                  <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-center text-slate-400">
-                                <Plus className="w-6 h-6 mx-auto mb-1" />
-                                <p className="text-xs">Shoes</p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    </div>
-                  ) : (
+                  {!isEditing && (
                     <div className="grid grid-cols-2 gap-3">
                       {allCurrentItems.map((item, index) => (
                         <motion.div
@@ -978,17 +583,17 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                           whileTap={{ scale: 0.95 }}
                         >
                           <Card
-                            className="h-20 cursor-pointer hover:shadow-md transition-shadow relative"
+                            className="h-20 cursor-pointer hover:shadow-lg transition-all duration-200 relative bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900"
                             onClick={() => handleOpenModal(index)}
                           >
-                            <CardContent className="h-full flex items-center justify-center p-1">
+                            <CardContent className="h-full flex items-center justify-center p-2">
                               <img
                                 src={item.url || "/placeholder.svg"}
                                 alt={item.name || "Clothing Item"}
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-contain rounded"
                               />
                               {item.mode === "wishlist" && (
-                                <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
+                                <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500 shadow-md">W</Badge>
                               )}
                             </CardContent>
                           </Card>
@@ -998,18 +603,22 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   )}
                 </div>
 
-                {/* Occasion Folder */}
+                {/* Occasion Section */}
                 {outfit.occasion && (
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center space-x-2">
-                      <Folder className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Occasion:</span>
-                      <Badge
-                        variant="secondary"
-                        className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
-                      >
-                        {outfit.occasion}
-                      </Badge>
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg">
+                        <Folder className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-purple-700 dark:text-purple-300">Occasion</span>
+                        <Badge
+                          variant="secondary"
+                          className="ml-2 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
+                        >
+                          {outfit.occasion}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 )}
