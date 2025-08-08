@@ -1,14 +1,13 @@
 "use client"
 
-import type React from "react"
-import { useState, useCallback, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import React, { useState, useRef, useCallback, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import { Shirt, Check, Settings, X, Plus } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { Shirt, Check, Settings, X } from "lucide-react"
 
 interface ClothingItem {
   id: string
@@ -36,6 +35,7 @@ interface Outfit {
   totalPrice?: number
   clothingItems: ClothingItem[]
   isFavorite?: boolean
+  createdAt?: string
 }
 
 interface CategorizedOutfitItems {
@@ -99,7 +99,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     width: 10,
   }
 
-  // Categorize clothing items (EXACT same logic as original OutfitCard)
+  // Categorize clothing items
   const categorizedItems: {
     tops: ClothingItem[]
     bottoms: ClothingItem[]
@@ -127,26 +127,21 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
   const topItems = categorizedItems.tops
 
-  // Helper to check if any item has custom layout - ONLY detect truly custom positioned items
-const hasCustomLayout = (outfit.clothingItems || []).some(
-  (item) => {
-    // Default values that should NOT trigger custom layout
-    const isDefaultLeft = item.left === undefined || item.left === 50
-    const isDefaultBottom = item.bottom === undefined || item.bottom === 0  
-    const isDefaultWidth = item.width === undefined || item.width === 10
-    const isDefaultX = item.x === undefined || item.x === 0
-    const isDefaultY = item.y === undefined || item.y === 0
-    
-    // Only use custom layout if items have been meaningfully moved from defaults
-    return (
-      (!isDefaultLeft && Math.abs(item.left! - 50) > 5) ||
-      (!isDefaultBottom && Math.abs(item.bottom!) > 1) ||
-      (!isDefaultWidth && Math.abs(item.width! - 10) > 2) ||
-      (!isDefaultX && Math.abs(item.x!) > 5) ||
-      (!isDefaultY && Math.abs(item.y!) > 5)
-    )
-  }
-)
+  // Check if outfit has custom positioning (any non-default values)
+  const hasCustomLayout = (outfit.clothingItems || []).some(
+    (item) => {
+      const hasCustomLeft = item.left !== undefined && item.left !== 50
+      const hasCustomBottom = item.bottom !== undefined && item.bottom !== 0
+      const hasCustomWidth = item.width !== undefined && item.width !== 10
+      const hasCustomScale = item.scale !== undefined && item.scale !== 1
+      const hasCustomX = item.x !== undefined && item.x !== 0
+      const hasCustomY = item.y !== undefined && item.y !== 0
+      
+      return hasCustomLeft || hasCustomBottom || hasCustomWidth || hasCustomScale || hasCustomX || hasCustomY
+    }
+  )
+
+  console.log(`[DEBUG] OutfitCard ${outfit.id} - hasCustomLayout:`, hasCustomLayout)
 
   // Get current items for display (detail view logic)
   const getCurrentCategorizedItems = (): CategorizedOutfitItems => {
@@ -289,99 +284,129 @@ const hasCustomLayout = (outfit.clothingItems || []).some(
     onToggleSelect?.(outfit.id)
   }
 
-  // RENDER OUTFIT DISPLAY (improved centering for default layout)
-  const renderOutfitDisplay = () => (
-    <div className="relative w-44 h-80 mx-auto">
-      {(hasCustomLayout || (isDetailView && isEditing)) ? (
-        // Custom layout or editing mode
-        allCurrentItems.map((item, index) => (
-          <motion.div
-            key={`${item.id}-${item.width ?? 10}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`absolute ${
-              isDetailView && isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-            } ${draggedItemId === item.id ? "z-50 shadow-2xl" : ""} ${
-              selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
-            }`}
-            style={{
-              left: `${item.left ?? DEFAULTS.left}%`,
-              bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
-              width: `${item.width ?? DEFAULTS.width}rem`,
-              transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
-              zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
-            }}
-            onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
-            onClick={() => enableResize && setSelectedItemForResize(item.id)}
-          >
-            <img
-              src={item.url}
-              alt={item.name || ""}
-              className="w-full h-auto object-contain rounded-lg"
-              draggable={false}
-            />
-            {isDetailView && isEditing && enableResize && (
-              <div className="absolute -top-2 -right-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
-                  }}
-                >
-                  <Settings className="w-3 h-3" />
-                </Button>
-              </div>
+  // RENDER OUTFIT DISPLAY - FIXED COORDINATE SYSTEM
+  const renderOutfitDisplay = () => {
+    const useCustomLayout = (hasCustomLayout || (isDetailView && isEditing))
+    
+    console.log(`[DEBUG] OutfitCard ${outfit.id} - useCustomLayout:`, useCustomLayout)
+    
+    return (
+      <div className="relative w-44 h-80 mx-auto">
+        {useCustomLayout ? (
+          // FIXED: Custom layout with corrected coordinate system that maintains item relationships
+          allCurrentItems.map((item, index) => {
+            // COORDINATE SYSTEM FIX: Apply different adjustments based on item type and position
+            // This maintains the relative positioning between items while centering the overall outfit
+            let adjustedLeft = item.left ?? DEFAULTS.left;
+
+            // Check if this is a pants/bottom item
+            const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "");
+
+            if (isPants) {
+              // Special adjustment just for pants
+              adjustedLeft = adjustedLeft - 42; // <-- Change this number to move pants left/right
+            } else {
+              // Regular adjustment for all other items (shirts, jackets, etc.)
+              const distanceFromCenter = Math.abs(adjustedLeft - 50);
+              const adjustmentFactor = Math.max(0.7, 1 - (distanceFromCenter / 100));
+              const baseAdjustment = 39;
+              const finalAdjustment = baseAdjustment * adjustmentFactor;
+              adjustedLeft = adjustedLeft - finalAdjustment;
+            }
+
+            
+            return (
+              <motion.div
+                key={`${item.id}-${item.width ?? 10}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`absolute ${
+                  isDetailView && isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
+                } ${draggedItemId === item.id ? "z-50 shadow-2xl" : ""} ${
+                  selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
+                }`}
+                style={{
+                  left: `${adjustedLeft}%`, // FIXED: Use adjusted left position
+                  bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
+                  width: `${item.width ?? DEFAULTS.width}rem`,
+                  transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
+                  zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+                }}
+                onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
+                onClick={() => enableResize && setSelectedItemForResize(item.id)}
+              >
+                <img
+                  src={item.url}
+                  alt={item.name || ""}
+                  className="w-full h-auto object-contain rounded-lg"
+                  draggable={false}
+                />
+                {isDetailView && isEditing && enableResize && (
+                  <div className="absolute -top-2 -right-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-6 w-6 p-0 rounded-full"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
+                      }}
+                    >
+                      <Settings className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            )
+          })
+        ) : (
+          // Default layout for outfits without custom positioning
+          <>
+            {console.log(`[DEBUG] OutfitCard ${outfit.id} - Using default layout`)}
+            
+            {/* Bottom (pants) - Default centered position */}
+            {categorizedItems.bottoms[0] && (
+              <img
+                src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
+                alt="Bottom"
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-36 z-10"
+                style={{ objectFit: "contain" }}
+              />
             )}
-          </motion.div>
-        ))
-      ) : (
-        // Default layout - PROPERLY CENTERED
-        <>
-          {/* Bottom (pants) - Standardized size and positioning */}
-          {categorizedItems.bottoms[0] && (
-            <img
-              src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
-              alt="Bottom"
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 z-10"
-              style={{ objectFit: "contain" }}
-            />
-          )}
-          {/* Top (shirt) - Standardized size and positioning */}
-          {topItems[0] && (
-            <img
-              src={topItems[0].url || "/placeholder.svg"}
-              alt="Top"
-              className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 w-32 z-20"
-              style={{ objectFit: "contain" }}
-            />
-          )}
-          {/* Outerwear - Standardized size and positioning */}
-          {categorizedItems.outerwear[0] && (
-            <img
-              src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
-              alt="Outerwear"
-              className="absolute bottom-[8.8rem] left-1/2 -translate-x-1/2 w-32 z-30"
-              style={{ objectFit: "contain" }}
-            />
-          )}
-        </>
-      )}
-      
-      {/* Fallback if no images */}
-      {allCurrentItems.length === 0 && (
-        <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
-          <div className="text-center">
-            <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No items</p>
+            {/* Top (shirt) - Default centered position */}
+            {topItems[0] && (
+              <img
+                src={topItems[0].url || "/placeholder.svg"}
+                alt="Top"
+                className="absolute bottom-[8.4rem] left-1/2 transform -translate-x-1/2 w-32 z-20"
+                style={{ objectFit: "contain" }}
+              />
+            )}
+            {/* Outerwear - Default centered position */}
+            {categorizedItems.outerwear[0] && (
+              <img
+                src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
+                alt="Outerwear"
+                className="absolute bottom-[8.8rem] left-1/2 transform -translate-x-1/2 w-32 z-30"
+                style={{ objectFit: "contain" }}
+              />
+            )}
+          </>
+        )}
+        
+        {/* Fallback if no images */}
+        {allCurrentItems.length === 0 && (
+          <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
+            <div className="text-center">
+              <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No items</p>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  )
+        )}
+      </div>
+    )
+  }
 
   // DETAIL VIEW LAYOUT
   if (isDetailView) {
@@ -480,20 +505,17 @@ const hasCustomLayout = (outfit.clothingItems || []).some(
                   <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.outerwear ? (
-                        <div className="relative w-full h-full">
-                          <img
-                            src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
-                            alt="Outerwear"
-                            className="w-full h-full object-contain rounded"
-                          />
-                          {currentCategorizedItems.outerwear.mode === "wishlist" && (
-                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                          )}
-                        </div>
+                        <img
+                          src={currentCategorizedItems.outerwear.url}
+                          alt="Outerwear"
+                          className="w-full h-full object-contain rounded"
+                        />
                       ) : (
-                        <div className="text-center text-slate-400">
-                          <Plus className="w-6 h-6 mx-auto mb-1" />
-                          <p className="text-xs font-medium">Outerwear</p>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg mx-auto mb-1 flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <span className="text-xs text-slate-600 dark:text-slate-400">Outerwear</span>
                         </div>
                       )}
                     </CardContent>
@@ -510,20 +532,17 @@ const hasCustomLayout = (outfit.clothingItems || []).some(
                   <Card className="h-24 border-2 border-dashed border-green-300 hover:border-green-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.top ? (
-                        <div className="relative w-full h-full">
-                          <img
-                            src={currentCategorizedItems.top.url || "/placeholder.svg"}
-                            alt="Top"
-                            className="w-full h-full object-contain rounded"
-                          />
-                          {currentCategorizedItems.top.mode === "wishlist" && (
-                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                          )}
-                        </div>
+                        <img
+                          src={currentCategorizedItems.top.url}
+                          alt="Top"
+                          className="w-full h-full object-contain rounded"
+                        />
                       ) : (
-                        <div className="text-center text-slate-400">
-                          <Plus className="w-6 h-6 mx-auto mb-1" />
-                          <p className="text-xs font-medium">Top</p>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg mx-auto mb-1 flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          </div>
+                          <span className="text-xs text-slate-600 dark:text-slate-400">Top</span>
                         </div>
                       )}
                     </CardContent>
@@ -540,20 +559,17 @@ const hasCustomLayout = (outfit.clothingItems || []).some(
                   <Card className="h-24 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.bottom ? (
-                        <div className="relative w-full h-full">
-                          <img
-                            src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
-                            alt="Bottom"
-                            className="w-full h-full object-contain rounded"
-                          />
-                          {currentCategorizedItems.bottom.mode === "wishlist" && (
-                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                          )}
-                        </div>
+                        <img
+                          src={currentCategorizedItems.bottom.url}
+                          alt="Bottom"
+                          className="w-full h-full object-contain rounded"
+                        />
                       ) : (
-                        <div className="text-center text-slate-400">
-                          <Plus className="w-6 h-6 mx-auto mb-1" />
-                          <p className="text-xs font-medium">Bottom</p>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg mx-auto mb-1 flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="text-xs text-slate-600 dark:text-slate-400">Bottom</span>
                         </div>
                       )}
                     </CardContent>
@@ -567,23 +583,20 @@ const hasCustomLayout = (outfit.clothingItems || []).some(
                   className="cursor-pointer"
                   onClick={() => onItemSelect("shoe")}
                 >
-                  <Card className="h-24 border-2 border-dashed border-pink-300 hover:border-pink-500 transition-all duration-200 hover:shadow-md">
+                  <Card className="h-24 border-2 border-dashed border-orange-300 hover:border-orange-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.shoe ? (
-                        <div className="relative w-full h-full">
-                          <img
-                            src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
-                            alt="Shoes"
-                            className="w-full h-full object-contain rounded"
-                          />
-                          {currentCategorizedItems.shoe.mode === "wishlist" && (
-                            <Badge className="absolute -top-1 -right-1 text-xs bg-amber-500">W</Badge>
-                          )}
-                        </div>
+                        <img
+                          src={currentCategorizedItems.shoe.url}
+                          alt="Shoes"
+                          className="w-full h-full object-contain rounded"
+                        />
                       ) : (
-                        <div className="text-center text-slate-400">
-                          <Plus className="w-6 h-6 mx-auto mb-1" />
-                          <p className="text-xs font-medium">Shoes</p>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900 rounded-lg mx-auto mb-1 flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                          </div>
+                          <span className="text-xs text-slate-600 dark:text-slate-400">Shoes</span>
                         </div>
                       )}
                     </CardContent>
@@ -597,22 +610,20 @@ const hasCustomLayout = (outfit.clothingItems || []).some(
     )
   }
 
-  // REGULAR CARD LAYOUT - FIXED DEFAULT LAYOUT
+  // REGULAR CARD VIEW
   return (
     <motion.div
-      whileHover={{ scale: isMultiSelecting ? 1 : 1.02 }}
-      whileTap={{ scale: isMultiSelecting ? 1 : 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
       className="relative"
     >
-      {/* Selection Checkbox - positioned absolutely */}
+      {/* Multi-select checkbox */}
       {isMultiSelecting && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          className="absolute top-3 left-3 z-20"
+          className="absolute top-2 left-2 z-10"
         >
           <button
             onClick={handleCheckboxClick}
