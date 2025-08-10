@@ -65,7 +65,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const DEFAULT_LAYOUT = {
     top: { left: 45, bottom: 8, width: 10, scale: 1 },
     bottom: { left: 50, bottom: 0, width: 10, scale: 1 },
-    outerwear: { left: 50, bottom: 6, width: 11, scale: 1 },
+    outerwear: { left: 64, bottom: 9, width: 10, scale: 1 },
   }
 
   const DEFAULTS = {
@@ -364,6 +364,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     onCloseAction()
   }
 
+  const getLayerOrder = (item: ClothingItem) => {
+  const category = getItemCategory(item)
+    switch (category) {
+      case "outerwear": return 1  // Back layer
+      case "bottom": return 2     // Middle layer  
+      case "top": return 3        // Front layer
+      default: return 2
+    }
+  }
+
   const renderOutfitDisplay = () => {
     return (
       <div className="relative w-44 h-80 mx-auto">
@@ -400,7 +410,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 bottom: `${outfitItem.bottom}rem`,
                 width: `${outfitItem.width}rem`,
                 transform: `translateX(-50%) scale(${outfitItem.scale})`,
-                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : getLayerOrder(item),
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
               onClick={() => setSelectedItemForResize(item.id)}
@@ -486,21 +496,27 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                       Top *
                     </label>
-                    {selectedTop ? (
-                      <div className="relative">
-                        <img src={selectedTop.url} alt={selectedTop.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={() => removeItem("top")}
+                      {selectedTop ? (
+                        <div 
+                          className="relative cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setShowTopSelectModal(true)}
                         >
-                          <X className="w-3 h-3" />
-                        </Button>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
-                          {selectedTop.name || "Unnamed Top"}
+                          <img src={selectedTop.url} alt={selectedTop.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeItem("top")
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                            {selectedTop.name || "Unnamed Top"}
+                          </div>
                         </div>
-                      </div>
                     ) : (
                       <Button
                         variant="outline"
@@ -519,21 +535,27 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                       Bottom *
                     </label>
-                    {selectedBottom ? (
-                      <div className="relative">
-                        <img src={selectedBottom.url} alt={selectedBottom.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={() => removeItem("bottom")}
+                      {selectedBottom ? (
+                        <div 
+                          className="relative cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setShowBottomSelectModal(true)}
                         >
-                          <X className="w-3 h-3" />
-                        </Button>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
-                          {selectedBottom.name || "Unnamed Bottom"}
+                          <img src={selectedBottom.url} alt={selectedBottom.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeItem("bottom")
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                            {selectedBottom.name || "Unnamed Bottom"}
+                          </div>
                         </div>
-                      </div>
                     ) : (
                       <Button
                         variant="outline"
@@ -552,21 +574,27 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                       Outerwear
                     </label>
-                    {selectedOuterwear ? (
-                      <div className="relative">
-                        <img src={selectedOuterwear.url} alt={selectedOuterwear.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={() => removeItem("outerwear")}
+                      {selectedOuterwear ? (
+                        <div 
+                          className="relative cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setShowOuterwearSelectModal(true)}
                         >
-                          <X className="w-3 h-3" />
-                        </Button>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
-                          {selectedOuterwear.name || "Unnamed Outerwear"}
+                          <img src={selectedOuterwear.url} alt={selectedOuterwear.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeItem("outerwear")
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                            {selectedOuterwear.name || "Unnamed Outerwear"}
+                          </div>
                         </div>
-                      </div>
                     ) : (
                       <Button
                         variant="outline"
@@ -721,18 +749,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       <ClothingItemSelectModal
         isOpen={showOuterwearSelectModal}
         onCloseAction={() => setShowOuterwearSelectModal(false)}
-        clothingItems={[
-          ...clothingItems.outerwear,
-          { id: "none", url: "", name: "Select None", mode: "closet" as const, type: "jacket" },
-        ]}
-        onSelectItem={(item) => {
-          if (item.id === "none") {
-            setSelectedOuterwear(null)
-          } else {
-            handleItemSelect("outerwear", item)
-          }
-          setShowOuterwearSelectModal(false)
-        }}
+        clothingItems={clothingItems.outerwear}
+        onSelectItem={(item) => handleItemSelect("outerwear", item)}
         viewMode="closet"
         selectedCategory="outerwear"
       />
