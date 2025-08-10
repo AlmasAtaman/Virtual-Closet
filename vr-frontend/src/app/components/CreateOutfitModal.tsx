@@ -52,6 +52,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [animationKey, setAnimationKey] = useState(0)
+  const [outfitName, setOutfitName] = useState("")
 
   // Drag and Drop State
   const [isDragging, setIsDragging] = useState(false)
@@ -192,6 +193,7 @@ useEffect(() => {
       setSelectedBottom(null)
       setSelectedOuterwear(null)
       setOutfitItems([])
+      setOutfitName("")
       setAnimationKey(prev => prev + 1)
       setSelectedItemForResize(null)
       setDraggedItemId(null)
@@ -341,6 +343,7 @@ useEffect(() => {
       }))
 
       const outfitData = {
+        name: outfitName.trim() || `Outfit ${new Date().getTime()}`,
         clothingItems: itemsToSave,
       }
 
@@ -357,16 +360,17 @@ useEffect(() => {
     }
   }
 
-  const handleCloseModal = () => {
-    setSelectedTop(null)
-    setSelectedBottom(null)
-    setSelectedOuterwear(null)
-    setOutfitItems([])
-    setAnimationKey(prev => prev + 1)
-    setSelectedItemForResize(null)
-    setDraggedItemId(null)
-    onCloseAction()
-  }
+const handleCloseModal = () => {
+  setSelectedTop(null)
+  setSelectedBottom(null)
+  setSelectedOuterwear(null)
+  setOutfitItems([])
+  setOutfitName("")
+  setAnimationKey(prev => prev + 1)
+  setSelectedItemForResize(null)
+  setDraggedItemId(null)
+  onCloseAction()
+}
 
   const getLayerOrder = (item: ClothingItem) => {
   const category = getItemCategory(item)
@@ -495,6 +499,21 @@ useEffect(() => {
               {/* Left Panel - Item Selection */}
               <div className="w-80 border-r border-slate-200 dark:border-slate-700 p-6 overflow-y-auto">
                 <div className="space-y-6">
+                  {/* Outfit Name */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Outfit Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter outfit name (optional)"
+                      value={outfitName}
+                      onChange={(e) => setOutfitName(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+
                   {/* Top Selection */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
