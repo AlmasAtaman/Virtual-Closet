@@ -77,7 +77,7 @@ router.get("/", authMiddleware, async (req, res) => {
 // Create a new outfit
 router.post("/", authMiddleware, async (req, res) => {
   const userId = req.user.id
-  const { clothingItems } = req.body
+  const { clothingItems, name } = req.body
 
   console.log("Received request to create outfit for user:", userId)
   console.log("Clothing items received:", clothingItems)
@@ -92,6 +92,7 @@ router.post("/", authMiddleware, async (req, res) => {
     const outfit = await prisma.outfit.create({
       data: {
         userId: userId,
+        name: name || null,
         outfitClothing: {
           create: clothingItems.map((item) => ({
             clothing: {
