@@ -76,41 +76,45 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   }
 
   // Initialize outfit items when clothing items are selected
-  useEffect(() => {
-    const items: OutfitItem[] = []
+useEffect(() => {
+  const items: OutfitItem[] = []
+  
+  if (selectedTop) {
+    items.push({
+      item: selectedTop,
+      left: selectedTop.left ?? DEFAULT_LAYOUT.top.left,
+      bottom: selectedTop.bottom ?? DEFAULT_LAYOUT.top.bottom,
+      width: selectedTop.width ?? DEFAULT_LAYOUT.top.width,
+      scale: selectedTop.scale ?? DEFAULT_LAYOUT.top.scale,
+    })
+  }
+  
+  if (selectedBottom) {
+    items.push({
+      item: selectedBottom,
+      left: selectedBottom.left ?? DEFAULT_LAYOUT.bottom.left,
+      bottom: selectedBottom.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
+      width: selectedBottom.width ?? DEFAULT_LAYOUT.bottom.width,
+      scale: selectedBottom.scale ?? DEFAULT_LAYOUT.bottom.scale,
+    })
+  }
+  
+  if (selectedOuterwear) {
+    // If no top is selected, use top's position for outerwear
+    const useTopPosition = !selectedTop
+    const defaultLayout = useTopPosition ? DEFAULT_LAYOUT.top : DEFAULT_LAYOUT.outerwear
     
-    if (selectedTop) {
-      items.push({
-        item: selectedTop,
-        left: selectedTop.left ?? DEFAULT_LAYOUT.top.left,
-        bottom: selectedTop.bottom ?? DEFAULT_LAYOUT.top.bottom,
-        width: selectedTop.width ?? DEFAULT_LAYOUT.top.width,
-        scale: selectedTop.scale ?? DEFAULT_LAYOUT.top.scale,
-      })
-    }
-    
-    if (selectedBottom) {
-      items.push({
-        item: selectedBottom,
-        left: selectedBottom.left ?? DEFAULT_LAYOUT.bottom.left,
-        bottom: selectedBottom.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
-        width: selectedBottom.width ?? DEFAULT_LAYOUT.bottom.width,
-        scale: selectedBottom.scale ?? DEFAULT_LAYOUT.bottom.scale,
-      })
-    }
-    
-    if (selectedOuterwear) {
-      items.push({
-        item: selectedOuterwear,
-        left: selectedOuterwear.left ?? DEFAULT_LAYOUT.outerwear.left,
-        bottom: selectedOuterwear.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
-        width: selectedOuterwear.width ?? DEFAULT_LAYOUT.outerwear.width,
-        scale: selectedOuterwear.scale ?? DEFAULT_LAYOUT.outerwear.scale,
-      })
-    }
-    
-    setOutfitItems(items)
-  }, [selectedTop, selectedBottom, selectedOuterwear])
+    items.push({
+      item: selectedOuterwear,
+      left: selectedOuterwear.left ?? defaultLayout.left,
+      bottom: selectedOuterwear.bottom ?? defaultLayout.bottom,
+      width: selectedOuterwear.width ?? defaultLayout.width,
+      scale: selectedOuterwear.scale ?? defaultLayout.scale,
+    })
+  }
+  
+  setOutfitItems(items)
+}, [selectedTop, selectedBottom, selectedOuterwear])
 
   // DRAG AND DROP SYSTEM
   const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
@@ -218,7 +222,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       const categorized: CategorizedClothing = {
         tops: allItems.filter((item: ClothingItem) =>
-          ["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(
+          ["t-shirt", "dress", "shirt", "blouse"].includes(
             item.type?.toLowerCase() || ""
           )
         ),
@@ -226,7 +230,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
         ),
         outerwear: allItems.filter((item: ClothingItem) =>
-          ["jacket", "coat", "blazer", "vest"].includes(item.type?.toLowerCase() || "")
+          ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(item.type?.toLowerCase() || "")
         ),
       }
 
@@ -316,7 +320,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   }
 
   const isFormValid = () => {
-    return selectedTop && selectedBottom
+    return selectedBottom && (selectedTop || selectedOuterwear)
   }
 
   const handleCreateOutfit = async () => {
