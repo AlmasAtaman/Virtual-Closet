@@ -90,6 +90,13 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
 
+  useEffect(() => {
+    if (!isEditing) {
+      setSelectedItemForResize(null)
+      setDraggedItemId(null)
+    }
+  }, [isEditing])
+
   const DEFAULTS = {
     x: 0,
     y: 0,
