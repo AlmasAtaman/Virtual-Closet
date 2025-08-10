@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Shuffle, Check, Plus, Move, RotateCcw } from "lucide-react"
+import { X, Shuffle, Check, Plus, Move, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
-import { Slider } from "@/components/ui/slider"
 import axios from "axios"
 
 interface CreateOutfitModalProps {
@@ -22,12 +21,24 @@ interface ClothingItem {
   url: string
   type?: string
   mode: "closet" | "wishlist"
+  left?: number
+  bottom?: number
+  width?: number
+  scale?: number
 }
 
 interface CategorizedClothing {
   tops: ClothingItem[]
   bottoms: ClothingItem[]
   outerwear: ClothingItem[]
+}
+
+interface OutfitItem {
+  item: ClothingItem
+  left: number
+  bottom: number
+  width: number
+  scale: number
 }
 
 export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated }: CreateOutfitModalProps) {
@@ -41,182 +52,302 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [animationKey, setAnimationKey] = useState(0)
-  const [activeAdjust, setActiveAdjust] = useState<string | null>(null)
-  const [topControls, setTopControls] = useState<{ left: number; bottom: number; width: number } | null>(null)
-  const [bottomControls, setBottomControls] = useState<{ left: number; bottom: number; width: number } | null>(null)
-  const [outerwearControls, setOuterwearControls] = useState<{ left: number; bottom: number; width: number } | null>(
-    null,
-  )
-  const [topTransform, setTopTransform] = useState({ x: 0, y: 0, scale: 1 })
-  const [bottomTransform, setBottomTransform] = useState({ x: 0, y: 0, scale: 1 })
-  const [outerwearTransform, setOuterwearTransform] = useState({ x: 0, y: 0, scale: 1 })
 
-  // Standardized sizing for consistent appearance
+  // Drag and Drop State
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
+  const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
+
+  // Outfit items with positioning
+  const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([])
+
   const DEFAULT_LAYOUT = {
-    top: { left: 50, bottom: 8.4, width: 8.5 },
-    bottom: { left: 50, bottom: 0, width: 9 },
-    outerwear: { left: 65, bottom: 10, width: 8.5 },
+    top: { left: 45, bottom: 8, width: 10, scale: 1 },
+    bottom: { left: 50, bottom: 0, width: 10, scale: 1 },
+    outerwear: { left: 50, bottom: 6, width: 11, scale: 1 },
   }
 
-  const topImgRef = useRef<HTMLImageElement>(null)
-  const bottomImgRef = useRef<HTMLImageElement>(null)
-  const outerwearImgRef = useRef<HTMLImageElement>(null)
+  const DEFAULTS = {
+    left: 50,
+    bottom: 0,
+    width: 10,
+    scale: 1,
+  }
+
+  // Initialize outfit items when clothing items are selected
+  useEffect(() => {
+    const items: OutfitItem[] = []
+    
+    if (selectedTop) {
+      items.push({
+        item: selectedTop,
+        left: selectedTop.left ?? DEFAULT_LAYOUT.top.left,
+        bottom: selectedTop.bottom ?? DEFAULT_LAYOUT.top.bottom,
+        width: selectedTop.width ?? DEFAULT_LAYOUT.top.width,
+        scale: selectedTop.scale ?? DEFAULT_LAYOUT.top.scale,
+      })
+    }
+    
+    if (selectedBottom) {
+      items.push({
+        item: selectedBottom,
+        left: selectedBottom.left ?? DEFAULT_LAYOUT.bottom.left,
+        bottom: selectedBottom.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
+        width: selectedBottom.width ?? DEFAULT_LAYOUT.bottom.width,
+        scale: selectedBottom.scale ?? DEFAULT_LAYOUT.bottom.scale,
+      })
+    }
+    
+    if (selectedOuterwear) {
+      items.push({
+        item: selectedOuterwear,
+        left: selectedOuterwear.left ?? DEFAULT_LAYOUT.outerwear.left,
+        bottom: selectedOuterwear.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
+        width: selectedOuterwear.width ?? DEFAULT_LAYOUT.outerwear.width,
+        scale: selectedOuterwear.scale ?? DEFAULT_LAYOUT.outerwear.scale,
+      })
+    }
+    
+    setOutfitItems(items)
+  }, [selectedTop, selectedBottom, selectedOuterwear])
+
+  // DRAG AND DROP SYSTEM
+  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
+    e.preventDefault()
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const currentItem = outfitItems.find(outfitItem => outfitItem.item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: e.clientX,
+        y: e.clientY,
+        itemLeft: currentItem.left,
+        itemBottom: currentItem.bottom,
+      }
+    }
+  }
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || !draggedItemId) return
+
+    const deltaX = e.clientX - dragStartPos.current.x
+    const deltaY = e.clientY - dragStartPos.current.y
+
+    // Container size: w-44 = 176px, h-80 = 320px
+    const containerWidth = 176
+    const containerHeight = 320
+
+    const leftDelta = (deltaX / containerWidth) * 100
+    const bottomDelta = -(deltaY / containerHeight) * 20
+
+    const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
+    const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
+
+    // Update item position
+    setOutfitItems(prev => prev.map(outfitItem => 
+      outfitItem.item.id === draggedItemId
+        ? { ...outfitItem, left: newLeft, bottom: newBottom }
+        : outfitItem
+    ))
+  }, [isDragging, draggedItemId])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse events for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
+  // RESIZE SYSTEM
+  const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
+    setOutfitItems(prev => prev.map(outfitItem => 
+      outfitItem.item.id === itemId
+        ? { ...outfitItem, width: newWidth }
+        : outfitItem
+    ))
+  }, [])
 
   useEffect(() => {
     if (show) {
       fetchClothingItems()
+    } else {
+      // Reset state when modal closes
+      setSelectedTop(null)
+      setSelectedBottom(null)
+      setSelectedOuterwear(null)
+      setOutfitItems([])
+      setAnimationKey(prev => prev + 1)
+      setSelectedItemForResize(null)
+      setDraggedItemId(null)
     }
   }, [show])
 
   const fetchClothingItems = async () => {
-    setLoadingClothing(true)
     try {
+      setLoadingClothing(true)
+      
+      // Fetch both closet and wishlist items
       const [closetRes, wishlistRes] = await Promise.all([
-        fetch("http://localhost:8000/api/images?mode=closet", { credentials: "include" }),
-        fetch("http://localhost:8000/api/images?mode=wishlist", { credentials: "include" }),
+        axios.get("http://localhost:8000/api/images?mode=closet", { withCredentials: true }),
+        axios.get("http://localhost:8000/api/images?mode=wishlist", { withCredentials: true }),
       ])
 
-      if (!closetRes.ok || !wishlistRes.ok) {
-        throw new Error("Failed to fetch clothing items")
-      }
-
-      const [closetData, wishlistData] = await Promise.all([closetRes.json(), wishlistRes.json()])
-
-      const closetItems: ClothingItem[] = (closetData.clothingItems || []).map((item: ClothingItem) => ({
+      const closetItems: ClothingItem[] = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
         ...item,
         mode: "closet",
       }))
 
-      const wishlistItems: ClothingItem[] = (wishlistData.clothingItems || []).map((item: ClothingItem) => ({
+      const wishlistItems: ClothingItem[] = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({
         ...item,
         mode: "wishlist",
       }))
 
       const allItems = [...closetItems, ...wishlistItems]
 
-      const categorized = allItems.reduce<CategorizedClothing>(
-        (acc, item) => {
-          if (item.type) {
-            const lowerCaseType = item.type.toLowerCase()
-            if (["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(lowerCaseType)) {
-              acc.tops.push(item)
-            } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(lowerCaseType)) {
-              acc.bottoms.push(item)
-            } else if (["jacket", "coat", "blazer", "vest"].includes(lowerCaseType)) {
-              acc.outerwear.push(item)
-            }
-          }
-          return acc
-        },
-        { tops: [], bottoms: [], outerwear: [] },
-      )
+      const categorized: CategorizedClothing = {
+        tops: allItems.filter((item: ClothingItem) =>
+          ["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(
+            item.type?.toLowerCase() || ""
+          )
+        ),
+        bottoms: allItems.filter((item: ClothingItem) =>
+          ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
+        ),
+        outerwear: allItems.filter((item: ClothingItem) =>
+          ["jacket", "coat", "blazer", "vest"].includes(item.type?.toLowerCase() || "")
+        ),
+      }
 
       setClothingItems(categorized)
     } catch (error) {
-      console.error("Failed to fetch clothing items:", error)
+      console.error("Error fetching clothing items:", error)
     } finally {
       setLoadingClothing(false)
     }
   }
 
+  const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
+    switch (category) {
+      case "top":
+        setSelectedTop(item)
+        setShowTopSelectModal(false)
+        break
+      case "bottom":
+        setSelectedBottom(item)
+        setShowBottomSelectModal(false)
+        break
+      case "outerwear":
+        setSelectedOuterwear(item)
+        setShowOuterwearSelectModal(false)
+        break
+    }
+    setAnimationKey(prev => prev + 1)
+  }
+
+  const removeItem = (category: "top" | "bottom" | "outerwear") => {
+    switch (category) {
+      case "top":
+        setSelectedTop(null)
+        break
+      case "bottom":
+        setSelectedBottom(null)
+        break
+      case "outerwear":
+        setSelectedOuterwear(null)
+        break
+    }
+    setAnimationKey(prev => prev + 1)
+  }
+
+  const shuffleOutfit = () => {
+    if (clothingItems.tops.length > 0) {
+      const randomTop = clothingItems.tops[Math.floor(Math.random() * clothingItems.tops.length)]
+      setSelectedTop(randomTop)
+    }
+    if (clothingItems.bottoms.length > 0) {
+      const randomBottom = clothingItems.bottoms[Math.floor(Math.random() * clothingItems.bottoms.length)]
+      setSelectedBottom(randomBottom)
+    }
+    if (clothingItems.outerwear.length > 0 && Math.random() > 0.5) {
+      const randomOuterwear = clothingItems.outerwear[Math.floor(Math.random() * clothingItems.outerwear.length)]
+      setSelectedOuterwear(randomOuterwear)
+    }
+    setAnimationKey(prev => prev + 1)
+  }
+
+  const resetLayout = () => {
+    setOutfitItems(prev => prev.map(outfitItem => {
+      const category = getItemCategory(outfitItem.item)
+      const defaultLayout = DEFAULT_LAYOUT[category as keyof typeof DEFAULT_LAYOUT] || DEFAULTS
+      return {
+        ...outfitItem,
+        left: defaultLayout.left,
+        bottom: defaultLayout.bottom,
+        width: defaultLayout.width,
+        scale: defaultLayout.scale,
+      }
+    }))
+  }
+
+  const getItemCategory = (item: ClothingItem): string => {
+    const type = item.type?.toLowerCase() || ""
+    if (["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)) {
+      return "top"
+    }
+    if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
+      return "bottom"
+    }
+    if (["jacket", "coat", "blazer", "vest"].includes(type)) {
+      return "outerwear"
+    }
+    return "other"
+  }
+
   const isFormValid = () => {
-    return selectedTop !== null && selectedTop.id !== "none" && selectedBottom !== null && selectedBottom.id !== "none"
+    return selectedTop && selectedBottom
   }
 
   const handleCreateOutfit = async () => {
-    if (!selectedTop && !selectedBottom && !selectedOuterwear) {
-      alert("Please select at least one clothing item to create an outfit.")
-      return
-    }
-
-    setIsCreating(true)
-
-    const clothingItems: {
-      clothingId: string
-      x: number
-      y: number
-      scale: number
-      left: number
-      bottom: number
-      width: number
-    }[] = []
-
-    if (selectedTop) {
-      const x = topControls ? 0 : topTransform.x
-      const y = topControls ? 0 : topTransform.y
-      const scale = topControls ? topControls.width / DEFAULT_LAYOUT.top.width : topTransform.scale
-      const left = topControls?.left ?? DEFAULT_LAYOUT.top.left
-      const bottom = topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom
-      const width = topControls?.width ?? DEFAULT_LAYOUT.top.width
-
-      clothingItems.push({
-        clothingId: selectedTop.id,
-        x,
-        y,
-        scale,
-        left,
-        bottom,
-        width,
-      })
-    }
-
-    if (selectedBottom) {
-      const x = bottomControls ? 0 : bottomTransform.x
-      const y = bottomControls ? 0 : bottomTransform.y
-      const scale = bottomControls ? bottomControls.width / DEFAULT_LAYOUT.bottom.width : bottomTransform.scale
-      const left = bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left
-      const bottom = bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom
-      const width = bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width
-
-      clothingItems.push({
-        clothingId: selectedBottom.id,
-        x,
-        y,
-        scale,
-        left,
-        bottom,
-        width,
-      })
-    }
-
-    if (selectedOuterwear) {
-      const x = outerwearControls ? 0 : outerwearTransform.x
-      const y = outerwearControls ? 0 : outerwearTransform.y
-      const scale = outerwearControls
-        ? outerwearControls.width / DEFAULT_LAYOUT.outerwear.width
-        : outerwearTransform.scale
-      const left = outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left
-      const bottom = outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom
-      const width = outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width
-
-      clothingItems.push({
-        clothingId: selectedOuterwear.id,
-        x,
-        y,
-        scale,
-        left,
-        bottom,
-        width,
-      })
-    }
+    if (!isFormValid()) return
 
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/outfits",
-        {
-          clothingItems,
-        },
-        {
-          withCredentials: true,
-        },
-      )
+      setIsCreating(true)
 
-      console.log("Outfit created:", response.data)
+      // Prepare items with their positioning data - using the exact API format
+      const itemsToSave = outfitItems.map(outfitItem => ({
+        clothingId: outfitItem.item.id,
+        x: 0, // Keep existing x/y for backward compatibility
+        y: 0,
+        scale: outfitItem.scale,
+        left: outfitItem.left,
+        bottom: outfitItem.bottom,
+        width: outfitItem.width,
+      }))
+
+      const outfitData = {
+        clothingItems: itemsToSave,
+      }
+
+      await axios.post("http://localhost:8000/api/outfits", outfitData, {
+        withCredentials: true,
+      })
+
       onOutfitCreated()
       handleCloseModal()
     } catch (error) {
-      console.error("Failed to create outfit:", error)
-      alert("Failed to create outfit. Please try again.")
+      console.error("Error creating outfit:", error)
     } finally {
       setIsCreating(false)
     }
@@ -226,687 +357,385 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setSelectedTop(null)
     setSelectedBottom(null)
     setSelectedOuterwear(null)
-    setShowTopSelectModal(false)
-    setShowBottomSelectModal(false)
-    setShowOuterwearSelectModal(false)
-    setTopControls(null)
-    setBottomControls(null)
-    setOuterwearControls(null)
-    setActiveAdjust(null)
+    setOutfitItems([])
+    setAnimationKey(prev => prev + 1)
+    setSelectedItemForResize(null)
+    setDraggedItemId(null)
     onCloseAction()
   }
 
-  const getRandomItem = <T,>(arr: T[]): T | null =>
-    arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null
+  const renderOutfitDisplay = () => {
+    return (
+      <div className="relative w-44 h-80 mx-auto">
+        {outfitItems.map((outfitItem, index) => {
+          const item = outfitItem.item
+          
+          // Apply coordinate adjustments similar to OutfitCard
+          let adjustedLeft = outfitItem.left;
+          const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "");
 
-  const handleRandomize = () => {
-    const sources: ("closet" | "wishlist")[] = ["closet", "wishlist"]
-    const filterBySource = (items: ClothingItem[]): ClothingItem[] =>
-      items.filter((item: ClothingItem) => sources.includes(item.mode))
+          if (isPants) {
+            adjustedLeft = adjustedLeft - 42;
+          } else {
+            const distanceFromCenter = Math.abs(adjustedLeft - 50);
+            const adjustmentFactor = Math.max(0.7, 1 - (distanceFromCenter / 100));
+            const baseAdjustment = 39;
+            const finalAdjustment = baseAdjustment * adjustmentFactor;
+            adjustedLeft = adjustedLeft - finalAdjustment;
+          }
 
-    const tops = filterBySource(clothingItems.tops)
-    const bottoms = filterBySource(clothingItems.bottoms)
-    const outerwear = filterBySource(clothingItems.outerwear)
-
-    setSelectedTop(getRandomItem(tops))
-    setSelectedBottom(getRandomItem(bottoms))
-    setSelectedOuterwear(getRandomItem(outerwear))
-    setAnimationKey((prev) => prev + 1)
+          return (
+            <motion.div
+              key={`${item.id}-${outfitItem.width}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`absolute cursor-move hover:shadow-lg transition-shadow ${
+                draggedItemId === item.id ? "z-50 shadow-2xl" : ""
+              } ${
+                selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
+              }`}
+              style={{
+                left: `${adjustedLeft}%`,
+                bottom: `${outfitItem.bottom}rem`,
+                width: `${outfitItem.width}rem`,
+                transform: `translateX(-50%) scale(${outfitItem.scale})`,
+                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+              }}
+              onMouseDown={(e) => handleMouseDown(e, item.id)}
+              onClick={() => setSelectedItemForResize(item.id)}
+            >
+              <img
+                src={item.url}
+                alt={item.name || ""}
+                className="w-full h-auto object-contain rounded-lg"
+                draggable={false}
+              />
+              <div className="absolute -top-2 -right-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-6 w-6 p-0 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
+                  }}
+                >
+                  <Move className="w-3 h-3" />
+                </Button>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    )
   }
 
-  if (!show) {
-    return null
-  }
+  if (!show) return null
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={handleCloseModal}
-      >
+    <>
+      <AnimatePresence>
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={handleCloseModal}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create New Outfit</h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={handleRandomize}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                <Shuffle className="w-4 h-4 mr-2" />
-                Randomize
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Side - Outfit Preview */}
-              <div className="order-2 lg:order-1">
-                <Card className="h-[500px]">
-                  <CardContent className="h-full p-6">
-                    <div className="h-full relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-xl flex items-center justify-center">
-                      <motion.div
-                        key={animationKey}
-                        className="relative w-44 h-80 mx-auto"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        {/* Bottom (pants) - Standardized size */}
-                        {selectedBottom && (
-                          <motion.img
-                            ref={bottomImgRef}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            src={selectedBottom.url}
-                            alt="Bottom"
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:ring-2 hover:ring-slate-400 rounded-lg transition-all"
-                            style={
-                              bottomControls
-                                ? {
-                                    left: `${bottomControls.left}%`,
-                                    bottom: `${bottomControls.bottom}rem`,
-                                    width: `${bottomControls.width}rem`,
-                                    position: "absolute",
-                                    transform: "translateX(-50%)",
-                                    zIndex: 10,
-                                    objectFit: "contain",
-                                    boxShadow: activeAdjust === "bottom" ? "0 0 0 2px #64748b" : undefined,
-                                  }
-                                : {
-                                    width: `${DEFAULT_LAYOUT.bottom.width}rem`,
-                                    objectFit: "contain",
-                                    boxShadow: activeAdjust === "bottom" ? "0 0 0 2px #64748b" : undefined,
-                                  }
-                            }
-                            onClick={() => setActiveAdjust(activeAdjust === "bottom" ? null : "bottom")}
-                          />
-                        )}
-
-                        {/* Outerwear - Standardized size */}
-                        {selectedOuterwear && (
-                          <motion.img
-                            ref={outerwearImgRef}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            src={selectedOuterwear.url}
-                            alt="Outerwear"
-                            className="absolute bottom-[10rem] left-[65%] -translate-x-1/2 z-20 cursor-pointer hover:ring-2 hover:ring-slate-400 rounded-lg transition-all"
-                            style={
-                              outerwearControls
-                                ? {
-                                    left: `${outerwearControls.left}%`,
-                                    bottom: `${outerwearControls.bottom}rem`,
-                                    width: `${outerwearControls.width}rem`,
-                                    position: "absolute",
-                                    transform: "translateX(-50%)",
-                                    zIndex: 20,
-                                    objectFit: "contain",
-                                    boxShadow: activeAdjust === "outerwear" ? "0 0 0 2px #64748b" : undefined,
-                                  }
-                                : {
-                                    width: `${DEFAULT_LAYOUT.outerwear.width}rem`,
-                                    objectFit: "contain",
-                                    boxShadow: activeAdjust === "outerwear" ? "0 0 0 2px #64748b" : undefined,
-                                  }
-                            }
-                            onClick={() => setActiveAdjust(activeAdjust === "outerwear" ? null : "outerwear")}
-                          />
-                        )}
-
-                        {/* Top (shirt) - Standardized size */}
-                        {selectedTop && (
-                          <motion.img
-                            ref={topImgRef}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            src={selectedTop.url}
-                            alt="Top"
-                            className="absolute bottom-[8.4rem] left-1/2 -translate-x-1/2 z-30 cursor-pointer hover:ring-2 hover:ring-slate-400 rounded-lg transition-all"
-                            style={
-                              topControls
-                                ? {
-                                    left: `${topControls.left}%`,
-                                    bottom: `${topControls.bottom}rem`,
-                                    width: `${topControls.width}rem`,
-                                    position: "absolute",
-                                    transform: "translateX(-50%)",
-                                    zIndex: 30,
-                                    objectFit: "contain",
-                                    boxShadow: activeAdjust === "top" ? "0 0 0 2px #64748b" : undefined,
-                                  }
-                                : {
-                                    width: `${DEFAULT_LAYOUT.top.width}rem`,
-                                    objectFit: "contain",
-                                    boxShadow: activeAdjust === "top" ? "0 0 0 2px #64748b" : undefined,
-                                  }
-                            }
-                            onClick={() => setActiveAdjust(activeAdjust === "top" ? null : "top")}
-                          />
-                        )}
-
-                        {/* Empty state */}
-                        {!selectedTop && !selectedBottom && !selectedOuterwear && (
-                          <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
-                            <div className="text-center">
-                              <p className="text-lg font-semibold mb-2">No items selected</p>
-                              <p className="text-sm">Select items to preview</p>
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Side - Item Selection & Adjustment Panel */}
-              <div className="order-1 lg:order-2 space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Select Your Pieces</h3>
-
-                {/* Outerwear Selection */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Card
-                    className={`cursor-pointer transition-all duration-300 ${
-                      selectedOuterwear
-                        ? "ring-2 ring-blue-500 shadow-lg bg-blue-50 dark:bg-blue-900/20"
-                        : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
-                    }`}
-                    onClick={() => setShowOuterwearSelectModal(true)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                          {selectedOuterwear ? (
-                            <img
-                              src={selectedOuterwear.url || "/placeholder.svg"}
-                              alt={selectedOuterwear.name || "Outerwear"}
-                              className="w-full h-full object-contain rounded-lg"
-                            />
-                          ) : (
-                            <span className="text-2xl text-slate-400">🧥</span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-white">
-                            {selectedOuterwear ? selectedOuterwear.name || "Selected Outerwear" : "Outerwear"}
-                          </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {selectedOuterwear ? "Click to change" : "Optional - Click to select"}
-                          </p>
-                          {selectedOuterwear?.mode === "wishlist" && (
-                            <Badge className="mt-1 bg-amber-500">Wishlist</Badge>
-                          )}
-                        </div>
-                        {!selectedOuterwear && <Plus className="w-5 h-5 text-slate-400" />}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                {/* Top Selection */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Card
-                    className={`cursor-pointer transition-all duration-300 ${
-                      selectedTop
-                        ? "ring-2 ring-green-500 shadow-lg bg-green-50 dark:bg-green-900/20"
-                        : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50/50 dark:hover:bg-green-900/10"
-                    }`}
-                    onClick={() => setShowTopSelectModal(true)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                          {selectedTop ? (
-                            <img
-                              src={selectedTop.url || "/placeholder.svg"}
-                              alt={selectedTop.name || "Top"}
-                              className="w-full h-full object-contain rounded-lg"
-                            />
-                          ) : (
-                            <span className="text-2xl text-slate-400">👕</span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-white">
-                            {selectedTop ? selectedTop.name || "Selected Top" : "Top"}
-                          </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {selectedTop ? "Click to change" : "Required - Click to select"}
-                          </p>
-                          {selectedTop?.mode === "wishlist" && <Badge className="mt-1 bg-amber-500">Wishlist</Badge>}
-                        </div>
-                        {!selectedTop && <Plus className="w-5 h-5 text-slate-400" />}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                {/* Bottom Selection */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Card
-                    className={`cursor-pointer transition-all duration-300 ${
-                      selectedBottom
-                        ? "ring-2 ring-purple-500 shadow-lg bg-purple-50 dark:bg-purple-900/20"
-                        : "border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/10"
-                    }`}
-                    onClick={() => setShowBottomSelectModal(true)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                          {selectedBottom ? (
-                            <img
-                              src={selectedBottom.url || "/placeholder.svg"}
-                              alt={selectedBottom.name || "Bottom"}
-                              className="w-full h-full object-contain rounded-lg"
-                            />
-                          ) : (
-                            <span className="text-2xl text-slate-400">👖</span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-white">
-                            {selectedBottom ? selectedBottom.name || "Selected Bottom" : "Bottom"}
-                          </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {selectedBottom ? "Click to change" : "Required - Click to select"}
-                          </p>
-                          {selectedBottom?.mode === "wishlist" && <Badge className="mt-1 bg-amber-500">Wishlist</Badge>}
-                        </div>
-                        {!selectedBottom && <Plus className="w-5 h-5 text-slate-400" />}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                {/* Adjustment Panel - Now positioned here */}
-                {activeAdjust && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
-                    <Card className="border-2 border-slate-300 dark:border-slate-600">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-2">
-                            <Move className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium text-slate-900 dark:text-white">
-                              Adjust{" "}
-                              {activeAdjust === "top" ? "Top" : activeAdjust === "bottom" ? "Bottom" : "Outerwear"}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                if (activeAdjust === "top") setTopControls(null)
-                                if (activeAdjust === "bottom") setBottomControls(null)
-                                if (activeAdjust === "outerwear") setOuterwearControls(null)
-                              }}
-                              className="h-8 px-2"
-                            >
-                              <RotateCcw className="w-3 h-3 mr-1" />
-                              Reset
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setActiveAdjust(null)}
-                              className="h-8 px-2"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          {activeAdjust === "top" && (
-                            <>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Position
-                                  </label>
-                                  <span className="text-xs text-slate-500">
-                                    {topControls?.left ?? DEFAULT_LAYOUT.top.left}%
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={100}
-                                  step={1}
-                                  value={[topControls?.left ?? DEFAULT_LAYOUT.top.left]}
-                                  onValueChange={([v]) => {
-                                    setTopControls((prev) => ({
-                                      left: v,
-                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.top.bottom,
-                                      width: prev?.width ?? DEFAULT_LAYOUT.top.width,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Height
-                                  </label>
-                                  <span className="text-xs text-slate-500">
-                                    {topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom}rem
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={20}
-                                  step={0.1}
-                                  value={[topControls?.bottom ?? DEFAULT_LAYOUT.top.bottom]}
-                                  onValueChange={([v]) => {
-                                    setTopControls((prev) => ({
-                                      left: prev?.left ?? DEFAULT_LAYOUT.top.left,
-                                      bottom: v,
-                                      width: prev?.width ?? DEFAULT_LAYOUT.top.width,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Size</label>
-                                  <span className="text-xs text-slate-500">
-                                    {topControls?.width ?? DEFAULT_LAYOUT.top.width}rem
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={6}
-                                  max={12}
-                                  step={0.1}
-                                  value={[topControls?.width ?? DEFAULT_LAYOUT.top.width]}
-                                  onValueChange={([v]) => {
-                                    setTopControls((prev) => ({
-                                      left: prev?.left ?? DEFAULT_LAYOUT.top.left,
-                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.top.bottom,
-                                      width: v,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                            </>
-                          )}
-
-                          {activeAdjust === "bottom" && (
-                            <>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Position
-                                  </label>
-                                  <span className="text-xs text-slate-500">
-                                    {bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left}%
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={100}
-                                  step={1}
-                                  value={[bottomControls?.left ?? DEFAULT_LAYOUT.bottom.left]}
-                                  onValueChange={([v]) => {
-                                    setBottomControls((prev) => ({
-                                      left: v,
-                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
-                                      width: prev?.width ?? DEFAULT_LAYOUT.bottom.width,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Height
-                                  </label>
-                                  <span className="text-xs text-slate-500">
-                                    {bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom}rem
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={20}
-                                  step={0.1}
-                                  value={[bottomControls?.bottom ?? DEFAULT_LAYOUT.bottom.bottom]}
-                                  onValueChange={([v]) => {
-                                    setBottomControls((prev) => ({
-                                      left: prev?.left ?? DEFAULT_LAYOUT.bottom.left,
-                                      bottom: v,
-                                      width: prev?.width ?? DEFAULT_LAYOUT.bottom.width,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Size</label>
-                                  <span className="text-xs text-slate-500">
-                                    {bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width}rem
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={6}
-                                  max={12}
-                                  step={0.1}
-                                  value={[bottomControls?.width ?? DEFAULT_LAYOUT.bottom.width]}
-                                  onValueChange={([v]) => {
-                                    setBottomControls((prev) => ({
-                                      left: prev?.left ?? DEFAULT_LAYOUT.bottom.left,
-                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
-                                      width: v,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                            </>
-                          )}
-
-                          {activeAdjust === "outerwear" && (
-                            <>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Position
-                                  </label>
-                                  <span className="text-xs text-slate-500">
-                                    {outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left}%
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={100}
-                                  step={1}
-                                  value={[outerwearControls?.left ?? DEFAULT_LAYOUT.outerwear.left]}
-                                  onValueChange={([v]) => {
-                                    setOuterwearControls((prev) => ({
-                                      left: v,
-                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
-                                      width: prev?.width ?? DEFAULT_LAYOUT.outerwear.width,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Height
-                                  </label>
-                                  <span className="text-xs text-slate-500">
-                                    {outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom}rem
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={20}
-                                  step={0.1}
-                                  value={[outerwearControls?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom]}
-                                  onValueChange={([v]) => {
-                                    setOuterwearControls((prev) => ({
-                                      left: prev?.left ?? DEFAULT_LAYOUT.outerwear.left,
-                                      bottom: v,
-                                      width: prev?.width ?? DEFAULT_LAYOUT.outerwear.width,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Size</label>
-                                  <span className="text-xs text-slate-500">
-                                    {outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width}rem
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={6}
-                                  max={12}
-                                  step={0.1}
-                                  value={[outerwearControls?.width ?? DEFAULT_LAYOUT.outerwear.width]}
-                                  onValueChange={([v]) => {
-                                    setOuterwearControls((prev) => ({
-                                      left: prev?.left ?? DEFAULT_LAYOUT.outerwear.left,
-                                      bottom: prev?.bottom ?? DEFAULT_LAYOUT.outerwear.bottom,
-                                      width: v,
-                                    }))
-                                  }}
-                                  className="w-full"
-                                />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              {isFormValid() ? (
-                <div className="flex items-center text-green-600 dark:text-green-400">
-                  <Check className="w-4 h-4 mr-1" />
-                  Ready to create
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: "spring", duration: 0.3 }}
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create New Outfit</h2>
+                  <p className="text-slate-600 dark:text-slate-400 mt-1">
+                    Mix and match your clothing items with drag & drop positioning
+                  </p>
                 </div>
-              ) : (
-                "Select at least a top and bottom"
+                <div className="flex items-center space-x-3">
+                  <Button variant="outline" onClick={shuffleOutfit} disabled={loadingClothing}>
+                    <Shuffle className="w-4 h-4 mr-2" />
+                    Shuffle
+                  </Button>
+                  <Button variant="outline" onClick={resetLayout}>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reset Layout
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex h-[calc(95vh-180px)]">
+              {/* Left Panel - Item Selection */}
+              <div className="w-80 border-r border-slate-200 dark:border-slate-700 p-6 overflow-y-auto">
+                <div className="space-y-6">
+                  {/* Top Selection */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Top *
+                    </label>
+                    {selectedTop ? (
+                      <div className="relative">
+                        <img src={selectedTop.url} alt={selectedTop.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                          onClick={() => removeItem("top")}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                          {selectedTop.name || "Unnamed Top"}
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400"
+                        onClick={() => setShowTopSelectModal(true)}
+                        disabled={loadingClothing}
+                      >
+                        <Plus className="w-6 h-6 mr-2" />
+                        Select Top
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Bottom Selection */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Bottom *
+                    </label>
+                    {selectedBottom ? (
+                      <div className="relative">
+                        <img src={selectedBottom.url} alt={selectedBottom.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                          onClick={() => removeItem("bottom")}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                          {selectedBottom.name || "Unnamed Bottom"}
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400"
+                        onClick={() => setShowBottomSelectModal(true)}
+                        disabled={loadingClothing}
+                      >
+                        <Plus className="w-6 h-6 mr-2" />
+                        Select Bottom
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Outerwear Selection */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Outerwear
+                    </label>
+                    {selectedOuterwear ? (
+                      <div className="relative">
+                        <img src={selectedOuterwear.url} alt={selectedOuterwear.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                          onClick={() => removeItem("outerwear")}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                          {selectedOuterwear.name || "Unnamed Outerwear"}
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400"
+                        onClick={() => setShowOuterwearSelectModal(true)}
+                        disabled={loadingClothing}
+                      >
+                        <Plus className="w-6 h-6 mr-2" />
+                        Add Outerwear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Center Panel - Outfit Preview */}
+              <div className="flex-1 flex flex-col">
+                <div className="flex-1 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-8 flex items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={animationKey}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ type: "spring", duration: 0.4 }}
+                    >
+                      {renderOutfitDisplay()}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Right Panel - Controls */}
+              {selectedItemForResize && (
+                <div className="w-80 border-l border-slate-200 dark:border-slate-700 p-6 overflow-y-auto">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                    Item Controls
+                  </h3>
+                  
+                  {(() => {
+                    const selectedOutfitItem = outfitItems.find(item => item.item.id === selectedItemForResize)
+                    if (!selectedOutfitItem) return null
+
+                    return (
+                      <div className="space-y-4">
+                        <div className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                          Editing: {selectedOutfitItem.item.name || "Unnamed Item"}
+                        </div>
+                        
+                        {/* Width Control */}
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Size: {selectedOutfitItem.width.toFixed(1)}rem
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleWidthChange(selectedItemForResize, Math.max(6, selectedOutfitItem.width - 0.5))}
+                            >
+                              <ZoomOut className="w-4 h-4" />
+                            </Button>
+                            <div className="flex-1 px-2">
+                              <input
+                                type="range"
+                                min="6"
+                                max="15"
+                                step="0.1"
+                                value={selectedOutfitItem.width}
+                                onChange={(e) => handleWidthChange(selectedItemForResize, parseFloat(e.target.value))}
+                                className="w-full"
+                              />
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleWidthChange(selectedItemForResize, Math.min(15, selectedOutfitItem.width + 0.5))}
+                            >
+                              <ZoomIn className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Position Info */}
+                        <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
+                          <div>Position: {selectedOutfitItem.left.toFixed(1)}%, {selectedOutfitItem.bottom.toFixed(1)}rem</div>
+                          <div className="mt-1 text-xs">Drag the item to reposition</div>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setSelectedItemForResize(null)}
+                        >
+                          Done Editing
+                        </Button>
+                      </div>
+                    )
+                  })()}
+                </div>
               )}
             </div>
-            <div className="flex space-x-3">
-              <Button variant="outline" onClick={handleCloseModal}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateOutfit}
-                disabled={!isFormValid() || isCreating}
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-              >
-                {isCreating ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                      className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"
-                    />
-                    Creating...
-                  </>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                {isFormValid() ? (
+                  <div className="flex items-center text-green-600 dark:text-green-400">
+                    <Check className="w-4 h-4 mr-1" />
+                    Ready to create
+                  </div>
                 ) : (
-                  "Create Outfit"
+                  "Select at least a top and bottom"
                 )}
-              </Button>
+              </div>
+              <div className="flex space-x-3">
+                <Button variant="outline" onClick={handleCloseModal}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateOutfit}
+                  disabled={!isFormValid() || isCreating}
+                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                >
+                  {isCreating ? "Creating..." : "Create Outfit"}
+                </Button>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
+      </AnimatePresence>
 
-        {/* Selection Modals */}
-        <ClothingItemSelectModal
-          isOpen={showOuterwearSelectModal}
-          onCloseAction={() => setShowOuterwearSelectModal(false)}
-          clothingItems={[
-            ...clothingItems.outerwear,
-            { id: "none", url: "", name: "Select None", mode: "closet" as const },
-          ]}
-          onSelectItem={(item) => {
-            setSelectedOuterwear(item.id === "none" ? null : item)
-            setOuterwearControls(null)
-            setShowOuterwearSelectModal(false)
-            setAnimationKey((prev) => prev + 1)
-          }}
-          viewMode={clothingItems.outerwear.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
-          selectedCategory="outerwear"
-        />
+      {/* Selection Modals */}
+      <ClothingItemSelectModal
+        isOpen={showTopSelectModal}
+        onCloseAction={() => setShowTopSelectModal(false)}
+        clothingItems={clothingItems.tops}
+        onSelectItem={(item) => handleItemSelect("top", item)}
+        viewMode="closet"
+        selectedCategory="top"
+      />
 
-        <ClothingItemSelectModal
-          isOpen={showTopSelectModal}
-          onCloseAction={() => setShowTopSelectModal(false)}
-          clothingItems={clothingItems.tops}
-          onSelectItem={(item) => {
-            setSelectedTop(item)
-            setTopControls(null)
-            setShowTopSelectModal(false)
-            setAnimationKey((prev) => prev + 1)
-          }}
-          viewMode={clothingItems.tops.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
-          selectedCategory="top"
-        />
+      <ClothingItemSelectModal
+        isOpen={showBottomSelectModal}
+        onCloseAction={() => setShowBottomSelectModal(false)}
+        clothingItems={clothingItems.bottoms}
+        onSelectItem={(item) => handleItemSelect("bottom", item)}
+        viewMode="closet"
+        selectedCategory="bottom"
+      />
 
-        <ClothingItemSelectModal
-          isOpen={showBottomSelectModal}
-          onCloseAction={() => setShowBottomSelectModal(false)}
-          clothingItems={clothingItems.bottoms}
-          onSelectItem={(item) => {
-            setSelectedBottom(item)
-            setBottomControls(null)
-            setShowBottomSelectModal(false)
-            setAnimationKey((prev) => prev + 1)
-          }}
-          viewMode={clothingItems.bottoms.filter((item) => item.mode === "closet").length > 0 ? "closet" : "wishlist"}
-          selectedCategory="bottom"
-        />
-      </motion.div>
-    </AnimatePresence>
+      <ClothingItemSelectModal
+        isOpen={showOuterwearSelectModal}
+        onCloseAction={() => setShowOuterwearSelectModal(false)}
+        clothingItems={[
+          ...clothingItems.outerwear,
+          { id: "none", url: "", name: "Select None", mode: "closet" as const, type: "jacket" },
+        ]}
+        onSelectItem={(item) => {
+          if (item.id === "none") {
+            setSelectedOuterwear(null)
+          } else {
+            handleItemSelect("outerwear", item)
+          }
+          setShowOuterwearSelectModal(false)
+        }}
+        viewMode="closet"
+        selectedCategory="outerwear"
+      />
+    </>
   )
 }
