@@ -167,7 +167,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 rounded-full flex items-center justify-center">
                 <Folder className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -226,7 +226,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                     <Button
                       onClick={handleNameNext}
                       disabled={!occasionName.trim()}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8"
                     >
                       Next: Select Outfits
                     </Button>
@@ -300,7 +300,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                             <Card
                               className={`cursor-pointer transition-all duration-200 ${
                                 selectedOutfitIds.includes(outfit.id)
-                                  ? "ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                                  ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20"
                                   : "hover:ring-2 hover:ring-slate-300 dark:hover:ring-slate-600"
                               }`}
                               onClick={() => toggleOutfitSelection(outfit.id)}
@@ -338,7 +338,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                     <div
                                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                         selectedOutfitIds.includes(outfit.id)
-                                          ? "bg-purple-500 border-purple-500"
+                                          ? "bg-blue-500 border-blue-500"
                                           : "bg-white border-slate-300 dark:bg-slate-700 dark:border-slate-600"
                                       }`}
                                     >
@@ -380,7 +380,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 {selectedOutfitIds.length === 0 ? (
                   "You can create an empty folder and add outfits later"
                 ) : (
-                  <div className="flex items-center text-purple-600 dark:text-purple-400">
+                  <div className="flex items-center text-slate-600 dark:text-slate-400">
                     <Check className="w-4 h-4 mr-1" />
                     {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
                   </div>
@@ -393,7 +393,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 <Button
                   onClick={handleCreateOccasion}
                   disabled={isCreating}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900"
                 >
                   {isCreating ? (
                     <>
