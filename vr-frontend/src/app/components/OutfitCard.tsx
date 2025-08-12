@@ -563,7 +563,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   className="cursor-pointer"
                   onClick={() => onItemSelect("bottom")}
                 >
-                  <Card className="h-24 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-all duration-200 hover:shadow-md">
+                  <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.bottom ? (
                         <img
@@ -573,8 +573,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                         />
                       ) : (
                         <div className="text-center">
-                          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg mx-auto mb-1 flex items-center justify-center">
-                            <Shirt className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg mx-auto mb-1 flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <span className="text-xs text-slate-600 dark:text-slate-400">Bottom</span>
                         </div>
@@ -673,7 +673,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex space-x-2 flex-wrap">
                 {outfit.occasion && (
-                  <Badge variant="secondary" className="text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                  <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                     {outfit.occasion}
                   </Badge>
                 )}

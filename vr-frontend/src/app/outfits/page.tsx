@@ -463,13 +463,13 @@ export default function OutfitsPage() {
                   >
                     <div
                       onClick={() => setShowCreateModal(true)}
-                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:via-white hover:to-purple-50 dark:hover:from-slate-800 dark:hover:via-slate-700 dark:hover:to-slate-800 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
+                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-50 hover:via-white hover:to-blue-50 dark:hover:from-slate-800 dark:hover:via-slate-700 dark:hover:to-slate-800 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
                     >
                       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                          <Plus className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                          <Plus className="w-10 h-10 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <span className="text-base font-semibold text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                        <span className="text-base font-semibold text-slate-700 dark:text-slate-300 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                           Create Outfit
                         </span>
                         <span className="text-sm text-slate-500 dark:text-slate-500 mt-1">
@@ -535,12 +535,12 @@ export default function OutfitsPage() {
                       >
                         <div
                           onClick={() => setShowCreateOccasionModal(true)}
-                          className="h-full bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950 dark:via-slate-900 dark:to-pink-950 border-2 border-dashed border-purple-300 dark:border-purple-600 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-100 hover:via-white hover:to-pink-100 dark:hover:from-purple-900 dark:hover:via-slate-800 dark:hover:to-pink-900 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
+                          className="h-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-blue-950 dark:via-slate-900 dark:to-indigo-950 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-100 hover:via-white hover:to-indigo-100 dark:hover:from-blue-900 dark:hover:via-slate-800 dark:hover:to-indigo-900 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
                         >
-                          <div className="w-20 h-20 bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-800 dark:to-pink-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                            <Plus className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+                          <div className="w-20 h-20 bg-gradient-to-br from-blue-200 to-indigo-200 dark:from-blue-800 dark:to-indigo-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                            <Plus className="w-10 h-10 text-blue-600 dark:text-blue-400" />
                           </div>
-                          <span className="text-lg font-semibold text-purple-700 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors text-center">
+                          <span className="text-lg font-semibold text-blue-700 dark:text-blue-300 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors text-center">
                             Create New Folder
                           </span>
                         </div>

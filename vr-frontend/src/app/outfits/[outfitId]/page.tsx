@@ -422,7 +422,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           animate={{ opacity: 1, scale: 1 }} 
           className="text-center"
         >
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <Sparkles className="w-8 h-8 text-white animate-pulse" />
           </div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Loading outfit...</h2>
@@ -463,7 +463,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           <Button 
             onClick={() => router.push("/outfits")} 
             variant="outline" 
-            className="group border-slate-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950"
+            className="group border-slate-200 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
           >
             <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
             Back to Outfits
@@ -480,7 +480,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             className="xl:col-span-3"
           >
             <Card className="shadow-xl border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800">
-              <div className="bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950/30 dark:via-slate-800 dark:to-pink-950/30 p-8 relative">{/* Made relative for overlay positioning */}
+              <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-blue-950/30 dark:via-slate-800 dark:to-indigo-950/30 p-8 relative">{/* Made relative for overlay positioning */}
                 <OutfitCard 
                   outfit={outfit}
                   isDetailView={true}
@@ -505,13 +505,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           >
             {/* Header Card */}
             <Card className="shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-br from-purple-500 to-pink-500 text-white pb-6">
+              <CardHeader className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white pb-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-2xl font-bold mb-2">
                       {outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || 'Unknown'}`}
                     </CardTitle>
-                    <p className="text-purple-100 text-sm">
+                    <p className="text-blue-100 text-sm">
                       {isEditing ? "Edit your outfit details" : "View and manage your outfit"}
                     </p>
                   </div>
@@ -561,7 +561,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                     </>
                   ) : (
                     <>
-                      <Button onClick={handleEdit} className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                      <Button onClick={handleEdit} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
                         <Edit3 className="w-4 h-4 mr-2" />
                         Edit Outfit
                       </Button>
@@ -582,7 +582,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             <Card className="shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-2xl">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center space-x-2 text-lg">
-                  <Shirt className="w-5 h-5 text-purple-600" />
+                  <Shirt className="w-5 h-5 text-blue-600" />
                   <span>{isEditing ? "Change Items" : `Items (${getCurrentItems().length})`}</span>
                 </CardTitle>
               </CardHeader>
@@ -678,7 +678,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       className="cursor-pointer"
                       onClick={() => handleOpenSelectModal("bottom")}
                     >
-                      <div className="h-20 border-2 border-dashed border-purple-300 hover:border-purple-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-purple-50 dark:bg-purple-950/30 p-3">
+                      <div className="h-20 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 p-3">
                         {editedCategorizedItems?.bottom ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -689,22 +689,22 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-purple-900 dark:text-purple-100 truncate">
+                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
                                 {editedCategorizedItems.bottom.name || "Bottom"}
                               </p>
-                              <p className="text-xs text-purple-600 dark:text-purple-400 capitalize">
+                              <p className="text-xs text-blue-600 dark:text-blue-400 capitalize">
                                 {editedCategorizedItems.bottom.type}
                               </p>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-purple-200 dark:bg-purple-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Shirt className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                            <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Shirt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Add Bottom</p>
-                              <p className="text-xs text-purple-600 dark:text-purple-400">Click to select</p>
+                              <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Add Bottom</p>
+                              <p className="text-xs text-blue-600 dark:text-blue-400">Click to select</p>
                             </div>
                           </div>
                         )}
