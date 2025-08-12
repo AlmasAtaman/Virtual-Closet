@@ -243,7 +243,7 @@ export default function OccasionCard({
       >
         <CardContent className="p-0 h-full flex flex-col">
           {/* Folder Preview Area */}
-          <div className="flex-1 relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 overflow-hidden">
+          <div className="flex-1 relative bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 overflow-hidden">
             {occasion.customThumbnail ? (
               <div className="relative w-full h-full">
                 <img
@@ -287,8 +287,8 @@ export default function OccasionCard({
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <Folder className="w-16 h-16 text-purple-300 dark:text-purple-700 mx-auto mb-3" />
-                  <p className="text-sm text-purple-400 dark:text-purple-600 font-medium">Empty Folder</p>
+                  <Folder className="w-16 h-16 text-blue-300 dark:text-blue-700 mx-auto mb-3" />
+                  <p className="text-sm text-blue-400 dark:text-blue-600 font-medium">Empty Folder</p>
                 </div>
               </div>
             )}
@@ -402,7 +402,7 @@ export default function OccasionCard({
                 </p>
               </div>
               <div className="flex items-center gap-1 ml-2">
-                <Folder className="w-4 h-4 text-purple-500" />
+                <Folder className="w-4 h-4 text-blue-500" />
               </div>
             </div>
           </div>
