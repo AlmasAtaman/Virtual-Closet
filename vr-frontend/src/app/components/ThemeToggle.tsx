@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Moon, Sun, Monitor } from "lucide-react"
+import { Moon, Sun, Monitor, Chrome } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTheme } from "../contexts/ThemeContext"
 
@@ -19,6 +19,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   const themeOptions = [
     { value: "light", label: "Light", icon: Sun },
     { value: "dark", label: "Dark", icon: Moon },
+    { value: "chrome", label: "Chrome", icon: Chrome },
     { value: "system", label: "System", icon: Monitor },
   ]
 
@@ -32,6 +33,19 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  const getCurrentIcon = () => {
+    switch (resolvedTheme) {
+      case "light":
+        return <Sun className="h-4 w-4" />
+      case "dark":
+        return <Moon className="h-4 w-4" />
+      case "chrome":
+        return <Chrome className="h-4 w-4" />
+      default:
+        return <Sun className="h-4 w-4" />
+    }
+  }
+
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <button
@@ -39,29 +53,16 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
         className="relative h-9 w-9 rounded-full hover:bg-accent hover:text-accent-foreground transition-all duration-200 flex items-center justify-center"
       >
         <AnimatePresence mode="wait">
-          {resolvedTheme === "light" ? (
-            <motion.div
-              key="sun"
-              variants={iconVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            >
-              <Sun className="h-4 w-4" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="moon"
-              variants={iconVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            >
-              <Moon className="h-4 w-4" />
-            </motion.div>
-          )}
+          <motion.div
+            key={resolvedTheme}
+            variants={iconVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          >
+            {getCurrentIcon()}
+          </motion.div>
         </AnimatePresence>
         <span className="sr-only">Toggle theme</span>
       </button>
@@ -109,39 +110,52 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 export function SimpleThemeToggle({ className = "" }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme()
 
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === "light" ? "dark" : "light")
+  const cycleTheme = () => {
+    switch (resolvedTheme) {
+      case "light":
+        setTheme("dark")
+        break
+      case "dark":
+        setTheme("chrome")
+        break
+      case "chrome":
+        setTheme("light")
+        break
+      default:
+        setTheme("light")
+    }
+  }
+
+  const getCurrentIcon = () => {
+    switch (resolvedTheme) {
+      case "light":
+        return <Sun className="h-4 w-4" />
+      case "dark":
+        return <Moon className="h-4 w-4" />
+      case "chrome":
+        return <Chrome className="h-4 w-4" />
+      default:
+        return <Sun className="h-4 w-4" />
+    }
   }
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={cycleTheme}
       className={`relative h-9 w-9 rounded-full hover:bg-accent hover:text-accent-foreground transition-all duration-200 flex items-center justify-center ${className}`}
     >
       <AnimatePresence mode="wait">
-        {resolvedTheme === "light" ? (
-          <motion.div
-            key="sun"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0, rotate: 180 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          >
-            <Sun className="h-4 w-4" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="moon"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0, rotate: 180 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          >
-            <Moon className="h-4 w-4" />
-          </motion.div>
-        )}
+        <motion.div
+          key={resolvedTheme}
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          exit={{ scale: 0, rotate: 180 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          {getCurrentIcon()}
+        </motion.div>
       </AnimatePresence>
-      <span className="sr-only">Toggle theme</span>
+      <span className="sr-only">Cycle theme</span>
     </button>
   )
 }

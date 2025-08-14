@@ -162,10 +162,8 @@ export default function OutfitsPage() {
   }
 
   const toggleOutfitSelection = (outfitId: string) => {
-    setSelectedOutfitIds((prev) => 
-      prev.includes(outfitId) 
-        ? prev.filter((id) => id !== outfitId) 
-        : [...prev, outfitId]
+    setSelectedOutfitIds((prev) =>
+      prev.includes(outfitId) ? prev.filter((id) => id !== outfitId) : [...prev, outfitId],
     )
   }
 
@@ -177,10 +175,8 @@ export default function OutfitsPage() {
   }
 
   const toggleOccasionSelection = (occasionId: string) => {
-    setSelectedOccasionIds((prev) => 
-      prev.includes(occasionId) 
-        ? prev.filter((id) => id !== occasionId) 
-        : [...prev, occasionId]
+    setSelectedOccasionIds((prev) =>
+      prev.includes(occasionId) ? prev.filter((id) => id !== occasionId) : [...prev, occasionId],
     )
   }
 
@@ -189,15 +185,15 @@ export default function OutfitsPage() {
 
     try {
       setIsDeleting(true)
-      
+
       // Delete outfits in parallel
       await Promise.all(
         selectedOutfitIds.map((outfitId) =>
           fetch(`http://localhost:8000/api/outfits/${outfitId}`, {
             method: "DELETE",
             credentials: "include",
-          })
-        )
+          }),
+        ),
       )
 
       // Update frontend state
@@ -215,21 +211,25 @@ export default function OutfitsPage() {
   const handleDeleteSelectedOccasions = async () => {
     if (selectedOccasionIds.length === 0) return
 
-    if (!confirm(`Are you sure you want to delete ${selectedOccasionIds.length} folder${selectedOccasionIds.length > 1 ? 's' : ''}? This will remove the folders but keep your outfits.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedOccasionIds.length} folder${selectedOccasionIds.length > 1 ? "s" : ""}? This will remove the folders but keep your outfits.`,
+      )
+    ) {
       return
     }
 
     try {
       setIsDeleting(true)
-      
+
       // Delete occasions in parallel
       await Promise.all(
         selectedOccasionIds.map((occasionId) =>
           fetch(`http://localhost:8000/api/occasions/${occasionId}`, {
             method: "DELETE",
             credentials: "include",
-          })
-        )
+          }),
+        ),
       )
 
       // Update frontend state
@@ -255,7 +255,7 @@ export default function OutfitsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-background dark:bg-background chrome:bg-background">
       {/* Navbar */}
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
@@ -276,7 +276,7 @@ export default function OutfitsPage() {
           <Button
             variant="ghost"
             onClick={handleBackToDashboard}
-            className="flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700 chrome:border-border px-4 py-2 text-sm text-slate-700 dark:text-slate-300 chrome:text-foreground bg-white dark:bg-slate-800 chrome:bg-card hover:bg-slate-100 dark:hover:bg-slate-700 chrome:hover:bg-accent transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Closet
@@ -293,13 +293,13 @@ export default function OutfitsPage() {
             <TabsList className="grid w-full grid-cols-2 bg-muted rounded-full overflow-hidden p-1">
               <TabsTrigger
                 value="outfits"
-                className="rounded-full data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:font-semibold text-muted-foreground"
+                className="rounded-full data-[state=active]:bg-white data-[state=active]:text-black chrome:data-[state=active]:bg-accent chrome:data-[state=active]:text-accent-foreground data-[state=active]:font-semibold text-muted-foreground"
               >
                 Outfits
               </TabsTrigger>
               <TabsTrigger
                 value="occasions"
-                className="rounded-full data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:font-semibold text-muted-foreground"
+                className="rounded-full data-[state=active]:bg-white data-[state=active]:text-black chrome:data-[state=active]:bg-accent chrome:data-[state=active]:text-accent-foreground data-[state=active]:font-semibold text-muted-foreground"
               >
                 Occasions
               </TabsTrigger>
@@ -317,10 +317,7 @@ export default function OutfitsPage() {
             </div>
 
             <div className="flex gap-2 items-center">
-              <Button
-                variant={isMultiSelecting ? "destructive" : "outline"}
-                onClick={toggleMultiSelect}
-              >
+              <Button variant={isMultiSelecting ? "destructive" : "outline"} onClick={toggleMultiSelect}>
                 {isMultiSelecting ? (
                   <>
                     <X className="h-4 w-4 mr-1" />
@@ -377,16 +374,11 @@ export default function OutfitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4">
+              <div className="bg-white dark:bg-slate-800 chrome:bg-card rounded-full shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium">
-                  {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? 's' : ''} selected
+                  {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? "s" : ""} selected
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAddToFolderModal(true)}
-                  className="gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowAddToFolderModal(true)} className="gap-2">
                   <Folder className="h-4 w-4" />
                   Add to Folder
                 </Button>
@@ -397,11 +389,7 @@ export default function OutfitsPage() {
                   disabled={isDeleting}
                   className="gap-2"
                 >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   Delete
                 </Button>
               </div>
@@ -415,9 +403,9 @@ export default function OutfitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4">
+              <div className="bg-white dark:bg-slate-800 chrome:bg-card rounded-full shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium">
-                  {selectedOccasionIds.length} folder{selectedOccasionIds.length > 1 ? 's' : ''} selected
+                  {selectedOccasionIds.length} folder{selectedOccasionIds.length > 1 ? "s" : ""} selected
                 </span>
                 <Button
                   variant="destructive"
@@ -426,11 +414,7 @@ export default function OutfitsPage() {
                   disabled={isDeleting}
                   className="gap-2"
                 >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   Delete Folders
                 </Button>
               </div>
@@ -451,7 +435,10 @@ export default function OutfitsPage() {
               {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
                   {Array.from({ length: 10 }).map((_, index) => (
-                    <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shadow-lg" />
+                    <div
+                      key={index}
+                      className="aspect-[3/4] bg-card dark:bg-card chrome:bg-card rounded-xl animate-pulse shadow-lg"
+                    />
                   ))}
                 </div>
               ) : (
@@ -465,16 +452,16 @@ export default function OutfitsPage() {
                   >
                     <div
                       onClick={() => setShowCreateModal(true)}
-                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-50 hover:via-white hover:to-blue-50 dark:hover:from-slate-800 dark:hover:via-slate-700 dark:hover:to-slate-800 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
+                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 chrome:from-card chrome:via-background chrome:to-muted border-2 border-dashed border-border dark:border-slate-600 chrome:border-border rounded-xl hover:border-slate-400 dark:hover:border-slate-500 chrome:hover:border-primary hover:bg-gradient-to-br hover:from-slate-100 hover:via-white hover:to-slate-200 dark:hover:from-slate-700 dark:hover:via-slate-800 dark:hover:to-slate-700 chrome:hover:from-accent chrome:hover:via-muted chrome:hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
                     >
                       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                          <Plus className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 chrome:from-secondary chrome:to-accent rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                          <Plus className="w-10 h-10 text-slate-600 dark:text-slate-300 chrome:text-primary" />
                         </div>
-                        <span className="text-base font-semibold text-slate-700 dark:text-slate-300 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                        <span className="text-base font-semibold text-foreground dark:text-foreground chrome:text-foreground group-hover:text-slate-800 dark:group-hover:text-slate-100 chrome:group-hover:text-primary transition-colors">
                           Create Outfit
                         </span>
-                        <span className="text-sm text-slate-500 dark:text-slate-500 mt-1">
+                        <span className="text-sm text-muted-foreground dark:text-muted-foreground chrome:text-muted-foreground mt-1">
                           Design your look
                         </span>
                       </div>
@@ -524,7 +511,10 @@ export default function OutfitsPage() {
                   {occasionsLoading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                       {Array.from({ length: 6 }).map((_, index) => (
-                        <div key={index} className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse shadow-lg" />
+                        <div
+                          key={index}
+                          className="aspect-square bg-card dark:bg-card chrome:bg-card rounded-xl animate-pulse shadow-lg"
+                        />
                       ))}
                     </div>
                   ) : (
@@ -537,12 +527,12 @@ export default function OutfitsPage() {
                       >
                         <div
                           onClick={() => setShowCreateOccasionModal(true)}
-                          className="h-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-blue-950 dark:via-slate-900 dark:to-indigo-950 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-100 hover:via-white hover:to-indigo-100 dark:hover:from-blue-900 dark:hover:via-slate-800 dark:hover:to-indigo-900 transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
+                          className="h-full bg-gradient-to-br from-slate-100 via-white to-slate-200 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 chrome:from-secondary chrome:via-background chrome:to-accent border-2 border-dashed border-border dark:border-slate-600 chrome:border-border rounded-xl hover:border-slate-400 dark:hover:border-slate-500 chrome:hover:border-primary hover:bg-gradient-to-br hover:from-slate-200 hover:via-white hover:to-slate-300 dark:hover:from-slate-700 dark:hover:via-slate-800 dark:hover:to-slate-700 chrome:hover:from-accent chrome:hover:via-muted chrome:hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
                         >
-                          <div className="w-20 h-20 bg-gradient-to-br from-blue-200 to-indigo-200 dark:from-blue-800 dark:to-indigo-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                            <Plus className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                          <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 chrome:from-accent chrome:to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                            <Plus className="w-10 h-10 text-slate-600 dark:text-slate-300 chrome:text-primary" />
                           </div>
-                          <span className="text-lg font-semibold text-blue-700 dark:text-blue-300 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors text-center">
+                          <span className="text-lg font-semibold text-foreground dark:text-foreground chrome:text-foreground group-hover:text-slate-800 dark:group-hover:text-slate-100 chrome:group-hover:text-primary transition-colors text-center">
                             Create New Folder
                           </span>
                         </div>
@@ -574,8 +564,10 @@ export default function OutfitsPage() {
                   {!occasionsLoading && occasions.length === 0 && (
                     <div className="text-center py-16 mt-8">
                       <div className="text-6xl mb-4">📁</div>
-                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Occasion Folders Yet</h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                      <h3 className="text-xl font-semibold text-foreground dark:text-foreground chrome:text-foreground mb-2">
+                        No Occasion Folders Yet
+                      </h3>
+                      <p className="text-muted-foreground dark:text-muted-foreground chrome:text-muted-foreground mb-6 max-w-md mx-auto">
                         Create your first occasion folder to organize your outfits by events, seasons, or activities.
                       </p>
                     </div>
@@ -606,7 +598,7 @@ export default function OutfitsPage() {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         title="Delete Selected Outfits"
-        description={`Are you sure you want to delete ${selectedOutfitIds.length} outfit${selectedOutfitIds.length > 1 ? 's' : ''}? This will only delete the outfit records - your clothing items will remain in your closet. This action cannot be undone.`}
+        description={`Are you sure you want to delete ${selectedOutfitIds.length} outfit${selectedOutfitIds.length > 1 ? "s" : ""}? This will only delete the outfit records - your clothing items will remain in your closet. This action cannot be undone.`}
         onConfirm={handleDeleteSelected}
         confirmLabel="Delete"
         cancelLabel="Cancel"

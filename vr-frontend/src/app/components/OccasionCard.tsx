@@ -225,7 +225,7 @@ export default function OccasionCard({
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
               isSelected
                 ? "bg-blue-600 border-blue-600 text-white shadow-lg"
-                : "bg-white border-slate-300 hover:border-blue-400 shadow-md"
+                : "bg-white border-slate-300 hover:border-blue-400 chrome:bg-muted chrome:border-border chrome:hover:border-primary shadow-md"
             }`}
           >
             {isSelected && <Check className="w-4 h-4" />}
@@ -234,16 +234,16 @@ export default function OccasionCard({
       )}
 
       <Card
-        className={`aspect-[3/4] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 group ${
+        className={`aspect-[3/4] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 chrome:bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 group ${
           isSelected
             ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900"
-            : "ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
+            : "ring-slate-200 dark:ring-slate-700 chrome:ring-border hover:ring-slate-300 dark:hover:ring-slate-600 chrome:hover:ring-accent"
         }`}
         onClick={handleCardClick}
       >
         <CardContent className="p-0 h-full flex flex-col">
           {/* Folder Preview Area */}
-          <div className="flex-1 relative bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 overflow-hidden">
+          <div className="flex-1 relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 chrome:from-muted chrome:to-accent overflow-hidden">
             {occasion.customThumbnail ? (
               <div className="relative w-full h-full">
                 <img
@@ -287,8 +287,10 @@ export default function OccasionCard({
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <Folder className="w-16 h-16 text-blue-300 dark:text-blue-700 mx-auto mb-3" />
-                  <p className="text-sm text-blue-400 dark:text-blue-600 font-medium">Empty Folder</p>
+                  <Folder className="w-16 h-16 text-slate-400 dark:text-slate-500 chrome:text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400 chrome:text-muted-foreground font-medium">
+                    Empty Folder
+                  </p>
                 </div>
               </div>
             )}
@@ -301,7 +303,7 @@ export default function OccasionCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-sm"
+                  className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 chrome:bg-card/90 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 chrome:hover:bg-card shadow-sm"
                   onMouseDown={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
@@ -319,7 +321,7 @@ export default function OccasionCard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -5 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    className="absolute right-0 top-9 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[140px] z-50"
+                    className="absolute right-0 top-9 bg-white dark:bg-slate-800 chrome:bg-popover rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border py-1 min-w-[140px] z-50"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Button
@@ -384,7 +386,7 @@ export default function OccasionCard({
               <div className="absolute bottom-3 left-3">
                 <Badge
                   variant="secondary"
-                  className="bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-xs px-2 py-1 backdrop-blur-sm"
+                  className="bg-white/90 dark:bg-slate-800/90 chrome:bg-card/90 text-slate-700 dark:text-slate-300 chrome:text-card-foreground text-xs px-2 py-1 backdrop-blur-sm"
                 >
                   {outfitCount} outfit{outfitCount !== 1 ? "s" : ""}
                 </Badge>
@@ -393,11 +395,13 @@ export default function OccasionCard({
           </div>
 
           {/* Folder Info */}
-          <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+          <div className="p-4 bg-white dark:bg-slate-800 chrome:bg-card border-t border-slate-100 dark:border-slate-700 chrome:border-border">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-white truncate text-sm mb-1">{occasion.name}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <h3 className="font-semibold text-slate-900 dark:text-white chrome:text-card-foreground truncate text-sm mb-1">
+                  {occasion.name}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 chrome:text-muted-foreground">
                   {outfitCount === 0 ? "Empty folder" : `${outfitCount} outfit${outfitCount !== 1 ? "s" : ""}`}
                 </p>
               </div>

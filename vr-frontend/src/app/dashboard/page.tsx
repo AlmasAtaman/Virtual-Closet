@@ -196,10 +196,10 @@ export default function Homepage() {
             {/* Show Favorites Only Toggle */}
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`p-2 rounded-full mr-2 transition-colors ${showFavoritesOnly ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700'}`}
+              className={`p-2 rounded-full mr-2 transition-colors ${showFavoritesOnly ? 'bg-red-100 dark:bg-red-900/30 chrome:bg-red-900/20' : 'bg-slate-200 dark:bg-slate-700 chrome:bg-slate-600'}`}
               aria-label={showFavoritesOnly ? "Show All" : "Show Favorites Only"}
             >
-              <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black dark:stroke-white'} />
+              <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black dark:stroke-white chrome:stroke-slate-200'} />
             </button>
             <FilterSection
             clothingItems={clothingItems}

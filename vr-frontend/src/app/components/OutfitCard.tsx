@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useRef, useCallback, useEffect } from "react"
+import type React from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -67,10 +68,10 @@ interface OutfitCardProps {
   setEditedCategorizedItems?: (items: CategorizedOutfitItems) => void
 }
 
-const OutfitCard: React.FC<OutfitCardProps> = ({ 
-  outfit, 
-  isSelected = false, 
-  isMultiSelecting = false, 
+const OutfitCard: React.FC<OutfitCardProps> = ({
+  outfit,
+  isSelected = false,
+  isMultiSelecting = false,
   onToggleSelect,
   // Detail view props
   isDetailView = false,
@@ -82,13 +83,18 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   enableDragDrop = false,
   enableResize = false,
   editedCategorizedItems,
-  setEditedCategorizedItems
+  setEditedCategorizedItems,
 }) => {
   // Drag state for detail view
   const [isDragging, setIsDragging] = useState(false)
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
-  const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
+  const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
+    x: 0,
+    y: 0,
+    itemLeft: 0,
+    itemBottom: 0,
+  })
 
   useEffect(() => {
     if (!isEditing) {
@@ -125,9 +131,22 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     others: (outfit.clothingItems || []).filter(
       (item) =>
         ![
-          "t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan",
-          "pants", "skirt", "shorts", "jeans", "leggings",
-          "jacket", "coat", "blazer", "vest",
+          "t-shirt",
+          "dress",
+          "shirt",
+          "blouse",
+          "sweater",
+          "hoodie",
+          "cardigan",
+          "pants",
+          "skirt",
+          "shorts",
+          "jeans",
+          "leggings",
+          "jacket",
+          "coat",
+          "blazer",
+          "vest",
         ].includes(item.type?.toLowerCase() || ""),
     ),
   }
@@ -135,18 +154,16 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   const topItems = categorizedItems.tops
 
   // Check if outfit has custom positioning (any non-default values)
-  const hasCustomLayout = (outfit.clothingItems || []).some(
-    (item) => {
-      const hasCustomLeft = item.left !== undefined && item.left !== 50
-      const hasCustomBottom = item.bottom !== undefined && item.bottom !== 0
-      const hasCustomWidth = item.width !== undefined && item.width !== 10
-      const hasCustomScale = item.scale !== undefined && item.scale !== 1
-      const hasCustomX = item.x !== undefined && item.x !== 0
-      const hasCustomY = item.y !== undefined && item.y !== 0
-      
-      return hasCustomLeft || hasCustomBottom || hasCustomWidth || hasCustomScale || hasCustomX || hasCustomY
-    }
-  )
+  const hasCustomLayout = (outfit.clothingItems || []).some((item) => {
+    const hasCustomLeft = item.left !== undefined && item.left !== 50
+    const hasCustomBottom = item.bottom !== undefined && item.bottom !== 0
+    const hasCustomWidth = item.width !== undefined && item.width !== 10
+    const hasCustomScale = item.scale !== undefined && item.scale !== 1
+    const hasCustomX = item.x !== undefined && item.x !== 0
+    const hasCustomY = item.y !== undefined && item.y !== 0
+
+    return hasCustomLeft || hasCustomBottom || hasCustomWidth || hasCustomScale || hasCustomX || hasCustomY
+  })
 
   console.log(`[DEBUG] OutfitCard ${outfit.id} - hasCustomLayout:`, hasCustomLayout)
 
@@ -155,13 +172,13 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     if (isDetailView && isEditing && editedCategorizedItems) {
       return editedCategorizedItems
     }
-    
+
     // Convert regular categorized items to detail view format
     return {
       top: topItems[0] || undefined,
       bottom: categorizedItems.bottoms[0] || undefined,
       outerwear: categorizedItems.outerwear[0] || undefined,
-      others: categorizedItems.others
+      others: categorizedItems.others,
     }
   }
 
@@ -182,7 +199,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     setIsDragging(true)
     setDraggedItemId(itemId)
 
-    const currentItem = allCurrentItems.find(item => item.id === itemId)
+    const currentItem = allCurrentItems.find((item) => item.id === itemId)
     if (currentItem) {
       dragStartPos.current = {
         x: e.clientX,
@@ -193,43 +210,46 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     }
   }
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
 
-    const deltaX = e.clientX - dragStartPos.current.x
-    const deltaY = e.clientY - dragStartPos.current.y
+      const deltaX = e.clientX - dragStartPos.current.x
+      const deltaY = e.clientY - dragStartPos.current.y
 
-    // Container size: w-44 = 176px, h-80 = 320px
-    const containerWidth = 176
-    const containerHeight = 320
+      // Container size: w-44 = 176px, h-80 = 320px
+      const containerWidth = 176
+      const containerHeight = 320
 
-    const leftDelta = (deltaX / containerWidth) * 100
-    const bottomDelta = -(deltaY / containerHeight) * 20
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
 
-    const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
-    const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
+      const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
 
-    // Update item position
-    const updatedItems = { ...editedCategorizedItems }
-    const updateItemPosition = (item: ClothingItem | undefined) => {
-      if (item && item.id === draggedItemId) {
-        return {
-          ...item,
-          left: newLeft,
-          bottom: newBottom,
+      // Update item position
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemPosition = (item: ClothingItem | undefined) => {
+        if (item && item.id === draggedItemId) {
+          return {
+            ...item,
+            left: newLeft,
+            bottom: newBottom,
+          }
         }
+        return item
       }
-      return item
-    }
 
-    updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
-    updatedItems.top = updateItemPosition(updatedItems.top)
-    updatedItems.bottom = updateItemPosition(updatedItems.bottom)
-    updatedItems.shoe = updateItemPosition(updatedItems.shoe)
-    updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+      updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+      updatedItems.top = updateItemPosition(updatedItems.top)
+      updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+      updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
 
-    setEditedCategorizedItems(updatedItems)
-  }, [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems])
+      setEditedCategorizedItems(updatedItems)
+    },
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
+  )
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -239,43 +259,46 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   // Global mouse events for dragging
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
 
   // RESIZE SYSTEM
-  const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
-    if (!setEditedCategorizedItems || !editedCategorizedItems) return
+  const handleWidthChange = useCallback(
+    (itemId: string, newWidth: number) => {
+      if (!setEditedCategorizedItems || !editedCategorizedItems) return
 
-    const updatedItems = { ...editedCategorizedItems }
-    const updateItemWidth = (item: ClothingItem | undefined) => {
-      if (item && item.id === itemId) {
-        return {
-          ...item,
-          width: newWidth,
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemWidth = (item: ClothingItem | undefined) => {
+        if (item && item.id === itemId) {
+          return {
+            ...item,
+            width: newWidth,
+          }
         }
+        return item
       }
-      return item
-    }
 
-    updatedItems.outerwear = updateItemWidth(updatedItems.outerwear)
-    updatedItems.top = updateItemWidth(updatedItems.top)
-    updatedItems.bottom = updateItemWidth(updatedItems.bottom)
-    updatedItems.shoe = updateItemWidth(updatedItems.shoe)
-    updatedItems.others = updatedItems.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
+      updatedItems.outerwear = updateItemWidth(updatedItems.outerwear)
+      updatedItems.top = updateItemWidth(updatedItems.top)
+      updatedItems.bottom = updateItemWidth(updatedItems.bottom)
+      updatedItems.shoe = updateItemWidth(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
 
-    setEditedCategorizedItems(updatedItems)
-  }, [editedCategorizedItems, setEditedCategorizedItems])
+      setEditedCategorizedItems(updatedItems)
+    },
+    [editedCategorizedItems, setEditedCategorizedItems],
+  )
 
   // Regular card click handler
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return // Don't handle clicks in detail view
-    
+
     if (isMultiSelecting) {
       e.preventDefault()
       e.stopPropagation()
@@ -293,10 +316,10 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
   // RENDER OUTFIT DISPLAY - FIXED COORDINATE SYSTEM
   const renderOutfitDisplay = () => {
-    const useCustomLayout = (hasCustomLayout || (isDetailView && isEditing))
-    
+    const useCustomLayout = hasCustomLayout || (isDetailView && isEditing)
+
     console.log(`[DEBUG] OutfitCard ${outfit.id} - useCustomLayout:`, useCustomLayout)
-    
+
     return (
       <div className="relative w-44 h-80 mx-auto">
         {useCustomLayout ? (
@@ -304,24 +327,23 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
           allCurrentItems.map((item, index) => {
             // COORDINATE SYSTEM FIX: Apply different adjustments based on item type and position
             // This maintains the relative positioning between items while centering the overall outfit
-            let adjustedLeft = item.left ?? DEFAULTS.left;
+            let adjustedLeft = item.left ?? DEFAULTS.left
 
             // Check if this is a pants/bottom item
-            const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "");
+            const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
 
             if (isPants) {
               // Special adjustment just for pants
-              adjustedLeft = adjustedLeft - 42; // <-- Change this number to move pants left/right
+              adjustedLeft = adjustedLeft - 42 // <-- Change this number to move pants left/right
             } else {
               // Regular adjustment for all other items (shirts, jackets, etc.)
-              const distanceFromCenter = Math.abs(adjustedLeft - 50);
-              const adjustmentFactor = Math.max(0.7, 1 - (distanceFromCenter / 100));
-              const baseAdjustment = 39;
-              const finalAdjustment = baseAdjustment * adjustmentFactor;
-              adjustedLeft = adjustedLeft - finalAdjustment;
+              const distanceFromCenter = Math.abs(adjustedLeft - 50)
+              const adjustmentFactor = Math.max(0.7, 1 - distanceFromCenter / 100)
+              const baseAdjustment = 39
+              const finalAdjustment = baseAdjustment * adjustmentFactor
+              adjustedLeft = adjustedLeft - finalAdjustment
             }
 
-            
             return (
               <motion.div
                 key={`${item.id}-${item.width ?? 10}`}
@@ -344,7 +366,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 onClick={() => enableResize && setSelectedItemForResize(item.id)}
               >
                 <img
-                  src={item.url}
+                  src={item.url || "/placeholder.svg"}
                   alt={item.name || ""}
                   className="w-full h-auto object-contain rounded-lg"
                   draggable={false}
@@ -371,7 +393,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
           // Default layout for outfits without custom positioning
           <>
             {console.log(`[DEBUG] OutfitCard ${outfit.id} - Using default layout`)}
-            
+
             {/* Bottom (pants) - Default centered position */}
             {categorizedItems.bottoms[0] && (
               <img
@@ -401,7 +423,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             )}
           </>
         )}
-        
+
         {/* Fallback if no images */}
         {allCurrentItems.length === 0 && (
           <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
@@ -430,9 +452,9 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             </CardHeader>
             <CardContent className="space-y-3">
               {(() => {
-                const selectedItem = allCurrentItems.find(item => item.id === selectedItemForResize)
+                const selectedItem = allCurrentItems.find((item) => item.id === selectedItemForResize)
                 if (!selectedItem) return null
-                
+
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -463,7 +485,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         )}
 
         {/* Enhanced Outfit Card for Detail View */}
-        <Card className="w-full max-w-md mx-auto h-[500px] overflow-hidden bg-white dark:bg-slate-800 shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl">
+        <Card className="w-full max-w-md mx-auto h-[500px] overflow-hidden bg-card shadow-lg border-0 ring-1 ring-border rounded-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center space-x-2">
@@ -476,11 +498,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 )}
               </div>
               {isEditing && selectedItemForResize && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedItemForResize(null)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedItemForResize(null)}>
                   <X className="w-4 h-4 mr-2" />
                   Close Resize
                 </Button>
@@ -488,7 +506,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex-1 flex items-center justify-center">
-            <div className="relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
+            <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
               {renderOutfitDisplay()}
             </div>
           </CardContent>
@@ -513,7 +531,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.outerwear ? (
                         <img
-                          src={currentCategorizedItems.outerwear.url}
+                          src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
                           alt="Outerwear"
                           className="w-full h-full object-contain rounded"
                         />
@@ -540,7 +558,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.top ? (
                         <img
-                          src={currentCategorizedItems.top.url}
+                          src={currentCategorizedItems.top.url || "/placeholder.svg"}
                           alt="Top"
                           className="w-full h-full object-contain rounded"
                         />
@@ -567,7 +585,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.bottom ? (
                         <img
-                          src={currentCategorizedItems.bottom.url}
+                          src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
                           alt="Bottom"
                           className="w-full h-full object-contain rounded"
                         />
@@ -594,7 +612,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.shoe ? (
                         <img
-                          src={currentCategorizedItems.shoe.url}
+                          src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
                           alt="Shoes"
                           className="w-full h-full object-contain rounded"
                         />
@@ -637,7 +655,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
               isSelected
                 ? "bg-blue-600 border-blue-600 text-white shadow-lg"
-                : "bg-white border-slate-300 hover:border-blue-400 shadow-md"
+                : "bg-white border-border hover:border-accent shadow-md"
             }`}
           >
             {isSelected && <Check className="w-4 h-4" />}
@@ -646,45 +664,48 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       )}
 
       <Card
-        className={`h-[32rem] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
+        className={`h-[32rem] cursor-pointer overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
           isSelected
             ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
-            : "ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600"
+            : "ring-border hover:ring-accent"
         }`}
         onClick={handleCardClick}
       >
         <CardContent className="p-0 h-full flex flex-col">
           {/* Outfit Visual Area */}
-          <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-6 flex items-center justify-center">
+          <div className="flex-1 relative bg-gradient-to-br from-muted via-background to-card p-6 flex items-center justify-center">
             {renderOutfitDisplay()}
           </div>
 
           {/* Outfit Info */}
-          <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+          <div className="p-4 bg-card border-t border-border">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-slate-900 dark:text-white truncate text-base">
+              <h3 className="font-semibold text-card-foreground truncate text-base">
                 {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
               </h3>
-              <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">
-                <Shirt className="w-3 h-3 text-slate-500 dark:text-slate-400" />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{(outfit.clothingItems || []).length}</span>
+              <div className="flex items-center space-x-1 bg-muted px-2 py-1 rounded-full">
+                <Shirt className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">{(outfit.clothingItems || []).length}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex space-x-2 flex-wrap">
                 {outfit.occasion && (
-                  <Badge variant="secondary" className="text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                  <Badge
+                    variant="secondary"
+                    className="text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                  >
                     {outfit.occasion}
                   </Badge>
                 )}
                 {outfit.season && (
-                  <Badge variant="outline" className="text-xs font-medium border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400">
+                  <Badge variant="outline" className="text-xs font-medium border-border text-muted-foreground">
                     {outfit.season}
                   </Badge>
                 )}
               </div>
               {outfit.totalPrice && (
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">
+                <span className="text-sm font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-md">
                   ${outfit.totalPrice.toFixed(2)}
                 </span>
               )}

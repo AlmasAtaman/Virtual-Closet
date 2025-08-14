@@ -11,7 +11,7 @@ export default function ThemeTestPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header with theme toggle */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Dark Mode Test</h1>
+          <h1 className="text-3xl font-bold">3-Way Theme Test</h1>
           <ThemeToggle />
         </div>
 
@@ -22,8 +22,8 @@ export default function ThemeTestPage() {
               <CardTitle>Fashion Item Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="aspect-square bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center mb-4 clothing-image">
-                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-lg flex items-center justify-center">
+              <div className="aspect-square bg-white dark:bg-slate-800 chrome:bg-slate-700 rounded-lg flex items-center justify-center mb-4 clothing-image">
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 chrome:from-slate-600 chrome:to-blue-700 rounded-lg flex items-center justify-center">
                   👕
                 </div>
               </div>
@@ -33,7 +33,7 @@ export default function ThemeTestPage() {
                 <Badge variant="secondary">Cotton</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                This demonstrates how clothing items look in both light and dark modes.
+                This demonstrates how clothing items look in Light, Dark, and Chrome themes.
               </p>
             </CardContent>
           </Card>

@@ -14,7 +14,7 @@ interface ClothingCardProps {
   isMultiSelecting?: boolean
   onToggleSelect?: (id: string) => void
   toggleFavorite: (id: string, newState: boolean) => void
-  viewMode?: 'closet' | 'wishlist';
+  viewMode?: "closet" | "wishlist"
   onDelete?: () => void
 }
 
@@ -22,18 +22,18 @@ interface ClothingCardProps {
 const getImageScaleClass = (type?: string) => {
   switch ((type || "").toLowerCase()) {
     case "pants":
-      return "scale-110";
+      return "scale-110"
     case "hoodie":
     case "sweater":
     case "jacket":
-      return "scale-115";
+      return "scale-115"
     case "t-shirt":
     case "shirt":
-      return "scale-130";
+      return "scale-130"
     default:
-      return "scale-120";
+      return "scale-120"
   }
-};
+}
 
 export default function ClothingCard({
   item,
@@ -80,7 +80,7 @@ export default function ClothingCard({
         }`}
       >
         <div
-          className="relative w-full h-[320px] flex items-center justify-center bg-white dark:bg-slate-800 cursor-pointer overflow-hidden clothing-image"
+          className="relative w-full h-[320px] flex items-center justify-center bg-white dark:bg-slate-800 chrome:bg-card cursor-pointer overflow-hidden clothing-image"
           onClick={(e) => {
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
@@ -91,7 +91,7 @@ export default function ClothingCard({
         >
           {item.url ? (
             <img
-              src={item.url}
+              src={item.url || "/placeholder.svg"}
               alt={item.name || "Clothing item"}
               className={`object-contain w-full h-full p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
             />
@@ -115,7 +115,7 @@ export default function ClothingCard({
               animate={{ opacity: 1 }}
               className="absolute inset-0 bg-primary/30 backdrop-blur-sm flex items-center justify-center"
             >
-              <div className="rounded-full bg-white dark:bg-slate-100 w-8 h-8 flex items-center justify-center">
+              <div className="rounded-full bg-white dark:bg-slate-100 chrome:bg-slate-200 w-8 h-8 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -136,19 +136,19 @@ export default function ClothingCard({
 
           {/* Favorite Heart Icon - top right, always visible, styled */}
           <motion.button
-            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm"
+            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 dark:bg-slate-700/80 chrome:bg-card/80 backdrop-blur-sm"
             whileHover={{ scale: 1.15 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
             onClick={(e) => {
-              e.stopPropagation();
-              toggleFavorite(item.id, !item.isFavorite);
+              e.stopPropagation()
+              toggleFavorite(item.id, !item.isFavorite)
             }}
             aria-label={item.isFavorite ? "Unfavorite" : "Favorite"}
           >
             {item.isFavorite ? (
               <Heart className="fill-red-500 text-red-500 w-6 h-6" />
             ) : (
-              <Heart className="text-gray-600 dark:text-gray-400 w-6 h-6" />
+              <Heart className="text-gray-500 dark:text-gray-300 chrome:text-muted-foreground w-6 h-6" />
             )}
           </motion.button>
         </div>
@@ -161,17 +161,17 @@ export default function ClothingCard({
                 {item.type}
               </Badge>
             )}
-            {item.brand && item.brand !== 'No brand' && item.brand.trim() !== '' && (
+            {item.brand && item.brand !== "No brand" && item.brand.trim() !== "" && (
               <Badge variant="secondary" className="text-xs font-normal">
                 {item.brand}
               </Badge>
             )}
           </div>
-          {viewMode !== 'closet' && formatPrice(item.price) && (
+          {viewMode !== "closet" && formatPrice(item.price) && (
             <p className="text-sm font-medium text-primary">{formatPrice(item.price)}</p>
           )}
         </CardContent>
       </Card>
     </motion.div>
   )
-} 
+}
