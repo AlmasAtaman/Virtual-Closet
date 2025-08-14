@@ -12,6 +12,7 @@ import OutfitCard from "../components/OutfitCard"
 import OccasionCard from "../components/OccasionCard"
 import OccasionOutfits from "../components/OccasionOutfits"
 import LogOutButton from "../components/LogoutButton"
+import { ThemeToggle } from "../components/ThemeToggle"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ConfirmDialog } from "@/components/ui/dialog"
 
@@ -263,6 +264,7 @@ export default function OutfitsPage() {
             <span className="text-xl font-semibold tracking-tight">VrC</span>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <LogOutButton />
           </div>
         </div>

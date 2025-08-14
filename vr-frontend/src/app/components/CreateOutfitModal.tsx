@@ -372,15 +372,26 @@ const handleCloseModal = () => {
   onCloseAction()
 }
 
-  const getLayerOrder = (item: ClothingItem) => {
-  const category = getItemCategory(item)
-    switch (category) {
-      case "outerwear": return 1  // Back layer
-      case "bottom": return 2     // Middle layer  
-      case "top": return 3        // Front layer
-      default: return 2
-    }
+const getLayerOrder = (item: ClothingItem) => {
+  const itemType = item.type?.toLowerCase() || ""
+  
+  // Bottoms go in back
+  if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(itemType)) {
+    return 1  // Bottom layer
   }
+  
+  // ALL outerwear goes BEHIND tops (jackets, sweaters, hoodies, etc.)
+  if (["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)) {
+    return 2  // Behind tops
+  }
+  
+  // Regular tops go in front of outerwear
+  if (["t-shirt", "dress", "shirt", "blouse"].includes(itemType)) {
+    return 3  // Front layer
+  }
+  
+  return 3  // Default
+}
 
   const renderOutfitDisplay = () => {
     return (

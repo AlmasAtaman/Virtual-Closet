@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback, useMemo  } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Search, X, Check, Heart } from "lucide-react"
 import LogOutButton from "../components/LogoutButton"
+import { ThemeToggle } from "../components/ThemeToggle"
 import UploadForm from "../components/UploadForm"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../components/ClothingGallery"
@@ -134,6 +135,7 @@ export default function Homepage() {
             <Button onClick={() => router.push("/outfits")} variant="outline" className="gap-2">
               <span className="hidden sm:inline">View</span> Outfits
             </Button>
+            <ThemeToggle />
             <LogOutButton />
           </div>
         </div>
@@ -194,10 +196,10 @@ export default function Homepage() {
             {/* Show Favorites Only Toggle */}
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`p-2 rounded-full mr-2 ${showFavoritesOnly ? 'bg-red-100' : 'bg-slate-200'}`}
+              className={`p-2 rounded-full mr-2 transition-colors ${showFavoritesOnly ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700'}`}
               aria-label={showFavoritesOnly ? "Show All" : "Show Favorites Only"}
             >
-              <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black'} />
+              <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black dark:stroke-white'} />
             </button>
             <FilterSection
             clothingItems={clothingItems}

@@ -310,21 +310,33 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                 <div className="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-lg mb-3 relative flex items-center justify-center overflow-hidden">
                                   {outfit.clothingItems.length > 0 ? (
                                     <div className="relative w-full h-full">
-                                      {outfit.clothingItems.map((item, index) => (
-                                        <img
-                                          key={item.id}
-                                          src={item.url}
-                                          alt={item.name || `Clothing item ${index + 1}`}
-                                          className="absolute object-contain max-w-[80%] max-h-[80%]"
-                                          style={{
-                                            left: `${item.left || 50}%`,
-                                            bottom: `${(item.bottom || 0) * 0.8}rem`,
-                                            width: `${(item.width || 8) * 0.6}rem`,
-                                            transform: "translateX(-50%)",
-                                            zIndex: index,
-                                          }}
-                                        />
-                                      ))}
+                                      {outfit.clothingItems.map((item, index) => {
+                                        // Much simpler coordinate adjustment for the smaller preview cards
+                                        let adjustedLeft = item.left ?? 50;
+                                        
+                                        // Only apply a small adjustment to center items better in the smaller preview
+                                        if (adjustedLeft !== 50) {
+                                          // Scale down the adjustment for the smaller preview cards
+                                          const adjustment = (adjustedLeft - 50) * 0.8; // Reduce adjustment by 20%
+                                          adjustedLeft = 50 + adjustment;
+                                        }
+
+                                        return (
+                                          <img
+                                            key={item.id}
+                                            src={item.url}
+                                            alt={item.name || `Clothing item ${index + 1}`}
+                                            className="absolute object-contain max-w-[80%] max-h-[80%]"
+                                            style={{
+                                              left: `${adjustedLeft}%`,
+                                              bottom: `${(item.bottom || 0) * 0.8}rem`,
+                                              width: `${(item.width || 8) * 0.6}rem`,
+                                              transform: "translateX(-50%)",
+                                              zIndex: index,
+                                            }}
+                                          />
+                                        )
+                                      })}
                                     </div>
                                   ) : (
                                     <div className="text-slate-400 dark:text-slate-500 text-center">

@@ -80,7 +80,7 @@ export default function ClothingCard({
         }`}
       >
         <div
-          className="relative w-full h-[320px] flex items-center justify-center bg-white cursor-pointer overflow-hidden"
+          className="relative w-full h-[320px] flex items-center justify-center bg-white dark:bg-slate-800 cursor-pointer overflow-hidden clothing-image"
           onClick={(e) => {
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
@@ -115,7 +115,7 @@ export default function ClothingCard({
               animate={{ opacity: 1 }}
               className="absolute inset-0 bg-primary/30 backdrop-blur-sm flex items-center justify-center"
             >
-              <div className="rounded-full bg-white w-8 h-8 flex items-center justify-center">
+              <div className="rounded-full bg-white dark:bg-slate-100 w-8 h-8 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -136,7 +136,7 @@ export default function ClothingCard({
 
           {/* Favorite Heart Icon - top right, always visible, styled */}
           <motion.button
-            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 backdrop-blur-sm"
+            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm"
             whileHover={{ scale: 1.15 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={(e) => {
@@ -148,7 +148,7 @@ export default function ClothingCard({
             {item.isFavorite ? (
               <Heart className="fill-red-500 text-red-500 w-6 h-6" />
             ) : (
-              <Heart className="text-gray-600 w-6 h-6" />
+              <Heart className="text-gray-600 dark:text-gray-400 w-6 h-6" />
             )}
           </motion.button>
         </div>
