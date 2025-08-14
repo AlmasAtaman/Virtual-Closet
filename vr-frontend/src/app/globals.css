@@ -78,37 +78,37 @@
 }
 
 .dark {
-  --background: oklch(8% 0 0);
-  --foreground: oklch(95% 0 0);
-  --card: oklch(12% 0 0);
-  --card-foreground: oklch(95% 0 0);
-  --popover: oklch(12% 0 0);
-  --popover-foreground: oklch(95% 0 0);
-  --primary: oklch(50% 0.03 240);
+  --background: oklch(12% 0.005 240);
+  --foreground: oklch(95% 0.01 240);
+  --card: oklch(15% 0.008 240);
+  --card-foreground: oklch(94% 0.01 240);
+  --popover: oklch(15% 0.008 240);
+  --popover-foreground: oklch(94% 0.01 240);
+  --primary: oklch(60% 0.08 250);
   --primary-foreground: oklch(98% 0 0);
-  --secondary: oklch(18% 0 0);
-  --secondary-foreground: oklch(80% 0 0);
-  --muted: oklch(15% 0 0);
-  --muted-foreground: oklch(60% 0 0);
-  --accent: oklch(20% 0 0);
-  --accent-foreground: oklch(90% 0 0);
+  --secondary: oklch(20% 0.01 240);
+  --secondary-foreground: oklch(85% 0.01 240);
+  --muted: oklch(18% 0.008 240);
+  --muted-foreground: oklch(65% 0.01 240);
+  --accent: oklch(22% 0.01 240);
+  --accent-foreground: oklch(90% 0.01 240);
   --destructive: oklch(65% 0.2 20);
-  --border: oklch(20% 0 0);
-  --input: oklch(15% 0 0);
-  --ring: oklch(30% 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: oklch(25% 0.01 240);
+  --input: oklch(18% 0.008 240);
+  --ring: oklch(40% 0.05 250);
+  --chart-1: oklch(0.65 0.15 250);
+  --chart-2: oklch(0.7 0.12 180);
+  --chart-3: oklch(0.75 0.1 300);
+  --chart-4: oklch(0.68 0.18 80);
+  --chart-5: oklch(0.72 0.16 60);
+  --sidebar: oklch(16% 0.008 240);
+  --sidebar-foreground: oklch(92% 0.01 240);
+  --sidebar-primary: oklch(55% 0.08 250);
+  --sidebar-primary-foreground: oklch(98% 0 0);
+  --sidebar-accent: oklch(22% 0.01 240);
+  --sidebar-accent-foreground: oklch(92% 0.01 240);
+  --sidebar-border: oklch(25% 0.01 240);
+  --sidebar-ring: oklch(45% 0.05 250);
 }
 
 @layer base {
@@ -116,10 +116,33 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+  
+  /* Smooth transitions for theme switching */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
   }
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Image optimizations for dark mode - keep clothing visible */
+.dark img {
+  filter: brightness(1.05) contrast(1.02);
+}
+
+/* Special handling for clothing images in dark mode */
+.dark .clothing-image {
+  background: radial-gradient(circle at center, oklch(18% 0.008 240), oklch(15% 0.008 240));
+  border-radius: 0.5rem;
+}
+
+/* Ensure proper contrast for modals in dark mode */
+.dark [role="dialog"] {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 }
