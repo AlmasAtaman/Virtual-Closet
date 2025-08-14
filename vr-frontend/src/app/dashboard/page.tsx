@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback, useMemo  } from "react"
+import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Search, X, Check, Heart } from "lucide-react"
 import LogOutButton from "../components/LogoutButton"
 import { ThemeToggle } from "../components/ThemeToggle"
 import UploadForm from "../components/UploadForm"
+import ColorPicker from "../components/ColorPicker"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../components/ClothingGallery"
 import Image from "next/image"
@@ -13,9 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { ClothingItem } from "../types/clothing"
-import FilterSection, { Clothing, FilterAttribute } from "../components/FilterSection";
-import { Badge } from "@/components/ui/badge";
-
+import FilterSection, { type FilterAttribute } from "../components/FilterSection"
+import { Badge } from "@/components/ui/badge"
 
 export default function Homepage() {
   const [username, setUsername] = useState<string | null>(null)
@@ -27,46 +27,41 @@ export default function Homepage() {
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
   const [searchQuery, setSearchQuery] = useState("")
 
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("")
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
+      setDebouncedQuery(searchQuery)
+    }, 300)
 
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
+    return () => clearTimeout(handler)
+  }, [searchQuery])
 
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
-  const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
-  const [isMultiSelecting, setIsMultiSelecting] = useState(false);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none")
+  const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null])
+  const [isMultiSelecting, setIsMultiSelecting] = useState(false)
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
   const filterAttributes: FilterAttribute[] = [
-  { key: "type", label: "Type" },
-  { key: "occasion", label: "Occasion" },
-  { key: "style", label: "Style" },
-  { key: "fit", label: "Fit" },
-  { key: "color", label: "Color" },
-  { key: "material", label: "Material" },
-  { key: "season", label: "Season" },
-];
-
-
-  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
+    { key: "type", label: "Type" },
+    { key: "occasion", label: "Occasion" },
+    { key: "style", label: "Style" },
+    { key: "fit", label: "Fit" },
+    { key: "color", label: "Color" },
+    { key: "material", label: "Material" },
+    { key: "season", label: "Season" },
+  ]
+  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([])
 
   const uniqueAttributeValues: Record<string, string[]> = useMemo(() => {
-    const values: Record<string, string[]> = {};
+    const values: Record<string, string[]> = {}
     filterAttributes.forEach((attr) => {
       values[attr.key] = Array.from(
-        new Set(clothingItems.map((item) => item[attr.key as keyof ClothingItem]).filter(Boolean))
-      ) as string[];
-    });
-    return values;
-  }, [clothingItems]);
-
-
+        new Set(clothingItems.map((item) => item[attr.key as keyof ClothingItem]).filter(Boolean)),
+      ) as string[]
+    })
+    return values
+  }, [clothingItems])
 
   const handleCloseModal = useCallback(() => {
     setShowModal(false)
@@ -74,13 +69,13 @@ export default function Homepage() {
 
   const handleUploadComplete = useCallback(
     (target: "closet" | "wishlist", newItem: ClothingItem) => {
-      setClothingItems((prevItems) => [newItem, ...prevItems]);
+      setClothingItems((prevItems) => [newItem, ...prevItems])
 
       if (viewMode !== target) {
-        setViewMode(target);
+        setViewMode(target)
       }
 
-      setShowModal(false);
+      setShowModal(false)
     },
     [viewMode],
   )
@@ -116,11 +111,8 @@ export default function Homepage() {
   if (!hasMounted || loading) return null
 
   const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
-
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,6 +127,7 @@ export default function Homepage() {
             <Button onClick={() => router.push("/outfits")} variant="outline" className="gap-2">
               <span className="hidden sm:inline">View</span> Outfits
             </Button>
+            <ColorPicker />
             <ThemeToggle />
             <LogOutButton />
           </div>
@@ -150,7 +143,7 @@ export default function Homepage() {
             onValueChange={(value) => setViewMode(value as "closet" | "wishlist")}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm">
+            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
               <TabsTrigger value="closet">My Closet</TabsTrigger>
               <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
             </TabsList>
@@ -196,49 +189,58 @@ export default function Homepage() {
             {/* Show Favorites Only Toggle */}
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`p-2 rounded-full mr-2 transition-colors ${showFavoritesOnly ? 'bg-red-100 dark:bg-red-900/30 chrome:bg-red-900/20' : 'bg-slate-200 dark:bg-slate-700 chrome:bg-slate-600'}`}
+              className={`p-2 rounded-full mr-2 transition-colors border ${
+                showFavoritesOnly
+                  ? "bg-red-100 dark:bg-red-900/30 chrome:bg-red-900/20 border-red-300 dark:border-red-700 chrome:border-red-600"
+                  : "bg-slate-200 dark:bg-slate-700 chrome:bg-slate-600 border-border dark:border-border chrome:border-border"
+              }`}
               aria-label={showFavoritesOnly ? "Show All" : "Show Favorites Only"}
             >
-              <Heart className={showFavoritesOnly ? 'fill-red-500 stroke-red-500' : 'stroke-black dark:stroke-white chrome:stroke-slate-200'} />
+              <Heart
+                className={
+                  showFavoritesOnly
+                    ? "fill-red-500 stroke-red-500"
+                    : "stroke-black dark:stroke-white chrome:stroke-slate-200"
+                }
+              />
             </button>
             <FilterSection
-            clothingItems={clothingItems}
-            selectedTags={selectedTags}
-            setSelectedTags={setSelectedTags}
-            filterAttributes={filterAttributes}
-            uniqueAttributeValues={uniqueAttributeValues}
-            priceSort={priceSort}
-            setPriceSort={setPriceSort}
-            priceRange={priceRange}
-            setPriceRange={setPriceRange}
-          />
+              clothingItems={clothingItems}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              filterAttributes={filterAttributes}
+              uniqueAttributeValues={uniqueAttributeValues}
+              priceSort={priceSort}
+              setPriceSort={setPriceSort}
+              priceRange={priceRange}
+              setPriceRange={setPriceRange}
+            />
 
-          <Button
-            variant={isMultiSelecting ? "destructive" : "outline"}
-            onClick={() => setIsMultiSelecting((prev) => !prev)}
-          >
-            {isMultiSelecting ? (
-              <>
-                <X className="h-4 w-4 mr-1" />
-                Cancel
-              </>
-            ) : (
-              <>
-                <Check className="h-4 w-4 mr-1" />
-                Select
-              </>
-            )}
-          </Button>
+            <Button
+              variant={isMultiSelecting ? "destructive" : "outline"}
+              onClick={() => setIsMultiSelecting((prev) => !prev)}
+            >
+              {isMultiSelecting ? (
+                <>
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Select
+                </>
+              )}
+            </Button>
             <Button
               onClick={handleOpenUploadModal}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2 dark:border dark:border-blue-400/50"
             >
               <Plus className="h-4 w-4" />
               Add Clothing
             </Button>
           </div>
         </div>
-
 
         {/* Gallery Section */}
         <AnimatePresence mode="wait">
@@ -249,87 +251,78 @@ export default function Homepage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-
-          {/* Selected Tags */}
-          {(selectedTags.length > 0 || priceSort !== "none") && (
-            <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
-              {/* Always show priceSort badge first if active */}
-              {priceSort !== "none" && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: 0.05 }}
-                >
-                  <Badge
-                    variant="secondary"
-                    className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                    onClick={() => setPriceSort("none")}
+            {/* Selected Tags */}
+            {(selectedTags.length > 0 || priceSort !== "none") && (
+              <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
+                {/* Always show priceSort badge first if active */}
+                {priceSort !== "none" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    transition={{ delay: 0.05 }}
                   >
-                    <span className="mr-1">
-                      {priceSort === "asc" ? "Price: Low → High" : "Price: High → Low"}
-                    </span>
-                    <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                  </Badge>
-                </motion.div>
-              )}
+                    <Badge
+                      variant="secondary"
+                      className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
+                      onClick={() => setPriceSort("none")}
+                    >
+                      <span className="mr-1">{priceSort === "asc" ? "Price: Low → High" : "Price: High → Low"}</span>
+                      <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                    </Badge>
+                  </motion.div>
+                )}
 
-              {/* Then show selected tags */}
-              {selectedTags.map((tag, index) => (
-                <motion.div
-                  key={tag}
-                  initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  transition={{ delay: (index + 1) * 0.05 }}
-                >
-                  <Badge
-                    variant="secondary"
-                    className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                    onClick={() => toggleTag(tag)}
+                {/* Then show selected tags */}
+                {selectedTags.map((tag, index) => (
+                  <motion.div
+                    key={tag}
+                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    transition={{ delay: (index + 1) * 0.05 }}
                   >
-                    <span className="mr-1">{tag}</span>
-                    <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                  </Badge>
-                </motion.div>
-              ))}
+                    <Badge
+                      variant="secondary"
+                      className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
+                      onClick={() => toggleTag(tag)}
+                    >
+                      <span className="mr-1">{tag}</span>
+                      <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                    </Badge>
+                  </motion.div>
+                ))}
 
-              {/* Clear all */}
-              {(selectedTags.length > 0 || priceSort !== "none") && (
-                <button
-                  onClick={() => {
-                    setSelectedTags([]);
-                    setPriceSort("none");
-                  }}
-                  className="text-xs text-muted-foreground hover:text-primary underline ml-2"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-          )}
+                {/* Clear all */}
+                {(selectedTags.length > 0 || priceSort !== "none") && (
+                  <button
+                    onClick={() => {
+                      setSelectedTags([])
+                      setPriceSort("none")
+                    }}
+                    className="text-xs text-muted-foreground hover:text-primary underline ml-2"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            )}
 
-
-
-
-
-      <ClothingGallery
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        openUploadModal={handleOpenUploadModal}
-        searchQuery={debouncedQuery}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-        priceSort={priceSort}
-        setPriceSort={setPriceSort}
-        priceRange={priceRange}
-        clothingItems={clothingItems}
-        setClothingItems={setClothingItems}
-        isMultiSelecting={isMultiSelecting}
-        setIsMultiSelecting={setIsMultiSelecting}
-        showFavoritesOnly={showFavoritesOnly}
-        setShowFavoritesOnly={setShowFavoritesOnly}
-      />
-
-
+            <ClothingGallery
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              openUploadModal={handleOpenUploadModal}
+              searchQuery={debouncedQuery}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              priceSort={priceSort}
+              setPriceSort={setPriceSort}
+              priceRange={priceRange}
+              clothingItems={clothingItems}
+              setClothingItems={setClothingItems}
+              isMultiSelecting={isMultiSelecting}
+              setIsMultiSelecting={setIsMultiSelecting}
+              showFavoritesOnly={showFavoritesOnly}
+              setShowFavoritesOnly={setShowFavoritesOnly}
+            />
           </motion.div>
         </AnimatePresence>
       </main>
