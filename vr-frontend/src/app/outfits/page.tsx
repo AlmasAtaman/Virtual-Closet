@@ -255,7 +255,7 @@ export default function OutfitsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background chrome:bg-background">
+    <div className="min-h-screen bg-background">
       {/* Navbar */}
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
@@ -274,9 +274,9 @@ export default function OutfitsPage() {
         {/* Back Button */}
         <div className="mb-6">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={handleBackToDashboard}
-            className="flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700 chrome:border-border px-4 py-2 text-sm text-slate-700 dark:text-slate-300 chrome:text-foreground bg-white dark:bg-slate-800 chrome:bg-card hover:bg-slate-100 dark:hover:bg-slate-700 chrome:hover:bg-accent transition-colors"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Closet
@@ -290,19 +290,9 @@ export default function OutfitsPage() {
             onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2 bg-muted rounded-full overflow-hidden p-1">
-              <TabsTrigger
-                value="outfits"
-                className="rounded-full data-[state=active]:bg-white data-[state=active]:text-black chrome:data-[state=active]:bg-accent chrome:data-[state=active]:text-accent-foreground data-[state=active]:font-semibold text-muted-foreground"
-              >
-                Outfits
-              </TabsTrigger>
-              <TabsTrigger
-                value="occasions"
-                className="rounded-full data-[state=active]:bg-white data-[state=active]:text-black chrome:data-[state=active]:bg-accent chrome:data-[state=active]:text-accent-foreground data-[state=active]:font-semibold text-muted-foreground"
-              >
-                Occasions
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border">
+              <TabsTrigger value="outfits">Outfits</TabsTrigger>
+              <TabsTrigger value="occasions">Occasions</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -374,7 +364,7 @@ export default function OutfitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-white dark:bg-slate-800 chrome:bg-card rounded-full shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border px-6 py-3 flex items-center gap-4">
+              <div className="bg-card rounded-full shadow-lg border border-border px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium">
                   {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? "s" : ""} selected
                 </span>
@@ -403,7 +393,7 @@ export default function OutfitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-white dark:bg-slate-800 chrome:bg-card rounded-full shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border px-6 py-3 flex items-center gap-4">
+              <div className="bg-card rounded-full shadow-lg border border-border px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium">
                   {selectedOccasionIds.length} folder{selectedOccasionIds.length > 1 ? "s" : ""} selected
                 </span>
@@ -435,10 +425,7 @@ export default function OutfitsPage() {
               {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
                   {Array.from({ length: 10 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="aspect-[3/4] bg-card dark:bg-card chrome:bg-card rounded-xl animate-pulse shadow-lg"
-                    />
+                    <div key={index} className="aspect-[3/4] bg-card rounded-xl animate-pulse shadow-lg" />
                   ))}
                 </div>
               ) : (
@@ -452,24 +439,21 @@ export default function OutfitsPage() {
                   >
                     <div
                       onClick={() => setShowCreateModal(true)}
-                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 chrome:from-card chrome:via-background chrome:to-muted border-2 border-dashed border-border dark:border-slate-600 chrome:border-border rounded-xl hover:border-slate-400 dark:hover:border-slate-500 chrome:hover:border-primary hover:bg-gradient-to-br hover:from-slate-100 hover:via-white hover:to-slate-200 dark:hover:from-slate-700 dark:hover:via-slate-800 dark:hover:to-slate-700 chrome:hover:from-accent chrome:hover:via-muted chrome:hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
+                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-muted via-background to-muted border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-accent transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
                     >
                       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 chrome:from-secondary chrome:to-accent rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                          <Plus className="w-10 h-10 text-slate-600 dark:text-slate-300 chrome:text-primary" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-muted to-accent rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                          <Plus className="w-10 h-10 text-primary" />
                         </div>
-                        <span className="text-base font-semibold text-foreground dark:text-foreground chrome:text-foreground group-hover:text-slate-800 dark:group-hover:text-slate-100 chrome:group-hover:text-primary transition-colors">
+                        <span className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
                           Create Outfit
                         </span>
-                        <span className="text-sm text-muted-foreground dark:text-muted-foreground chrome:text-muted-foreground mt-1">
-                          Design your look
-                        </span>
+                        <span className="text-sm text-muted-foreground mt-1">Design your look</span>
                       </div>
                       <div className="h-[42px]" /> {/* matches height of footer in OutfitCard */}
                     </div>
                   </motion.div>
 
-                  {/* Existing Outfits */}
                   {outfits.map((outfit, index) => (
                     <motion.div
                       key={outfit.id}
@@ -511,10 +495,7 @@ export default function OutfitsPage() {
                   {occasionsLoading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                       {Array.from({ length: 6 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className="aspect-square bg-card dark:bg-card chrome:bg-card rounded-xl animate-pulse shadow-lg"
-                        />
+                        <div key={index} className="aspect-square bg-card rounded-xl animate-pulse shadow-lg" />
                       ))}
                     </div>
                   ) : (
@@ -527,18 +508,17 @@ export default function OutfitsPage() {
                       >
                         <div
                           onClick={() => setShowCreateOccasionModal(true)}
-                          className="h-full bg-gradient-to-br from-slate-100 via-white to-slate-200 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 chrome:from-secondary chrome:via-background chrome:to-accent border-2 border-dashed border-border dark:border-slate-600 chrome:border-border rounded-xl hover:border-slate-400 dark:hover:border-slate-500 chrome:hover:border-primary hover:bg-gradient-to-br hover:from-slate-200 hover:via-white hover:to-slate-300 dark:hover:from-slate-700 dark:hover:via-slate-800 dark:hover:to-slate-700 chrome:hover:from-accent chrome:hover:via-muted chrome:hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
+                          className="h-full bg-gradient-to-br from-muted via-background to-accent border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
                         >
-                          <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 chrome:from-accent chrome:to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                            <Plus className="w-10 h-10 text-slate-600 dark:text-slate-300 chrome:text-primary" />
+                          <div className="w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                            <Plus className="w-10 h-10 text-primary" />
                           </div>
-                          <span className="text-lg font-semibold text-foreground dark:text-foreground chrome:text-foreground group-hover:text-slate-800 dark:group-hover:text-slate-100 chrome:group-hover:text-primary transition-colors text-center">
+                          <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors text-center">
                             Create New Folder
                           </span>
                         </div>
                       </motion.div>
 
-                      {/* Existing Occasions */}
                       {occasions.map((occasion, index) => (
                         <motion.div
                           key={occasion.id}
@@ -560,14 +540,11 @@ export default function OutfitsPage() {
                     </div>
                   )}
 
-                  {/* Empty state - only show when no occasions and not loading */}
                   {!occasionsLoading && occasions.length === 0 && (
                     <div className="text-center py-16 mt-8">
                       <div className="text-6xl mb-4">📁</div>
-                      <h3 className="text-xl font-semibold text-foreground dark:text-foreground chrome:text-foreground mb-2">
-                        No Occasion Folders Yet
-                      </h3>
-                      <p className="text-muted-foreground dark:text-muted-foreground chrome:text-muted-foreground mb-6 max-w-md mx-auto">
+                      <h3 className="text-xl font-semibold text-foreground mb-2">No Occasion Folders Yet</h3>
+                      <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                         Create your first occasion folder to organize your outfits by events, seasons, or activities.
                       </p>
                     </div>

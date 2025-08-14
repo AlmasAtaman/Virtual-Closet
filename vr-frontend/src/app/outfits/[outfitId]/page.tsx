@@ -1,39 +1,11 @@
 "use client"
-
-import type React from "react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, use, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import axios from "axios"
-import { 
-  ArrowLeft, 
-  Edit3, 
-  Trash2, 
-  Save, 
-  X, 
-  AlertTriangle, 
-  DollarSign, 
-  Tag, 
-  Folder,
-  Calendar,
-  FileText,
-  Sparkles,
-  Heart,
-  Share,
-  Eye,
-  Shirt,
-  Clock,
-  MapPin,
-  Plus,
-  Check
-} from 'lucide-react'
+import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, DollarSign, Sparkles, Shirt } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import OutfitCard from "../../components/OutfitCard"
 import ClothingItemSelectModal from "../../components/ClothingItemSelectModal"
 
@@ -61,7 +33,7 @@ interface CategorizedOutfitItems {
   outerwear?: ClothingItem
   top?: ClothingItem
   bottom?: ClothingItem
-  shoe?: ClothingItem  // Keep shoe support for compatibility
+  shoe?: ClothingItem // Keep shoe support for compatibility
   others: ClothingItem[]
 }
 
@@ -93,7 +65,7 @@ interface OutfitDetailPageProps {
 export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const { outfitId } = use(params)
   const router = useRouter()
-  
+
   const [outfit, setOutfit] = useState<Outfit | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -118,13 +90,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     name: "",
     occasion: "",
     season: "",
-    notes: ""
+    notes: "",
   })
 
   // Calculate total price from clothing items
   const calculateTotalPrice = useCallback((items: ClothingItem[]): number => {
     return items.reduce((total, item) => {
-      const price = typeof item.price === 'number' ? item.price : 0
+      const price = typeof item.price === "number" ? item.price : 0
       return total + price
     }, 0)
   }, [])
@@ -136,7 +108,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         editedCategorizedItems.top,
         editedCategorizedItems.bottom,
         editedCategorizedItems.shoe,
-        ...(editedCategorizedItems.others || [])
+        ...(editedCategorizedItems.others || []),
       ].filter(Boolean) as ClothingItem[]
     }
     return outfit?.clothingItems || []
@@ -163,7 +135,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         name: outfit.name || "",
         occasion: outfit.occasion || "",
         season: outfit.season || "",
-        notes: outfit.notes || ""
+        notes: outfit.notes || "",
       })
     }
   }, [outfit])
@@ -173,14 +145,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       const response = await axios.get(`http://localhost:8000/api/outfits/${outfitId}`, {
         withCredentials: true,
       })
-      
+
       // The backend returns { outfit: transformedOutfit }
       console.log("Raw outfit response:", response.data)
-      
+
       const outfitData = response.data.outfit || response.data
       console.log("Processed outfit data:", outfitData)
       console.log("Clothing items:", outfitData.clothingItems)
-      
+
       setOutfit(outfitData)
     } catch (error) {
       console.error("Failed to fetch outfit:", error)
@@ -197,14 +169,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         }),
         axios.get("http://localhost:8000/api/images?mode=wishlist", {
           withCredentials: true,
-        })
+        }),
       ])
 
       const closetItems = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
         ...item,
         mode: "closet" as const,
       }))
-      
+
       const wishlistItems = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({
         ...item,
         mode: "wishlist" as const,
@@ -219,18 +191,18 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   const fetchOutfitFolders = async () => {
     if (!outfitId) return
-    
+
     try {
       const response = await axios.get("http://localhost:8000/api/occasions", {
         withCredentials: true,
       })
       const occasions = response.data.occasions || []
-      
+
       // Filter occasions that contain this outfit
       const foldersWithOutfit = occasions.filter((occasion: Occasion) =>
-        occasion.outfits.some((outfitInFolder) => outfitInFolder.id === outfitId)
+        occasion.outfits.some((outfitInFolder) => outfitInFolder.id === outfitId),
       )
-      
+
       setOutfitFolders(foldersWithOutfit)
     } catch (error) {
       console.error("Failed to fetch outfit folders:", error)
@@ -250,15 +222,15 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   const handleEdit = () => {
     if (!outfit) return
-    
+
     setIsEditing(true)
-    
+
     // Initialize edited categorized items
     const categorized: CategorizedOutfitItems = {
-      others: []
+      others: [],
     }
-    
-    outfit.clothingItems.forEach(item => {
+
+    outfit.clothingItems.forEach((item) => {
       const type = item.type?.toLowerCase() || ""
       if (["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)) {
         if (!categorized.top) categorized.top = item
@@ -276,7 +248,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         categorized.others.push(item)
       }
     })
-    
+
     setEditedCategorizedItems(categorized)
   }
 
@@ -294,7 +266,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         season: editForm.season,
         notes: editForm.notes,
         clothingItems: allCurrentItems,
-        totalPrice: totalPrice
+        totalPrice: totalPrice,
       }
 
       await axios.put(`http://localhost:8000/api/outfits/${outfitId}`, updatedOutfit, {
@@ -317,7 +289,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         name: outfit.name || "",
         occasion: outfit.occasion || "",
         season: outfit.season || "",
-        notes: outfit.notes || ""
+        notes: outfit.notes || "",
       })
     }
   }
@@ -351,7 +323,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     newCategorizedItems[selectedModalState.category] = item
 
     // Remove item from others if it was there
-    newCategorizedItems.others = newCategorizedItems.others.filter(i => i.id !== item.id)
+    newCategorizedItems.others = newCategorizedItems.others.filter((i) => i.id !== item.id)
 
     setEditedCategorizedItems(newCategorizedItems)
     setSelectedModalState({ ...selectedModalState, isOpen: false })
@@ -363,18 +335,22 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setAddingToFolder(true)
     try {
       // Get current outfits in the selected folder
-      const selectedFolder = allFolders.find(folder => folder.id === selectedFolderId)
-      const currentOutfitIds = selectedFolder?.outfits.map(outfit => outfit.id) || []
-      
+      const selectedFolder = allFolders.find((folder) => folder.id === selectedFolderId)
+      const currentOutfitIds = selectedFolder?.outfits.map((outfit) => outfit.id) || []
+
       // Add this outfit to the folder (avoid duplicates)
       const allOutfitIds = [...new Set([...currentOutfitIds, outfit.id])]
 
-      await axios.post("http://localhost:8000/api/occasions/assign", {
-        occasionId: selectedFolderId,
-        outfitIds: allOutfitIds,
-      }, {
-        withCredentials: true,
-      })
+      await axios.post(
+        "http://localhost:8000/api/occasions/assign",
+        {
+          occasionId: selectedFolderId,
+          outfitIds: allOutfitIds,
+        },
+        {
+          withCredentials: true,
+        },
+      )
 
       // Refresh folder data
       await fetchOutfitFolders()
@@ -393,18 +369,22 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
     try {
       // Get current outfits in the folder
-      const folder = outfitFolders.find(f => f.id === folderId)
-      const currentOutfitIds = folder?.outfits.map(outfit => outfit.id) || []
-      
-      // Remove this outfit from the folder
-      const remainingOutfitIds = currentOutfitIds.filter(id => id !== outfit.id)
+      const folder = outfitFolders.find((f) => f.id === folderId)
+      const currentOutfitIds = folder?.outfits.map((outfit) => outfit.id) || []
 
-      await axios.post("http://localhost:8000/api/occasions/assign", {
-        occasionId: folderId,
-        outfitIds: remainingOutfitIds,
-      }, {
-        withCredentials: true,
-      })
+      // Remove this outfit from the folder
+      const remainingOutfitIds = currentOutfitIds.filter((id) => id !== outfit.id)
+
+      await axios.post(
+        "http://localhost:8000/api/occasions/assign",
+        {
+          occasionId: folderId,
+          outfitIds: remainingOutfitIds,
+        },
+        {
+          withCredentials: true,
+        },
+      )
 
       // Refresh folder data
       await fetchOutfitFolders()
@@ -416,17 +396,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }} 
-          animate={{ opacity: 1, scale: 1 }} 
-          className="text-center"
-        >
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <Sparkles className="w-8 h-8 text-white animate-pulse" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Loading outfit...</h2>
-          <p className="text-slate-600 dark:text-slate-400">Please wait while we fetch your outfit details.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Loading outfit...</h2>
+          <p className="text-muted-foreground">Please wait while we fetch your outfit details.</p>
         </motion.div>
       </div>
     )
@@ -434,13 +410,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   if (!outfit) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <AlertTriangle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Outfit not found</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">The outfit you're looking for doesn't exist.</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Outfit not found</h2>
+          <p className="text-muted-foreground mb-6">The outfit you're looking for doesn't exist.</p>
           <Button onClick={() => router.push("/outfits")} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Outfits
@@ -451,7 +427,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Navigation */}
         <motion.div
@@ -460,11 +436,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           transition={{ delay: 0.1 }}
           className="mb-8"
         >
-          <Button 
-            onClick={() => router.push("/outfits")} 
-            variant="outline" 
-            className="group border-slate-200 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
-          >
+          <Button onClick={() => router.push("/outfits")} variant="outline" className="group hover:bg-accent">
             <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
             Back to Outfits
           </Button>
@@ -473,15 +445,15 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           {/* Left Side - Outfit Preview (3 columns) */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            transition={{ delay: 0.2 }} 
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
             className="xl:col-span-3"
           >
-            <Card className="shadow-xl border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800">
-              <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-blue-950/30 dark:via-slate-800 dark:to-indigo-950/30 p-8 relative">{/* Made relative for overlay positioning */}
-                <OutfitCard 
+            <Card className="shadow-xl border border-border rounded-2xl overflow-hidden bg-card">
+              <div className="bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative">
+                <OutfitCard
                   outfit={outfit}
                   isDetailView={true}
                   isEditing={isEditing}
@@ -489,7 +461,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   enableResize={isEditing}
                   editedCategorizedItems={editedCategorizedItems}
                   setEditedCategorizedItems={setEditedCategorizedItems}
-                  onItemSelect={undefined} // Remove this to prevent showing Change Items section
+                  onItemSelect={undefined}
                   allClothingItems={allClothingItems}
                 />
               </div>
@@ -504,12 +476,12 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             className="xl:col-span-2 space-y-6"
           >
             {/* Header Card */}
-            <Card className="shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-2xl overflow-hidden">
+            <Card className="shadow-lg border border-border rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white pb-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-2xl font-bold mb-2">
-                      {outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || 'Unknown'}`}
+                      {outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || "Unknown"}`}
                     </CardTitle>
                     <p className="text-blue-100 text-sm">
                       {isEditing ? "Edit your outfit details" : "View and manage your outfit"}
@@ -517,7 +489,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="p-6">
                 {/* Price Display */}
                 <div className="mb-6">
@@ -537,11 +509,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       <p className="text-2xl font-bold text-green-700 dark:text-green-300">
                         ${currentTotalPrice.toFixed(2)}
                       </p>
-                      {isEditing && (
-                        <p className="text-xs text-green-600 dark:text-green-400">
-                          Auto-calculated
-                        </p>
-                      )}
+                      {isEditing && <p className="text-xs text-green-600 dark:text-green-400">Auto-calculated</p>}
                     </div>
                   </div>
                 </div>
@@ -550,24 +518,30 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 <div className="flex space-x-3">
                   {isEditing ? (
                     <>
-                      <Button onClick={handleSave} className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                      <Button
+                        onClick={handleSave}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      >
                         <Save className="w-4 h-4 mr-2" />
                         Save Changes
                       </Button>
-                      <Button onClick={handleCancel} variant="outline" className="flex-1">
+                      <Button onClick={handleCancel} variant="outline" className="flex-1 bg-transparent">
                         <X className="w-4 h-4 mr-2" />
                         Cancel
                       </Button>
                     </>
                   ) : (
                     <>
-                      <Button onClick={handleEdit} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      <Button
+                        onClick={handleEdit}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      >
                         <Edit3 className="w-4 h-4 mr-2" />
                         Edit Outfit
                       </Button>
-                      <Button 
-                        onClick={() => setShowDeleteDialog(true)} 
-                        variant="outline" 
+                      <Button
+                        onClick={() => setShowDeleteDialog(true)}
+                        variant="outline"
                         className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -579,14 +553,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             </Card>
 
             {/* Items Overview Card - Changes based on edit mode */}
-            <Card className="shadow-lg border-0 ring-1 ring-slate-200 dark:ring-slate-700 rounded-2xl">
+            <Card className="shadow-lg border border-border rounded-2xl">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center space-x-2 text-lg">
                   <Shirt className="w-5 h-5 text-blue-600" />
                   <span>{isEditing ? "Change Items" : `Items (${getCurrentItems().length})`}</span>
                 </CardTitle>
               </CardHeader>
-              
+
               <CardContent>
                 {isEditing ? (
                   /* Edit Mode - Category Selection Grid (smaller, harmonious sizing) */
@@ -602,8 +576,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         {editedCategorizedItems?.outerwear ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img 
-                                src={editedCategorizedItems.outerwear.url} 
+                              <img
+                                src={editedCategorizedItems.outerwear.url || "/placeholder.svg"}
                                 alt={editedCategorizedItems.outerwear.name || "Outerwear"}
                                 className="w-full h-full object-cover"
                               />
@@ -642,8 +616,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         {editedCategorizedItems?.top ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img 
-                                src={editedCategorizedItems.top.url} 
+                              <img
+                                src={editedCategorizedItems.top.url || "/placeholder.svg"}
                                 alt={editedCategorizedItems.top.name || "Top"}
                                 className="w-full h-full object-cover"
                               />
@@ -682,8 +656,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         {editedCategorizedItems?.bottom ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img 
-                                src={editedCategorizedItems.bottom.url} 
+                              <img
+                                src={editedCategorizedItems.bottom.url || "/placeholder.svg"}
                                 alt={editedCategorizedItems.bottom.name || "Bottom"}
                                 className="w-full h-full object-cover"
                               />
@@ -713,10 +687,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
                     {/* Others (if any exist) */}
                     {editedCategorizedItems?.others && editedCategorizedItems.others.length > 0 && (
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        className="cursor-pointer"
-                      >
+                      <motion.div whileHover={{ scale: 1.02 }} className="cursor-pointer">
                         <div className="h-20 border-2 border-dashed border-gray-300 hover:border-gray-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-950/30 p-3">
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -724,7 +695,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                             </div>
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Others</p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">{editedCategorizedItems.others.length} items</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {editedCategorizedItems.others.length} items
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -740,24 +713,22 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 }}
-                        className="group relative bg-slate-50 dark:bg-slate-800 rounded-lg p-3 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="group relative bg-muted rounded-lg p-3 hover:bg-muted/80 transition-colors"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden">
-                            <img 
-                              src={item.url} 
+                          <div className="w-12 h-12 bg-background rounded-lg flex items-center justify-center overflow-hidden border border-border">
+                            <img
+                              src={item.url || "/placeholder.svg"}
                               alt={item.name || "Item"}
                               className="w-full h-full object-cover"
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {item.name || item.type || "Unnamed Item"}
                             </p>
                             <div className="flex items-center justify-between mt-1">
-                              <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
-                                {item.type}
-                              </p>
+                              <p className="text-xs text-muted-foreground capitalize">{item.type}</p>
                               {item.price && item.price > 0 && (
                                 <p className="text-xs font-medium text-green-600 dark:text-green-400">
                                   ${item.price.toFixed(2)}
@@ -791,34 +762,34 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+              className="bg-background rounded-2xl p-6 max-w-md w-full shadow-2xl border border-border"
             >
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-2 bg-red-100 dark:bg-red-950/30 rounded-lg">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delete Outfit</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">This action cannot be undone</p>
+                  <h3 className="text-lg font-semibold text-foreground">Delete Outfit</h3>
+                  <p className="text-sm text-muted-foreground">This action cannot be undone</p>
                 </div>
               </div>
-              
-              <p className="text-slate-700 dark:text-slate-300 mb-6">
-                Are you sure you want to delete "{outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || 'Unknown'}`}"? 
-                This will permanently remove the outfit from your wardrobe.
+
+              <p className="text-foreground mb-6">
+                Are you sure you want to delete "{outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || "Unknown"}`}
+                "? This will permanently remove the outfit from your wardrobe.
               </p>
-              
+
               <div className="flex space-x-3">
-                <Button 
-                  onClick={() => setShowDeleteDialog(false)} 
-                  variant="outline" 
+                <Button
+                  onClick={() => setShowDeleteDialog(false)}
+                  variant="outline"
                   className="flex-1"
                   disabled={isDeleting}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleDelete} 
+                <Button
+                  onClick={handleDelete}
                   className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
                   disabled={isDeleting}
                 >

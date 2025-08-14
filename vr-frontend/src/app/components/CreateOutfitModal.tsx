@@ -1,11 +1,11 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Shuffle, Check, Plus, Move, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
 import axios from "axios"
 
@@ -58,7 +58,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [isDragging, setIsDragging] = useState(false)
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
-  const dragStartPos = useRef<{ x: number, y: number, itemLeft: number, itemBottom: number }>({ x: 0, y: 0, itemLeft: 0, itemBottom: 0 })
+  const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
+    x: 0,
+    y: 0,
+    itemLeft: 0,
+    itemBottom: 0,
+  })
 
   // Outfit items with positioning
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([])
@@ -77,45 +82,45 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   }
 
   // Initialize outfit items when clothing items are selected
-useEffect(() => {
-  const items: OutfitItem[] = []
-  
-  if (selectedTop) {
-    items.push({
-      item: selectedTop,
-      left: selectedTop.left ?? DEFAULT_LAYOUT.top.left,
-      bottom: selectedTop.bottom ?? DEFAULT_LAYOUT.top.bottom,
-      width: selectedTop.width ?? DEFAULT_LAYOUT.top.width,
-      scale: selectedTop.scale ?? DEFAULT_LAYOUT.top.scale,
-    })
-  }
-  
-  if (selectedBottom) {
-    items.push({
-      item: selectedBottom,
-      left: selectedBottom.left ?? DEFAULT_LAYOUT.bottom.left,
-      bottom: selectedBottom.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
-      width: selectedBottom.width ?? DEFAULT_LAYOUT.bottom.width,
-      scale: selectedBottom.scale ?? DEFAULT_LAYOUT.bottom.scale,
-    })
-  }
-  
-  if (selectedOuterwear) {
-    // If no top is selected, use top's position for outerwear
-    const useTopPosition = !selectedTop
-    const defaultLayout = useTopPosition ? DEFAULT_LAYOUT.top : DEFAULT_LAYOUT.outerwear
-    
-    items.push({
-      item: selectedOuterwear,
-      left: selectedOuterwear.left ?? defaultLayout.left,
-      bottom: selectedOuterwear.bottom ?? defaultLayout.bottom,
-      width: selectedOuterwear.width ?? defaultLayout.width,
-      scale: selectedOuterwear.scale ?? defaultLayout.scale,
-    })
-  }
-  
-  setOutfitItems(items)
-}, [selectedTop, selectedBottom, selectedOuterwear])
+  useEffect(() => {
+    const items: OutfitItem[] = []
+
+    if (selectedTop) {
+      items.push({
+        item: selectedTop,
+        left: selectedTop.left ?? DEFAULT_LAYOUT.top.left,
+        bottom: selectedTop.bottom ?? DEFAULT_LAYOUT.top.bottom,
+        width: selectedTop.width ?? DEFAULT_LAYOUT.top.width,
+        scale: selectedTop.scale ?? DEFAULT_LAYOUT.top.scale,
+      })
+    }
+
+    if (selectedBottom) {
+      items.push({
+        item: selectedBottom,
+        left: selectedBottom.left ?? DEFAULT_LAYOUT.bottom.left,
+        bottom: selectedBottom.bottom ?? DEFAULT_LAYOUT.bottom.bottom,
+        width: selectedBottom.width ?? DEFAULT_LAYOUT.bottom.width,
+        scale: selectedBottom.scale ?? DEFAULT_LAYOUT.bottom.scale,
+      })
+    }
+
+    if (selectedOuterwear) {
+      // If no top is selected, use top's position for outerwear
+      const useTopPosition = !selectedTop
+      const defaultLayout = useTopPosition ? DEFAULT_LAYOUT.top : DEFAULT_LAYOUT.outerwear
+
+      items.push({
+        item: selectedOuterwear,
+        left: selectedOuterwear.left ?? defaultLayout.left,
+        bottom: selectedOuterwear.bottom ?? defaultLayout.bottom,
+        width: selectedOuterwear.width ?? defaultLayout.width,
+        scale: selectedOuterwear.scale ?? defaultLayout.scale,
+      })
+    }
+
+    setOutfitItems(items)
+  }, [selectedTop, selectedBottom, selectedOuterwear])
 
   // DRAG AND DROP SYSTEM
   const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
@@ -123,7 +128,7 @@ useEffect(() => {
     setIsDragging(true)
     setDraggedItemId(itemId)
 
-    const currentItem = outfitItems.find(outfitItem => outfitItem.item.id === itemId)
+    const currentItem = outfitItems.find((outfitItem) => outfitItem.item.id === itemId)
     if (currentItem) {
       dragStartPos.current = {
         x: e.clientX,
@@ -134,29 +139,32 @@ useEffect(() => {
     }
   }
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !draggedItemId) return
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !draggedItemId) return
 
-    const deltaX = e.clientX - dragStartPos.current.x
-    const deltaY = e.clientY - dragStartPos.current.y
+      const deltaX = e.clientX - dragStartPos.current.x
+      const deltaY = e.clientY - dragStartPos.current.y
 
-    // Container size: w-44 = 176px, h-80 = 320px
-    const containerWidth = 176
-    const containerHeight = 320
+      // Container size: w-44 = 176px, h-80 = 320px
+      const containerWidth = 176
+      const containerHeight = 320
 
-    const leftDelta = (deltaX / containerWidth) * 100
-    const bottomDelta = -(deltaY / containerHeight) * 20
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
 
-    const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
-    const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
+      const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
 
-    // Update item position
-    setOutfitItems(prev => prev.map(outfitItem => 
-      outfitItem.item.id === draggedItemId
-        ? { ...outfitItem, left: newLeft, bottom: newBottom }
-        : outfitItem
-    ))
-  }, [isDragging, draggedItemId])
+      // Update item position
+      setOutfitItems((prev) =>
+        prev.map((outfitItem) =>
+          outfitItem.item.id === draggedItemId ? { ...outfitItem, left: newLeft, bottom: newBottom } : outfitItem,
+        ),
+      )
+    },
+    [isDragging, draggedItemId],
+  )
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -166,22 +174,20 @@ useEffect(() => {
   // Global mouse events for dragging
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
 
   // RESIZE SYSTEM
   const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
-    setOutfitItems(prev => prev.map(outfitItem => 
-      outfitItem.item.id === itemId
-        ? { ...outfitItem, width: newWidth }
-        : outfitItem
-    ))
+    setOutfitItems((prev) =>
+      prev.map((outfitItem) => (outfitItem.item.id === itemId ? { ...outfitItem, width: newWidth } : outfitItem)),
+    )
   }, [])
 
   useEffect(() => {
@@ -194,7 +200,7 @@ useEffect(() => {
       setSelectedOuterwear(null)
       setOutfitItems([])
       setOutfitName("")
-      setAnimationKey(prev => prev + 1)
+      setAnimationKey((prev) => prev + 1)
       setSelectedItemForResize(null)
       setDraggedItemId(null)
     }
@@ -203,7 +209,7 @@ useEffect(() => {
   const fetchClothingItems = async () => {
     try {
       setLoadingClothing(true)
-      
+
       // Fetch both closet and wishlist items
       const [closetRes, wishlistRes] = await Promise.all([
         axios.get("http://localhost:8000/api/images?mode=closet", { withCredentials: true }),
@@ -224,15 +230,15 @@ useEffect(() => {
 
       const categorized: CategorizedClothing = {
         tops: allItems.filter((item: ClothingItem) =>
-          ["t-shirt", "dress", "shirt", "blouse"].includes(
-            item.type?.toLowerCase() || ""
-          )
+          ["t-shirt", "dress", "shirt", "blouse"].includes(item.type?.toLowerCase() || ""),
         ),
         bottoms: allItems.filter((item: ClothingItem) =>
-          ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
+          ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || ""),
         ),
         outerwear: allItems.filter((item: ClothingItem) =>
-          ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(item.type?.toLowerCase() || "")
+          ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(
+            item.type?.toLowerCase() || "",
+          ),
         ),
       }
 
@@ -259,7 +265,7 @@ useEffect(() => {
         setShowOuterwearSelectModal(false)
         break
     }
-    setAnimationKey(prev => prev + 1)
+    setAnimationKey((prev) => prev + 1)
   }
 
   const removeItem = (category: "top" | "bottom" | "outerwear") => {
@@ -274,7 +280,7 @@ useEffect(() => {
         setSelectedOuterwear(null)
         break
     }
-    setAnimationKey(prev => prev + 1)
+    setAnimationKey((prev) => prev + 1)
   }
 
   const shuffleOutfit = () => {
@@ -290,21 +296,23 @@ useEffect(() => {
       const randomOuterwear = clothingItems.outerwear[Math.floor(Math.random() * clothingItems.outerwear.length)]
       setSelectedOuterwear(randomOuterwear)
     }
-    setAnimationKey(prev => prev + 1)
+    setAnimationKey((prev) => prev + 1)
   }
 
   const resetLayout = () => {
-    setOutfitItems(prev => prev.map(outfitItem => {
-      const category = getItemCategory(outfitItem.item)
-      const defaultLayout = DEFAULT_LAYOUT[category as keyof typeof DEFAULT_LAYOUT] || DEFAULTS
-      return {
-        ...outfitItem,
-        left: defaultLayout.left,
-        bottom: defaultLayout.bottom,
-        width: defaultLayout.width,
-        scale: defaultLayout.scale,
-      }
-    }))
+    setOutfitItems((prev) =>
+      prev.map((outfitItem) => {
+        const category = getItemCategory(outfitItem.item)
+        const defaultLayout = DEFAULT_LAYOUT[category as keyof typeof DEFAULT_LAYOUT] || DEFAULTS
+        return {
+          ...outfitItem,
+          left: defaultLayout.left,
+          bottom: defaultLayout.bottom,
+          width: defaultLayout.width,
+          scale: defaultLayout.scale,
+        }
+      }),
+    )
   }
 
   const getItemCategory = (item: ClothingItem): string => {
@@ -332,7 +340,7 @@ useEffect(() => {
       setIsCreating(true)
 
       // Prepare items with their positioning data - using the exact API format
-      const itemsToSave = outfitItems.map(outfitItem => ({
+      const itemsToSave = outfitItems.map((outfitItem) => ({
         clothingId: outfitItem.item.id,
         x: 0, // Keep existing x/y for backward compatibility
         y: 0,
@@ -360,57 +368,57 @@ useEffect(() => {
     }
   }
 
-const handleCloseModal = () => {
-  setSelectedTop(null)
-  setSelectedBottom(null)
-  setSelectedOuterwear(null)
-  setOutfitItems([])
-  setOutfitName("")
-  setAnimationKey(prev => prev + 1)
-  setSelectedItemForResize(null)
-  setDraggedItemId(null)
-  onCloseAction()
-}
+  const handleCloseModal = () => {
+    setSelectedTop(null)
+    setSelectedBottom(null)
+    setSelectedOuterwear(null)
+    setOutfitItems([])
+    setOutfitName("")
+    setAnimationKey((prev) => prev + 1)
+    setSelectedItemForResize(null)
+    setDraggedItemId(null)
+    onCloseAction()
+  }
 
-const getLayerOrder = (item: ClothingItem) => {
-  const itemType = item.type?.toLowerCase() || ""
-  
-  // Bottoms go in back
-  if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(itemType)) {
-    return 1  // Bottom layer
+  const getLayerOrder = (item: ClothingItem) => {
+    const itemType = item.type?.toLowerCase() || ""
+
+    // Bottoms go in back
+    if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(itemType)) {
+      return 1 // Bottom layer
+    }
+
+    // ALL outerwear goes BEHIND tops (jackets, sweaters, hoodies, etc.)
+    if (["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)) {
+      return 2 // Behind tops
+    }
+
+    // Regular tops go in front of outerwear
+    if (["t-shirt", "dress", "shirt", "blouse"].includes(itemType)) {
+      return 3 // Front layer
+    }
+
+    return 3 // Default
   }
-  
-  // ALL outerwear goes BEHIND tops (jackets, sweaters, hoodies, etc.)
-  if (["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)) {
-    return 2  // Behind tops
-  }
-  
-  // Regular tops go in front of outerwear
-  if (["t-shirt", "dress", "shirt", "blouse"].includes(itemType)) {
-    return 3  // Front layer
-  }
-  
-  return 3  // Default
-}
 
   const renderOutfitDisplay = () => {
     return (
       <div className="relative w-44 h-80 mx-auto">
         {outfitItems.map((outfitItem, index) => {
           const item = outfitItem.item
-          
+
           // Apply coordinate adjustments similar to OutfitCard
-          let adjustedLeft = outfitItem.left;
-          const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "");
+          let adjustedLeft = outfitItem.left
+          const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
 
           if (isPants) {
-            adjustedLeft = adjustedLeft - 42;
+            adjustedLeft = adjustedLeft - 42
           } else {
-            const distanceFromCenter = Math.abs(adjustedLeft - 50);
-            const adjustmentFactor = Math.max(0.7, 1 - (distanceFromCenter / 100));
-            const baseAdjustment = 39;
-            const finalAdjustment = baseAdjustment * adjustmentFactor;
-            adjustedLeft = adjustedLeft - finalAdjustment;
+            const distanceFromCenter = Math.abs(adjustedLeft - 50)
+            const adjustmentFactor = Math.max(0.7, 1 - distanceFromCenter / 100)
+            const baseAdjustment = 39
+            const finalAdjustment = baseAdjustment * adjustmentFactor
+            adjustedLeft = adjustedLeft - finalAdjustment
           }
 
           return (
@@ -421,9 +429,7 @@ const getLayerOrder = (item: ClothingItem) => {
               transition={{ delay: index * 0.1 }}
               className={`absolute cursor-move hover:shadow-lg transition-shadow ${
                 draggedItemId === item.id ? "z-50 shadow-2xl" : ""
-              } ${
-                selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
-              }`}
+              } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
               style={{
                 left: `${adjustedLeft}%`,
                 bottom: `${outfitItem.bottom}rem`,
@@ -435,7 +441,7 @@ const getLayerOrder = (item: ClothingItem) => {
               onClick={() => setSelectedItemForResize(item.id)}
             >
               <img
-                src={item.url}
+                src={item.url || "/placeholder.svg"}
                 alt={item.name || ""}
                 className="w-full h-auto object-contain rounded-lg"
                 draggable={false}
@@ -477,14 +483,16 @@ const getLayerOrder = (item: ClothingItem) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="bg-white dark:bg-slate-900 chrome:bg-background rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
+            className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-700 chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 chrome:from-card chrome:to-secondary">
+            <div className="p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white chrome:text-foreground">Create New Outfit</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white chrome:text-foreground">
+                    Create New Outfit
+                  </h2>
                   <p className="text-slate-600 dark:text-slate-400 chrome:text-muted-foreground mt-1">
                     Mix and match your clothing items with drag & drop positioning
                   </p>
@@ -508,11 +516,11 @@ const getLayerOrder = (item: ClothingItem) => {
             {/* Content */}
             <div className="flex h-[calc(95vh-180px)]">
               {/* Left Panel - Item Selection */}
-              <div className="w-80 border-r border-slate-200 dark:border-slate-700 chrome:border-border p-6 overflow-y-auto">
+              <div className="w-80 border-r border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto">
                 <div className="space-y-6">
                   {/* Outfit Name */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
                       Outfit Name
                     </label>
                     <input
@@ -520,41 +528,44 @@ const getLayerOrder = (item: ClothingItem) => {
                       placeholder="Enter outfit name (optional)"
                       value={outfitName}
                       onChange={(e) => setOutfitName(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 chrome:border-slate-500 rounded-lg bg-white dark:bg-slate-800 chrome:bg-slate-700 text-slate-900 dark:text-white chrome:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 chrome:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-border chrome:border-border rounded-lg bg-white dark:bg-background chrome:bg-background text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-500 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
-
                   {/* Top Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
                       Top *
                     </label>
-                      {selectedTop ? (
-                        <div 
-                          className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setShowTopSelectModal(true)}
+                    {selectedTop ? (
+                      <div
+                        className="relative cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setShowTopSelectModal(true)}
+                      >
+                        <img
+                          src={selectedTop.url || "/placeholder.svg"}
+                          alt={selectedTop.name}
+                          className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeItem("top")
+                          }}
                         >
-                          <img src={selectedTop.url} alt={selectedTop.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeItem("top")
-                            }}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 chrome:text-muted-foreground truncate">
-                            {selectedTop.name || "Unnamed Top"}
-                          </div>
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground truncate">
+                          {selectedTop.name || "Unnamed Top"}
                         </div>
+                      </div>
                     ) : (
                       <Button
                         variant="outline"
-                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400"
+                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
                         onClick={() => setShowTopSelectModal(true)}
                         disabled={loadingClothing}
                       >
@@ -566,34 +577,38 @@ const getLayerOrder = (item: ClothingItem) => {
 
                   {/* Bottom Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
                       Bottom *
                     </label>
-                      {selectedBottom ? (
-                        <div 
-                          className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setShowBottomSelectModal(true)}
+                    {selectedBottom ? (
+                      <div
+                        className="relative cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setShowBottomSelectModal(true)}
+                      >
+                        <img
+                          src={selectedBottom.url || "/placeholder.svg"}
+                          alt={selectedBottom.name}
+                          className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeItem("bottom")
+                          }}
                         >
-                          <img src={selectedBottom.url} alt={selectedBottom.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeItem("bottom")
-                            }}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 chrome:text-muted-foreground truncate">
-                            {selectedBottom.name || "Unnamed Bottom"}
-                          </div>
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground truncate">
+                          {selectedBottom.name || "Unnamed Bottom"}
                         </div>
+                      </div>
                     ) : (
                       <Button
                         variant="outline"
-                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400"
+                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
                         onClick={() => setShowBottomSelectModal(true)}
                         disabled={loadingClothing}
                       >
@@ -605,34 +620,38 @@ const getLayerOrder = (item: ClothingItem) => {
 
                   {/* Outerwear Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
                       Outerwear
                     </label>
-                      {selectedOuterwear ? (
-                        <div 
-                          className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setShowOuterwearSelectModal(true)}
+                    {selectedOuterwear ? (
+                      <div
+                        className="relative cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setShowOuterwearSelectModal(true)}
+                      >
+                        <img
+                          src={selectedOuterwear.url || "/placeholder.svg"}
+                          alt={selectedOuterwear.name}
+                          className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeItem("outerwear")
+                          }}
                         >
-                          <img src={selectedOuterwear.url} alt={selectedOuterwear.name} className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50" />
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeItem("outerwear")
-                            }}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 chrome:text-muted-foreground truncate">
-                            {selectedOuterwear.name || "Unnamed Outerwear"}
-                          </div>
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground truncate">
+                          {selectedOuterwear.name || "Unnamed Outerwear"}
                         </div>
+                      </div>
                     ) : (
                       <Button
                         variant="outline"
-                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400"
+                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
                         onClick={() => setShowOuterwearSelectModal(true)}
                         disabled={loadingClothing}
                       >
@@ -646,7 +665,7 @@ const getLayerOrder = (item: ClothingItem) => {
 
               {/* Center Panel - Outfit Preview */}
               <div className="flex-1 flex flex-col">
-                <div className="flex-1 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 p-8 flex items-center justify-center">
+                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-8 flex items-center justify-center">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={animationKey}
@@ -663,31 +682,33 @@ const getLayerOrder = (item: ClothingItem) => {
 
               {/* Right Panel - Controls */}
               {selectedItemForResize && (
-                <div className="w-80 border-l border-slate-200 dark:border-slate-700 p-6 overflow-y-auto">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                <div className="w-80 border-l border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground chrome:text-foreground mb-4">
                     Item Controls
                   </h3>
-                  
+
                   {(() => {
-                    const selectedOutfitItem = outfitItems.find(item => item.item.id === selectedItemForResize)
+                    const selectedOutfitItem = outfitItems.find((item) => item.item.id === selectedItemForResize)
                     if (!selectedOutfitItem) return null
 
                     return (
                       <div className="space-y-4">
-                        <div className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                        <div className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground mb-4">
                           Editing: {selectedOutfitItem.item.name || "Unnamed Item"}
                         </div>
-                        
+
                         {/* Width Control */}
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          <label className="block text-sm font-medium text-slate-700 dark:text-foreground chrome:text-foreground mb-2">
                             Size: {selectedOutfitItem.width.toFixed(1)}rem
                           </label>
                           <div className="flex items-center space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleWidthChange(selectedItemForResize, Math.max(6, selectedOutfitItem.width - 0.5))}
+                              onClick={() =>
+                                handleWidthChange(selectedItemForResize, Math.max(6, selectedOutfitItem.width - 0.5))
+                              }
                             >
                               <ZoomOut className="w-4 h-4" />
                             </Button>
@@ -698,14 +719,18 @@ const getLayerOrder = (item: ClothingItem) => {
                                 max="15"
                                 step="0.1"
                                 value={selectedOutfitItem.width}
-                                onChange={(e) => handleWidthChange(selectedItemForResize, parseFloat(e.target.value))}
+                                onChange={(e) =>
+                                  handleWidthChange(selectedItemForResize, Number.parseFloat(e.target.value))
+                                }
                                 className="w-full"
                               />
                             </div>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleWidthChange(selectedItemForResize, Math.min(15, selectedOutfitItem.width + 0.5))}
+                              onClick={() =>
+                                handleWidthChange(selectedItemForResize, Math.min(15, selectedOutfitItem.width + 0.5))
+                              }
                             >
                               <ZoomIn className="w-4 h-4" />
                             </Button>
@@ -713,14 +738,16 @@ const getLayerOrder = (item: ClothingItem) => {
                         </div>
 
                         {/* Position Info */}
-                        <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
-                          <div>Position: {selectedOutfitItem.left.toFixed(1)}%, {selectedOutfitItem.bottom.toFixed(1)}rem</div>
+                        <div className="text-sm text-slate-500 dark:text-muted-foreground chrome:text-muted-foreground bg-slate-100 dark:bg-muted chrome:bg-muted p-3 rounded-lg">
+                          <div>
+                            Position: {selectedOutfitItem.left.toFixed(1)}%, {selectedOutfitItem.bottom.toFixed(1)}rem
+                          </div>
                           <div className="mt-1 text-xs">Drag the item to reposition</div>
                         </div>
 
                         <Button
                           variant="outline"
-                          className="w-full"
+                          className="w-full bg-transparent"
                           onClick={() => setSelectedItemForResize(null)}
                         >
                           Done Editing
@@ -733,8 +760,8 @@ const getLayerOrder = (item: ClothingItem) => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-              <div className="text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-border chrome:border-border bg-slate-50 dark:bg-muted/30 chrome:bg-muted/30">
+              <div className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
                 {isFormValid() ? (
                   <div className="flex items-center text-green-600 dark:text-green-400">
                     <Check className="w-4 h-4 mr-1" />

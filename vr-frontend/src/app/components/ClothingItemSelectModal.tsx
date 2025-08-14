@@ -142,14 +142,14 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-slate-900 chrome:bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden"
+            className="bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 chrome:border-border">
+            <div className="flex items-center justify-between p-6 border-b border-border">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white chrome:text-slate-100">Select Clothing Item</h2>
-                <p className="text-slate-600 dark:text-slate-400 chrome:text-slate-300 mt-1">
+                <h2 className="text-2xl font-bold text-foreground">Select Clothing Item</h2>
+                <p className="text-muted-foreground mt-1">
                   Choose from your {selectedCategory || "clothing"} collection
                 </p>
               </div>
@@ -174,7 +174,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
 
                 {/* Search */}
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     type="text"
                     placeholder="Search by name, type, or brand..."
@@ -185,7 +185,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 </div>
 
                 {/* View Type Toggle */}
-                <div className="flex rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex rounded-lg border border-border">
                   <Button
                     variant={viewType === "grid" ? "default" : "ghost"}
                     size="sm"
@@ -227,15 +227,15 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                             <CardContent className="p-3">
                               {item.id?.startsWith("__none") ? (
                                 <>
-                                  <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800 chrome:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 chrome:border-slate-500 flex items-center justify-center">
-                                    <X className="w-10 h-10 text-slate-400 dark:text-slate-500 chrome:text-slate-400" />
+                                  <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-muted border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                                    <X className="w-10 h-10 text-muted-foreground" />
                                   </div>
                                   <p className="text-sm font-medium text-center">Select None</p>
                                   <p className="text-xs text-center opacity-0">Type</p>
                                 </>
                               ) : (
                                 <>
-                                  <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800 chrome:bg-slate-700">
+                                  <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-muted">
                                     <img
                                       src={item.url || "/placeholder.svg"}
                                       alt={item.name || "Clothing Item"}
@@ -245,12 +245,10 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                       <Badge className="absolute top-1 right-1 text-xs bg-amber-500">Wishlist</Badge>
                                     )}
                                   </div>
-                                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                  <p className="text-sm font-medium text-foreground truncate">
                                     {item.name || "Unnamed"}
                                   </p>
-                                  {item.type && (
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{item.type}</p>
-                                  )}
+                                  {item.type && <p className="text-xs text-muted-foreground truncate">{item.type}</p>}
                                 </>
                               )}
                             </CardContent>
@@ -279,11 +277,11 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                             <CardContent className="p-4">
                               <div className="flex items-center space-x-4">
                                 {item.id?.startsWith("__none") ? (
-                                  <div className="w-16 h-16 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 chrome:border-slate-500 rounded-lg">
-                                    <X className="w-6 h-6 text-slate-400 chrome:text-slate-400" />
+                                  <div className="w-16 h-16 flex items-center justify-center border-2 border-dashed border-muted-foreground/30 rounded-lg">
+                                    <X className="w-6 h-6 text-muted-foreground" />
                                   </div>
                                 ) : (
-                                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800 chrome:bg-slate-700 flex-shrink-0">
+                                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                                     <img
                                       src={item.url || "/placeholder.svg"}
                                       alt={item.name || "Clothing Item"}
@@ -292,15 +290,11 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-medium text-slate-900 dark:text-white truncate">
+                                  <h3 className="font-medium text-foreground truncate">
                                     {item.name || (item.id === "none" ? "Select None" : "Unnamed")}
                                   </h3>
-                                  {item.type && (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">{item.type}</p>
-                                  )}
-                                  {item.brand && (
-                                    <p className="text-xs text-slate-400 dark:text-slate-500">{item.brand}</p>
-                                  )}
+                                  {item.type && <p className="text-sm text-muted-foreground">{item.type}</p>}
+                                  {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
                                 </div>
                                 {item.mode === "wishlist" && !item.id?.startsWith("__none") && (
                                   <Badge className="bg-amber-500">Wishlist</Badge>
@@ -316,7 +310,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
 
                 {filteredItems.length === 0 && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-                    <div className="text-slate-400 dark:text-slate-500">
+                    <div className="text-muted-foreground">
                       <Search className="w-12 h-12 mx-auto mb-4" />
                       <h3 className="text-lg font-medium mb-2">No items found</h3>
                       <p className="text-sm">Try adjusting your search or switching between Closet and Wishlist</p>
