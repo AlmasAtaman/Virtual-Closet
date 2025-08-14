@@ -13,6 +13,7 @@ import OccasionCard from "../components/OccasionCard"
 import OccasionOutfits from "../components/OccasionOutfits"
 import LogOutButton from "../components/LogoutButton"
 import { ThemeToggle } from "../components/ThemeToggle"
+import ColorPicker from "../components/ColorPicker"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ConfirmDialog } from "@/components/ui/dialog"
 
@@ -264,6 +265,7 @@ export default function OutfitsPage() {
             <span className="text-xl font-semibold tracking-tight">VrC</span>
           </div>
           <div className="flex items-center gap-4">
+            <ColorPicker />
             <ThemeToggle />
             <LogOutButton />
           </div>
@@ -290,7 +292,7 @@ export default function OutfitsPage() {
             onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border">
+            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
               <TabsTrigger value="outfits">Outfits</TabsTrigger>
               <TabsTrigger value="occasions">Occasions</TabsTrigger>
             </TabsList>
@@ -364,7 +366,7 @@ export default function OutfitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-card rounded-full shadow-lg border border-border px-6 py-3 flex items-center gap-4">
+              <div className="bg-card rounded-full shadow-lg border border-border dark:border-border/60 px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium">
                   {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? "s" : ""} selected
                 </span>
@@ -393,7 +395,7 @@ export default function OutfitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             >
-              <div className="bg-card rounded-full shadow-lg border border-border px-6 py-3 flex items-center gap-4">
+              <div className="bg-card rounded-full shadow-lg border border-border dark:border-border/60 px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium">
                   {selectedOccasionIds.length} folder{selectedOccasionIds.length > 1 ? "s" : ""} selected
                 </span>
