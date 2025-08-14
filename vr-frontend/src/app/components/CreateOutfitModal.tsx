@@ -477,15 +477,15 @@ const getLayerOrder = (item: ClothingItem) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
+            className="bg-white dark:bg-slate-900 chrome:bg-background rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 chrome:from-card chrome:to-secondary">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create New Outfit</h2>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white chrome:text-foreground">Create New Outfit</h2>
+                  <p className="text-slate-600 dark:text-slate-400 chrome:text-muted-foreground mt-1">
                     Mix and match your clothing items with drag & drop positioning
                   </p>
                 </div>
@@ -508,11 +508,11 @@ const getLayerOrder = (item: ClothingItem) => {
             {/* Content */}
             <div className="flex h-[calc(95vh-180px)]">
               {/* Left Panel - Item Selection */}
-              <div className="w-80 border-r border-slate-200 dark:border-slate-700 p-6 overflow-y-auto">
+              <div className="w-80 border-r border-slate-200 dark:border-slate-700 chrome:border-border p-6 overflow-y-auto">
                 <div className="space-y-6">
                   {/* Outfit Name */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
                       Outfit Name
                     </label>
                     <input
@@ -520,14 +520,14 @@ const getLayerOrder = (item: ClothingItem) => {
                       placeholder="Enter outfit name (optional)"
                       value={outfitName}
                       onChange={(e) => setOutfitName(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 chrome:border-slate-500 rounded-lg bg-white dark:bg-slate-800 chrome:bg-slate-700 text-slate-900 dark:text-white chrome:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 chrome:placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
 
                   {/* Top Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
                       Top *
                     </label>
                       {selectedTop ? (
@@ -547,7 +547,7 @@ const getLayerOrder = (item: ClothingItem) => {
                           >
                             <X className="w-3 h-3" />
                           </Button>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 chrome:text-muted-foreground truncate">
                             {selectedTop.name || "Unnamed Top"}
                           </div>
                         </div>
@@ -566,7 +566,7 @@ const getLayerOrder = (item: ClothingItem) => {
 
                   {/* Bottom Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
                       Bottom *
                     </label>
                       {selectedBottom ? (
@@ -586,7 +586,7 @@ const getLayerOrder = (item: ClothingItem) => {
                           >
                             <X className="w-3 h-3" />
                           </Button>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 chrome:text-muted-foreground truncate">
                             {selectedBottom.name || "Unnamed Bottom"}
                           </div>
                         </div>
@@ -605,7 +605,7 @@ const getLayerOrder = (item: ClothingItem) => {
 
                   {/* Outerwear Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 chrome:text-foreground mb-3">
                       Outerwear
                     </label>
                       {selectedOuterwear ? (
@@ -625,7 +625,7 @@ const getLayerOrder = (item: ClothingItem) => {
                           >
                             <X className="w-3 h-3" />
                           </Button>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 chrome:text-muted-foreground truncate">
                             {selectedOuterwear.name || "Unnamed Outerwear"}
                           </div>
                         </div>

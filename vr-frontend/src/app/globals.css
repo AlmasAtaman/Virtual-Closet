@@ -1,6 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant chrome (&:is(.chrome *));
 
 @theme inline {
   --color-background: var(--background);
@@ -44,24 +46,25 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(99.5% 0 0);
-  --foreground: oklch(10% 0 0);
-  --card: oklch(100% 0 0);
-  --card-foreground: oklch(10% 0 0);
-  --popover: oklch(100% 0 0);
-  --popover-foreground: oklch(10% 0 0);
-  --primary: oklch(40% 0.02 240);
-  --primary-foreground: oklch(98% 0 0);
-  --secondary: oklch(96% 0 0);
-  --secondary-foreground: oklch(25% 0 0);
-  --muted: oklch(93% 0 0);
-  --muted-foreground: oklch(50% 0 0);
-  --accent: oklch(90% 0 0);
-  --accent-foreground: oklch(25% 0 0);
-  --destructive: oklch(65% 0.2 20);
-  --border: oklch(90% 0 0);
-  --input: oklch(93% 0 0);
-  --ring: oklch(60% 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -77,38 +80,112 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Updated dark mode to exactly match first screenshot - deep navy/slate theme */
 .dark {
-  --background: oklch(12% 0.005 240);
-  --foreground: oklch(95% 0.01 240);
-  --card: oklch(15% 0.008 240);
-  --card-foreground: oklch(94% 0.01 240);
-  --popover: oklch(15% 0.008 240);
-  --popover-foreground: oklch(94% 0.01 240);
-  --primary: oklch(60% 0.08 250);
-  --primary-foreground: oklch(98% 0 0);
-  --secondary: oklch(20% 0.01 240);
-  --secondary-foreground: oklch(85% 0.01 240);
-  --muted: oklch(18% 0.008 240);
-  --muted-foreground: oklch(65% 0.01 240);
-  --accent: oklch(22% 0.01 240);
-  --accent-foreground: oklch(90% 0.01 240);
-  --destructive: oklch(65% 0.2 20);
-  --border: oklch(25% 0.01 240);
-  --input: oklch(18% 0.008 240);
-  --ring: oklch(40% 0.05 250);
-  --chart-1: oklch(0.65 0.15 250);
+  --background: oklch(0.12 0.015 240);
+  --foreground: oklch(0.98 0.005 240);
+  --card: oklch(0.15 0.015 240);
+  --card-foreground: oklch(0.95 0.005 240);
+  --popover: oklch(0.15 0.015 240);
+  --popover-foreground: oklch(0.95 0.005 240);
+  --primary: oklch(0.65 0.15 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.18 0.015 240);
+  --secondary-foreground: oklch(0.9 0.005 240);
+  --muted: oklch(0.18 0.015 240);
+  --muted-foreground: oklch(0.65 0.01 240);
+  --accent: oklch(0.18 0.015 240);
+  --accent-foreground: oklch(0.9 0.005 240);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.95 0.005 240);
+  --border: oklch(0.22 0.015 240);
+  --input: oklch(0.18 0.015 240);
+  --ring: oklch(0.65 0.15 220);
+  --chart-1: oklch(0.65 0.15 220);
   --chart-2: oklch(0.7 0.12 180);
   --chart-3: oklch(0.75 0.1 300);
   --chart-4: oklch(0.68 0.18 80);
-  --chart-5: oklch(0.72 0.16 60);
-  --sidebar: oklch(16% 0.008 240);
-  --sidebar-foreground: oklch(92% 0.01 240);
-  --sidebar-primary: oklch(55% 0.08 250);
-  --sidebar-primary-foreground: oklch(98% 0 0);
-  --sidebar-accent: oklch(22% 0.01 240);
-  --sidebar-accent-foreground: oklch(92% 0.01 240);
-  --sidebar-border: oklch(25% 0.01 240);
-  --sidebar-ring: oklch(45% 0.05 250);
+  --chart-5: oklch(0.72 0.15 60);
+  --sidebar: oklch(0.12 0.015 240);
+  --sidebar-foreground: oklch(0.95 0.005 240);
+  --sidebar-primary: oklch(0.65 0.15 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.18 0.015 240);
+  --sidebar-accent-foreground: oklch(0.9 0.005 240);
+  --sidebar-border: oklch(0.22 0.015 240);
+  --sidebar-ring: oklch(0.65 0.15 220);
+}
+
+/* Updated chrome mode to exactly match second screenshot - blue-gray metallic theme */
+.chrome {
+  --background: oklch(0.35 0.025 240);
+  --foreground: oklch(0.95 0.01 240);
+  --card: oklch(0.42 0.025 240);
+  --card-foreground: oklch(0.92 0.01 240);
+  --popover: oklch(0.42 0.025 240);
+  --popover-foreground: oklch(0.92 0.01 240);
+  --primary: oklch(0.6 0.12 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.45 0.025 240);
+  --secondary-foreground: oklch(0.88 0.01 240);
+  --muted: oklch(0.48 0.025 240);
+  --muted-foreground: oklch(0.7 0.015 240);
+  --accent: oklch(0.5 0.025 240);
+  --accent-foreground: oklch(0.85 0.01 240);
+  --destructive: oklch(0.65 0.2 20);
+  --destructive-foreground: oklch(0.95 0.01 240);
+  --border: oklch(0.55 0.025 240);
+  --input: oklch(0.48 0.025 240);
+  --ring: oklch(0.6 0.12 220);
+  --chart-1: oklch(0.65 0.12 220);
+  --chart-2: oklch(0.7 0.1 180);
+  --chart-3: oklch(0.75 0.08 300);
+  --chart-4: oklch(0.68 0.15 80);
+  --chart-5: oklch(0.72 0.12 60);
+  --sidebar: oklch(0.38 0.025 240);
+  --sidebar-foreground: oklch(0.9 0.01 240);
+  --sidebar-primary: oklch(0.6 0.12 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.5 0.025 240);
+  --sidebar-accent-foreground: oklch(0.85 0.01 240);
+  --sidebar-border: oklch(0.55 0.025 240);
+  --sidebar-ring: oklch(0.6 0.12 220);
+}
+
+/* Updated dark mode to exactly match third screenshot - deep navy/black theme */
+.dark {
+  --background: oklch(0.08 0.01 240);
+  --foreground: oklch(0.98 0.005 240);
+  --card: oklch(0.11 0.012 240);
+  --card-foreground: oklch(0.95 0.005 240);
+  --popover: oklch(0.11 0.012 240);
+  --popover-foreground: oklch(0.95 0.005 240);
+  --primary: oklch(0.65 0.15 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.13 0.012 240);
+  --secondary-foreground: oklch(0.9 0.005 240);
+  --muted: oklch(0.13 0.012 240);
+  --muted-foreground: oklch(0.65 0.01 240);
+  --accent: oklch(0.13 0.012 240);
+  --accent-foreground: oklch(0.9 0.005 240);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.95 0.005 240);
+  --border: oklch(0.16 0.012 240);
+  --input: oklch(0.13 0.012 240);
+  --ring: oklch(0.65 0.15 220);
+  --chart-1: oklch(0.65 0.15 220);
+  --chart-2: oklch(0.7 0.12 180);
+  --chart-3: oklch(0.75 0.1 300);
+  --chart-4: oklch(0.68 0.18 80);
+  --chart-5: oklch(0.72 0.15 60);
+  --sidebar: oklch(0.08 0.01 240);
+  --sidebar-foreground: oklch(0.95 0.005 240);
+  --sidebar-primary: oklch(0.65 0.15 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.13 0.012 240);
+  --sidebar-accent-foreground: oklch(0.9 0.005 240);
+  --sidebar-border: oklch(0.16 0.012 240);
+  --sidebar-ring: oklch(0.65 0.15 220);
 }
 
 @layer base {
@@ -116,14 +193,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground transition-colors duration-300;
-  }
-  
-  /* Smooth transitions for theme switching */
-  *, *::before, *::after {
-    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
+    @apply bg-background text-foreground;
   }
 }
 
@@ -131,18 +201,28 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Image optimizations for dark mode - keep clothing visible */
-.dark img {
-  filter: brightness(1.05) contrast(1.02);
+/* Enhanced image optimizations for better clothing visibility in dark themes */
+.dark img,
+.chrome img {
+  filter: brightness(1.1) contrast(1.05) saturate(1.1);
 }
 
-/* Special handling for clothing images in dark mode */
+/* Special handling for clothing images in dark themes */
 .dark .clothing-image {
-  background: radial-gradient(circle at center, oklch(18% 0.008 240), oklch(15% 0.008 240));
+  background: radial-gradient(circle at center, oklch(18% 0.015 240), oklch(12% 0.015 240));
   border-radius: 0.5rem;
 }
 
-/* Ensure proper contrast for modals in dark mode */
+.chrome .clothing-image {
+  background: radial-gradient(circle at center, oklch(45% 0.025 240), oklch(35% 0.025 240));
+  border-radius: 0.5rem;
+}
+
+/* Enhanced modal shadows for better depth in updated themes */
 .dark [role="dialog"] {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+.chrome [role="dialog"] {
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.7);
 }
