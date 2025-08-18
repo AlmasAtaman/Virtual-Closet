@@ -320,7 +320,38 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     if (!editedCategorizedItems) return
 
     const newCategorizedItems = { ...editedCategorizedItems }
-    newCategorizedItems[selectedModalState.category] = item
+    const category = selectedModalState.category
+    const currentItem = newCategorizedItems[category]
+
+    // Default positions for each category (matching CreateOutfitModal)
+    const DEFAULT_POSITIONS = {
+      outerwear: { left: 64, bottom: 9, width: 10, scale: 1 },
+      top: { left: 45, bottom: 8, width: 10, scale: 1 },
+      bottom: { left: 50, bottom: 0, width: 10, scale: 1 },
+      shoe: { left: 50, bottom: 0, width: 10, scale: 1 },
+    }
+
+    // Create new item with preserved position or default position
+    const newItem = { ...item }
+    
+    if (currentItem) {
+      // Preserve position if replacing an existing item of the same type
+      newItem.left = currentItem.left
+      newItem.bottom = currentItem.bottom
+      newItem.width = currentItem.width
+      newItem.scale = currentItem.scale
+      newItem.x = currentItem.x
+      newItem.y = currentItem.y
+    } else {
+      // Use default position for new clothing type
+      const defaultPos = DEFAULT_POSITIONS[category]
+      newItem.left = defaultPos.left
+      newItem.bottom = defaultPos.bottom
+      newItem.width = defaultPos.width
+      newItem.scale = defaultPos.scale
+    }
+
+    newCategorizedItems[category] = newItem
 
     // Remove item from others if it was there
     newCategorizedItems.others = newCategorizedItems.others.filter((i) => i.id !== item.id)
