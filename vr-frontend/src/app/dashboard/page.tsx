@@ -6,7 +6,6 @@ import { Plus, Search, X, Check, Heart } from "lucide-react"
 import LogOutButton from "../components/LogoutButton"
 import { ThemeToggle } from "../components/ThemeToggle"
 import UploadForm from "../components/UploadForm"
-import ColorPicker from "../components/ColorPicker"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../components/ClothingGallery"
 import Image from "next/image"
@@ -127,7 +126,6 @@ export default function Homepage() {
             <Button onClick={() => router.push("/outfits")} variant="outline" className="gap-2">
               <span className="hidden sm:inline">View</span> Outfits
             </Button>
-            <ColorPicker />
             <ThemeToggle />
             <LogOutButton />
           </div>
