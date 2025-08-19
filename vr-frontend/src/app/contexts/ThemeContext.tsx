@@ -165,17 +165,17 @@ const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrom
   } else {
     // Light theme
     return {
-      background: `oklch(${Math.min(0.98, l / 100 + 0.3)} ${Math.min(s / 100, 0.02)} ${h})`,
+      background: `oklch(0.96 ${Math.min(s / 100, 0.04)} ${h})`,
       foreground: `oklch(0.145 0 0)`,
-      card: `oklch(${Math.min(1, l / 100 + 0.35)} ${Math.min(s / 100, 0.01)} ${h})`,
+      card: `oklch(0.98 ${Math.min(s / 100, 0.03)} ${h})`,
       cardForeground: `oklch(0.145 0 0)`,
       popover: `oklch(${Math.min(1, l / 100 + 0.35)} ${Math.min(s / 100, 0.01)} ${h})`,
       popoverForeground: `oklch(0.145 0 0)`,
       primary: `oklch(0.205 0 0)`,
       primaryForeground: `oklch(0.985 0 0)`,
-      secondary: `oklch(${Math.min(0.95, l / 100 + 0.25)} ${Math.min(s / 100, 0.03)} ${h})`,
+      secondary: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
       secondaryForeground: `oklch(0.205 0 0)`,
-      muted: `oklch(${Math.min(0.95, l / 100 + 0.25)} ${Math.min(s / 100, 0.03)} ${h})`,
+      muted: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
       mutedForeground: `oklch(0.556 0 0)`,
       accent: `oklch(${Math.min(0.92, l / 100 + 0.2)} ${Math.min(s / 100, 0.04)} ${h})`,
       accentForeground: `oklch(0.205 0 0)`,
