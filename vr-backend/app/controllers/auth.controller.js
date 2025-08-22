@@ -98,7 +98,19 @@ export const signin = async (req, res) => {
 };
 
 export const signout = (req, res) => {
-  res.clearCookie("accessToken");
+  // Clear all possible auth cookies
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "Lax"
+  });
+  
+  // Clear any legacy NextAuth cookies if they exist
+  res.clearCookie("next-auth.session-token");
+  res.clearCookie("__Secure-next-auth.session-token");
+  res.clearCookie("next-auth.csrf-token");
+  res.clearCookie("__Host-next-auth.csrf-token");
+  
   res.status(200).send({ message: "You've been signed out!" });
 };
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaFacebookF, FaApple, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import { signIn } from "next-auth/react";
 
 
 type User = {
@@ -75,7 +74,7 @@ export default function SignUp(){
                 {/* Social Buttons */}
                 <div className="flex flex-col gap-3">
                     <button
-                        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                        onClick={() => window.location.href = '/login'}
                         className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition"
                         >
                         <FaGoogle className="text-lg" /> Sign in with Google

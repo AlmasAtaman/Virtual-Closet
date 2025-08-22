@@ -11,9 +11,19 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
+    async jwt({ token, account, user }) {
+      // Initial sign in - store the Google access token
+      if (account && user) {
+        token.accessToken = account.access_token;
+        token.id = user.id;
+      }
+      return token;
+    },
     async session({ session, token }) {
+      // Send properties to the client
       if (token?.sub) {
         session.user.id = token.sub;
+        session.accessToken = token.accessToken;
       }
       return session;
     },
@@ -50,6 +60,7 @@ const handler = NextAuth({
           ...payload,
           id: payload.sub as string,
           sub: payload.sub as string,
+          accessToken: payload.accessToken as string,
         };
         return customJwt;
 

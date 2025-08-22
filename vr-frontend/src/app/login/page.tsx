@@ -4,7 +4,13 @@ import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaGoogle, FaFacebookF, FaApple, FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import { signIn } from "next-auth/react";
+
+// Google Identity Services global declaration
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 type User = {
     id: string; // Changed to string to match Prisma schema
@@ -22,6 +28,39 @@ export default function LoginPage(){
     const [showPassword, setShowPassword] = useState(false); // New state for password visibility
 
     const router = useRouter();
+
+    const handleGoogleButtonClick = () => {
+        console.log("Google button clicked");
+        setLoading(true);
+        setMessage("");
+        setIsSuccess(false);
+
+        // Create the OAuth2 URL manually
+        const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        const redirectUri = encodeURIComponent("http://localhost:3000/auth/google/callback");
+        const scope = encodeURIComponent("openid email profile");
+        const responseType = "code";
+        const state = Math.random().toString(36).substring(2, 15);
+
+        // Store state in sessionStorage for verification
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('oauth_state', state);
+        }
+
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+            `client_id=${googleClientId}&` +
+            `redirect_uri=${redirectUri}&` +
+            `response_type=${responseType}&` +
+            `scope=${scope}&` +
+            `state=${state}&` +
+            `access_type=offline&` +
+            `prompt=select_account`;
+
+        console.log("Redirecting to Google OAuth:", googleAuthUrl);
+        
+        // Redirect to Google OAuth
+        window.location.href = googleAuthUrl;
+    };
 
     const checkUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,10 +114,11 @@ export default function LoginPage(){
                 {/* Social Buttons */}
                 <div className="flex flex-col gap-3">
                     <button 
-                        onClick={() => signIn('google')}
-                        className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition"
+                        onClick={handleGoogleButtonClick}
+                        disabled={loading}
+                        className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
                     >
-                        <FaGoogle className="text-lg" /> Sign in with Google
+                        <FaGoogle className="text-lg" /> {loading ? "Signing in..." : "Sign in with Google"}
                     </button>
                 </div>
                 {/* Divider */}

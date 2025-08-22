@@ -32,9 +32,16 @@ type ClothingGalleryProps = {
   setShowFavoritesOnly: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-
 const ClothingGallery = forwardRef(
   ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, setPriceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly,}: ClothingGalleryProps, ref ) => {
+
+    // Create an axios instance with credentials (uses cookies automatically)
+    const createAuthenticatedAxios = () => {
+      return axios.create({
+        withCredentials: true // This will include cookies automatically for our unified auth
+      });
+    };
+
     const [selectedItem, setSelectedItem] = useState<Clothing | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -101,24 +108,28 @@ const ClothingGallery = forwardRef(
     const fetchImages = async () => {
       setIsLoading(true);
       try {
+        const authAxios = createAuthenticatedAxios();
+        
         // If either checkbox is checked, fetch all items
         if (searchAcrossModes || filterAcrossModes) {
           const [closetRes, wishlistRes] = await Promise.all([
-            axios.get(`http://localhost:8000/api/images?mode=closet`, { withCredentials: true }),
-            axios.get(`http://localhost:8000/api/images?mode=wishlist`, { withCredentials: true }),
+            authAxios.get(`http://localhost:8000/api/images?mode=closet`),
+            authAxios.get(`http://localhost:8000/api/images?mode=wishlist`),
           ]);
 
           const allItems = [...(closetRes.data.clothingItems || []), ...(wishlistRes.data.clothingItems || [])];
           setClothingItems(allItems);
         } else {
           // Otherwise, fetch only items for current view mode
-          const res = await axios.get(`http://localhost:8000/api/images?mode=${viewMode}`, {
-            withCredentials: true,
-          });
+          const res = await authAxios.get(`http://localhost:8000/api/images?mode=${viewMode}`);
           setClothingItems(res.data.clothingItems || []);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching images:", err);
+        // If 401, might need to redirect to login
+        if (err.response?.status === 401) {
+          console.log("User not authenticated with backend");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -128,9 +139,8 @@ const ClothingGallery = forwardRef(
       setShowSingleDeleteDialog(false);
       try {
         setIsDeleting(true);
-        await axios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`, {
-          withCredentials: true,
-        });
+        const authAxios = createAuthenticatedAxios();
+        await authAxios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`);
         setClothingItems((prev) => prev.filter((item) => item.key !== key));
         setSelectedItemIds((prev) => prev.filter((id) => id !== key));
         setSelectedItem(null);
@@ -154,10 +164,9 @@ const ClothingGallery = forwardRef(
       try {
         console.log("Updating item with ID:", selectedItem.id, "with data:", editForm);
 
-        await axios.patch(
+        await createAuthenticatedAxios().patch(
           "http://localhost:8000/api/images/update",
-          { id: selectedItem.id, ...editForm, price: numericPrice },
-          { withCredentials: true },
+          { id: selectedItem.id, ...editForm, price: numericPrice }
         );
 
         setSelectedItem(updated);
@@ -172,10 +181,9 @@ const ClothingGallery = forwardRef(
     const handleMoveToCloset = async (item: Clothing) => {
       try {
         setIsMoving(true);
-        const response = await axios.patch(
+        const response = await createAuthenticatedAxios().patch(
           `http://localhost:8000/api/images/move-to-closet/${item.id}`,
-          {},
-          { withCredentials: true },
+          {}
         );
 
         // Remove the item from the current view
@@ -220,7 +228,7 @@ const ClothingGallery = forwardRef(
         // Send delete requests in parallel
         await Promise.all(
           keysToDelete.map((key) =>
-            axios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`, { withCredentials: true }),
+            createAuthenticatedAxios().delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`)
           ),
         );
 
@@ -256,7 +264,7 @@ const ClothingGallery = forwardRef(
         // Send move requests in parallel
         await Promise.all(
           itemsToMove.map((item) =>
-            axios.patch(`http://localhost:8000/api/images/move-to-closet/${item.id}`, {}, { withCredentials: true }),
+            createAuthenticatedAxios().patch(`http://localhost:8000/api/images/move-to-closet/${item.id}`, {})
           ),
         );
 
@@ -380,10 +388,9 @@ const ClothingGallery = forwardRef(
         )
       );
       try {
-        await axios.patch(
+        await createAuthenticatedAxios().patch(
           `http://localhost:8000/api/images/${id}/favorite`,
-          { isFavorite },
-          { withCredentials: true }
+          { isFavorite }
         );
         // No need to refetch, UI already updated
       } catch (err) {
@@ -598,4 +605,4 @@ const ClothingGallery = forwardRef(
 );
 
 ClothingGallery.displayName = "ClothingGallery";
-export default ClothingGallery; 
+export default ClothingGallery;

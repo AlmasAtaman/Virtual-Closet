@@ -1,5 +1,6 @@
 import { verifySignUp } from "../middlewares/index.js";
 import * as authController from "../controllers/auth.controller.js";
+import * as googleAuthController from "../controllers/google-auth.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 
 
@@ -15,6 +16,8 @@ export default function(app) {
   ], authController.signup);
 
   app.post("/api/auth/signin", authController.signin);
+  app.post("/api/auth/google", googleAuthController.googleAuth);
+  app.post("/api/auth/google/callback", googleAuthController.googleCallback);
   app.post("/api/auth/signout", authController.signout);
   app.post("/api/auth/forgot-password", authController.forgotPassword);
   app.post("/api/auth/reset-password", authController.resetPassword);

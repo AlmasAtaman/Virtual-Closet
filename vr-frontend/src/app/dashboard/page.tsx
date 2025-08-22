@@ -16,6 +16,7 @@ import type { ClothingItem } from "../types/clothing"
 import FilterSection, { type FilterAttribute } from "../components/FilterSection"
 import { Badge } from "@/components/ui/badge"
 
+
 export default function Homepage() {
   const [username, setUsername] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -89,22 +90,29 @@ export default function Homepage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const res = await fetch("http://localhost:8000/api/auth/me", {
-        credentials: "include",
-      })
-
-      if (!res.ok) {
-        router.push("/login")
-      } else {
-        const data = await res.json()
-        setUsername(data.username)
+      try {
+        const res = await fetch("http://localhost:8000/api/auth/me", {
+          credentials: "include",
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log("User authenticated:", data);
+          setUsername(data.username);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.log("Auth check failed:", error);
       }
-
-      setLoading(false)
-    }
-
-    checkAuth()
-  }, [router])
+      
+      // No authentication found
+      console.log("No authentication found, redirecting to login");
+      router.push("/login");
+    };
+    
+    checkAuth();
+  }, [router]);
 
   // Conditional return statements must come AFTER all hooks have been called.
   if (!hasMounted || loading) return null
