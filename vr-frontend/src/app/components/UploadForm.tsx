@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem, ScrapedProduct } from "../types/clothing"
 
+
 interface UploadFormProps {
   isOpen: boolean
   onCloseAction: () => void

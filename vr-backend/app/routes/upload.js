@@ -13,30 +13,7 @@ const router = express.Router();
 const storage = memoryStorage();
 const upload = multer({storage});
 
-// New middleware to ensure user exists in the database
-const ensureUserExists = async (req, res, next) => {
-  const userId = req.user.id;
-  const email = req.user.email;
-  const username = req.user.name || req.user.email;
-
-  try {
-    let user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          id: userId,
-          email,
-          username,
-          password: null,
-        }
-      });
-    }
-    next();
-  } catch (error) {
-    console.error("Error ensuring user exists:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
+// Middleware removed - no longer needed since unified auth ensures users exist
 
 router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
   const { file } = req;
@@ -139,7 +116,7 @@ router.post("/submit-clothing", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/final-submit", authMiddleware, ensureUserExists, upload.single("image"), async (req, res) => {
+router.post("/final-submit", authMiddleware, upload.single("image"), async (req, res) => {
   const {
     name, type, brand,
     occasion, style, fit,
