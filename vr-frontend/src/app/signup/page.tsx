@@ -5,7 +5,6 @@ import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaFacebookF, FaApple, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
-
 type User = {
     id: string;
     username: string;
@@ -23,6 +22,40 @@ export default function SignUp(){
     const [showPassword, setShowPassword] = useState(false);
 
     const router = useRouter();
+
+    // Google OAuth handler - same logic as login page
+    const handleGoogleButtonClick = () => {
+        console.log("Google button clicked from signup page");
+        setLoading(true);
+        setMessage("");
+        setIsSuccess(false);
+
+        // Create the OAuth2 URL manually
+        const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        const redirectUri = encodeURIComponent("http://localhost:3000/auth/google/callback");
+        const scope = encodeURIComponent("openid email profile");
+        const responseType = "code";
+        const state = Math.random().toString(36).substring(2, 15);
+
+        // Store state in sessionStorage for verification
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('oauth_state', state);
+        }
+
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+            `client_id=${googleClientId}&` +
+            `redirect_uri=${redirectUri}&` +
+            `response_type=${responseType}&` +
+            `scope=${scope}&` +
+            `state=${state}&` +
+            `access_type=offline&` +
+            `prompt=select_account`;
+
+        console.log("Redirecting to Google OAuth from signup:", googleAuthUrl);
+        
+        // Redirect to Google OAuth
+        window.location.href = googleAuthUrl;
+    };
 
     const addUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,7 +95,6 @@ export default function SignUp(){
         }
     }
 
-
     return (
         <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-orange-50/60 to-white px-4 py-12">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 p-8 sm:p-10 flex flex-col gap-6">
@@ -74,10 +106,11 @@ export default function SignUp(){
                 {/* Social Buttons */}
                 <div className="flex flex-col gap-3">
                     <button
-                        onClick={() => window.location.href = '/login'}
-                        className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition"
-                        >
-                        <FaGoogle className="text-lg" /> Sign in with Google
+                        onClick={handleGoogleButtonClick}
+                        disabled={loading}
+                        className="flex items-center justify-center gap-3 w-full border border-gray-300 rounded-lg py-2 font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                    >
+                        <FaGoogle className="text-lg" /> {loading ? "Signing up..." : "Sign up with Google"}
                     </button>
                 </div>
                 {/* Divider */}
@@ -161,4 +194,4 @@ export default function SignUp(){
             </div>
         </div>
     );
-};
+}
