@@ -508,7 +508,7 @@ export default function OutfitsPage() {
                       >
                         <div
                           onClick={() => setShowCreateOccasionModal(true)}
-                          className="h-full bg-gradient-to-br from-muted via-background to-accent border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
+                          className="aspect-[3/4] bg-gradient-to-br from-muted via-background to-accent border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
                         >
                           <div className="w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
                             <Plus className="w-10 h-10 text-primary" />
