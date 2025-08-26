@@ -86,12 +86,11 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
   }
 
   const handleColorSelect = (color: string) => {
-    // Only apply colors on light theme
-    if (resolvedTheme === 'light') {
-      setSelectedColor(color)
-      setCustomColorInput(color)
-      applyCustomTheme(color)
-    }
+    // Always switch to light mode when selecting a color
+    setTheme('light')
+    setSelectedColor(color)
+    setCustomColorInput(color)
+    applyCustomTheme(color)
   }
 
   const handleCustomColorChange = (color: string) => {
@@ -104,7 +103,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
     }
     
     // Validate the normalized color (with or without #)
-    if (normalizedColor.match(/^#[0-9A-F]{6}$/i) && resolvedTheme === 'light') {
+    if (normalizedColor.match(/^#[0-9A-F]{6}$/i)) {
       handleColorSelect(normalizedColor)
     }
   }
@@ -207,8 +206,8 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
                     </button>
                   ))}
                   
-                  {/* Color Picker Button - Only show on pure light theme (no custom colors) */}
-                  {resolvedTheme === 'light' && !customColor && (
+                  {/* Color Picker Button - Always show when no custom colors are applied */}
+                  {!customColor && (
                     <div className="border-t border-border mt-1 pt-1">
                       <button
                         onClick={() => setShowColorPicker(true)}
@@ -249,7 +248,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
                     <div>
                       <Label className="text-sm font-medium">Choose Theme Color</Label>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Light theme with custom color tint
+                        {getThemeDescription()}
                       </p>
                     </div>
                     <button
@@ -287,13 +286,13 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
                       className="w-full h-8 rounded-md border border-border mt-2 flex items-center justify-center text-xs text-foreground/80"
                       style={{ 
                         backgroundColor: resolvedTheme === 'light' 
-                          ? `oklch(0.98 0.01 ${getHueFromHex(selectedColor)})`
+                          ? `oklch(0.96 0.04 ${getHueFromHex(selectedColor)})`
                           : resolvedTheme === 'dark'
                           ? `oklch(0.08 0.01 ${getHueFromHex(selectedColor)})`
                           : `oklch(0.35 0.025 ${getHueFromHex(selectedColor)})`
                       }}
                     >
-                      Actual Background
+                      Background Preview
                     </div>
                   </div>
 

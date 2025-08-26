@@ -102,9 +102,9 @@ const generateChromeThemeColors = (baseColor: string) => {
 }
 
 const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrome") => {
-  // For chrome theme, use the special chrome color generation
-  if (theme === "chrome") {
-    return generateChromeThemeColors(baseColor)
+  // Colors are only applied to light theme - other themes ignore custom colors
+  if (theme !== "light") {
+    return {}
   }
 
   // Convert hex to HSL for better color manipulation
@@ -141,48 +141,25 @@ const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrom
 
   const [h, s, l] = hexToHsl(baseColor)
 
-  // Generate color palette based on the base color for light/dark themes
-  if (theme === "dark") {
-    return {
-      background: `oklch(${Math.max(0.08, l / 100 - 0.85)} ${Math.min(s / 100, 0.01)} ${h})`,
-      foreground: `oklch(0.98 0.005 ${h})`,
-      card: `oklch(${Math.max(0.11, l / 100 - 0.8)} ${Math.min(s / 100, 0.012)} ${h})`,
-      cardForeground: `oklch(0.95 0.005 ${h})`,
-      popover: `oklch(${Math.max(0.11, l / 100 - 0.8)} ${Math.min(s / 100, 0.012)} ${h})`,
-      popoverForeground: `oklch(0.95 0.005 ${h})`,
-      primary: `oklch(0.65 0.15 ${h - 20})`,
-      primaryForeground: `oklch(0.98 0 0)`,
-      secondary: `oklch(${Math.max(0.13, l / 100 - 0.75)} ${Math.min(s / 100, 0.012)} ${h})`,
-      secondaryForeground: `oklch(0.9 0.005 ${h})`,
-      muted: `oklch(${Math.max(0.13, l / 100 - 0.75)} ${Math.min(s / 100, 0.012)} ${h})`,
-      mutedForeground: `oklch(0.65 0.01 ${h})`,
-      accent: `oklch(${Math.max(0.13, l / 100 - 0.75)} ${Math.min(s / 100, 0.012)} ${h})`,
-      accentForeground: `oklch(0.9 0.005 ${h})`,
-      border: `oklch(${Math.max(0.16, l / 100 - 0.7)} ${Math.min(s / 100, 0.012)} ${h})`,
-      input: `oklch(${Math.max(0.13, l / 100 - 0.75)} ${Math.min(s / 100, 0.012)} ${h})`,
-      ring: `oklch(0.65 0.15 ${h - 20})`,
-    }
-  } else {
-    // Light theme
-    return {
-      background: `oklch(0.96 ${Math.min(s / 100, 0.04)} ${h})`,
-      foreground: `oklch(0.145 0 0)`,
-      card: `oklch(0.98 ${Math.min(s / 100, 0.03)} ${h})`,
-      cardForeground: `oklch(0.145 0 0)`,
-      popover: `oklch(${Math.min(1, l / 100 + 0.35)} ${Math.min(s / 100, 0.01)} ${h})`,
-      popoverForeground: `oklch(0.145 0 0)`,
-      primary: `oklch(0.205 0 0)`,
-      primaryForeground: `oklch(0.985 0 0)`,
-      secondary: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
-      secondaryForeground: `oklch(0.205 0 0)`,
-      muted: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
-      mutedForeground: `oklch(0.556 0 0)`,
-      accent: `oklch(${Math.min(0.92, l / 100 + 0.2)} ${Math.min(s / 100, 0.04)} ${h})`,
-      accentForeground: `oklch(0.205 0 0)`,
-      border: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
-      input: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
-      ring: `oklch(0.708 0 0)`,
-    }
+  // Light theme with custom colors
+  return {
+    background: `oklch(0.96 ${Math.min(s / 100, 0.04)} ${h})`,
+    foreground: `oklch(0.145 0 0)`,
+    card: `oklch(0.98 ${Math.min(s / 100, 0.03)} ${h})`,
+    cardForeground: `oklch(0.145 0 0)`,
+    popover: `oklch(${Math.min(1, l / 100 + 0.35)} ${Math.min(s / 100, 0.01)} ${h})`,
+    popoverForeground: `oklch(0.145 0 0)`,
+    primary: `oklch(0.205 0 0)`,
+    primaryForeground: `oklch(0.985 0 0)`,
+    secondary: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
+    secondaryForeground: `oklch(0.205 0 0)`,
+    muted: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
+    mutedForeground: `oklch(0.556 0 0)`,
+    accent: `oklch(${Math.min(0.92, l / 100 + 0.2)} ${Math.min(s / 100, 0.04)} ${h})`,
+    accentForeground: `oklch(0.205 0 0)`,
+    border: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
+    input: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
+    ring: `oklch(0.708 0 0)`,
   }
 }
 
