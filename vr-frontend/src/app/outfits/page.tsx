@@ -540,15 +540,6 @@ export default function OutfitsPage() {
                     </div>
                   )}
 
-                  {!occasionsLoading && occasions.length === 0 && (
-                    <div className="text-center py-16 mt-8">
-                      <div className="text-6xl mb-4">📁</div>
-                      <h3 className="text-xl font-semibold text-foreground mb-2">No Occasion Folders Yet</h3>
-                      <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                        Create your first occasion folder to organize your outfits by events, seasons, or activities.
-                      </p>
-                    </div>
-                  )}
                 </>
               )}
             </motion.div>
