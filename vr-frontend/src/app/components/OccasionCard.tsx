@@ -256,22 +256,43 @@ export default function OccasionCard({
               <div className="relative w-full h-full p-4">
                 {/* Main outfit preview */}
                 <div className="relative w-full h-full">
-                  {firstOutfit.clothingItems.slice(0, 3).map((item, index) => (
-                    <img
-                      key={item.id}
-                      src={item.url || "/placeholder.svg"}
-                      alt={item.name || `Item ${index + 1}`}
-                      className="absolute object-contain"
-                      style={{
-                        left: `${(item.left || 50) - 10 + index * 2}%`,
-                        bottom: `${(item.bottom || 0) * 0.8 + index * 0.5}rem`,
-                        width: `${(item.width || 8) * 0.7}rem`,
-                        transform: "translateX(-50%)",
-                        zIndex: 10 - index,
-                        filter: index > 0 ? "brightness(0.9)" : "none",
-                      }}
-                    />
-                  ))}
+                  {(() => {
+                    // Sort items by layer priority: outerwear (bottom layer), then others
+                    const getLayerPriority = (item: any) => {
+                      const type = item.type?.toLowerCase() || ""
+                      if (type.includes("jacket") || type.includes("coat") || type.includes("blazer") || type.includes("sweater") || type.includes("cardigan")) {
+                        return 1 // Outerwear - bottom layer
+                      }
+                      if (type.includes("shirt") || type.includes("t-shirt") || type.includes("top") || type.includes("blouse")) {
+                        return 2 // Tops - middle layer
+                      }
+                      if (type.includes("pants") || type.includes("jeans") || type.includes("shorts") || type.includes("skirt") || type.includes("dress")) {
+                        return 3 // Bottoms - top layer (for visibility)
+                      }
+                      return 2 // Default to middle layer
+                    }
+                    
+                    const sortedItems = [...firstOutfit.clothingItems]
+                      .slice(0, 3)
+                      .sort((a, b) => getLayerPriority(a) - getLayerPriority(b))
+
+                    return sortedItems.map((item, index) => (
+                      <img
+                        key={item.id}
+                        src={item.url || "/placeholder.svg"}
+                        alt={item.name || `Item ${index + 1}`}
+                        className="absolute object-contain"
+                        style={{
+                          left: `${(item.left || 50) - 10 + index * 2}%`,
+                          bottom: `${(item.bottom || 0) * 0.8 + index * 0.5}rem`,
+                          width: `${(item.width || 8) * 0.7}rem`,
+                          transform: "translateX(-50%)",
+                          zIndex: 10 + getLayerPriority(item),
+                          filter: index > 0 ? "brightness(0.9)" : "none",
+                        }}
+                      />
+                    ))
+                  })()}
                 </div>
 
                 {/* Stacked card effect for multiple outfits */}
