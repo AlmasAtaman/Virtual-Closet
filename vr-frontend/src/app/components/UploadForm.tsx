@@ -187,6 +187,91 @@ export default function UploadForm({
     [handleFileUpload],
   )
 
+  // Helper function to normalize AI responses to dropdown values
+  const normalizeAIValue = (value: string | undefined, type: 'type' | 'fit' | 'material' | 'season'): string => {
+    if (!value) return ""
+    
+    const lowerValue = value.toLowerCase().trim()
+    
+    switch (type) {
+      case 'type':
+        const typeMap: Record<string, string> = {
+          'tshirt': 'T-Shirt',
+          't-shirt': 'T-Shirt',
+          'tee': 'T-Shirt',
+          'shirt': 'T-Shirt',
+          'jacket': 'Jacket',
+          'coat': 'Jacket',
+          'blazer': 'Jacket',
+          'pants': 'Pants',
+          'trousers': 'Pants',
+          'jeans': 'Pants',
+          'shoes': 'Shoes',
+          'sneakers': 'Shoes',
+          'boots': 'Shoes',
+          'hat': 'Hat',
+          'cap': 'Hat',
+          'beanie': 'Hat',
+          'sweater': 'Sweater',
+          'jumper': 'Sweater',
+          'pullover': 'Sweater',
+          'shorts': 'Shorts',
+          'dress': 'Dress',
+          'skirt': 'Skirt'
+        }
+        return typeMap[lowerValue] || 'Other'
+      
+      case 'fit':
+        const fitMap: Record<string, string> = {
+          'slim': 'Slim',
+          'slim fit': 'Slim',
+          'skinny': 'Skinny',
+          'regular': 'Regular',
+          'regular fit': 'Regular',
+          'standard': 'Regular',
+          'oversized': 'Oversized',
+          'oversize': 'Oversized',
+          'loose': 'Oversized',
+          'baggy': 'Baggy',
+          'crop': 'Crop',
+          'cropped': 'Crop',
+          'tapered': 'Tapered'
+        }
+        return fitMap[lowerValue] || 'Other'
+      
+      case 'material':
+        const materialMap: Record<string, string> = {
+          'cotton': 'Cotton',
+          '100% cotton': 'Cotton',
+          'cotton blend': 'Cotton',
+          'linen': 'Linen',
+          'denim': 'Denim',
+          'jean': 'Denim',
+          'leather': 'Leather',
+          'faux leather': 'Leather',
+          'knit': 'Knit',
+          'knitted': 'Knit',
+          'polyester': 'Polyester',
+          'poly': 'Polyester',
+          'synthetic': 'Polyester'
+        }
+        return materialMap[lowerValue] || 'Other'
+      
+      case 'season':
+        const seasonMap: Record<string, string> = {
+          'spring': 'Spring',
+          'summer': 'Summer',
+          'fall': 'Fall',
+          'autumn': 'Fall',
+          'winter': 'Winter'
+        }
+        return seasonMap[lowerValue] || ''
+      
+      default:
+        return value
+    }
+  }
+
   const handleAutoFill = async () => {
     if (!selectedFile) return
 
@@ -210,15 +295,15 @@ export default function UploadForm({
       setFormData((prev: Partial<ClothingItem>) => ({
         ...prev,
         name: clothingData?.name ?? prev.name,
-        type: clothingData?.type ?? prev.type,
+        type: normalizeAIValue(clothingData?.type, 'type') || prev.type,
         brand: clothingData?.brand ?? prev.brand,
         price: clothingData?.price ?? prev.price,
         occasion: clothingData?.occasion ?? prev.occasion,
         style: clothingData?.style ?? prev.style,
-        fit: clothingData?.fit ?? prev.fit,
+        fit: normalizeAIValue(clothingData?.fit, 'fit') || prev.fit,
         color: clothingData?.color ?? prev.color,
-        material: clothingData?.material ?? prev.material,
-        season: clothingData?.season ?? prev.season,
+        material: normalizeAIValue(clothingData?.material, 'material') || prev.material,
+        season: normalizeAIValue(clothingData?.season, 'season') || prev.season,
         notes: "",
       }))
     } catch (error) {
@@ -261,13 +346,13 @@ export default function UploadForm({
         name: data.name || prev.name,
         brand: data.brand || prev.brand,
         price: data.price || prev.price,
-        type: data.type || prev.type,
+        type: normalizeAIValue(data.type, 'type') || prev.type,
         occasion: data.occasion || prev.occasion,
         style: data.style || prev.style,
-        fit: data.fit || prev.fit,
+        fit: normalizeAIValue(data.fit, 'fit') || prev.fit,
         color: data.color || prev.color,
-        material: data.material || prev.material,
-        season: data.season || prev.season,
+        material: normalizeAIValue(data.material, 'material') || prev.material,
+        season: normalizeAIValue(data.season, 'season') || prev.season,
         sourceUrl: scrapingUrl,
       }));
 
@@ -331,13 +416,13 @@ export default function UploadForm({
         brand: data.brand || prev.brand,
         price: data.price || prev.price,
         sourceUrl: data.sourceUrl || scrapingUrl,
-        type: data.type || prev.type,
+        type: normalizeAIValue(data.type, 'type') || prev.type,
         occasion: data.occasion || prev.occasion,
         style: data.style || prev.style,
-        fit: data.fit?.toLowerCase() || "",
+        fit: normalizeAIValue(data.fit, 'fit') || prev.fit,
         color: data.color || prev.color,
-        material: data.material?.toLowerCase() || "",
-        season: data.season?.toLowerCase() || "",
+        material: normalizeAIValue(data.material, 'material') || prev.material,
+        season: normalizeAIValue(data.season, 'season') || prev.season,
       }))
 
       if (progressInterval) {
