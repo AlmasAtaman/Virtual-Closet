@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Sun, Moon, Chrome, Monitor, Palette, Check } from "lucide-react"
+import { Sun, Moon, Layers, Monitor, Palette, Check } from "lucide-react"
 import { useTheme } from "../contexts/ThemeContext"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,7 +29,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
   const themeOptions = [
     { value: "light", label: "Light", icon: Sun },
     { value: "dark", label: "Dark", icon: Moon },
-    { value: "chrome", label: "Chrome", icon: Chrome },
+    { value: "chrome", label: "Chrome", icon: Layers },
     { value: "system", label: "System", icon: Monitor },
   ]
 
@@ -79,7 +79,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
       case "dark":
         return <Moon className="h-4 w-4" />
       case "chrome":
-        return <Chrome className="h-4 w-4" />
+        return <Layers className="h-4 w-4" />
       default:
         return <Sun className="h-4 w-4" />
     }

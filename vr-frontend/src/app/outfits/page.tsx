@@ -15,6 +15,7 @@ import LogOutButton from "../components/LogoutButton"
 import { ThemeToggle } from "../components/ThemeToggle"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ConfirmDialog } from "@/components/ui/dialog"
+import { Logo } from "../components/Logo"
 
 interface ClothingItem {
   id: string
@@ -260,7 +261,7 @@ export default function OutfitsPage() {
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <img src="/vrclogo.png" alt="VRC Logo" width={32} height={32} className="h-8 w-8" />
+            <Logo />
             <span className="text-xl font-semibold tracking-tight">VrC</span>
           </div>
           <div className="flex items-center gap-4">

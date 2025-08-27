@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { Logo } from "./Logo"
 import { Upload, Palette, Heart, ArrowRight, Star } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -73,7 +74,7 @@ export default function LandingPage() {
         <div className="max-w-screen-xl mx-auto w-full flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Left: Logo */}
           <Link href="#top" className="flex items-center gap-3 min-w-0 cursor-pointer">
-            <Image src="/VrClogo.png" alt="VrC" width={32} height={32} />
+            <Logo />
             <span className="text-xl font-bold truncate">VrC</span>
           </Link>
 
