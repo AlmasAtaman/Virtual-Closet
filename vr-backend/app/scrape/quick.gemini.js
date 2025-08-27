@@ -49,7 +49,15 @@ export async function extractProductData(html) {
     - Only return the specified JSON object. Do not include any other text, explanations, or fields.
 
     **IMPORTANT**: You MUST provide a value for every field if "isClothing" is true (except 'price' if not found).
-    If you are unsure about a field, make a reasonable guess based on the HTML content. Do not use null.
+    If you are unsure about a field, make an educated guess based on the available information. NEVER use null or empty strings for any field except price.
+    
+    **CRITICAL FIELD GUIDANCE**:
+    - For "style": If unclear, default to "Streetwear" or make a reasonable guess from the 5 options based on brand/aesthetic
+    - For "fit": If unclear, default to "regular" or guess based on clothing type (e.g., "oversized" for hoodies)
+    - For "material": Make educated guesses based on clothing type (e.g., "cotton" for t-shirts, "denim" for jeans)
+    - For "season": Consider the clothing type and weight (e.g., "summer" for t-shirts, "fall" for jackets)
+    - For "occasion": Default to "Casual" unless clearly formal/athletic wear
+    - For "color": Identify primary color even if pattern exists
 
     HTML:
     \`\`\`html

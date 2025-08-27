@@ -863,7 +863,7 @@ export default function UploadForm({
                           </CardContent>
                         </Card>
                       )}
-                      {/* Full Scrape and other flows remain unchanged */}
+                      {/* Full Scrape image selection with proper scrolling */}
                       {urlExtractionMode === "full" && scrapedProducts.length > 0 && !isLoading &&(
                         <motion.div
                           key="step3-full"
@@ -871,11 +871,16 @@ export default function UploadForm({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="space-y-4 flex flex-col flex-1"
+                          className="flex flex-col flex-1 min-h-0 space-y-3"
                         >
-                          <Label className="text-sm font-medium mb-2 block">Select Product Image</Label>
-                          <div className="w-full flex-1 overflow-y-auto pr-1">
-                            <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Select Product Image</Label>
+                            <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                              {scrapedProducts[0]?.images?.length || 0} images found
+                            </div>
+                          </div>
+                          <div className="flex-1 min-h-0 max-h-[50vh] overflow-y-auto border rounded-lg p-3 bg-background/50">
+                            <div className="grid grid-cols-2 gap-3">
                               {scrapedProducts.length > 0 && scrapedProducts[0].images?.map((image, index) => (
                                 <motion.div
                                   key={index}
@@ -887,7 +892,7 @@ export default function UploadForm({
                                       ? "border-primary shadow-lg scale-[1.02]"
                                       : "border-border hover:border-primary/50 hover:scale-[1.01]"
                                   }`}
-                                  style={{ height: 220 }}
+                                  style={{ height: 180 }}
                                   onClick={() => setSelectedScrapedImage(image)}
                                 >
                                   <img
@@ -895,6 +900,9 @@ export default function UploadForm({
                                     alt={`Product ${index + 1}`}
                                     className="w-full h-full object-cover"
                                   />
+                                  <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                    {index + 1}
+                                  </div>
                                   <AnimatePresence>
                                     {selectedScrapedImage === image && (
                                       <motion.div
