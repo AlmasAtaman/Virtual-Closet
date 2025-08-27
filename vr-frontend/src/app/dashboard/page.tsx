@@ -9,6 +9,7 @@ import UploadForm from "../components/UploadForm"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../components/ClothingGallery"
 import Image from "next/image"
+import { Logo } from "../components/Logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -127,7 +128,7 @@ export default function Homepage() {
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Image src="/VrClogo.png" alt="VrC Logo" width={32} height={32} className="h-8 w-8" />
+            <Logo />
             <span className="text-xl font-semibold tracking-tight">VrC</span>
           </div>
           <div className="flex items-center gap-4">
