@@ -123,7 +123,7 @@ export default function Homepage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header Section */}
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
@@ -142,7 +142,7 @@ export default function Homepage() {
       </header>
 
       {/* Main Content */}
-      <main className="container px-4 py-8">
+      <main className="container px-4 py-8 flex flex-col flex-1 min-h-0">
         {/* Tabs full width on top */}
         <div className="mb-6">
           <Tabs
@@ -257,6 +257,7 @@ export default function Homepage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="flex flex-col flex-1 min-h-0"
           >
             {/* Selected Tags */}
             {(selectedTags.length > 0 || priceSort !== "none") && (

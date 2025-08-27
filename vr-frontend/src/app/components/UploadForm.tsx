@@ -581,8 +581,8 @@ export default function UploadForm({
 
             <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
               {/* Left Column - Image Upload */}
-              <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10">
-                <div className="space-y-6">
+              <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10 flex flex-col">
+                <div className="space-y-6 flex flex-col flex-1">
                   {/* Upload Method Toggle */}
                   <Card className="p-1 bg-background/50 backdrop-blur-sm">
                     <div className="flex gap-1">
@@ -613,10 +613,10 @@ export default function UploadForm({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="space-y-4 flex flex-col flex-1"
                     >
                       <Card
-                        className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden ${
+                        className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
                           isDragOver
                             ? "border-primary bg-primary/5 scale-[1.02]"
                             : imagePreview
@@ -631,7 +631,7 @@ export default function UploadForm({
                         onDragLeave={() => setIsDragOver(false)}
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        <CardContent className="p-8">
+                        <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
                           <AnimatePresence mode="wait">
                             {imagePreview ? (
                               <motion.div
@@ -666,7 +666,7 @@ export default function UploadForm({
                               <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="text-center space-y-4"
+                                className="text-center space-y-4 flex flex-col justify-center items-center h-full"
                               >
                                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                                   <ImageIcon className="w-8 h-8 text-primary" />
@@ -724,7 +724,7 @@ export default function UploadForm({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="space-y-4 flex flex-col flex-1"
                     >
                       {/* Before metadata fetch: show only URL input, fetch button, and extraction mode toggle */}
                       {((urlExtractionMode === "quick" && !quickMetadataFetched) || (urlExtractionMode === "full" && scrapedProducts.length === 0)) && !isFetching && (
@@ -809,8 +809,8 @@ export default function UploadForm({
                       
                       {/* After quick metadata fetch: show only image upload area, no form fields */}
                       {urlExtractionMode === "quick" && quickMetadataFetched && hasFetched && (
-                        <Card className="p-4 bg-background/50 backdrop-blur-sm border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer overflow-hidden">
-                          <CardContent className="flex flex-col items-center justify-center">
+                        <Card className="p-4 bg-background/50 backdrop-blur-sm border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col">
+                          <CardContent className="flex flex-col items-center justify-center flex-1">
                             <div className="w-full text-center mb-4">
                               <p className="text-lg font-medium text-foreground">Upload or Paste Product Image</p>
                               <p className="text-sm text-muted-foreground mt-1">Drag & drop, click to upload, or paste from clipboard</p>
@@ -871,10 +871,10 @@ export default function UploadForm({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="space-y-4"
+                          className="space-y-4 flex flex-col flex-1"
                         >
                           <Label className="text-sm font-medium mb-2 block">Select Product Image</Label>
-                          <div className="w-full max-h-[420px] overflow-y-auto pr-1">
+                          <div className="w-full flex-1 overflow-y-auto pr-1">
                             <div className="grid grid-cols-2 gap-4">
                               {scrapedProducts.length > 0 && scrapedProducts[0].images?.map((image, index) => (
                                 <motion.div
