@@ -79,8 +79,6 @@ router.post("/", authMiddleware, async (req, res) => {
   const userId = req.user.id
   const { clothingItems, name } = req.body
 
-  console.log("Received request to create outfit for user:", userId)
-  console.log("Clothing items received:", clothingItems)
 
   if (!clothingItems || !Array.isArray(clothingItems)) {
     console.error("Invalid request: clothingItems is not an array or is missing")
@@ -117,7 +115,6 @@ router.post("/", authMiddleware, async (req, res) => {
     })
 
     const transformedOutfit = await transformOutfitData(outfit)
-    console.log("Outfit created successfully:", transformedOutfit.id)
     res.status(201).json(transformedOutfit)
   } catch (error) {
     console.error("Error creating outfit in backend:", error)

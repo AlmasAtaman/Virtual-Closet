@@ -111,7 +111,6 @@ export const googleCallback = async (req, res) => {
       return res.status(400).json({ message: "Authorization code is required" });
     }
 
-    console.log("Received OAuth code:", code);
 
     // Exchange authorization code for tokens
     const { tokens } = await googleClient.getToken({
@@ -119,7 +118,6 @@ export const googleCallback = async (req, res) => {
       redirect_uri
     });
 
-    console.log("Received tokens:", !!tokens.access_token, !!tokens.id_token);
 
     // Verify ID token and get user info
     const ticket = await googleClient.verifyIdToken({
@@ -132,7 +130,6 @@ export const googleCallback = async (req, res) => {
     const email = payload.email;
     const name = payload.name;
 
-    console.log("Google user info:", { googleId, email, name });
 
     // Check if user already exists with this Google ID
     let user = await prisma.user.findUnique({
@@ -154,7 +151,6 @@ export const googleCallback = async (req, res) => {
           data: { googleId },
           include: { roles: true }
         });
-        console.log("Linked Google account to existing user:", user.id);
       } else {
         // Create new user with Google account
         const newUserId = uuidv4();
@@ -169,10 +165,8 @@ export const googleCallback = async (req, res) => {
           },
           include: { roles: true }
         });
-        console.log("Created new Google user:", user.id);
       }
     } else {
-      console.log("Found existing Google user:", user.id);
     }
 
     // Generate JWT token using the same format as manual login
@@ -192,7 +186,6 @@ export const googleCallback = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
-    console.log("Google OAuth successful for user:", user.id);
 
     res.status(200).json({
       id: user.id,

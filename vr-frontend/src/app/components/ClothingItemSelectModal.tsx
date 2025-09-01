@@ -62,15 +62,6 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
   useEffect(() => {
     if (!clothingItems) return
 
-    console.log("→ Current View Mode:", currentModalViewMode)
-    console.log(
-      "→ Items passed to modal:",
-      clothingItems.map((i) => `${i.name} (${i.mode})`),
-    )
-    console.log(
-      "→ Mode values of passed items:",
-      clothingItems.map((i) => i.mode),
-    )
 
     // Filter by category first, then by mode
     const itemsFilteredByCategory = selectedCategory
@@ -80,24 +71,13 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
           if (item.id?.startsWith("__none")) {
             return true
           }
-          console.log(
-            `  Checking item: ${item.name} (Type: ${item.type}, Category: ${category}, Mode: ${item.mode}). Matches selectedCategory (${selectedCategory})? ${category === selectedCategory}`,
-          )
           return category === selectedCategory
         })
       : clothingItems // If no category selected, use all items
 
-    console.log(
-      "→ Filtered items after category match:",
-      itemsFilteredByCategory.map((i) => `${i.name} (${i.mode})`),
-    )
 
     const itemsToFilter = itemsFilteredByCategory.filter((item) => item.mode?.toLowerCase() === currentModalViewMode)
 
-    console.log(
-      "→ Filtered items after mode match:",
-      itemsToFilter.map((i) => i.name),
-    )
 
     const noneOption = clothingItems.find((item) => item.id === "none")
     const itemsWithoutNone = itemsToFilter.filter(
@@ -210,7 +190,6 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 {viewType === "grid" ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {filteredItems.map((item, index) => {
-                      console.log(`Rendering item: ${item.name} with ID: ${item.id}`)
                       return (
                         <motion.div
                           key={item.id || `grid-item-${index}`}
@@ -260,7 +239,6 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 ) : (
                   <div className="space-y-2">
                     {filteredItems.map((item, index) => {
-                      console.log(`Rendering item: ${item.name} with ID: ${item.id}`)
                       return (
                         <motion.div
                           key={item.id || `list-item-${index}`}

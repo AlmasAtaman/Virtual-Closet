@@ -11,9 +11,6 @@ const bucket = process.env.BUCKET;
 
 
 
-console.log("Loaded AWS region:", process.env.AWS_REGION); // Debug log
-console.log("Using bucket:", bucket);
-s3.config.region().then(region => console.log("S3 region in use:", region));
 
 export const uploadToS3 = async ({file, userId}) => {
     const key = `${userId}/${uuid()}`;
@@ -84,7 +81,6 @@ export async function deleteFromS3({ key }) {
 
   try {
     await s3.send(command);
-    console.log(`Deleted ${key} from S3`);
   } catch (err) {
     console.error("S3 deletion error:", err);
     throw err;

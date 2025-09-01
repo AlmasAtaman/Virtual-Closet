@@ -30,7 +30,6 @@ export default function LoginPage(){
     const router = useRouter();
 
     const handleGoogleButtonClick = () => {
-        console.log("Google button clicked");
         setLoading(true);
         setMessage("");
         setIsSuccess(false);
@@ -56,7 +55,6 @@ export default function LoginPage(){
             `access_type=offline&` +
             `prompt=select_account`;
 
-        console.log("Redirecting to Google OAuth:", googleAuthUrl);
         
         // Redirect to Google OAuth
         window.location.href = googleAuthUrl;
@@ -87,7 +85,6 @@ export default function LoginPage(){
             } else {
                 setMessage(data.message || `Welcome back, ${username}! Redirecting...`);
                 setIsSuccess(true);
-                console.log(`User ${username} logged in`);
                 setTimeout(() => {
                     router.push("/dashboard");
                 }, 2000); // Redirect after 2 seconds

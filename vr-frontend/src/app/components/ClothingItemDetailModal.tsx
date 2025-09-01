@@ -59,7 +59,6 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
                     throw new Error(`Failed to remove item from outfit: ${res.status} ${res.statusText} - ${errorData.message || 'Unknown error'}`);
                 }
 
-                console.log(`Item ${item.id} removed from outfit ${outfit.id} successfully`);
                 // Call the handler to update the UI, passing both item and outfit IDs
                 onItemDeleted(item.id, outfit.id);
 

@@ -147,11 +147,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       })
 
       // The backend returns { outfit: transformedOutfit }
-      console.log("Raw outfit response:", response.data)
 
       const outfitData = response.data.outfit || response.data
-      console.log("Processed outfit data:", outfitData)
-      console.log("Clothing items:", outfitData.clothingItems)
 
       setOutfit(outfitData)
     } catch (error) {
