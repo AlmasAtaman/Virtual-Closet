@@ -7,7 +7,7 @@ import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload } from "luci
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useState } from "react"
 import ThumbnailEditorModal from "./ThumbnailEditorModal"
 
@@ -451,8 +451,10 @@ export default function OccasionCard({
       {/* Thumbnail Input Modal */}
       <Dialog open={showThumbnailInput} onOpenChange={setShowThumbnailInput}>
         <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Set Custom Thumbnail</DialogTitle>
+          </DialogHeader>
           <div className="p-2">
-            <h3 className="text-lg font-semibold mb-4">Set Custom Thumbnail</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Upload an image from your device to use as the folder thumbnail
             </p>
