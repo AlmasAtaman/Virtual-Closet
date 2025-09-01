@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef, useCallback } from "react"
 import { X, ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface ThumbnailEditorModalProps {
   isOpen: boolean
@@ -149,17 +149,17 @@ export default function ThumbnailEditorModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">{title}</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500">Crop, rotate, and zoom your image</span>
-                <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
+              <span className="text-sm text-slate-500">Crop, rotate, and zoom your image</span>
+              <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
+                <X className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
