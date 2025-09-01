@@ -200,6 +200,9 @@ export default function UploadForm({
           't-shirt': 'T-Shirt',
           'tee': 'T-Shirt',
           'shirt': 'T-Shirt',
+          'hoodie': 'Hoodie',
+          'hoody': 'Hoodie',
+          'sweatshirt': 'Hoodie',
           'jacket': 'Jacket',
           'coat': 'Jacket',
           'blazer': 'Jacket',
@@ -1003,6 +1006,7 @@ export default function UploadForm({
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="T-Shirt">T-Shirt</SelectItem>
+                              <SelectItem value="Hoodie">Hoodie</SelectItem>
                               <SelectItem value="Jacket">Jacket</SelectItem>
                               <SelectItem value="Pants">Pants</SelectItem>
                               <SelectItem value="Shoes">Shoes</SelectItem>
