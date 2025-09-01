@@ -51,7 +51,6 @@ export default function SignUp(){
             `access_type=offline&` +
             `prompt=select_account`;
 
-        console.log("Redirecting to Google OAuth from signup:", googleAuthUrl);
         
         // Redirect to Google OAuth
         window.location.href = googleAuthUrl;

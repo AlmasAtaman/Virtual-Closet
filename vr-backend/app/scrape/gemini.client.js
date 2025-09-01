@@ -70,7 +70,6 @@ export async function extractProductData(html) {
     const result = await model.generateContent(prompt);
     const text = (await result.response.text()).trim();
 
-    console.log("Raw Gemini response:", text); // DEBUG
 
     const cleaned = text.replace(/```json|```/g, "").trim();
     const match = cleaned.match(/\{[\s\S]*?\}/);

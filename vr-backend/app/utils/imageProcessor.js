@@ -51,7 +51,6 @@ export async function processImage(imageData, userId) {
 
     // 3.5 Resize to standard canvas based on clothing type
     standardizedPath = `standardized_${Date.now()}_${originalname || 'clothing.png'}`;
-    console.log("→ Clothing type detected:", clothingData?.type);
     await standardizeImage(cleanedImagePath, clothingData?.type, standardizedPath);
 
     // 4. Read standardized image buffer (this is the one to upload and return)

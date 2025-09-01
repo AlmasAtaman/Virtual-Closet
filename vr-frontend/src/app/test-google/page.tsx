@@ -14,9 +14,6 @@ export default function TestGooglePage() {
             `access_type=offline&` +
             `prompt=select_account`;
 
-        console.log("Full OAuth URL:", googleAuthUrl);
-        console.log("Client ID:", googleClientId);
-        console.log("Redirect URI:", "http://localhost:3000/auth/google/callback");
         
         window.location.href = googleAuthUrl;
     };

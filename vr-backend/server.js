@@ -53,14 +53,9 @@ async function initial() {
         { name: 'admin' }
       ]
     });
-    console.log("Seeded roles: user, moderator, admin");
   }
 }
 
-app.get("/debug/cookies", (req, res) => {
-  console.log("Cookies received:", req.cookies);
-  res.send(req.cookies);
-});
 
 app.listen(port, async () => {
   console.log(`Server is running on port ${port}`);

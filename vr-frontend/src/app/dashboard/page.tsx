@@ -98,17 +98,14 @@ export default function Homepage() {
         
         if (res.ok) {
           const data = await res.json();
-          console.log("User authenticated:", data);
           setUsername(data.username);
           setLoading(false);
           return;
         }
       } catch (error) {
-        console.log("Auth check failed:", error);
       }
       
       // No authentication found
-      console.log("No authentication found, redirecting to login");
       router.push("/login");
     };
     

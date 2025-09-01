@@ -128,7 +128,6 @@ const ClothingGallery = forwardRef(
         console.error("Error fetching images:", err);
         // If 401, might need to redirect to login
         if (err.response?.status === 401) {
-          console.log("User not authenticated with backend");
         }
       } finally {
         setIsLoading(false);
@@ -162,7 +161,6 @@ const ClothingGallery = forwardRef(
         price: numericPrice,
       };
       try {
-        console.log("Updating item with ID:", selectedItem.id, "with data:", editForm);
 
         await createAuthenticatedAxios().patch(
           "http://localhost:8000/api/images/update",
@@ -285,7 +283,6 @@ const ClothingGallery = forwardRef(
       () => ({
         refresh: fetchImages,
         addClothingItem: (newItem: Clothing) => {
-          console.log("ClothingGallery: addClothingItem called. newItem:", newItem, "current viewMode:", viewMode);
           if (newItem.mode === viewMode) {
             setClothingItems((prevItems) => [...prevItems, newItem]);
           }
