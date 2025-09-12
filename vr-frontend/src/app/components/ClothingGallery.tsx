@@ -442,6 +442,13 @@ const ClothingGallery = forwardRef(
       }
     };
 
+    const handleTagFromItem = useCallback((tag: string) => {
+      setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    }, [setSelectedTags]);
+
+    const handleToggleFavoritesFilter = useCallback(() => {
+      setShowFavoritesOnly((prev) => !prev);
+    }, [setShowFavoritesOnly]);
 
     return (
       <div className="space-y-6 flex flex-col flex-1">
