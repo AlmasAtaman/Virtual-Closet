@@ -101,12 +101,12 @@ export default function Homepage() {
         });
         
         if (res.ok) {
-          const data = await res.json();
-          setUsername(data.username);
+          // User is authenticated, just set loading to false
           setLoading(false);
           return;
         }
       } catch {
+        // Error occurred, redirect to login
       }
       
       // No authentication found
