@@ -1,9 +1,23 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { getBaseUrl, safeRedirect } from "../utils/url"
+
 export default function TestGooglePage() {
+    const [baseUrl, setBaseUrl] = useState<string>("")
+    const [isClient, setIsClient] = useState(false)
+
+    useEffect(() => {
+        // This runs only on the client side
+        setIsClient(true)
+        setBaseUrl(getBaseUrl())
+    }, [])
+
     const testGoogleOAuth = () => {
+        if (!isClient) return
+
         const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
+        const redirectUri = encodeURIComponent(`${baseUrl}/auth/google/callback`);
         const scope = encodeURIComponent("openid email profile");
         
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -14,8 +28,7 @@ export default function TestGooglePage() {
             `access_type=offline&` +
             `prompt=select_account`;
 
-        
-        window.location.href = googleAuthUrl;
+        safeRedirect(googleAuthUrl);
     };
 
     return (
@@ -24,11 +37,12 @@ export default function TestGooglePage() {
                 <h1 className="text-2xl font-bold mb-4">Google OAuth Test</h1>
                 <div className="mb-4">
                     <p><strong>Client ID:</strong> {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}</p>
-                    <p><strong>Redirect URI:</strong> {window.location.origin}/auth/google/callback</p>
+                    <p><strong>Redirect URI:</strong> {isClient ? `${baseUrl}/auth/google/callback` : 'Loading...'}</p>
                 </div>
                 <button 
                     onClick={testGoogleOAuth}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    disabled={!isClient}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
                 >
                     Test Google OAuth
                 </button>

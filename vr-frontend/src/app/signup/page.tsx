@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { getBaseUrl, safeRedirect } from "../utils/url";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
@@ -26,7 +27,7 @@ export default function SignUp(){
 
         // Create the OAuth2 URL manually
         const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
+        const redirectUri = encodeURIComponent(`${getBaseUrl()}/auth/google/callback`);
         const scope = encodeURIComponent("openid email profile");
         const responseType = "code";
         const state = Math.random().toString(36).substring(2, 15);
@@ -47,7 +48,7 @@ export default function SignUp(){
 
         
         // Redirect to Google OAuth
-        window.location.href = googleAuthUrl;
+        safeRedirect(googleAuthUrl);
     };
 
     const addUser = async (e: React.FormEvent) => {
