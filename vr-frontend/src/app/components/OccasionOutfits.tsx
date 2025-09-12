@@ -57,16 +57,12 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
   const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
   const [isRemoving, setIsRemoving] = useState(false)
 
-  useEffect(() => {
-    if (occasionId) {
-      fetchOccasionOutfits()
-    }
-  }, [occasionId, fetchOccasionOutfits])
+
 
   const fetchOccasionOutfits = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/occasions/${occasionId}/outfits`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/occasions/${occasionId}/outfits`, {
         credentials: "include",
       })
 
@@ -85,6 +81,12 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
       setLoading(false)
     }
   }, [occasionId])
+
+    useEffect(() => {
+    if (occasionId) {
+      fetchOccasionOutfits()
+    }
+  }, [occasionId, fetchOccasionOutfits])
 
   const handleOutfitDeleted = (outfitId: string) => {
     setOutfits((prev) => prev.filter((outfit) => outfit.id !== outfitId))
