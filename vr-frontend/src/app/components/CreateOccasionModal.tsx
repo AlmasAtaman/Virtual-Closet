@@ -66,7 +66,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
   const fetchOutfits = async () => {
     setLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/api/outfits", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch outfits")
@@ -90,7 +90,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
     setIsCreating(true)
 
     try {
-      const response = await fetch("http://localhost:8000/api/occasions", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -49,7 +49,7 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
         if (confirm(`Are you sure you want to remove ${item.name || 'this item'} from this outfit?`)) {
             try {
                 // Call the new backend endpoint to remove the item from the outfit
-                const res = await fetch(`http://localhost:8000/api/outfits/${outfit.id}/items/${item.id}`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfit.id}/items/${item.id}`, {
                     method: 'DELETE',
                     credentials: 'include',
                 });

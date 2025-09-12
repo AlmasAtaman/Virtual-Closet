@@ -120,7 +120,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
 const fetchOutfit = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/outfits/${outfitId}`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, {
         withCredentials: true,
       })
 
@@ -139,10 +139,10 @@ const fetchOutfit = useCallback(async () => {
 const fetchAllClothingItems = useCallback(async () => {
     try {
       const [closetRes, wishlistRes] = await Promise.all([
-        axios.get("http://localhost:8000/api/images?mode=closet", {
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=closet`, {
           withCredentials: true,
         }),
-        axios.get("http://localhost:8000/api/images?mode=wishlist", {
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=wishlist`, {
           withCredentials: true,
         }),
       ])
@@ -168,7 +168,7 @@ const fetchOutfitFolders = useCallback(async () => {
     if (!outfitId) return
 
     try {
-      const response = await axios.get("http://localhost:8000/api/occasions", {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
         withCredentials: true,
       })
       const occasions = response.data.occasions || []
@@ -186,7 +186,7 @@ const fetchOutfitFolders = useCallback(async () => {
 
 const fetchAllFolders = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/occasions", {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
         withCredentials: true,
       })
       setAllFolders(response.data.occasions || [])
@@ -269,7 +269,7 @@ const fetchAllFolders = useCallback(async () => {
         totalPrice: totalPrice,
       }
 
-      await axios.put(`http://localhost:8000/api/outfits/${outfitId}`, updatedOutfit, {
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, updatedOutfit, {
         withCredentials: true,
       })
 
@@ -297,7 +297,7 @@ const fetchAllFolders = useCallback(async () => {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      await axios.delete(`http://localhost:8000/api/outfits/${outfitId}`, {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, {
         withCredentials: true,
       })
       router.push("/outfits")

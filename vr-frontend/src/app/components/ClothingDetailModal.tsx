@@ -117,7 +117,7 @@ export default function ClothingDetailModal({
   // Fetch all outfits and check if this item is used in any
   const fetchOutfitsUsingItem = useCallback(async (itemId: string) => {
     try {
-      const res = await fetch("http://localhost:8000/api/outfits", { credentials: "include" })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, { credentials: "include" })
       if (!res.ok) return
       const data = await res.json()
       const outfits = data.outfits || []

@@ -44,7 +44,7 @@ export default function GoogleCallbackPage() {
                 }
 
                 // Exchange code for user info via our backend
-                const response = await fetch("http://localhost:8000/api/auth/google/callback", {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/callback`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -52,7 +52,7 @@ export default function GoogleCallbackPage() {
                     credentials: "include",
                     body: JSON.stringify({ 
                         code,
-                        redirect_uri: "http://localhost:3000/auth/google/callback"
+                        redirect_uri: `${window.location.origin}/auth/google/callback`
                     }),
                 });
 

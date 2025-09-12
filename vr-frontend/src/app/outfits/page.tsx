@@ -86,7 +86,7 @@ export default function OutfitsPage() {
   const fetchOutfits = async () => {
     setLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/api/outfits", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch outfits")
@@ -104,7 +104,7 @@ export default function OutfitsPage() {
   const fetchOccasions = async () => {
     setOccasionsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/api/occasions", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch occasions")
@@ -190,7 +190,7 @@ export default function OutfitsPage() {
       // Delete outfits in parallel
       await Promise.all(
         selectedOutfitIds.map((outfitId) =>
-          fetch(`http://localhost:8000/api/outfits/${outfitId}`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, {
             method: "DELETE",
             credentials: "include",
           }),
@@ -226,7 +226,7 @@ export default function OutfitsPage() {
       // Delete occasions in parallel
       await Promise.all(
         selectedOccasionIds.map((occasionId) =>
-          fetch(`http://localhost:8000/api/occasions/${occasionId}`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/${occasionId}`, {
             method: "DELETE",
             credentials: "include",
           }),

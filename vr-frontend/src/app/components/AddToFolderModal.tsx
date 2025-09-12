@@ -64,7 +64,7 @@ export default function AddToFolderModal({
   const fetchOccasions = async () => {
     setLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/api/occasions", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
         credentials: "include",
       })
       if (!response.ok) throw new Error("Failed to fetch occasions")
@@ -91,7 +91,7 @@ export default function AddToFolderModal({
       // Combine current outfits with selected outfits (avoid duplicates)
       const allOutfitIds = [...new Set([...currentOutfitIds, ...selectedOutfitIds])]
 
-      const response = await fetch("http://localhost:8000/api/occasions/assign", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -122,7 +122,7 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
       // Remove selected outfits
       const remainingOutfitIds = currentOutfitIds.filter(id => !selectedOutfitIds.includes(id))
 
-      const response = await fetch("http://localhost:8000/api/occasions/assign", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
