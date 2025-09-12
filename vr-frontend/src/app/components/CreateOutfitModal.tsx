@@ -548,7 +548,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       >
                         <Image
                           src={selectedTop.url || "/placeholder.svg"}
-                          alt={selectedTop.name}
+                          alt={selectedTop.name || "Top item"}
                           width={200}
                           height={128}
                           className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
@@ -594,7 +594,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       >
                         <Image
                           src={selectedBottom.url || "/placeholder.svg"}
-                          alt={selectedBottom.name}
+                          alt={selectedBottom.name ||  "Bottom Item" }
                           width={200}
                           height={128}
                           className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
@@ -640,7 +640,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       >
                         <Image
                           src={selectedOuterwear.url || "/placeholder.svg"}
-                          alt={selectedOuterwear.name}
+                          alt={selectedOuterwear.name || "Outerwear Item"}
                           width={200}
                           height={128}
                           className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
