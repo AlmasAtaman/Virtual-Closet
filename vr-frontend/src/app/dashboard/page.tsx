@@ -109,7 +109,7 @@ export default function Homepage() {
         // Error occurred, redirect to login
       }
       
-      // No authentication found
+      // No authentication found.
       router.push("/login");
     };
     
