@@ -80,6 +80,10 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }>({ category: "top", isOpen: false })
 
   // Folder/Occasion related state
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [outfitFolders, setOutfitFolders] = useState<Occasion[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [allFolders, setAllFolders] = useState<Occasion[]>([])
 
   // Edit form state
   const [editForm, setEditForm] = useState({

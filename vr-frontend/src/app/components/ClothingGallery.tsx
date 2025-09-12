@@ -58,6 +58,10 @@ type ClothingGalleryProps = {
 
 const ClothingGallery = forwardRef(
   ({ viewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly, priceSort }: ClothingGalleryProps, ref ) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _unusedSetSelectedTags = setSelectedTags;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _unusedSetShowFavoritesOnly = setShowFavoritesOnly;
 
     // Create an axios instance with credentials (uses cookies automatically)
     const createAuthenticatedAxios = () => {
@@ -442,13 +446,6 @@ const ClothingGallery = forwardRef(
       }
     };
 
-    const handleTagFromItem = useCallback((tag: string) => {
-      setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-    }, [setSelectedTags]);
-
-    const handleToggleFavoritesFilter = useCallback(() => {
-      setShowFavoritesOnly((prev) => !prev);
-    }, [setShowFavoritesOnly]);
 
     return (
       <div className="space-y-6 flex flex-col flex-1">
