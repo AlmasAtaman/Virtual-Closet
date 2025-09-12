@@ -44,6 +44,7 @@ type ClothingGalleryProps = {
   openUploadModal: () => void;
   searchQuery?: string;
   selectedTags: string[];
+  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
   priceSort: "none" | "asc" | "desc";
   setPriceSort: (mode: "none" | "asc" | "desc") => void;
   priceRange: [number | null, number | null];
@@ -52,10 +53,11 @@ type ClothingGalleryProps = {
   isMultiSelecting: boolean;
   setIsMultiSelecting: React.Dispatch<React.SetStateAction<boolean>>;
   showFavoritesOnly: boolean;
+  setShowFavoritesOnly: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, openUploadModal, searchQuery = "", selectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, priceSort }: ClothingGalleryProps, ref ) => {
+  ({ viewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly, priceSort }: ClothingGalleryProps, ref ) => {
 
     // Create an axios instance with credentials (uses cookies automatically)
     const createAuthenticatedAxios = () => {
