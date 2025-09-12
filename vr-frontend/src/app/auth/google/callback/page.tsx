@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import { getBaseUrl } from "../../../utils/url";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function GoogleCallbackPage() {
@@ -52,7 +53,7 @@ export default function GoogleCallbackPage() {
                     credentials: "include",
                     body: JSON.stringify({ 
                         code,
-                        redirect_uri: `${window.location.origin}/auth/google/callback`
+                        redirect_uri: `${getBaseUrl()}/auth/google/callback`
                     }),
                 });
 
