@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useState } from "react";
 import toast from 'react-hot-toast';
 
@@ -18,7 +18,7 @@ const useMutation = ({ url, method = "POST" }: UseMutationArgs) => {
     error: "",
   });
 
-  const fn = async (data: any) => {
+  const fn = async (data: unknown) => {
     setState(prev => ({
       ...prev,
       isLoading: true,
@@ -39,10 +39,12 @@ const useMutation = ({ url, method = "POST" }: UseMutationArgs) => {
         duration: 2000,
         position: "top-center",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = axiosError.message || 'An error occurred';
       setState({
         isLoading: false,
-        error: error.message,
+        error: message,
       });
     }
   };

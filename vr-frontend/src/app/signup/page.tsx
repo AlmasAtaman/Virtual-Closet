@@ -1,16 +1,10 @@
 "use client"
 
 import Link from "next/link";
-import { useState, useEffect, useContext } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaGoogle, FaFacebookF, FaApple, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaGoogle, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
-type User = {
-    id: string;
-    username: string;
-    email: string;
-    password: string;
-};
 
 export default function SignUp(){
     const [email, setEmail] = useState("");

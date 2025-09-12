@@ -62,9 +62,10 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
                 // Call the handler to update the UI, passing both item and outfit IDs
                 onItemDeleted(item.id, outfit.id);
 
-            } catch (error: any) {
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
                 console.error('Error removing item from outfit:', error);
-                alert(`Error removing item from outfit: ${error.message}`);
+                alert(`Error removing item from outfit: ${errorMessage}`);
             }
         }
     };
@@ -89,10 +90,13 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
 
                 {/* Item Image */}
                 <div className="mb-4 flex justify-center">
-                     <img
+                     <Image
                         src={item.url}
                         alt={item.name || 'Clothing Item'}
+                        width={200}
+                        height={200}
                         className="max-w-full max-h-48 object-contain rounded"
+                        unoptimized
                     />
                 </div>
 
@@ -114,10 +118,13 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
                         <div className="flex flex-wrap gap-2">
                             {outfit.clothingItems.map(outfitItem => (
                                 <div key={outfitItem.id} className="w-16 h-16 overflow-hidden rounded border border-gray-600">
-                                    <img
+                                    <Image
                                         src={outfitItem.url}
                                         alt={outfitItem.name || 'Outfit Item'}
+                                        width={64}
+                                        height={64}
                                         className="w-full h-full object-cover"
+                                        unoptimized
                                     />
                                 </div>
                             ))}

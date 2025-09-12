@@ -16,7 +16,7 @@ class SafeStorage implements StorageInterface {
       testStorage.setItem(testKey, "test")
       testStorage.removeItem(testKey)
       this.storage = testStorage
-    } catch (error) {
+    } catch {
       console.warn(`${storageType} is not available, using in-memory fallback`)
       this.storage = null
     }
@@ -28,8 +28,8 @@ class SafeStorage implements StorageInterface {
         return this.storage.getItem(key)
       }
       return this.fallback.get(key) || null
-    } catch (error) {
-      console.warn(`Error reading from storage for key "${key}":`, error)
+    } catch {
+      console.warn(`Error reading from storage for key "${key}":`)
       return this.fallback.get(key) || null
     }
   }
@@ -40,8 +40,8 @@ class SafeStorage implements StorageInterface {
         this.storage.setItem(key, value)
       }
       this.fallback.set(key, value)
-    } catch (error) {
-      console.warn(`Error writing to storage for key "${key}":`, error)
+    } catch {
+      console.warn(`Error writing to storage for key "${key}":`)
       this.fallback.set(key, value)
     }
   }
@@ -52,8 +52,8 @@ class SafeStorage implements StorageInterface {
         this.storage.removeItem(key)
       }
       this.fallback.delete(key)
-    } catch (error) {
-      console.warn(`Error removing from storage for key "${key}":`, error)
+    } catch {
+      console.warn(`Error removing from storage for key "${key}":`)
       this.fallback.delete(key)
     }
   }

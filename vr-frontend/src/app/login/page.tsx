@@ -1,23 +1,27 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaGoogle, FaFacebookF, FaApple, FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaGoogle, FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
 // Google Identity Services global declaration
+interface GoogleIdentityServices {
+  accounts: {
+    id: {
+      initialize: (config: unknown) => void;
+      renderButton: (element: HTMLElement, config: unknown) => void;
+      prompt: () => void;
+    };
+  };
+}
+
 declare global {
   interface Window {
-    google: any;
+    google: GoogleIdentityServices;
   }
 }
 
-type User = {
-    id: string; // Changed to string to match Prisma schema
-    username: string;
-    email: string;
-    password: string;
-};
 
 export default function LoginPage(){
     const [username, setUsername] = useState("");

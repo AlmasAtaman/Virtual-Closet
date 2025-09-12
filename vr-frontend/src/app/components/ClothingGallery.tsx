@@ -1,18 +1,42 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from "react";
 import axios from "axios";
 import Fuse from "fuse.js";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Trash2, MoveRight, Loader2, X, Plus } from "lucide-react";
+import { Trash2, MoveRight, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clothing, FilterAttribute } from "./FilterSection";
 import ClothingCard from "./ClothingCard";
 import ClothingDetailModal from "./ClothingDetailModal";
 import type { ClothingItem } from "../types/clothing";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/dialog";
+
+// Type definitions for outfit-related API responses
+interface OutfitUsageInfo {
+  count: number;
+  outfits: OutfitInfo[];
+}
+
+interface OutfitInfo {
+  id: string;
+  name?: string;
+  clothingItems: Array<{
+    id: string;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
+// Type for axios error responses
+interface AxiosError {
+  response?: {
+    status: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
 
 type ClothingGalleryProps = {
   viewMode: "closet" | "wishlist";
@@ -20,7 +44,6 @@ type ClothingGalleryProps = {
   openUploadModal: () => void;
   searchQuery?: string;
   selectedTags: string[];
-  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
   priceSort: "none" | "asc" | "desc";
   setPriceSort: (mode: "none" | "asc" | "desc") => void;
   priceRange: [number | null, number | null];
@@ -33,7 +56,7 @@ type ClothingGalleryProps = {
 };
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, setViewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceSort, setPriceSort, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly,}: ClothingGalleryProps, ref ) => {
+  ({ viewMode, openUploadModal, searchQuery = "", selectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting }: ClothingGalleryProps, ref ) => {
 
     // Create an axios instance with credentials (uses cookies automatically)
     const createAuthenticatedAxios = () => {
@@ -45,8 +68,6 @@ const ClothingGallery = forwardRef(
     const [selectedItem, setSelectedItem] = useState<Clothing | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [autocompleteEnabled, setAutocompleteEnabled] = useState(true);
-    const [suggestions, setSuggestions] = useState<string[]>([]);
     const [editForm, setEditForm] = useState({
       name: "",
       type: "",
@@ -61,19 +82,12 @@ const ClothingGallery = forwardRef(
       notes: "",
       sourceUrl: "",
     });
-    const [showFilters, setShowFilters] = useState(false);
-    const [filterAcrossModes, setFilterAcrossModes] = useState(false);
-    const [searchAcrossModes, setSearchAcrossModes] = useState(false);
     const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
-    const [clickedItemRect, setClickedItemRect] = useState<DOMRect | null>(null);
-    const [selectedTab, setSelectedTab] = useState<"general" | "details">("general");
     const [isDeleting, setIsDeleting] = useState(false);
     const [isMoving, setIsMoving] = useState(false);
     const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
-    const [outfitsUsingSelectedItems, setOutfitsUsingSelectedItems] = useState<{count: number, outfits: any[]}>({count: 0, outfits: []});
+    const [outfitsUsingSelectedItems, setOutfitsUsingSelectedItems] = useState<OutfitUsageInfo>({count: 0, outfits: []});
     const [showSingleDeleteDialog, setShowSingleDeleteDialog] = useState(false);
-    const [singleDeleteKey, setSingleDeleteKey] = useState<string | null>(null);
-    const [outfitsUsingSingleItem, setOutfitsUsingSingleItem] = useState<{count: number, outfits: any[]}>({count: 0, outfits: []});
 
     // Define the filterable attributes
     const filterAttributes: FilterAttribute[] = [
@@ -105,7 +119,7 @@ const ClothingGallery = forwardRef(
     const baseItems =
       searchAcrossModes || filterAcrossModes ? clothingItems : clothingItems.filter((item) => item.mode === viewMode);
 
-    const fetchImages = async () => {
+    const fetchImages = useCallback(async () => {
       setIsLoading(true);
       try {
         const authAxios = createAuthenticatedAxios();
@@ -124,15 +138,16 @@ const ClothingGallery = forwardRef(
           const res = await authAxios.get(`http://localhost:8000/api/images?mode=${viewMode}`);
           setClothingItems(res.data.clothingItems || []);
         }
-      } catch (err: any) {
-        console.error("Error fetching images:", err);
+      } catch (err: unknown) {
+        const axiosError = err as AxiosError;
+        console.error("Error fetching images:", axiosError);
         // If 401, might need to redirect to login
-        if (err.response?.status === 401) {
+        if (axiosError.response?.status === 401) {
         }
       } finally {
         setIsLoading(false);
       }
-    };
+    }, [viewMode, setClothingItems]);
 
     const handleDelete = async (key: string) => {
       setShowSingleDeleteDialog(false);
@@ -179,7 +194,7 @@ const ClothingGallery = forwardRef(
     const handleMoveToCloset = async (item: Clothing) => {
       try {
         setIsMoving(true);
-        const response = await createAuthenticatedAxios().patch(
+        await createAuthenticatedAxios().patch(
           `http://localhost:8000/api/images/move-to-closet/${item.id}`,
           {}
         );
@@ -205,11 +220,11 @@ const ClothingGallery = forwardRef(
         const data = await res.json();
         const outfits = data.outfits || [];
         // Find outfits that contain any of the selected items
-        const usedIn = outfits.filter((outfit: any) =>
-          Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci: any) => selectedIds.includes(ci.id))
+        const usedIn = outfits.filter((outfit: OutfitInfo) =>
+          Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci) => selectedIds.includes(ci.id))
         );
         return { count: usedIn.length, outfits: usedIn };
-      } catch (e) {
+      } catch {
         return { count: 0, outfits: [] };
       }
     };
@@ -288,16 +303,13 @@ const ClothingGallery = forwardRef(
           }
         },
       }),
-      [viewMode],
+      [viewMode, fetchImages, setClothingItems],
     );
 
     useEffect(() => {
       fetchImages();
-    }, [viewMode, searchAcrossModes, filterAcrossModes]);
+    }, [fetchImages]);
 
-    const toggleTag = (tag: string) => {
-      setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-    };
 
     const fuse = new Fuse(baseItems, {
       keys: ["name", "type", "brand", "occasion", "style", "fit", "color", "material", "season"],
@@ -365,12 +377,6 @@ const ClothingGallery = forwardRef(
         return priceSort === "asc" ? priceA - priceB : priceB - priceA;
       });
 
-    const toggleMultiSelect = () => {
-      setIsMultiSelecting((prev) => !prev);
-      if (isMultiSelecting) {
-        setSelectedItemIds([]);
-      }
-    };
 
     const toggleItemSelection = (itemId: string) => {
       setSelectedItemIds((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
@@ -401,21 +407,6 @@ const ClothingGallery = forwardRef(
       }
     };
 
-    // Fetch outfits for a single item
-    const fetchOutfitsUsingSingleItem = async (itemId: string) => {
-      try {
-        const res = await fetch("http://localhost:8000/api/outfits", { credentials: "include" });
-        if (!res.ok) return { count: 0, outfits: [] };
-        const data = await res.json();
-        const outfits = data.outfits || [];
-        const usedIn = outfits.filter((outfit: any) =>
-          Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci: any) => ci.id === itemId)
-        );
-        return { count: usedIn.length, outfits: usedIn };
-      } catch (e) {
-        return { count: 0, outfits: [] };
-      }
-    };
 
     return (
       <div className="space-y-6 flex flex-col flex-1">
@@ -546,12 +537,6 @@ const ClothingGallery = forwardRef(
                     onToggleSelect={toggleItemSelection}
                     toggleFavorite={toggleFavorite}
                     viewMode={viewMode}
-                    onDelete={async () => {
-                      setSingleDeleteKey(item.key);
-                      const result = await fetchOutfitsUsingSingleItem(item.id);
-                      setOutfitsUsingSingleItem(result);
-                      setShowSingleDeleteDialog(true);
-                    }}
                   />
                 </motion.div>
               ))}

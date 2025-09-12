@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Image from "next/image"
 import { X, Search, Grid, List } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -215,10 +216,13 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                               ) : (
                                 <>
                                   <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-muted">
-                                    <img
+                                    <Image
                                       src={item.url || "/placeholder.svg"}
                                       alt={item.name || "Clothing Item"}
+                                      width={200}
+                                      height={200}
                                       className="w-full h-full object-cover"
+                                      unoptimized
                                     />
                                     {item.mode === "wishlist" && (
                                       <Badge className="absolute top-1 right-1 text-xs bg-amber-500">Wishlist</Badge>
@@ -260,10 +264,13 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                   </div>
                                 ) : (
                                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                                    <img
+                                    <Image
                                       src={item.url || "/placeholder.svg"}
                                       alt={item.name || "Clothing Item"}
+                                      width={64}
+                                      height={64}
                                       className="w-full h-full object-cover"
+                                      unoptimized
                                     />
                                   </div>
                                 )}

@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
 import { Upload, Link, X, Loader2, Check, Sparkles, ImageIcon, Plus, Zap, Clock } from "lucide-react"
@@ -24,7 +25,6 @@ interface UploadFormProps {
   onCloseAction: () => void
   onUploadComplete?: (mode: "closet" | "wishlist", newItem: ClothingItem) => void
   currentViewMode?: "closet" | "wishlist"
-  fetchGeminiMetadata?: (url: string) => Promise<Partial<ClothingItem>>
 }
 
 export default function UploadForm({
@@ -32,7 +32,6 @@ export default function UploadForm({
   onCloseAction,
   onUploadComplete,
   currentViewMode = "closet",
-  fetchGeminiMetadata,
 }: UploadFormProps) {
   const [uploadMethod, setUploadMethod] = useState<"direct" | "url">("direct")
   const [urlExtractionMode, setUrlExtractionMode] = useState<"quick" | "full">("quick")
@@ -97,6 +96,7 @@ export default function UploadForm({
       setHasFetched(false)
       setFetchError(null)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, currentViewMode])
 
   const isFormValid = () => {
@@ -557,10 +557,6 @@ export default function UploadForm({
     }
   }
 
-  // Type guard for urlExtractionMode
-  function isFullMode(mode: string): mode is "full" {
-    return mode === "full";
-  }
 
   if (!isOpen) return null
 
@@ -644,9 +640,11 @@ export default function UploadForm({
                                 className="space-y-4"
                               >
                                 <div className="relative group">
-                                  <img
+                                  <Image
                                     src={imagePreview || "/placeholder.svg"}
                                     alt="Preview"
+                                    width={400}
+                                    height={256}
                                     className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
                                   />
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
@@ -830,9 +828,11 @@ export default function UploadForm({
                             />
                             {imagePreview ? (
                               <div className="relative group w-full flex flex-col items-center">
-                                <img
+                                <Image
                                   src={imagePreview || "/placeholder.svg"}
                                   alt="Preview"
+                                  width={400}
+                                  height={256}
                                   className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
                                 />
                                 <Button
@@ -898,9 +898,11 @@ export default function UploadForm({
                                   style={{ height: 180 }}
                                   onClick={() => setSelectedScrapedImage(image)}
                                 >
-                                  <img
+                                  <Image
                                     src={image || "/placeholder.svg"}
                                     alt={`Product ${index + 1}`}
+                                    width={200}
+                                    height={180}
                                     className="w-full h-full object-cover"
                                   />
                                   <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
@@ -922,7 +924,7 @@ export default function UploadForm({
                               ))}
                               {scrapedProducts.length === 0 && (
                                 <div className="col-span-2 text-center py-8 text-muted-foreground">
-                                  Enter a URL and click "Full Scrape" to view product images
+                                  Enter a URL and click &quot;Full Scrape&quot; to view product images
                                 </div>
                               )}
                             </div>

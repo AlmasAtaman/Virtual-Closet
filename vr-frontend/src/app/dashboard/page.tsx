@@ -8,23 +8,27 @@ import { ThemeToggle } from "../components/ThemeToggle"
 import UploadForm from "../components/UploadForm"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../components/ClothingGallery"
-import Image from "next/image"
+import type { ClothingItem } from "../types/clothing"
+
+// Interface for ClothingGallery ref
+interface ClothingGalleryRef {
+  refresh: () => Promise<void>;
+  addClothingItem: (newItem: ClothingItem) => void;
+}
 import { Logo } from "../components/Logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { ClothingItem } from "../types/clothing"
 import FilterSection, { type FilterAttribute } from "../components/FilterSection"
 import { Badge } from "@/components/ui/badge"
 
 
 export default function Homepage() {
-  const [username, setUsername] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [hasMounted, setHasMounted] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
-  const galleryRef = useRef<any>(null)
+  const galleryRef = useRef<ClothingGalleryRef>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -43,7 +47,7 @@ export default function Homepage() {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
-  const filterAttributes: FilterAttribute[] = [
+  const filterAttributes: FilterAttribute[] = useMemo(() => [
     { key: "type", label: "Type" },
     { key: "occasion", label: "Occasion" },
     { key: "style", label: "Style" },
@@ -51,7 +55,7 @@ export default function Homepage() {
     { key: "color", label: "Color" },
     { key: "material", label: "Material" },
     { key: "season", label: "Season" },
-  ]
+  ], [])
   const [clothingItems, setClothingItems] = useState<ClothingItem[]>([])
 
   const uniqueAttributeValues: Record<string, string[]> = useMemo(() => {
@@ -62,7 +66,7 @@ export default function Homepage() {
       ) as string[]
     })
     return values
-  }, [clothingItems])
+  }, [clothingItems, filterAttributes])
 
   const handleCloseModal = useCallback(() => {
     setShowModal(false)
@@ -102,7 +106,7 @@ export default function Homepage() {
           setLoading(false);
           return;
         }
-      } catch (error) {
+      } catch {
       }
       
       // No authentication found
@@ -312,6 +316,7 @@ export default function Homepage() {
             )}
 
             <ClothingGallery
+              ref={galleryRef}
               viewMode={viewMode}
               setViewMode={setViewMode}
               openUploadModal={handleOpenUploadModal}

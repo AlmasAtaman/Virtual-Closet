@@ -26,80 +26,6 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-const generateChromeThemeColors = (baseColor: string) => {
-  // Convert hex to HSL for better color manipulation
-  const hexToHsl = (hex: string): [number, number, number] => {
-    const r = Number.parseInt(hex.slice(1, 3), 16) / 255
-    const g = Number.parseInt(hex.slice(3, 5), 16) / 255
-    const b = Number.parseInt(hex.slice(5, 7), 16) / 255
-
-    const max = Math.max(r, g, b)
-    const min = Math.min(r, g, b)
-    let h = 0,
-      s = 0,
-      l = (max + min) / 2
-
-    if (max !== min) {
-      const d = max - min
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
-      switch (max) {
-        case r:
-          h = (g - b) / d + (g < b ? 6 : 0)
-          break
-        case g:
-          h = (b - r) / d + 2
-          break
-        case b:
-          h = (r - g) / d + 4
-          break
-      }
-      h /= 6
-    }
-
-    return [h * 360, s * 100, l * 100]
-  }
-
-  const [h] = hexToHsl(baseColor)
-
-  // Generate chrome-style theme using the user's hue but maintaining chrome structure
-  return {
-    // Chrome theme structure with custom hue
-    background: `oklch(0.35 0.025 ${h})`,
-    foreground: `oklch(0.95 0.01 ${h})`,
-    card: `oklch(0.42 0.025 ${h})`,
-    cardForeground: `oklch(0.92 0.01 ${h})`,
-    popover: `oklch(0.42 0.025 ${h})`,
-    popoverForeground: `oklch(0.92 0.01 ${h})`,
-    primary: `oklch(0.6 0.12 ${h - 20})`, // Slightly shifted hue for accent
-    primaryForeground: `oklch(0.98 0 0)`,
-    secondary: `oklch(0.45 0.025 ${h})`,
-    secondaryForeground: `oklch(0.88 0.01 ${h})`,
-    muted: `oklch(0.48 0.025 ${h})`,
-    mutedForeground: `oklch(0.7 0.015 ${h})`,
-    accent: `oklch(0.5 0.025 ${h})`,
-    accentForeground: `oklch(0.85 0.01 ${h})`,
-    destructive: `oklch(0.65 0.2 20)`, // Keep destructive as red-orange
-    destructiveForeground: `oklch(0.95 0.01 ${h})`,
-    border: `oklch(0.55 0.025 ${h})`,
-    input: `oklch(0.48 0.025 ${h})`,
-    ring: `oklch(0.6 0.12 ${h - 20})`,
-    // Chart colors with varied hues
-    chart1: `oklch(0.65 0.12 ${h - 20})`,
-    chart2: `oklch(0.7 0.1 ${h + 60})`,
-    chart3: `oklch(0.75 0.08 ${h + 120})`,
-    chart4: `oklch(0.68 0.15 ${h - 160})`,
-    chart5: `oklch(0.72 0.12 ${h - 180})`,
-    // Sidebar colors
-    sidebar: `oklch(0.38 0.025 ${h})`,
-    sidebarForeground: `oklch(0.9 0.01 ${h})`,
-    sidebarPrimary: `oklch(0.6 0.12 ${h - 20})`,
-    sidebarPrimaryForeground: `oklch(0.98 0 0)`,
-    sidebarAccent: `oklch(0.5 0.025 ${h})`,
-    sidebarAccentForeground: `oklch(0.85 0.01 ${h})`,
-    sidebarBorder: `oklch(0.55 0.025 ${h})`,
-    sidebarRing: `oklch(0.6 0.12 ${h - 20})`,
-  }
-}
 
 const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrome") => {
   // Colors are only applied to light theme - other themes ignore custom colors
@@ -116,8 +42,8 @@ const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrom
     const max = Math.max(r, g, b)
     const min = Math.min(r, g, b)
     let h = 0,
-      s = 0,
-      l = (max + min) / 2
+      s = 0
+    const l = (max + min) / 2
 
     if (max !== min) {
       const d = max - min

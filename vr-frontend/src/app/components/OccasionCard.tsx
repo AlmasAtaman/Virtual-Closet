@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -246,10 +246,11 @@ export default function OccasionCard({
           <div className="flex-1 relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 chrome:from-muted chrome:to-accent overflow-hidden">
             {occasion.customThumbnail ? (
               <div className="relative w-full h-full">
-                <img
+                <Image
                   src={occasion.customThumbnail || "/placeholder.svg"}
                   alt={`${occasion.name} thumbnail`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
             ) : firstOutfit && firstOutfit.clothingItems.length > 0 ? (
@@ -258,7 +259,7 @@ export default function OccasionCard({
                 <div className="relative w-full h-full">
                   {(() => {
                     // Sort items by layer priority: outerwear (bottom layer), then others
-                    const getLayerPriority = (item: any) => {
+                    const getLayerPriority = (item: ClothingItem) => {
                       const type = item.type?.toLowerCase() || ""
                       if (type.includes("jacket") || type.includes("coat") || type.includes("blazer") || type.includes("sweater") || type.includes("cardigan")) {
                         return 1 // Outerwear - bottom layer
@@ -277,10 +278,12 @@ export default function OccasionCard({
                       .sort((a, b) => getLayerPriority(a) - getLayerPriority(b))
 
                     return sortedItems.map((item, index) => (
-                      <img
+                      <Image
                         key={item.id}
                         src={item.url || "/placeholder.svg"}
                         alt={item.name || `Item ${index + 1}`}
+                        width={112}
+                        height={112}
                         className="absolute object-contain"
                         style={{
                           left: `${(item.left || 50) - 10 + index * 2}%`,

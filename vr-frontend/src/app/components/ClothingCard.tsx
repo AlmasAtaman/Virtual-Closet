@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
 import { Heart } from "lucide-react"
+import Image from "next/image"
 
 interface ClothingCardProps {
   item: ClothingItem
@@ -15,7 +16,6 @@ interface ClothingCardProps {
   onToggleSelect?: (id: string) => void
   toggleFavorite: (id: string, newState: boolean) => void
   viewMode?: "closet" | "wishlist"
-  onDelete?: () => void
 }
 
 // Helper to scale image by clothing type
@@ -43,7 +43,6 @@ export default function ClothingCard({
   onToggleSelect,
   toggleFavorite,
   viewMode,
-  onDelete,
 }: ClothingCardProps) {
   const [isHovering, setIsHovering] = useState(false)
 
@@ -90,10 +89,11 @@ export default function ClothingCard({
           }}
         >
           {item.url ? (
-            <img
+            <Image
               src={item.url || "/placeholder.svg"}
               alt={item.name || "Clothing item"}
-              className={`object-contain w-full h-full p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+              fill
+              className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
             />
           ) : (
             <div className="flex items-center justify-center w-full h-full">

@@ -26,7 +26,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
     exit: { scale: 0, rotate: 180 },
   }
 
-  const themeOptions = [
+  const themeOptions: Array<{ value: "light" | "dark" | "chrome" | "system"; label: string; icon: React.ComponentType<{ className?: string }> }> = [
     { value: "light", label: "Light", icon: Sun },
     { value: "dark", label: "Dark", icon: Moon },
     { value: "chrome", label: "Chrome", icon: Layers },
@@ -187,7 +187,7 @@ export function ThemeToggle({ className = "" }: ThemeToggleProps) {
                     <button
                       key={value}
                       onClick={() => {
-                        setTheme(value as any)
+                        setTheme(value)
                         // Reset custom colors when switching themes
                         if (customColor) {
                           resetCustomTheme()

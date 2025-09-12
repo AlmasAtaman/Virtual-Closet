@@ -1,11 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { X, Folder, Plus, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+
+interface ClothingItem {
+  id: string
+  name?: string
+  type?: string
+  color?: string
+  brand?: string
+  price?: number
+  imageUrl?: string
+}
 
 interface Outfit {
   id: string
@@ -15,7 +24,7 @@ interface Outfit {
   notes?: string
   price?: number
   totalPrice?: number
-  clothingItems: any[]
+  clothingItems: ClothingItem[]
   isFavorite?: boolean
   createdAt?: string
 }

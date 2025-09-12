@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import Image from "next/image"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Shuffle, Check, Plus, Move, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
@@ -120,6 +120,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
 
     setOutfitItems(items)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTop, selectedBottom, selectedOuterwear])
 
   // DRAG AND DROP SYSTEM
@@ -440,11 +441,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               onMouseDown={(e) => handleMouseDown(e, item.id)}
               onClick={() => setSelectedItemForResize(item.id)}
             >
-              <img
+              <Image
                 src={item.url || "/placeholder.svg"}
                 alt={item.name || ""}
+                width={200}
+                height={200}
                 className="w-full h-auto object-contain rounded-lg"
                 draggable={false}
+                unoptimized
               />
               <div className="absolute -top-2 -right-2">
                 <Button
@@ -542,10 +546,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         className="relative cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setShowTopSelectModal(true)}
                       >
-                        <img
+                        <Image
                           src={selectedTop.url || "/placeholder.svg"}
                           alt={selectedTop.name}
+                          width={200}
+                          height={128}
                           className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
+                          unoptimized
                         />
                         <Button
                           size="sm"
@@ -585,10 +592,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         className="relative cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setShowBottomSelectModal(true)}
                       >
-                        <img
+                        <Image
                           src={selectedBottom.url || "/placeholder.svg"}
                           alt={selectedBottom.name}
+                          width={200}
+                          height={128}
                           className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
+                          unoptimized
                         />
                         <Button
                           size="sm"
@@ -628,10 +638,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         className="relative cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setShowOuterwearSelectModal(true)}
                       >
-                        <img
+                        <Image
                           src={selectedOuterwear.url || "/placeholder.svg"}
                           alt={selectedOuterwear.name}
+                          width={200}
+                          height={128}
                           className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
+                          unoptimized
                         />
                         <Button
                           size="sm"

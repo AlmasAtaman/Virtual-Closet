@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState, use, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Image from "next/image"
 import axios from "axios"
 import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, DollarSign, Sparkles, Shirt } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -79,11 +80,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }>({ category: "top", isOpen: false })
 
   // Folder/Occasion related state
-  const [outfitFolders, setOutfitFolders] = useState<Occasion[]>([])
-  const [allFolders, setAllFolders] = useState<Occasion[]>([])
-  const [showAddToFolderModal, setShowAddToFolderModal] = useState(false)
-  const [addingToFolder, setAddingToFolder] = useState(false)
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -116,31 +112,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   const currentTotalPrice = calculateTotalPrice(getCurrentItems())
 
-  useEffect(() => {
-    fetchOutfit()
-    fetchAllClothingItems()
-    fetchAllFolders()
-  }, [outfitId])
+  // Fetch functions - defined before useEffect to avoid hoisting issues
 
-  // Fetch outfit folders after we have the outfit data
-  useEffect(() => {
-    if (outfit?.id) {
-      fetchOutfitFolders()
-    }
-  }, [outfit?.id])
-
-  useEffect(() => {
-    if (outfit) {
-      setEditForm({
-        name: outfit.name || "",
-        occasion: outfit.occasion || "",
-        season: outfit.season || "",
-        notes: outfit.notes || "",
-      })
-    }
-  }, [outfit])
-
-  const fetchOutfit = async () => {
+const fetchOutfit = useCallback(async () => {
     try {
       const response = await axios.get(`http://localhost:8000/api/outfits/${outfitId}`, {
         withCredentials: true,
@@ -156,9 +130,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [outfitId])
 
-  const fetchAllClothingItems = async () => {
+const fetchAllClothingItems = useCallback(async () => {
     try {
       const [closetRes, wishlistRes] = await Promise.all([
         axios.get("http://localhost:8000/api/images?mode=closet", {
@@ -184,9 +158,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     } catch (error) {
       console.error("Failed to fetch clothing items:", error)
     }
-  }
+  }, [])
 
-  const fetchOutfitFolders = async () => {
+const fetchOutfitFolders = useCallback(async () => {
     if (!outfitId) return
 
     try {
@@ -204,9 +178,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     } catch (error) {
       console.error("Failed to fetch outfit folders:", error)
     }
-  }
+  }, [outfitId])
 
-  const fetchAllFolders = async () => {
+const fetchAllFolders = useCallback(async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/occasions", {
         withCredentials: true,
@@ -215,7 +189,32 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     } catch (error) {
       console.error("Failed to fetch folders:", error)
     }
-  }
+  }, [])
+
+  // useEffect hooks
+  useEffect(() => {
+    fetchOutfit()
+    fetchAllClothingItems()
+    fetchAllFolders()
+  }, [outfitId, fetchOutfit, fetchAllClothingItems, fetchAllFolders])
+
+  // Fetch outfit folders after we have the outfit data
+  useEffect(() => {
+    if (outfit?.id) {
+      fetchOutfitFolders()
+    }
+  }, [outfit?.id, fetchOutfitFolders])
+
+  useEffect(() => {
+    if (outfit) {
+      setEditForm({
+        name: outfit.name || "",
+        occasion: outfit.occasion || "",
+        season: outfit.season || "",
+        notes: outfit.notes || "",
+      })
+    }
+  }, [outfit])
 
   const handleEdit = () => {
     if (!outfit) return
@@ -357,70 +356,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setSelectedModalState({ ...selectedModalState, isOpen: false })
   }
 
-  const handleAddToFolder = async () => {
-    if (!selectedFolderId || !outfit?.id) return
-
-    setAddingToFolder(true)
-    try {
-      // Get current outfits in the selected folder
-      const selectedFolder = allFolders.find((folder) => folder.id === selectedFolderId)
-      const currentOutfitIds = selectedFolder?.outfits.map((outfit) => outfit.id) || []
-
-      // Add this outfit to the folder (avoid duplicates)
-      const allOutfitIds = [...new Set([...currentOutfitIds, outfit.id])]
-
-      await axios.post(
-        "http://localhost:8000/api/occasions/assign",
-        {
-          occasionId: selectedFolderId,
-          outfitIds: allOutfitIds,
-        },
-        {
-          withCredentials: true,
-        },
-      )
-
-      // Refresh folder data
-      await fetchOutfitFolders()
-      setShowAddToFolderModal(false)
-      setSelectedFolderId(null)
-    } catch (error) {
-      console.error("Failed to add outfit to folder:", error)
-      alert("Failed to add outfit to folder. Please try again.")
-    } finally {
-      setAddingToFolder(false)
-    }
-  }
-
-  const handleRemoveFromFolder = async (folderId: string) => {
-    if (!outfit?.id) return
-
-    try {
-      // Get current outfits in the folder
-      const folder = outfitFolders.find((f) => f.id === folderId)
-      const currentOutfitIds = folder?.outfits.map((outfit) => outfit.id) || []
-
-      // Remove this outfit from the folder
-      const remainingOutfitIds = currentOutfitIds.filter((id) => id !== outfit.id)
-
-      await axios.post(
-        "http://localhost:8000/api/occasions/assign",
-        {
-          occasionId: folderId,
-          outfitIds: remainingOutfitIds,
-        },
-        {
-          withCredentials: true,
-        },
-      )
-
-      // Refresh folder data
-      await fetchOutfitFolders()
-    } catch (error) {
-      console.error("Failed to remove outfit from folder:", error)
-      alert("Failed to remove outfit from folder. Please try again.")
-    }
-  }
 
   if (loading) {
     return (
@@ -444,7 +379,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
             <AlertTriangle className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-semibold text-foreground mb-2">Outfit not found</h2>
-          <p className="text-muted-foreground mb-6">The outfit you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground mb-6">The outfit you&apos;re looking for doesn&apos;t exist.</p>
           <Button onClick={() => router.push("/outfits")} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Outfits
@@ -604,10 +539,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         {editedCategorizedItems?.outerwear ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img
+                              <Image
                                 src={editedCategorizedItems.outerwear.url || "/placeholder.svg"}
                                 alt={editedCategorizedItems.outerwear.name || "Outerwear"}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
+                                unoptimized
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -644,10 +582,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         {editedCategorizedItems?.top ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img
+                              <Image
                                 src={editedCategorizedItems.top.url || "/placeholder.svg"}
                                 alt={editedCategorizedItems.top.name || "Top"}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
+                                unoptimized
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -684,10 +625,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                         {editedCategorizedItems?.bottom ? (
                           <div className="flex items-center space-x-3 w-full">
                             <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <img
+                              <Image
                                 src={editedCategorizedItems.bottom.url || "/placeholder.svg"}
                                 alt={editedCategorizedItems.bottom.name || "Bottom"}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
+                                unoptimized
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -745,10 +689,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-background rounded-lg flex items-center justify-center overflow-hidden border border-border">
-                            <img
+                            <Image
                               src={item.url || "/placeholder.svg"}
                               alt={item.name || "Item"}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover"
+                              unoptimized
                             />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -803,8 +750,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               </div>
 
               <p className="text-foreground mb-6">
-                Are you sure you want to delete "{outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || "Unknown"}`}
-                "? This will permanently remove the outfit from your wardrobe.
+                Are you sure you want to delete &quot;{outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || "Unknown"}`}
+                &quot;? This will permanently remove the outfit from your wardrobe.
               </p>
 
               <div className="flex space-x-3">

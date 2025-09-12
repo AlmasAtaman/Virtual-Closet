@@ -9,10 +9,30 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
 import { ConfirmDialog } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+
+interface EditForm {
+  name: string
+  type: string
+  brand: string
+  price: string
+  occasion: string
+  style: string
+  fit: string
+  color: string
+  material: string
+  season: string
+  notes: string
+  sourceUrl: string
+}
+
+interface Outfit {
+  id: string
+  name?: string
+  clothingItems: Array<{ id: string }>
+}
 
 interface ClothingDetailModalProps {
   item: ClothingItem
@@ -23,21 +43,8 @@ interface ClothingDetailModalProps {
   onMoveToCloset: (item: ClothingItem) => void
   isEditing: boolean
   setIsEditing: (value: boolean) => void
-  editForm: {
-    name: string
-    type: string
-    brand: string
-    price: string
-    occasion: string
-    style: string
-    fit: string
-    color: string
-    material: string
-    season: string
-    notes: string
-    sourceUrl: string
-  }
-  setEditForm: (value: any) => void
+  editForm: EditForm
+  setEditForm: (value: EditForm) => void
   isDeleting: boolean
   isMoving: boolean
   allItems?: ClothingItem[] // Added to support navigation
@@ -63,7 +70,7 @@ export default function ClothingDetailModal({
   const [activeTab, setActiveTab] = useState<string>("general")
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(0)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [outfitsUsingThisItem, setOutfitsUsingThisItem] = useState<any[]>([])
+  const [outfitsUsingThisItem, setOutfitsUsingThisItem] = useState<Outfit[]>([])
 
   // Find the current item index in the allItems array
   useEffect(() => {
@@ -91,8 +98,6 @@ export default function ClothingDetailModal({
       newIndex = (currentItemIndex - 1 + allItems.length) % allItems.length
     }
 
-    // Update the current item
-    const newItem = allItems[newIndex]
     setCurrentItemIndex(newIndex)
 
     // Reset editing state and update form if needed
@@ -116,11 +121,11 @@ export default function ClothingDetailModal({
       if (!res.ok) return
       const data = await res.json()
       const outfits = data.outfits || []
-      const usedIn = outfits.filter((outfit: any) =>
-        Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci: any) => ci.id === itemId)
+      const usedIn = outfits.filter((outfit: Outfit) =>
+        Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci) => ci.id === itemId)
       )
       setOutfitsUsingThisItem(usedIn)
-    } catch (e) {
+    } catch {
       setOutfitsUsingThisItem([])
     }
   }, [])
@@ -577,7 +582,7 @@ export default function ClothingDetailModal({
                       description={
                         outfitsUsingThisItem.length > 0
                           ? `This item is used in ${outfitsUsingThisItem.length} outfit${outfitsUsingThisItem.length > 1 ? 's' : ''}: ` +
-                            outfitsUsingThisItem.slice(0, 3).map((o: any) => o.name || `Outfit ${o.id.slice(0, 6)}`).join(', ') +
+                            outfitsUsingThisItem.slice(0, 3).map((o) => o.name || `Outfit ${o.id.slice(0, 6)}`).join(', ') +
                             (outfitsUsingThisItem.length > 3 ? `, +${outfitsUsingThisItem.length - 3} more` : '') +
                             ". Deleting it will leave an empty space in those outfits. This action cannot be undone."
                           : "Are you sure you want to delete this item? This action cannot be undone."

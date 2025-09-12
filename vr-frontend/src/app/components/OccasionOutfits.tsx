@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Plus, Check, X, Trash2, Loader2, Folder } from "lucide-react"
+import { ArrowLeft, Check, X, Loader2, Folder } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import OutfitCard from "./OutfitCard"
 
@@ -61,9 +61,9 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
     if (occasionId) {
       fetchOccasionOutfits()
     }
-  }, [occasionId])
+  }, [occasionId, fetchOccasionOutfits])
 
-  const fetchOccasionOutfits = async () => {
+  const fetchOccasionOutfits = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(`http://localhost:8000/api/occasions/${occasionId}/outfits`, {
@@ -84,7 +84,7 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
     } finally {
       setLoading(false)
     }
-  }
+  }, [occasionId])
 
   const handleOutfitDeleted = (outfitId: string) => {
     setOutfits((prev) => prev.filter((outfit) => outfit.id !== outfitId))
@@ -168,7 +168,7 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
         <div className="text-6xl mb-4">❌</div>
         <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Occasion Not Found</h3>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          The occasion you're looking for doesn't exist or has been deleted.
+          The occasion you&apos;re looking for doesn&apos;t exist or has been deleted.
         </p>
         <Button onClick={onBack} variant="outline">
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -273,7 +273,7 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
           <div className="text-6xl mb-4">📂</div>
           <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Empty Folder</h3>
           <p className="text-slate-600 dark:text-slate-400 mb-4">
-            This occasion folder doesn't contain any outfits yet.
+            This occasion folder doesn&apos;t contain any outfits yet.
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-500">
             Go back to the main occasions view to add outfits to this folder.
