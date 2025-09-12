@@ -33,6 +33,8 @@ export default function UploadForm({
   onUploadComplete,
   currentViewMode = "closet",
 }: UploadFormProps) {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  
   const [uploadMethod, setUploadMethod] = useState<"direct" | "url">("direct")
   const [urlExtractionMode, setUrlExtractionMode] = useState<"quick" | "full">("quick")
   const [uploadTarget, setUploadTarget] = useState<"closet" | "wishlist">(currentViewMode)
@@ -122,7 +124,7 @@ export default function UploadForm({
 
       // Convert AVIF to PNG using canvas
       if (file.type === "image/avif") {
-        const img = new Image()
+        const img = new window.Image()
         img.onload = () => {
           const canvas = document.createElement("canvas")
           canvas.width = img.width
@@ -283,7 +285,7 @@ export default function UploadForm({
       const form = new FormData()
       form.append("image", selectedFile)
 
-      const res = await axios.post("http://localhost:8000/api/images", form, {
+      const res = await axios.post(`${API_URL}/api/images`, form, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       })
@@ -336,7 +338,7 @@ export default function UploadForm({
       }, 100);
 
       // Call the new quick-scrape backend endpoint
-      const res = await axios.post("http://localhost:8000/api/quick-scrape", {
+      const res = await axios.post(`${API_URL}/api/quick-scrape`, {
         url: scrapingUrl,
       });
       const data = res.data;
@@ -388,7 +390,7 @@ export default function UploadForm({
         })
       }, 200)
 
-      const res = await axios.post("http://localhost:8000/api/scrape", {
+      const res = await axios.post(`${API_URL}/api/scrape`, {
         url: scrapingUrl,
         process: false,
       })
@@ -500,7 +502,7 @@ export default function UploadForm({
         })
       }, 200)
 
-      const res = await axios.post("http://localhost:8000/api/images/final-submit", submitFormData, {
+      const res = await axios.post(`${API_URL}/api/images/final-submit`, submitFormData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       })
