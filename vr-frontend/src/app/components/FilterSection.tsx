@@ -32,7 +32,6 @@ type FilterSectionProps = {
 };
 
 const FilterSection: React.FC<FilterSectionProps> = ({
-  clothingItems,
   selectedTags,
   setSelectedTags,
   filterAttributes,
@@ -67,49 +66,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({
     }));
   };
 
-  const seasonOptions = [
-    { label: "Spring", icon: "🌸", color: "from-green-400 to-blue-400" },
-    { label: "Summer", icon: "☀️", color: "from-yellow-400 to-orange-400" },
-    { label: "Fall", icon: "🍂", color: "from-orange-400 to-red-400" },
-    { label: "Winter", icon: "❄️", color: "from-blue-400 to-purple-400" },
-  ];
 
-  const getTypeIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      "T-shirt": "👕",
-      Jacket: "🧥",
-      Pants: "👖",
-      Shoes: "👟",
-      Hat: "🧢",
-      Sweater: "🧶",
-      Shorts: "🩳",
-      Dress: "👗",
-      Skirt: "👗",
-    };
-    return icons[type] || "👚";
-  };
 
-  const mapColorToCss = (colorName: string): string => {
-    const colorMap: Record<string, string> = {
-      black: "#1f2937",
-      white: "#f9fafb",
-      red: "#ef4444",
-      blue: "#3b82f6",
-      green: "#22c55e",
-      yellow: "#eab308",
-      purple: "#a855f7",
-      orange: "#f97316",
-      pink: "#ec4899",
-      gray: "#6b7280",
-      brown: "#8b4513",
-      cyan: "#06b6d4",
-      teal: "#14b8a6",
-      maroon: "#800000",
-      silver: "#c0c0c0",
-      gold: "#ffd700",
-    };
-    return colorMap[colorName.toLowerCase()] || colorName.toLowerCase();
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -244,7 +202,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                             }].map((option) => (
                               <button
                                 key={option.value}
-                                onClick={() => setPriceSort(priceSort === option.value ? "none" as "none" : option.value as "asc" | "desc")}
+                                onClick={() => setPriceSort(priceSort === option.value ? "none" as const : option.value as "asc" | "desc")}
                                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
                                   priceSort === option.value
                                     ? "bg-primary text-primary-foreground shadow-md"

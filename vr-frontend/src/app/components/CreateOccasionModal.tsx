@@ -3,12 +3,11 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Plus, Check, Search, Loader2, Folder } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
 
 interface CreateOccasionModalProps {
   show: boolean
@@ -247,7 +246,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-slate-900 dark:text-white chrome:text-foreground">
-                        Adding outfits to "{occasionName}"
+                        Adding outfits to &quot;{occasionName}&quot;
                       </h3>
                       <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
                         {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
@@ -322,11 +321,14 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                         }
 
                                         return (
-                                          <img
+                                          <Image
                                             key={item.id}
                                             src={item.url}
                                             alt={item.name || `Clothing item ${index + 1}`}
+                                            width={200}
+                                            height={200}
                                             className="absolute object-contain max-w-[80%] max-h-[80%]"
+                                            unoptimized
                                             style={{
                                               left: `${adjustedLeft}%`,
                                               bottom: `${(item.bottom || 0) * 0.8}rem`,

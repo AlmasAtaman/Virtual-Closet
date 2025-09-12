@@ -33,7 +33,7 @@ export default function TestGooglePage() {
                     Test Google OAuth
                 </button>
                 <div className="mt-4 text-sm text-gray-600">
-                    <p>If this fails with "redirect_uri_mismatch", then the URI is not properly configured in Google Cloud Console.</p>
+                    <p>If this fails with &quot;redirect_uri_mismatch&quot;, then the URI is not properly configured in Google Cloud Console.</p>
                 </div>
             </div>
         </div>

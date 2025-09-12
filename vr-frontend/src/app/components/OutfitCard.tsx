@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -57,9 +58,6 @@ interface OutfitCardProps {
   // NEW: Detail view props
   isDetailView?: boolean
   isEditing?: boolean
-  onEdit?: () => void
-  onSave?: (updatedOutfit: Outfit) => void
-  onCancel?: () => void
   onItemSelect?: (category: "outerwear" | "top" | "bottom" | "shoe") => void
   allClothingItems?: ClothingItem[]
   enableDragDrop?: boolean
@@ -76,9 +74,6 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   // Detail view props
   isDetailView = false,
   isEditing = false,
-  onEdit,
-  onSave,
-  onCancel,
   onItemSelect,
   enableDragDrop = false,
   enableResize = false,
@@ -365,9 +360,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
                 onClick={() => enableResize && setSelectedItemForResize(item.id)}
               >
-                <img
+                <Image
                   src={item.url || "/placeholder.svg"}
                   alt={item.name || ""}
+                  width={200}
+                  height={200}
                   className="w-full h-auto object-contain rounded-lg"
                   draggable={false}
                 />
@@ -396,27 +393,33 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
             {/* Bottom (pants) - Default centered position */}
             {categorizedItems.bottoms[0] && (
-              <img
+              <Image
                 src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
                 alt="Bottom"
+                width={144}
+                height={144}
                 className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-36 z-10"
                 style={{ objectFit: "contain" }}
               />
             )}
             {/* Top (shirt) - Default centered position */}
             {topItems[0] && (
-              <img
+              <Image
                 src={topItems[0].url || "/placeholder.svg"}
                 alt="Top"
+                width={128}
+                height={128}
                 className="absolute bottom-[8.4rem] left-1/2 transform -translate-x-1/2 w-32 z-20"
                 style={{ objectFit: "contain" }}
               />
             )}
             {/* Outerwear - Default centered position */}
             {categorizedItems.outerwear[0] && (
-              <img
+              <Image
                 src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
                 alt="Outerwear"
+                width={128}
+                height={128}
                 className="absolute bottom-[8.8rem] left-1/2 transform -translate-x-1/2 w-32 z-30"
                 style={{ objectFit: "contain" }}
               />
@@ -530,9 +533,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.outerwear ? (
-                        <img
+                        <Image
                           src={currentCategorizedItems.outerwear.url || "/placeholder.svg"}
                           alt="Outerwear"
+                          width={100}
+                          height={100}
                           className="w-full h-full object-contain rounded"
                         />
                       ) : (
@@ -557,9 +562,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   <Card className="h-24 border-2 border-dashed border-green-300 hover:border-green-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.top ? (
-                        <img
+                        <Image
                           src={currentCategorizedItems.top.url || "/placeholder.svg"}
                           alt="Top"
+                          width={100}
+                          height={100}
                           className="w-full h-full object-contain rounded"
                         />
                       ) : (
@@ -584,9 +591,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   <Card className="h-24 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.bottom ? (
-                        <img
+                        <Image
                           src={currentCategorizedItems.bottom.url || "/placeholder.svg"}
                           alt="Bottom"
+                          width={100}
+                          height={100}
                           className="w-full h-full object-contain rounded"
                         />
                       ) : (
@@ -611,9 +620,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   <Card className="h-24 border-2 border-dashed border-orange-300 hover:border-orange-500 transition-all duration-200 hover:shadow-md">
                     <CardContent className="h-full flex items-center justify-center p-2">
                       {currentCategorizedItems.shoe ? (
-                        <img
+                        <Image
                           src={currentCategorizedItems.shoe.url || "/placeholder.svg"}
                           alt="Shoes"
+                          width={100}
+                          height={100}
                           className="w-full h-full object-contain rounded"
                         />
                       ) : (

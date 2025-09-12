@@ -245,8 +245,8 @@ export default function LandingPage() {
                     <Star className="fill-yellow-500 h-5 w-5" />
                   </div>
                   <p className="text-muted-foreground italic">
-                    "Virtual Closet has completely changed how I plan my outfits. I save so much time in the morning and
-                    always feel put together!"
+                    &quot;Virtual Closet has completely changed how I plan my outfits. I save so much time in the morning and
+                    always feel put together!&quot;
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-4">
@@ -278,8 +278,8 @@ export default function LandingPage() {
                     <Star className="fill-yellow-500 h-5 w-5" />
                   </div>
                   <p className="text-muted-foreground italic">
-                    "I've stopped buying duplicate items since I can see my entire wardrobe at a glance. This app has
-                    saved me money and closet space!"
+                    &quot;I&apos;ve stopped buying duplicate items since I can see my entire wardrobe at a glance. This app has
+                    saved me money and closet space!&quot;
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-4">
@@ -311,8 +311,8 @@ export default function LandingPage() {
                     <Star className="h-5 w-5" />
                   </div>
                   <p className="text-muted-foreground italic">
-                    "The outfit planning feature is a game-changer for travel. I can pack exactly what I need and know
-                    everything will coordinate perfectly."
+                    &quot;The outfit planning feature is a game-changer for travel. I can pack exactly what I need and know
+                    everything will coordinate perfectly.&quot;
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-4">

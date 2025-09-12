@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import Image from "next/image"
 
 interface ClothingItem {
   id: string
@@ -59,10 +60,13 @@ const ClothingModal: React.FC<ClothingModalProps> = ({ isOpen, onCloseAction, cl
         <h2 className="text-xl font-bold mb-4 text-center">{currentItem.name || "Clothing Item"}</h2>
 
         <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden rounded mb-4 flex items-center justify-center">
-          <img
+          <Image
             src={currentItem.url || "/placeholder.svg"}
             alt={currentItem.name || "Clothing Item"}
+            width={800}
+            height={600}
             className="w-full h-full object-contain"
+            unoptimized
           />
         </div>
 

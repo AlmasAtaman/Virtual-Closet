@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import Image from "next/image"
 import { useState, useRef, useCallback } from "react"
 import { X, ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -179,10 +179,12 @@ export default function ThumbnailEditorModal({
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                   >
-                    <img
+                    <Image
                       ref={imgRef}
                       src={imageUrl || "/placeholder.svg"}
                       alt="Edit thumbnail"
+                      width={400}
+                      height={400}
                       className="absolute select-none pointer-events-none"
                       style={{
                         transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageScale})`,
@@ -199,9 +201,11 @@ export default function ThumbnailEditorModal({
                 <div className="relative">
                   <div className="text-sm text-slate-500 mb-3 text-center font-medium">Original Image</div>
                   <div className="w-64 h-64 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex items-center justify-center rounded-lg">
-                    <img
+                    <Image
                       src={imageUrl || "/placeholder.svg"}
                       alt="Original"
+                      width={256}
+                      height={256}
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
