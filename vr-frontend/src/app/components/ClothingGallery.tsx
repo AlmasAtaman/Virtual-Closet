@@ -52,16 +52,16 @@ type ClothingGalleryProps = {
   isMultiSelecting: boolean;
   setIsMultiSelecting: React.Dispatch<React.SetStateAction<boolean>>;
   showFavoritesOnly: boolean;
-  setShowFavoritesOnly: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, openUploadModal, searchQuery = "", selectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting }: ClothingGalleryProps, ref ) => {
+  ({ viewMode, openUploadModal, searchQuery = "", selectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, priceSort }: ClothingGalleryProps, ref ) => {
 
     // Create an axios instance with credentials (uses cookies automatically)
     const createAuthenticatedAxios = () => {
       return axios.create({
-        withCredentials: true // This will include cookies automatically for our unified auth
+        withCredentials: true, // This will include cookies automatically for our unified auth
+        baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       });
     };
 
@@ -88,6 +88,10 @@ const ClothingGallery = forwardRef(
     const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
     const [outfitsUsingSelectedItems, setOutfitsUsingSelectedItems] = useState<OutfitUsageInfo>({count: 0, outfits: []});
     const [showSingleDeleteDialog, setShowSingleDeleteDialog] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [clickedItemRect, setClickedItemRect] = useState<DOMRect | null>(null);
+    const [outfitsUsingSingleItem, setOutfitsUsingSingleItem] = useState<OutfitUsageInfo>({count: 0, outfits: []});
+    const [singleDeleteKey, setSingleDeleteKey] = useState<string | null>(null);
 
     // Define the filterable attributes
     const filterAttributes: FilterAttribute[] = [
@@ -115,6 +119,10 @@ const ClothingGallery = forwardRef(
       ) as string[];
     });
 
+    // Configuration for cross-mode search and filtering
+    const searchAcrossModes = false; // Set to true if you want to search across both closet and wishlist
+    const filterAcrossModes = false; // Set to true if you want to filter across both closet and wishlist
+    
     // Determine the items to search/filter based on searchAcrossModes and filterAcrossModes
     const baseItems =
       searchAcrossModes || filterAcrossModes ? clothingItems : clothingItems.filter((item) => item.mode === viewMode);
@@ -127,15 +135,15 @@ const ClothingGallery = forwardRef(
         // If either checkbox is checked, fetch all items
         if (searchAcrossModes || filterAcrossModes) {
           const [closetRes, wishlistRes] = await Promise.all([
-            authAxios.get(`http://localhost:8000/api/images?mode=closet`),
-            authAxios.get(`http://localhost:8000/api/images?mode=wishlist`),
+            authAxios.get(`/api/images?mode=closet`),
+            authAxios.get(`/api/images?mode=wishlist`),
           ]);
 
           const allItems = [...(closetRes.data.clothingItems || []), ...(wishlistRes.data.clothingItems || [])];
           setClothingItems(allItems);
         } else {
           // Otherwise, fetch only items for current view mode
-          const res = await authAxios.get(`http://localhost:8000/api/images?mode=${viewMode}`);
+          const res = await authAxios.get(`/api/images?mode=${viewMode}`);
           setClothingItems(res.data.clothingItems || []);
         }
       } catch (err: unknown) {
@@ -147,21 +155,46 @@ const ClothingGallery = forwardRef(
       } finally {
         setIsLoading(false);
       }
-    }, [viewMode, setClothingItems]);
+    }, [viewMode, setClothingItems, searchAcrossModes, filterAcrossModes]);
 
     const handleDelete = async (key: string) => {
       setShowSingleDeleteDialog(false);
       try {
         setIsDeleting(true);
         const authAxios = createAuthenticatedAxios();
-        await authAxios.delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`);
+        await authAxios.delete(`/api/images/${encodeURIComponent(key)}`);
         setClothingItems((prev) => prev.filter((item) => item.key !== key));
         setSelectedItemIds((prev) => prev.filter((id) => id !== key));
         setSelectedItem(null);
+        setSingleDeleteKey(null);
       } catch (err) {
         console.error("Error deleting image:", err);
       } finally {
         setIsDeleting(false);
+      }
+    };
+
+    const handleDeleteClick = async (item: ClothingItem) => {
+      // Fetch outfits using this single item
+      const result = await fetchOutfitUsingSingleItem([item.id]);
+      setOutfitsUsingSingleItem(result);
+      setSingleDeleteKey(item.key);
+      setShowSingleDeleteDialog(true);
+    };
+
+    const fetchOutfitUsingSingleItem = async (itemIds: string[]) => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, { credentials: "include" });
+        if (!res.ok) return { count: 0, outfits: [] };
+        const data = await res.json();
+        const outfits = data.outfits || [];
+        // Find outfits that contain the specific item
+        const usedIn = outfits.filter((outfit: OutfitInfo) =>
+          Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci) => itemIds.includes(ci.id))
+        );
+        return { count: usedIn.length, outfits: usedIn };
+      } catch {
+        return { count: 0, outfits: [] };
       }
     };
 
@@ -178,7 +211,7 @@ const ClothingGallery = forwardRef(
       try {
 
         await createAuthenticatedAxios().patch(
-          "http://localhost:8000/api/images/update",
+          "/api/images/update",
           { id: selectedItem.id, ...editForm, price: numericPrice }
         );
 
@@ -195,7 +228,7 @@ const ClothingGallery = forwardRef(
       try {
         setIsMoving(true);
         await createAuthenticatedAxios().patch(
-          `http://localhost:8000/api/images/move-to-closet/${item.id}`,
+          `/api/images/move-to-closet/${item.id}`,
           {}
         );
 
@@ -215,7 +248,7 @@ const ClothingGallery = forwardRef(
     // Fetch all outfits and count how many unique outfits contain any of the selected items
     const fetchOutfitsUsingSelectedItems = async (selectedIds: string[]) => {
       try {
-        const res = await fetch("http://localhost:8000/api/outfits", { credentials: "include" });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, { credentials: "include" });
         if (!res.ok) return { count: 0, outfits: [] };
         const data = await res.json();
         const outfits = data.outfits || [];
@@ -241,7 +274,7 @@ const ClothingGallery = forwardRef(
         // Send delete requests in parallel
         await Promise.all(
           keysToDelete.map((key) =>
-            createAuthenticatedAxios().delete(`http://localhost:8000/api/images/${encodeURIComponent(key)}`)
+            createAuthenticatedAxios().delete(`/api/images/${encodeURIComponent(key)}`)
           ),
         );
 
@@ -277,7 +310,7 @@ const ClothingGallery = forwardRef(
         // Send move requests in parallel
         await Promise.all(
           itemsToMove.map((item) =>
-            createAuthenticatedAxios().patch(`http://localhost:8000/api/images/move-to-closet/${item.id}`, {})
+            createAuthenticatedAxios().patch(`/api/images/move-to-closet/${item.id}`, {})
           ),
         );
 
@@ -392,7 +425,7 @@ const ClothingGallery = forwardRef(
       );
       try {
         await createAuthenticatedAxios().patch(
-          `http://localhost:8000/api/images/${id}/favorite`,
+          `/api/images/${id}/favorite`,
           { isFavorite }
         );
         // No need to refetch, UI already updated
@@ -555,7 +588,10 @@ const ClothingGallery = forwardRef(
               setClickedItemRect(null);
             }}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={(key: string) => {
+              const item = clothingItems.find(i => i.key === key);
+              if (item) handleDeleteClick(item);
+            }}
             onMoveToCloset={handleMoveToCloset}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
