@@ -3,7 +3,7 @@
 export default function TestGooglePage() {
     const testGoogleOAuth = () => {
         const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        const redirectUri = encodeURIComponent("http://localhost:3000/auth/google/callback");
+        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
         const scope = encodeURIComponent("openid email profile");
         
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -24,7 +24,7 @@ export default function TestGooglePage() {
                 <h1 className="text-2xl font-bold mb-4">Google OAuth Test</h1>
                 <div className="mb-4">
                     <p><strong>Client ID:</strong> {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}</p>
-                    <p><strong>Redirect URI:</strong> http://localhost:3000/auth/google/callback</p>
+                    <p><strong>Redirect URI:</strong> {window.location.origin}/auth/google/callback</p>
                 </div>
                 <button 
                     onClick={testGoogleOAuth}

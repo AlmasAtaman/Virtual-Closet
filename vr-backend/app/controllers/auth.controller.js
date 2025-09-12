@@ -39,9 +39,9 @@ export const signup = async (req, res) => {
 
     res.cookie("accessToken", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
       sameSite: "Lax", 
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
     res.status(200).send({
@@ -140,7 +140,8 @@ export const forgotPassword = async (req, res) => {
       },
     });
 
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
 
     // Use the new sendEmail helper
     await sendEmail({

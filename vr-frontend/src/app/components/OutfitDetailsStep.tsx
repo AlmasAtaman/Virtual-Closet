@@ -76,7 +76,7 @@ export default function OutfitDetailsModal({
   const handleSaveDetails = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/outfits/${outfitId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

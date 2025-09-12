@@ -213,8 +213,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       // Fetch both closet and wishlist items
       const [closetRes, wishlistRes] = await Promise.all([
-        axios.get("http://localhost:8000/api/images?mode=closet", { withCredentials: true }),
-        axios.get("http://localhost:8000/api/images?mode=wishlist", { withCredentials: true }),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=closet`, { withCredentials: true }),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=wishlist`, { withCredentials: true }),
       ])
 
       const closetItems: ClothingItem[] = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
@@ -356,7 +356,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         clothingItems: itemsToSave,
       }
 
-      await axios.post("http://localhost:8000/api/outfits", outfitData, {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, outfitData, {
         withCredentials: true,
       })
 

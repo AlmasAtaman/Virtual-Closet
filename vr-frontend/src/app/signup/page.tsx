@@ -26,7 +26,7 @@ export default function SignUp(){
 
         // Create the OAuth2 URL manually
         const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        const redirectUri = encodeURIComponent("http://localhost:3000/auth/google/callback");
+        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
         const scope = encodeURIComponent("openid email profile");
         const responseType = "code";
         const state = Math.random().toString(36).substring(2, 15);
@@ -57,7 +57,7 @@ export default function SignUp(){
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:8000/api/auth/signup", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

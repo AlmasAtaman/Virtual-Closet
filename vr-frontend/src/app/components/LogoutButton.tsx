@@ -10,7 +10,7 @@ export default function LogOutButton() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:8000/api/auth/signout", {}, { withCredentials: true })
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/signout`, {}, { withCredentials: true })
     } catch (error) {
       console.error("Error signing out on backend:", error)
     }

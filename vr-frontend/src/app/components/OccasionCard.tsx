@@ -86,7 +86,7 @@ export default function OccasionCard({
 
     setIsDeleting(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/${occasion.id}`, {
         method: "DELETE",
         credentials: "include",
       })
@@ -121,7 +121,7 @@ export default function OccasionCard({
   const handleSaveThumbnail = async (thumbnailBase64: string) => {
     setIsUpdatingThumbnail(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/${occasion.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -156,7 +156,7 @@ export default function OccasionCard({
   const handleRemoveThumbnail = async () => {
     setIsUpdatingThumbnail(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/occasions/${occasion.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/${occasion.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
