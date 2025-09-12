@@ -79,11 +79,11 @@ export const googleAuth = async (req, res) => {
 
     // Set the same cookie as manual login
     res.cookie("accessToken", jwtToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "Lax", 
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: "None", 
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
 
     res.status(200).json({
       id: user.id,
@@ -179,10 +179,10 @@ export const googleCallback = async (req, res) => {
     const authorities = user.roles.map(role => `ROLE_${role.name.toUpperCase()}`);
 
     // Set the same cookie as manual login
-    res.cookie("accessToken", jwtToken, {
+  res.cookie("accessToken", jwtToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "Lax", 
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "None", 
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 

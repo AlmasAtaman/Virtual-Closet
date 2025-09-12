@@ -38,11 +38,11 @@ export const signup = async (req, res) => {
 
 
     res.cookie("accessToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
-      sameSite: "Lax", 
-      maxAge: 30 * 24 * 60 * 60 * 1000
-    });
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: "None",
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
 
     res.status(200).send({
       id: user.id,
@@ -79,12 +79,13 @@ export const signin = async (req, res) => {
     const authorities = user.roles.map(role => `ROLE_${role.name.toUpperCase()}`);
 
     res.cookie("accessToken", token, {
-      httpOnly: true,
-      secure: false, 
-      sameSite: "Lax", 
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: "None",
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
 
+      
     res.status(200).send({
       id: user.id,
       username: user.username,
