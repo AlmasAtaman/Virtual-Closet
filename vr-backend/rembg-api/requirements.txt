@@ -1,13 +1,8 @@
-# vr-backend/rembg-api/requirements.txt
-
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pillow==10.1.0
-numpy==1.24.3
-rembg==2.0.56
-python-multipart==0.0.6
-
-# CPU-only PyTorch (smaller size)
---index-url https://download.pytorch.org/whl/cpu
-torch==2.1.0+cpu
-torchvision==0.16.0+cpu
+fastapi
+uvicorn[standard]
+pillow
+numpy
+rembg
+python-multipart
+torch
+torchvision
