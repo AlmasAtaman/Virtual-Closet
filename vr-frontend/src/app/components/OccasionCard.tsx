@@ -246,11 +246,13 @@ export default function OccasionCard({
           <div className="flex-1 relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 chrome:from-muted chrome:to-accent overflow-hidden">
             {occasion.customThumbnail ? (
               <div className="relative w-full h-full">
-                <Image
+                <img
                   src={occasion.customThumbnail || "/placeholder.svg"}
                   alt={`${occasion.name} thumbnail`}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg"
+                  }}
                 />
               </div>
             ) : firstOutfit && firstOutfit.clothingItems.length > 0 ? (
@@ -278,12 +280,10 @@ export default function OccasionCard({
                       .sort((a, b) => getLayerPriority(a) - getLayerPriority(b))
 
                     return sortedItems.map((item, index) => (
-                      <Image
+                      <img
                         key={item.id}
                         src={item.url || "/placeholder.svg"}
                         alt={item.name || `Item ${index + 1}`}
-                        width={112}
-                        height={112}
                         className="absolute object-contain"
                         style={{
                           left: `${(item.left || 50) - 10 + index * 2}%`,
@@ -292,6 +292,9 @@ export default function OccasionCard({
                           transform: "translateX(-50%)",
                           zIndex: 10 + getLayerPriority(item),
                           filter: index > 0 ? "brightness(0.9)" : "none",
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg"
                         }}
                       />
                     ))
