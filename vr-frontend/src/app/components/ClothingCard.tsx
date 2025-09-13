@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
 import { Heart } from "lucide-react"
-import Image from "next/image"
 
 interface ClothingCardProps {
   item: ClothingItem
@@ -89,12 +88,10 @@ export default function ClothingCard({
           }}
         >
           {item.url ? (
-            <Image
+            <img
               src={item.url || "/placeholder.svg"}
               alt={item.name || "Clothing item"}
-              fill
-              className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
-              unoptimized
+              className={`object-contain w-full h-full p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
             />
           ) : (
             <div className="flex items-center justify-center w-full h-full">
