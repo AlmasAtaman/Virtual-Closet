@@ -79,7 +79,7 @@ export default function ClothingCard({
         }`}
       >
         <div
-          className="relative w-full h-[320px] flex items-center justify-center bg-white dark:bg-slate-800 chrome:bg-card cursor-pointer overflow-hidden clothing-image"
+          className="relative w-full h-[320px] bg-white dark:bg-slate-800 chrome:bg-card cursor-pointer overflow-hidden clothing-image"
           onClick={(e) => {
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
@@ -89,13 +89,12 @@ export default function ClothingCard({
           }}
         >
           {item.url ? (
-<Image
-  src={item.url || "/placeholder.svg"}
-  alt={item.name || "Clothing item"}
-  width={320}
-  height={320}
-  className={`w-full h-full object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
-/>
+            <Image
+              src={item.url || "/placeholder.svg"}
+              alt={item.name || "Clothing item"}
+              fill
+              className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+            />
           ) : (
             <div className="flex items-center justify-center w-full h-full">
               <span className="text-3xl">👕</span>
