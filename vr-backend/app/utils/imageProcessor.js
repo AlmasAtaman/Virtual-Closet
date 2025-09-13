@@ -62,7 +62,7 @@ export async function processImage(imageData, userId) {
 
     // 5. Upload to S3 if userId is provided
     let s3Key = null;
-    if (userId) {
+    if (userId) { // This check now prevents auto-fill uploads
       const file = {
         buffer: standardizedBuffer,
         originalname: originalname || 'processed.png',
@@ -71,6 +71,9 @@ export async function processImage(imageData, userId) {
       const { error, key } = await uploadToS3({ file, userId });
       if (error) throw new Error(error.message);
       s3Key = key;
+      console.log('✅ Image uploaded to S3 for final submission:', key);
+    } else {
+      console.log('ℹ️ Skipping S3 upload for auto-fill request');
     }
 
     // Clean up temporary files

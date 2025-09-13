@@ -447,9 +447,15 @@ export default function UploadForm({
   }
 
   const handleSubmit = async () => {
-    if (!isFormValid()) return
+    // SAFETY CHECK: Prevent double submission
+    if (!isFormValid() || isSubmitting) {
+      console.log('⚠️ Submission blocked - form invalid or already submitting');
+      return;
+    }
 
     setIsSubmitting(true)
+    setUploadProgress(0)
+    console.log('🚀 Starting submission process');
     setUploadProgress(0)
 
     try {
@@ -468,8 +474,10 @@ export default function UploadForm({
 
       if (finalImageFile) {
         submitFormData.append("image", finalImageFile)
+        console.log('📤 Submitting direct upload to final-submit endpoint');
       } else if (finalImageUrl) {
         submitFormData.append("imageUrl", finalImageUrl)
+        console.log('📤 Submitting URL upload to final-submit endpoint');
       } else {
         alert("No image selected for submission.")
         return
@@ -508,7 +516,8 @@ export default function UploadForm({
 
       clearInterval(progressInterval)
       setUploadProgress(100)
-
+      console.log('✅ Final submission successful');
+      
       const { item: newItem } = res.data
 
       const clothingItem: ClothingItem = {
