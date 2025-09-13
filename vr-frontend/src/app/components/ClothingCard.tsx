@@ -79,7 +79,7 @@ export default function ClothingCard({
         }`}
       >
         <div
-          className="relative w-full h-[320px] bg-white dark:bg-slate-800 chrome:bg-card cursor-pointer overflow-hidden clothing-image"
+          className="relative w-full h-[320px] flex items-center justify-center bg-white dark:bg-slate-800 chrome:bg-card cursor-pointer overflow-hidden clothing-image"
           onClick={(e) => {
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
