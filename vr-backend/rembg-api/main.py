@@ -8,6 +8,7 @@ from io import BytesIO
 from PIL import Image
 import uvicorn
 
+# just testin redeploy
 app = FastAPI(title="Background Removal API", version="1.0.0")
 
 # Initialize the AI model
