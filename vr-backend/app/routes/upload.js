@@ -21,21 +21,22 @@ router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
   if (!file || !userId) return res.status(400).json({ message: "Bad Request" });
 
   try {
+    // FIXED: Pass null for userId to skip S3 upload in auto-fill
     const result = await processImage({
       type: 'file',
       data: file.buffer,
       originalname: file.originalname
-    }, userId);
+    }, null); // Changed: null instead of userId
 
     return res.status(200).json({
       clothingData: result.clothingData,
       imageBuffer: result.imageBuffer,
       originalname: file.originalname,
-      s3Key: result.s3Key
+      // s3Key: result.s3Key // Removed: Don't return S3 key for auto-fill
     });
   } catch (err) {
-    console.error("Upload failed:", err);
-    return res.status(500).json({ message: err.message || "Upload failed" });
+    console.error("Auto-fill failed:", err);
+    return res.status(500).json({ message: err.message || "Auto-fill failed" });
   }
 });
 
