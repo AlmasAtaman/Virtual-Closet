@@ -390,9 +390,8 @@ export default function UploadForm({
         })
       }, 200)
 
-      const res = await axios.post(`${API_URL}/api/scrape`, {
+      const res = await axios.post(`${API_URL}/api/quick-scrape`, {
         url: scrapingUrl,
-        process: false,
       })
 
       const data = res.data

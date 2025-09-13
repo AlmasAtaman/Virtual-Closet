@@ -46,10 +46,24 @@ export async function scrapeProduct(req, res) {
       }
     }
 
-    browser = await playwright.chromium.launch({ 
-     headless: true,
-     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-   });
+    console.log('[Scraper] Attempting to launch browser...');
+    try {
+      browser = await playwright.chromium.launch({ 
+        headless: true,
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox', 
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-zygote',
+          '--single-process'
+        ]
+      });
+      console.log('[Scraper] Browser launched successfully');
+    } catch (launchError) {
+      console.error('[Scraper] Browser launch failed:', launchError);
+      throw new Error(`Browser launch failed: ${launchError.message}`);
+    }
     const context = await browser.newContext({
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     });
