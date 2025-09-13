@@ -28,7 +28,7 @@ export default function ThumbnailEditorModal({
   const [isSaving, setIsSaving] = useState(false)
 
   const imgRef = useRef<HTMLImageElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -58,7 +58,7 @@ export default function ThumbnailEditorModal({
 
   const generateThumbnail = useCallback((): Promise<string> => {
     return new Promise((resolve) => {
-      if (!imgRef.current || !containerRef.current) return
+      if (!imgRef.current || !previewRef.current) return
 
       const canvas = document.createElement("canvas")
       const ctx = canvas.getContext("2d")
@@ -77,9 +77,9 @@ export default function ThumbnailEditorModal({
       ctx.fillStyle = "#ffffff"
       ctx.fillRect(0, 0, thumbnailWidth, thumbnailHeight)
 
-      // Get the crop area dimensions (240x320 from the UI - 3:4 aspect ratio)
-      const cropAreaWidth = 240
-      const cropAreaHeight = 320
+      // Get the preview area dimensions (matches folder preview size)
+      const previewWidth = 240  // w-60 = 240px
+      const previewHeight = 320 // h-80 = 320px
       const img = imgRef.current
 
       // Calculate the actual image dimensions as displayed
@@ -90,29 +90,29 @@ export default function ThumbnailEditorModal({
       let displayWidth, displayHeight
       const aspectRatio = imgNaturalWidth / imgNaturalHeight
 
-      if (aspectRatio > cropAreaWidth / cropAreaHeight) {
-        // Image is wider than crop area aspect ratio
-        displayHeight = cropAreaHeight * imageScale
+      if (aspectRatio > previewWidth / previewHeight) {
+        // Image is wider than preview aspect ratio
+        displayHeight = previewHeight * imageScale
         displayWidth = displayHeight * aspectRatio
       } else {
-        // Image is taller than crop area aspect ratio  
-        displayWidth = cropAreaWidth * imageScale
+        // Image is taller than preview aspect ratio  
+        displayWidth = previewWidth * imageScale
         displayHeight = displayWidth / aspectRatio
       }
 
       // Calculate the crop area in the original image coordinates
-      const centerX = cropAreaWidth / 2
-      const centerY = cropAreaHeight / 2
+      const centerX = previewWidth / 2
+      const centerY = previewHeight / 2
 
-      // Calculate what part of the image is visible in the crop area
+      // Calculate what part of the image is visible in the preview area
       const visibleX = centerX - imagePosition.x - displayWidth / 2
       const visibleY = centerY - imagePosition.y - displayHeight / 2
 
       // Convert to source image coordinates
       const sourceX = Math.max(0, -visibleX * (imgNaturalWidth / displayWidth))
       const sourceY = Math.max(0, -visibleY * (imgNaturalHeight / displayHeight))
-      const sourceWidth = Math.min(imgNaturalWidth, cropAreaWidth * (imgNaturalWidth / displayWidth))
-      const sourceHeight = Math.min(imgNaturalHeight, cropAreaHeight * (imgNaturalHeight / displayHeight))
+      const sourceWidth = Math.min(imgNaturalWidth, previewWidth * (imgNaturalWidth / displayWidth))
+      const sourceHeight = Math.min(imgNaturalHeight, previewHeight * (imgNaturalHeight / displayHeight))
 
       // Draw the cropped portion to fill the entire canvas
       ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, thumbnailWidth, thumbnailHeight)
@@ -149,7 +149,7 @@ export default function ThumbnailEditorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden">
+      <DialogContent className="max-w-5xl w-[90vw] max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="px-6 pt-6">{title}</DialogTitle>
         </DialogHeader>
@@ -157,7 +157,7 @@ export default function ThumbnailEditorModal({
           {/* Header */}
           <div className="px-6 pb-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">Crop, rotate, and zoom your image</span>
+              <span className="text-sm text-slate-500">Drag the image in the folder preview to position it perfectly</span>
               <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
                 <X className="w-5 h-5" />
               </Button>
@@ -165,16 +165,18 @@ export default function ThumbnailEditorModal({
           </div>
 
           {/* Editor Content */}
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden min-h-0">
             {/* Image Editor Area */}
-            <div className="flex-1 p-8 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+            <div className="flex-1 p-6 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
               <div className="flex gap-8 items-center max-w-full max-h-full">
-                {/* Crop Preview Area - Now matches folder aspect ratio (3:4) */}
+                {/* Main Folder Preview - This is where users interact */}
                 <div className="relative">
-                  <div className="text-sm text-slate-500 mb-3 text-center font-medium">Crop Area (3:4 Portrait)</div>
+                  <div className="text-sm text-slate-500 mb-3 text-center font-medium">
+                    📁 Drag Image to Position
+                  </div>
                   <div
-                    ref={containerRef}
-                    className="relative w-60 h-80 border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 overflow-hidden cursor-move rounded-lg"
+                    ref={previewRef}
+                    className="relative w-60 h-80 border-2 border-dashed border-blue-400 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden cursor-move rounded-lg shadow-lg ring-2 ring-blue-200"
                     style={{ aspectRatio: "3/4" }}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -186,7 +188,7 @@ export default function ThumbnailEditorModal({
                       ref={imgRef}
                       src={imageUrl || "/placeholder.svg"}
                       alt="Edit thumbnail"
-                      className="absolute select-none pointer-events-none"
+                      className="absolute select-none pointer-events-none w-full h-full object-cover"
                       style={{
                         transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageScale})`,
                         transformOrigin: "center",
@@ -195,33 +197,24 @@ export default function ThumbnailEditorModal({
                       }}
                       draggable={false}
                     />
-                  </div>
-                </div>
-
-                {/* Folder Preview - Shows exactly how it will look on the folder */}
-                <div className="relative">
-                  <div className="text-sm text-slate-500 mb-3 text-center font-medium">Folder Preview</div>
-                  <div className="w-48 h-64 border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden flex items-center justify-center rounded-lg shadow-md">
-                    <div className="relative w-full h-full">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imageUrl || "/placeholder.svg"}
-                        alt="Folder preview"
-                        className="w-full h-full object-cover"
-                        style={{
-                          transform: `translate(${imagePosition.x * (192/240)}px, ${imagePosition.y * (256/320)}px) scale(${imageScale})`,
-                          transformOrigin: "center",
-                        }}
-                      />
+                    
+                    {/* Overlay to show it's interactive */}
+                    <div className="absolute inset-0 bg-blue-500/10 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                      <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+                        <Move className="w-4 h-4" />
+                        Drag to reposition
+                      </div>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 text-center mt-2">How it will appear on folder</div>
+                  <div className="text-xs text-blue-600 text-center mt-2 font-medium">
+                    This is exactly how it will look on your folder
+                  </div>
                 </div>
 
-                {/* Original Image Preview */}
+                {/* Original Image Reference */}
                 <div className="relative">
                   <div className="text-sm text-slate-500 mb-3 text-center font-medium">Original Image</div>
-                  <div className="w-64 h-64 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex items-center justify-center rounded-lg">
+                  <div className="w-48 h-48 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex items-center justify-center rounded-lg">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imageUrl || "/placeholder.svg"}
@@ -234,8 +227,8 @@ export default function ThumbnailEditorModal({
             </div>
 
             {/* Controls Panel */}
-            <div className="w-72 p-6 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-              <div className="space-y-8">
+            <div className="w-64 p-6 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <div className="space-y-6">
                 {/* Instructions */}
                 <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-3">
@@ -243,18 +236,17 @@ export default function ThumbnailEditorModal({
                     <span className="font-medium">How to use:</span>
                   </div>
                   <ul className="space-y-2 text-sm">
-                    <li>• Drag image to reposition</li>
-                    <li>• Use zoom slider to scale</li>
-                    <li>• Portrait crop area matches folder</li>
-                    <li>• Check folder preview for final result</li>
+                    <li>• Drag image directly on folder preview</li>
+                    <li>• Use zoom controls to resize</li>
+                    <li>• Preview shows exact result</li>
                   </ul>
                 </div>
 
                 {/* Zoom Controls */}
                 <div>
-                  <label className="text-sm font-medium mb-4 block">Zoom</label>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium mb-3 block">Zoom</label>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -293,8 +285,8 @@ export default function ThumbnailEditorModal({
 
                 {/* Reset Controls */}
                 <div>
-                  <label className="text-sm font-medium mb-4 block">Reset</label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <label className="text-sm font-medium mb-3 block">Reset</label>
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -314,12 +306,12 @@ export default function ThumbnailEditorModal({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+          {/* Footer - Fixed height to prevent cut-off */}
+          <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
             <div className="flex justify-between items-center">
               <div className="text-sm text-slate-600 dark:text-slate-400">
-                <div>Final thumbnail will be 300×400 pixels (3:4 portrait)</div>
-                <div className="text-xs text-slate-500 mt-1">Drag and zoom to adjust the crop area</div>
+                <div>Final thumbnail: 300×400 pixels (3:4 portrait)</div>
+                <div className="text-xs text-slate-500 mt-1">Perfect for folder cards</div>
               </div>
               <div className="flex space-x-3">
                 <Button variant="outline" onClick={handleClose} disabled={isSaving}>
