@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import Image from "next/image"
 import { useState, useRef, useCallback } from "react"
 import { X, ZoomIn, ZoomOut, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -65,20 +64,22 @@ export default function ThumbnailEditorModal({
       const ctx = canvas.getContext("2d")
       if (!ctx) return
 
-      // Set thumbnail size (square)
-      const thumbnailSize = 400
-      canvas.width = thumbnailSize
-      canvas.height = thumbnailSize
+      // Set thumbnail size to match OccasionCard aspect ratio (3:4 portrait)
+      const thumbnailWidth = 300
+      const thumbnailHeight = 400
+      canvas.width = thumbnailWidth
+      canvas.height = thumbnailHeight
 
       ctx.imageSmoothingEnabled = true
       ctx.imageSmoothingQuality = "high"
 
       // Fill with white background
       ctx.fillStyle = "#ffffff"
-      ctx.fillRect(0, 0, thumbnailSize, thumbnailSize)
+      ctx.fillRect(0, 0, thumbnailWidth, thumbnailHeight)
 
-      // Get the crop area dimensions (320x320 from the UI)
-      const cropAreaSize = 320
+      // Get the crop area dimensions (240x320 from the UI - 3:4 aspect ratio)
+      const cropAreaWidth = 240
+      const cropAreaHeight = 320
       const img = imgRef.current
 
       // Calculate the actual image dimensions as displayed
@@ -89,19 +90,19 @@ export default function ThumbnailEditorModal({
       let displayWidth, displayHeight
       const aspectRatio = imgNaturalWidth / imgNaturalHeight
 
-      if (aspectRatio > 1) {
-        // Landscape
-        displayWidth = cropAreaSize * imageScale
-        displayHeight = displayWidth / aspectRatio
-      } else {
-        // Portrait or square
-        displayHeight = cropAreaSize * imageScale
+      if (aspectRatio > cropAreaWidth / cropAreaHeight) {
+        // Image is wider than crop area aspect ratio
+        displayHeight = cropAreaHeight * imageScale
         displayWidth = displayHeight * aspectRatio
+      } else {
+        // Image is taller than crop area aspect ratio  
+        displayWidth = cropAreaWidth * imageScale
+        displayHeight = displayWidth / aspectRatio
       }
 
       // Calculate the crop area in the original image coordinates
-      const centerX = cropAreaSize / 2
-      const centerY = cropAreaSize / 2
+      const centerX = cropAreaWidth / 2
+      const centerY = cropAreaHeight / 2
 
       // Calculate what part of the image is visible in the crop area
       const visibleX = centerX - imagePosition.x - displayWidth / 2
@@ -110,11 +111,11 @@ export default function ThumbnailEditorModal({
       // Convert to source image coordinates
       const sourceX = Math.max(0, -visibleX * (imgNaturalWidth / displayWidth))
       const sourceY = Math.max(0, -visibleY * (imgNaturalHeight / displayHeight))
-      const sourceWidth = Math.min(imgNaturalWidth, cropAreaSize * (imgNaturalWidth / displayWidth))
-      const sourceHeight = Math.min(imgNaturalHeight, cropAreaSize * (imgNaturalHeight / displayHeight))
+      const sourceWidth = Math.min(imgNaturalWidth, cropAreaWidth * (imgNaturalWidth / displayWidth))
+      const sourceHeight = Math.min(imgNaturalHeight, cropAreaHeight * (imgNaturalHeight / displayHeight))
 
       // Draw the cropped portion to fill the entire canvas
-      ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, thumbnailSize, thumbnailSize)
+      ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, thumbnailWidth, thumbnailHeight)
 
       const base64 = canvas.toDataURL("image/jpeg", 0.85)
       resolve(base64)
@@ -150,11 +151,11 @@ export default function ThumbnailEditorModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="px-6 pt-6">{title}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="px-6 pb-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500">Crop, rotate, and zoom your image</span>
               <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full">
@@ -168,23 +169,23 @@ export default function ThumbnailEditorModal({
             {/* Image Editor Area */}
             <div className="flex-1 p-8 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
               <div className="flex gap-8 items-center max-w-full max-h-full">
-                {/* Crop Preview Area */}
+                {/* Crop Preview Area - Now matches folder aspect ratio (3:4) */}
                 <div className="relative">
-                  <div className="text-sm text-slate-500 mb-3 text-center font-medium">Crop Area (400×400)</div>
+                  <div className="text-sm text-slate-500 mb-3 text-center font-medium">Crop Area (3:4 Portrait)</div>
                   <div
                     ref={containerRef}
-                    className="relative w-80 h-80 border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 overflow-hidden cursor-move rounded-lg"
+                    className="relative w-60 h-80 border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 overflow-hidden cursor-move rounded-lg"
+                    style={{ aspectRatio: "3/4" }}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       ref={imgRef}
                       src={imageUrl || "/placeholder.svg"}
                       alt="Edit thumbnail"
-                      width={400}
-                      height={400}
                       className="absolute select-none pointer-events-none"
                       style={{
                         transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageScale})`,
@@ -197,15 +198,34 @@ export default function ThumbnailEditorModal({
                   </div>
                 </div>
 
+                {/* Folder Preview - Shows exactly how it will look on the folder */}
+                <div className="relative">
+                  <div className="text-sm text-slate-500 mb-3 text-center font-medium">Folder Preview</div>
+                  <div className="w-48 h-64 border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden flex items-center justify-center rounded-lg shadow-md">
+                    <div className="relative w-full h-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageUrl || "/placeholder.svg"}
+                        alt="Folder preview"
+                        className="w-full h-full object-cover"
+                        style={{
+                          transform: `translate(${imagePosition.x * (192/240)}px, ${imagePosition.y * (256/320)}px) scale(${imageScale})`,
+                          transformOrigin: "center",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-400 text-center mt-2">How it will appear on folder</div>
+                </div>
+
                 {/* Original Image Preview */}
                 <div className="relative">
                   <div className="text-sm text-slate-500 mb-3 text-center font-medium">Original Image</div>
                   <div className="w-64 h-64 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex items-center justify-center rounded-lg">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={imageUrl || "/placeholder.svg"}
                       alt="Original"
-                      width={256}
-                      height={256}
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
@@ -225,7 +245,8 @@ export default function ThumbnailEditorModal({
                   <ul className="space-y-2 text-sm">
                     <li>• Drag image to reposition</li>
                     <li>• Use zoom slider to scale</li>
-                    <li>• Square crop area shows final result</li>
+                    <li>• Portrait crop area matches folder</li>
+                    <li>• Check folder preview for final result</li>
                   </ul>
                 </div>
 
@@ -297,7 +318,7 @@ export default function ThumbnailEditorModal({
           <div className="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
             <div className="flex justify-between items-center">
               <div className="text-sm text-slate-600 dark:text-slate-400">
-                <div>Final thumbnail will be 400×400 pixels</div>
+                <div>Final thumbnail will be 300×400 pixels (3:4 portrait)</div>
                 <div className="text-xs text-slate-500 mt-1">Drag and zoom to adjust the crop area</div>
               </div>
               <div className="flex space-x-3">
