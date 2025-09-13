@@ -4,5 +4,3 @@ pillow
 numpy
 rembg
 python-multipart
-torch
-torchvision
