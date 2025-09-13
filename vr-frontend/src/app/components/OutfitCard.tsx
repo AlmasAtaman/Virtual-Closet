@@ -400,6 +400,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 height={144}
                 className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-36 z-10"
                 style={{ objectFit: "contain" }}
+                unoptimized
               />
             )}
             {/* Top (shirt) - Default centered position */}
@@ -411,6 +412,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 height={128}
                 className="absolute bottom-[8.4rem] left-1/2 transform -translate-x-1/2 w-32 z-20"
                 style={{ objectFit: "contain" }}
+                unoptimized
               />
             )}
             {/* Outerwear - Default centered position */}
@@ -422,6 +424,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 height={128}
                 className="absolute bottom-[8.8rem] left-1/2 transform -translate-x-1/2 w-32 z-30"
                 style={{ objectFit: "contain" }}
+                unoptimized
               />
             )}
           </>
