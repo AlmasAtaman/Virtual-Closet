@@ -94,6 +94,7 @@ export default function ClothingCard({
               alt={item.name || "Clothing item"}
               fill
               className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+              unoptimized
             />
           ) : (
             <div className="flex items-center justify-center w-full h-full">
