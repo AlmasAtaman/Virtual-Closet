@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import Image from "next/image"
 import { motion } from "framer-motion"
 import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
