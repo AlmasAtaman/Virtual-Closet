@@ -360,14 +360,12 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                 onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
                 onClick={() => enableResize && setSelectedItemForResize(item.id)}
               >
-                <Image
-                  src={item.url || "/placeholder.svg"}
-                  alt={item.name || ""}
-                  width={200}
-                  height={200}
-                  className="w-full h-auto object-contain rounded-lg"
-                  draggable={false}
-                />
+              <img
+                src={item.url || "/placeholder.svg"}
+                alt={item.name || ""}
+                className="w-full h-auto object-contain rounded-lg"
+                draggable={false}
+              />
                 {isDetailView && isEditing && enableResize && (
                   <div className="absolute -top-2 -right-2">
                     <Button
