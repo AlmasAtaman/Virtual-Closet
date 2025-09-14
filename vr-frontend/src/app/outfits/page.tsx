@@ -272,35 +272,54 @@ export default function OutfitsPage() {
           </header>
 
       <div className="px-6 py-6">
-        {/* Only show Back to Closet button when NOT inside an occasion folder */}
-        {!selectedOccasionId && (
-          <div className="mb-6">
-            <Button
-              variant="outline"
-              onClick={handleBackToDashboard}
-              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
+{/* Animated Back to Closet button */}
+        <AnimatePresence>
+          {!selectedOccasionId && (
+            <motion.div
+              key="back-button"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="mb-6"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Closet
-            </Button>
-          </div>
-        )}
+              <Button
+                variant="outline"
+                onClick={handleBackToDashboard}
+                className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Closet
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Only show Outfits/Occasions tabs when NOT inside an occasion folder */}
-        {!selectedOccasionId && (
-          <div className="mb-8 w-full max-w-md mx-auto">
-            <Tabs
-              defaultValue={activeTab}
-              onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
-              className="w-full"
+{/* Animated Outfits/Occasions tabs */}
+        <AnimatePresence>
+          {!selectedOccasionId && (
+            <motion.div
+              key="tabs"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
+              className="mb-8 w-full max-w-md mx-auto"
             >
-              <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
-                <TabsTrigger value="outfits">Outfits</TabsTrigger>
-                <TabsTrigger value="occasions">Occasions</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        )}
+              <Tabs
+                defaultValue={activeTab}
+                onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
+                  <TabsTrigger value="outfits">Outfits</TabsTrigger>
+                  <TabsTrigger value="occasions">Occasions</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Multi-select Controls */}
         {activeTab === "outfits" && (
