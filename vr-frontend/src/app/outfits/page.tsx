@@ -255,48 +255,52 @@ export default function OutfitsPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Navbar */}
-      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Logo />
-            <span className="text-xl font-semibold tracking-tight">VrC</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <LogOutButton />
-          </div>
-        </div>
-      </header>
+    return (
+        <div className="min-h-screen bg-background">
+          {/* Always show navbar */}
+          <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-16 items-center justify-between px-4">
+              <div className="flex items-center gap-2">
+                <Logo />
+                <span className="text-xl font-semibold tracking-tight">VrC</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                <LogOutButton />
+              </div>
+            </div>
+          </header>
 
       <div className="px-6 py-6">
-        {/* Back Button */}
-        <div className="mb-6">
-          <Button
-            variant="outline"
-            onClick={handleBackToDashboard}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Closet
-          </Button>
-        </div>
+        {/* Only show Back to Closet button when NOT inside an occasion folder */}
+        {!selectedOccasionId && (
+          <div className="mb-6">
+            <Button
+              variant="outline"
+              onClick={handleBackToDashboard}
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Closet
+            </Button>
+          </div>
+        )}
 
-        {/* Toggle Bar - Styled like closet */}
-        <div className="mb-8 w-full max-w-md mx-auto">
-          <Tabs
-            defaultValue={activeTab}
-            onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
-              <TabsTrigger value="outfits">Outfits</TabsTrigger>
-              <TabsTrigger value="occasions">Occasions</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        {/* Only show Outfits/Occasions tabs when NOT inside an occasion folder */}
+        {!selectedOccasionId && (
+          <div className="mb-8 w-full max-w-md mx-auto">
+            <Tabs
+              defaultValue={activeTab}
+              onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
+                <TabsTrigger value="outfits">Outfits</TabsTrigger>
+                <TabsTrigger value="occasions">Occasions</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
 
         {/* Multi-select Controls */}
         {activeTab === "outfits" && (
