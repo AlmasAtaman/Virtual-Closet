@@ -115,7 +115,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8"
           onClick={onCloseAction}
         >
           <motion.div
@@ -124,11 +124,11 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden border border-border"
+            className="bg-background rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
+            <div className="flex items-center justify-between p-6 sm:p-8 border-b border-border">
               <div>
                 <h2 className="text-2xl font-bold text-foreground">Select Clothing Item</h2>
                 <p className="text-muted-foreground mt-1">
@@ -140,10 +140,10 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
               </Button>
             </div>
 
-            <div className="flex flex-col h-[calc(95vh-96px)] px-6 pb-6 pt-0">
+            <div className="flex flex-col h-[calc(90vh-96px)] px-6 sm:px-8 pb-6 sm:pb-8 pt-6">
               {/* Category Tabs */}
               {selectedCategory && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <Tabs value={categoryTab} onValueChange={(value) => setCategoryTab(value as "category" | "all")}>
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="category">
@@ -159,7 +159,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
               )}
 
               {/* Controls */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* View Mode Tabs */}
                 <Tabs
                   value={currentModalViewMode}
@@ -205,9 +205,9 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
               </div>
 
               {/* Items Grid/List */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto py-2">
                 {viewType === "grid" ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                     {filteredItems.map((item, index) => {
                       return (
                         <motion.div
@@ -222,10 +222,10 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                             className="cursor-pointer hover:shadow-lg transition-all duration-200"
                             onClick={() => handleItemClick(item)}
                           >
-                            <CardContent className="p-3">
+                            <CardContent className="p-4">
                               {item.id?.startsWith("__none") ? (
                                 <>
-                                  <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-muted border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                                  <div className="aspect-square relative mb-3 rounded-lg overflow-hidden bg-muted border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
                                     <X className="w-10 h-10 text-muted-foreground" />
                                   </div>
                                   <p className="text-sm font-medium text-center">Select None</p>
@@ -233,7 +233,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                 </>
                               ) : (
                                 <>
-                                  <div className="aspect-square relative mb-2 rounded-lg overflow-hidden bg-muted">
+                                  <div className="aspect-square relative mb-3 rounded-lg overflow-hidden bg-muted">
                                     <Image
                                       src={item.url || "/placeholder.svg"}
                                       alt={item.name || "Clothing Item"}
@@ -262,7 +262,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                     })}
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {filteredItems.map((item, index) => {
                       return (
                         <motion.div
