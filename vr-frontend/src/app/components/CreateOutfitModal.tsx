@@ -31,6 +31,7 @@ interface CategorizedClothing {
   tops: ClothingItem[]
   bottoms: ClothingItem[]
   outerwear: ClothingItem[]
+  allItems: ClothingItem[]
 }
 
 interface OutfitItem {
@@ -42,10 +43,19 @@ interface OutfitItem {
 }
 
 export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated }: CreateOutfitModalProps) {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+  // Create an axios instance with credentials
+  const createAuthenticatedAxios = () => {
+    return axios.create({
+      withCredentials: true,
+      baseURL: API_URL
+    })
+  }
   const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null)
   const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null)
   const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null)
-  const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [] })
+  const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], allItems: [] })
   const [loadingClothing, setLoadingClothing] = useState(true)
   const [showTopSelectModal, setShowTopSelectModal] = useState(false)
   const [showBottomSelectModal, setShowBottomSelectModal] = useState(false)
@@ -241,6 +251,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             item.type?.toLowerCase() || "",
           ),
         ),
+        allItems: allItems,
       }
 
       setClothingItems(categorized)
@@ -251,18 +262,93 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }
 
-  const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
+  // Auto-categorize uncategorized items based on the category they're selected in
+  const autoCategorizeItem = async (item: ClothingItem, category: "top" | "bottom" | "outerwear"): Promise<ClothingItem | null> => {
+    // Only auto-categorize items that are actually uncategorized
+    if (item.type !== "uncategorized") {
+      return item // Return the item unchanged if it's already categorized
+    }
+
+    // Determine the new type based on the category
+    let newType: string
     switch (category) {
       case "top":
-        setSelectedTop(item)
+        newType = "t-shirt"
+        break
+      case "bottom":
+        newType = "pants"
+        break
+      case "outerwear":
+        newType = "jacket"
+        break
+      default:
+        return item // Return unchanged if category is unknown
+    }
+
+    try {
+      // Update the item in the database
+      await createAuthenticatedAxios().patch(
+        "/api/images/update",
+        { id: item.id, type: newType }
+      )
+
+      console.log(`Auto-categorized "${item.name || 'Unnamed item'}" as ${newType}`)
+
+      // Create updated item object
+      const updatedItem: ClothingItem = {
+        ...item,
+        type: newType
+      }
+
+      // Update local clothing items state
+      setClothingItems(prev => {
+        const newAllItems = prev.allItems.map(i => i.id === item.id ? updatedItem : i)
+
+        // Recategorize all items
+        const newCategorized = {
+          tops: newAllItems.filter((i: ClothingItem) =>
+            ["t-shirt", "dress", "shirt", "blouse"].includes(i.type?.toLowerCase() || "")
+          ),
+          bottoms: newAllItems.filter((i: ClothingItem) =>
+            ["pants", "skirt", "shorts", "jeans", "leggings"].includes(i.type?.toLowerCase() || "")
+          ),
+          outerwear: newAllItems.filter((i: ClothingItem) =>
+            ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(i.type?.toLowerCase() || "")
+          ),
+          allItems: newAllItems,
+        }
+
+        return newCategorized
+      })
+
+      return updatedItem
+    } catch (error) {
+      console.error("Failed to auto-categorize item:", error)
+      // Show a non-intrusive error message
+      console.warn(`Could not auto-categorize "${item.name || 'item'}". You can manually categorize it later.`)
+      // Return the original item if the update fails
+      return item
+    }
+  }
+
+  const handleItemSelect = async (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
+    // Attempt auto-categorization for uncategorized items
+    const finalItem = await autoCategorizeItem(item, category)
+
+    // Safety check - if auto-categorization failed, use the original item
+    const itemToSelect = finalItem || item
+
+    switch (category) {
+      case "top":
+        setSelectedTop(itemToSelect)
         setShowTopSelectModal(false)
         break
       case "bottom":
-        setSelectedBottom(item)
+        setSelectedBottom(itemToSelect)
         setShowBottomSelectModal(false)
         break
       case "outerwear":
-        setSelectedOuterwear(item)
+        setSelectedOuterwear(itemToSelect)
         setShowOuterwearSelectModal(false)
         break
     }
@@ -805,7 +891,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       <ClothingItemSelectModal
         isOpen={showTopSelectModal}
         onCloseAction={() => setShowTopSelectModal(false)}
-        clothingItems={clothingItems.tops}
+        clothingItems={clothingItems.allItems}
         onSelectItem={(item) => handleItemSelect("top", item)}
         viewMode="closet"
         selectedCategory="top"
@@ -814,7 +900,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       <ClothingItemSelectModal
         isOpen={showBottomSelectModal}
         onCloseAction={() => setShowBottomSelectModal(false)}
-        clothingItems={clothingItems.bottoms}
+        clothingItems={clothingItems.allItems}
         onSelectItem={(item) => handleItemSelect("bottom", item)}
         viewMode="closet"
         selectedCategory="bottom"
@@ -823,7 +909,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       <ClothingItemSelectModal
         isOpen={showOuterwearSelectModal}
         onCloseAction={() => setShowOuterwearSelectModal(false)}
-        clothingItems={clothingItems.outerwear}
+        clothingItems={clothingItems.allItems}
         onSelectItem={(item) => handleItemSelect("outerwear", item)}
         viewMode="closet"
         selectedCategory="outerwear"
