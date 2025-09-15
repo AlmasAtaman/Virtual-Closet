@@ -59,13 +59,14 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
   const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([])
   const [currentModalViewMode, setCurrentModalViewMode] = useState<"closet" | "wishlist">(viewMode)
   const [viewType, setViewType] = useState<"grid" | "list">("grid")
+  const [categoryTab, setCategoryTab] = useState<"category" | "all">("category")
 
   useEffect(() => {
     if (!clothingItems) return
 
 
     // Filter by category first, then by mode
-    const itemsFilteredByCategory = selectedCategory
+    const itemsFilteredByCategory = selectedCategory && categoryTab === "category"
       ? clothingItems.filter((item) => {
           const category = getItemCategory(item)
           // Explicitly include "Select None" item if its ID is "none"
@@ -74,7 +75,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
           }
           return category === selectedCategory
         })
-      : clothingItems // If no category selected, use all items
+      : clothingItems // If no category selected or "all" tab is active, use all items
 
 
     const itemsToFilter = itemsFilteredByCategory.filter((item) => item.mode?.toLowerCase() === currentModalViewMode)
@@ -95,7 +96,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
         ? [noneOption, ...itemsWithoutNone]
         : itemsWithoutNone,
     )
-  }, [filterText, clothingItems, currentModalViewMode, selectedCategory])
+  }, [filterText, clothingItems, currentModalViewMode, selectedCategory, categoryTab])
 
   if (!isOpen) {
     return null
@@ -140,6 +141,23 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
             </div>
 
             <div className="flex flex-col h-[calc(95vh-96px)] px-6 pb-6 pt-0">
+              {/* Category Tabs */}
+              {selectedCategory && (
+                <div className="mb-4">
+                  <Tabs value={categoryTab} onValueChange={(value) => setCategoryTab(value as "category" | "all")}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="category">
+                        {selectedCategory === "top" ? "Tops" :
+                         selectedCategory === "bottom" ? "Bottoms" :
+                         selectedCategory === "outerwear" ? "Outerwear" :
+                         selectedCategory === "shoe" ? "Shoes" : "Category"}
+                      </TabsTrigger>
+                      <TabsTrigger value="all">All Items</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              )}
+
               {/* Controls */}
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 {/* View Mode Tabs */}
@@ -227,6 +245,9 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                     {item.mode === "wishlist" && (
                                       <Badge className="absolute top-1 right-1 text-xs bg-amber-500">Wishlist</Badge>
                                     )}
+                                    {categoryTab === "all" && item.type === "uncategorized" && (
+                                      <Badge className="absolute top-1 left-1 text-xs bg-gray-500 text-white">Uncategorized</Badge>
+                                    )}
                                   </div>
                                   <p className="text-sm font-medium text-foreground truncate">
                                     {item.name || "Unnamed"}
@@ -281,9 +302,14 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                   {item.type && <p className="text-sm text-muted-foreground">{item.type}</p>}
                                   {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
                                 </div>
-                                {item.mode === "wishlist" && !item.id?.startsWith("__none") && (
-                                  <Badge className="bg-amber-500">Wishlist</Badge>
-                                )}
+                                <div className="flex flex-col gap-1">
+                                  {item.mode === "wishlist" && !item.id?.startsWith("__none") && (
+                                    <Badge className="bg-amber-500">Wishlist</Badge>
+                                  )}
+                                  {categoryTab === "all" && item.type === "uncategorized" && !item.id?.startsWith("__none") && (
+                                    <Badge className="bg-gray-500 text-white">Uncategorized</Badge>
+                                  )}
+                                </div>
                               </div>
                             </CardContent>
                           </Card>

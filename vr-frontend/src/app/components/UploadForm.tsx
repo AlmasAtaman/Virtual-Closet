@@ -103,10 +103,8 @@ export default function UploadForm({
 
   const isFormValid = () => {
     const hasImage = imagePreview || selectedScrapedImage
-    const hasName = formData.name?.trim()
-    const hasType = formData.type?.trim()
 
-    if (!hasImage || !hasName || !hasType) return false
+    if (!hasImage) return false
 
     if (uploadTarget === "wishlist") {
       return formData.price !== undefined && formData.sourceUrl?.trim()
@@ -446,6 +444,54 @@ export default function UploadForm({
     }
   }
 
+  // Function to fetch existing items and generate auto name
+  const generateAutoName = async (): Promise<string> => {
+    try {
+      // Fetch existing items from both closet and wishlist
+      const [closetRes, wishlistRes] = await Promise.all([
+        axios.get(`${API_URL}/api/images?mode=closet`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/images?mode=wishlist`, { withCredentials: true })
+      ])
+
+      const allItems = [
+        ...(closetRes.data.clothingItems || []),
+        ...(wishlistRes.data.clothingItems || [])
+      ]
+
+      // Find all existing "Untitled" names
+      const untitledPattern = /^Untitled( \d+)?$/
+      const existingUntitledNumbers = new Set<number>()
+
+      allItems.forEach((item: { name?: string }) => {
+        if (item.name) {
+          const match = item.name.match(untitledPattern)
+          if (match) {
+            if (match[1]) {
+              // Extract number from "Untitled X"
+              const num = parseInt(match[1].trim())
+              existingUntitledNumbers.add(num)
+            } else {
+              // "Untitled" without number is considered as 1
+              existingUntitledNumbers.add(1)
+            }
+          }
+        }
+      })
+
+      // Find the next available number
+      let nextNumber = 1
+      while (existingUntitledNumbers.has(nextNumber)) {
+        nextNumber++
+      }
+
+      return nextNumber === 1 ? "Untitled" : `Untitled ${nextNumber}`
+    } catch (error) {
+      console.error('Error generating auto name:', error)
+      // Fallback to simple "Untitled" if API call fails
+      return "Untitled"
+    }
+  }
+
   const handleSubmit = async () => {
     // SAFETY CHECK: Prevent double submission
     if (!isFormValid() || isSubmitting) {
@@ -483,8 +529,13 @@ export default function UploadForm({
         return
       }
 
-      submitFormData.append("name", formData.name || "")
-      submitFormData.append("type", formData.type || "")
+      // Auto-generate name if not provided
+      const finalName = formData.name?.trim() || await generateAutoName()
+      // Set default type if not provided
+      const finalType = formData.type?.trim() || "uncategorized"
+
+      submitFormData.append("name", finalName)
+      submitFormData.append("type", finalType)
       submitFormData.append("brand", formData.brand || "")
       submitFormData.append("price", (formData.price || 0).toString())
       submitFormData.append("mode", uploadTarget)
@@ -994,11 +1045,11 @@ export default function UploadForm({
                       >
                         <div className="space-y-2">
                           <Label htmlFor="name" className="text-sm font-medium">
-                            Name *
+                            Name
                           </Label>
                           <Input
                             id="name"
-                            placeholder="e.g., Classic Denim Jacket"
+                            placeholder="e.g., Classic Denim Jacket (optional - auto-names if empty)"
                             value={formData.name || ""}
                             onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                             className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -1007,16 +1058,17 @@ export default function UploadForm({
 
                         <div className="space-y-2">
                           <Label htmlFor="type" className="text-sm font-medium">
-                            Type *
+                            Type
                           </Label>
                           <Select
                             value={formData.type || ""}
                             onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
                           >
                             <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder="Select type (optional - defaults to uncategorized)" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="uncategorized">Uncategorized</SelectItem>
                               <SelectItem value="T-Shirt">T-Shirt</SelectItem>
                               <SelectItem value="Hoodie">Hoodie</SelectItem>
                               <SelectItem value="Jacket">Jacket</SelectItem>
