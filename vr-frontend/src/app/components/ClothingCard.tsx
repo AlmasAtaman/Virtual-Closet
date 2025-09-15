@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
-import { Heart } from "lucide-react"
+import { Heart, Check } from "lucide-react"
 
 interface ClothingCardProps {
   item: ClothingItem
@@ -73,8 +73,12 @@ export default function ClothingCard({
       onMouseLeave={() => setIsHovering(false)}
     >
       <Card
-        className={`group h-full transition-all duration-300 ${
-          isHovering && !isMultiSelecting ? "shadow-lg" : "shadow-sm"
+        className={`group h-full transition-all duration-300 border-0 ring-1 rounded-xl ${
+          isSelected
+            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
+            : isHovering && !isMultiSelecting
+            ? "shadow-lg ring-border"
+            : "shadow-sm ring-border"
         }`}
       >
         <div
@@ -106,29 +110,18 @@ export default function ClothingCard({
             </Badge>
           )}
 
-          {/* Multi-select overlay */}
+          {/* Multi-select checkmark - top left corner */}
           {isMultiSelecting && isSelected && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0 bg-primary/30 backdrop-blur-sm flex items-center justify-center"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute top-2 left-2 z-20"
             >
-              <div className="rounded-full bg-white dark:bg-slate-100 chrome:bg-slate-200 w-8 h-8 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-primary"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
+              <button
+                className="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 bg-blue-600 border-blue-600 text-white shadow-lg"
+              >
+                <Check className="w-4 h-4" />
+              </button>
             </motion.div>
           )}
 
