@@ -259,7 +259,7 @@ export default function OutfitsPage() {
         <div className="min-h-screen bg-background">
           {/* Always show navbar */}
           <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-16 items-center justify-between px-4">
+            <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
               <div className="flex items-center gap-2">
                 <Logo />
                 <span className="text-xl font-semibold tracking-tight">VrC</span>
@@ -271,7 +271,7 @@ export default function OutfitsPage() {
             </div>
           </header>
 
-      <div className="px-6 py-6">
+      <div className="px-4 lg:px-6 xl:px-8 py-6">
 {/* Animated Back to Closet button */}
         <AnimatePresence>
           {!selectedOccasionId && (
@@ -447,13 +447,13 @@ export default function OutfitsPage() {
               transition={{ duration: 0.2 }}
             >
               {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
                   {Array.from({ length: 10 }).map((_, index) => (
                     <div key={index} className="aspect-[3/4] bg-card rounded-xl animate-pulse shadow-lg" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
                   {/* Create Outfit Button - Same size as outfit cards */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -517,13 +517,13 @@ export default function OutfitsPage() {
               ) : (
                 <>
                   {occasionsLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
                       {Array.from({ length: 6 }).map((_, index) => (
                         <div key={index} className="aspect-square bg-card rounded-xl animate-pulse shadow-lg" />
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
                       {/* Create Folder Button - First item in grid */}
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}

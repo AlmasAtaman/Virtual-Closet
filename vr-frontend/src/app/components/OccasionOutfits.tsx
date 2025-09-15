@@ -155,7 +155,7 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
     return (
       <div className="space-y-6">
         <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded animate-pulse w-48" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
           {Array.from({ length: 10 }).map((_, index) => (
             <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
           ))}
@@ -282,7 +282,7 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
           {outfits.map((outfit, index) => (
             <motion.div
               key={outfit.id}

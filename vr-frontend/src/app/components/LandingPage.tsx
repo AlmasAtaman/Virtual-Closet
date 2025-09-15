@@ -71,7 +71,7 @@ export default function LandingPage() {
     <div id="top" className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur">
-        <div className="max-w-screen-xl mx-auto w-full flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="w-full flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-12">
           {/* Left: Logo */}
           <Link href="#top" className="flex items-center gap-3 min-w-0 cursor-pointer">
             <Logo />
@@ -108,7 +108,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-6 sm:py-10 md:py-14 lg:py-20 xl:py-24 bg-gradient-to-r from-blue-50 to-purple-50">
-          <div className="max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
             <div className="grid gap-4 lg:grid-cols-[1fr_350px] lg:gap-8 xl:grid-cols-[1fr_420px] xl:gap-10 items-center">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -160,7 +160,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="w-full py-12 md:py-20 bg-gradient-to-b from-orange-50/60 to-white">
-          <div className="max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col items-center text-center mb-14">
               <span className="text-sm font-semibold text-orange-500 tracking-widest mb-2">HOW IT WORKS</span>
               <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">How Virtual Closet Works</h2>
@@ -220,7 +220,7 @@ export default function LandingPage() {
 
         {/* Testimonials Section */}
         <section id="testimonials" className="w-full py-8 md:py-14 lg:py-18 bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="container px-4 md:px-6">
+          <div className="w-full max-w-none px-4 lg:px-6 xl:px-8">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">What Our Users Say</h2>
@@ -335,7 +335,7 @@ export default function LandingPage() {
 
         {/* FAQ Section */}
         <section id="faq" className="w-full py-14 md:py-20 bg-gradient-to-b from-white to-orange-50/60">
-          <div className="max-w-screen-md mx-auto w-full px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col items-center text-center mb-10">
               <span className="text-sm font-semibold text-orange-500 tracking-widest mb-2">FAQ</span>
               <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">Frequently Asked Questions</h2>
@@ -347,7 +347,7 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="w-full py-8 md:py-14 lg:py-18 bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="container px-4 md:px-6">
+          <div className="w-full max-w-none px-4 lg:px-6 xl:px-8">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Ready to Transform Your Wardrobe?</h2>
@@ -367,7 +367,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer id="about" className="w-full border-t bg-gradient-to-r from-blue-50 to-purple-50 py-6 md:py-8">
-        <div className="container flex flex-col items-center justify-between gap-4 md:flex-row px-4 md:px-6">
+        <div className="w-full max-w-none flex flex-col items-center justify-between gap-4 md:flex-row px-4 lg:px-6 xl:px-8">
           <div className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
             <span className="text-lg font-semibold">Virtual Closet</span>

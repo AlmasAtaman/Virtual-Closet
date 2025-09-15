@@ -127,7 +127,7 @@ export default function Homepage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header Section */}
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
           <div className="flex items-center gap-2">
             <Logo />
             <span className="text-xl font-semibold tracking-tight">VrC</span>
@@ -143,7 +143,7 @@ export default function Homepage() {
       </header>
 
       {/* Main Content */}
-      <main className="container px-4 py-8 flex flex-col flex-1 min-h-0">
+      <main className="w-full max-w-none px-4 lg:px-6 xl:px-8 py-8 flex flex-col flex-1 min-h-0">
         {/* Tabs full width on top */}
         <div className="mb-6">
           <Tabs

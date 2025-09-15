@@ -395,7 +395,7 @@ const fetchAllFolders = useCallback(async () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="w-full max-w-none px-4 lg:px-6 xl:px-8 2xl:px-12 py-8">
         {/* Navigation */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
