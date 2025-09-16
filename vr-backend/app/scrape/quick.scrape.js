@@ -42,13 +42,33 @@ export async function scrapeProduct(req, res) {
     }
   } catch (err) {
     console.warn('Quick scrape error:', err.message, err.response?.status);
-    // Return appropriate error status
     const status = err.response?.status || 500;
+
+    // Provide user-friendly error messages for specific status codes
+    let userFriendlyMessage = err.message;
+    let errorType = 'generic';
+
+    if (status === 403) {
+      userFriendlyMessage = 'This website blocks automated requests for security purposes.';
+      errorType = 'bot_detection';
+    } else if (status === 404) {
+      userFriendlyMessage = 'The product page could not be found. Please check the URL.';
+      errorType = 'not_found';
+    } else if (status === 429) {
+      userFriendlyMessage = 'Too many requests. Please wait a moment and try again.';
+      errorType = 'rate_limited';
+    } else if (status >= 500) {
+      userFriendlyMessage = 'The website is currently unavailable. Please try again later.';
+      errorType = 'server_error';
+    }
+
     return res.status(status).json({
-      error: err.message,
+      error: userFriendlyMessage,
       _method: 'quick',
       _extractionSuccess: false,
       _errorStatus: status,
+      _errorType: errorType,
+      _technicalError: err.message, // Keep original error for debugging
       sourceUrl: url
     });
   }
