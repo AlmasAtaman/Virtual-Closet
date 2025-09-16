@@ -194,8 +194,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
 
-  // RESIZE SYSTEM
+  // RESIZE SYSTEM with smooth updates and throttling
+  const throttledWidthChange = useRef<NodeJS.Timeout | null>(null)
+
   const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
+    // Clear previous timeout
+    if (throttledWidthChange.current) {
+      clearTimeout(throttledWidthChange.current)
+    }
+
+    // Immediate update for responsive feedback
     setOutfitItems((prev) =>
       prev.map((outfitItem) => (outfitItem.item.id === itemId ? { ...outfitItem, width: newWidth } : outfitItem)),
     )
@@ -518,18 +526,28 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
           return (
             <motion.div
-              key={`${item.id}-${outfitItem.width}`}
+              key={item.id}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`absolute cursor-move hover:shadow-lg transition-shadow ${
-                draggedItemId === item.id ? "z-50 shadow-2xl" : ""
-              } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
-              style={{
+              animate={{
+                opacity: 1,
+                y: 0,
                 left: `${adjustedLeft}%`,
                 bottom: `${outfitItem.bottom}rem`,
                 width: `${outfitItem.width}rem`,
-                transform: `translateX(-50%) scale(${outfitItem.scale})`,
+                scale: outfitItem.scale
+              }}
+              transition={{
+                delay: index * 0.1,
+                width: { duration: 0.2, ease: "easeOut" },
+                scale: { duration: 0.2, ease: "easeOut" },
+                left: { duration: 0.2, ease: "easeOut" },
+                bottom: { duration: 0.2, ease: "easeOut" }
+              }}
+              className={`absolute cursor-move hover:shadow-lg clothing-item-smooth ${
+                draggedItemId === item.id ? "z-50 shadow-2xl dragging" : ""
+              } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
+              style={{
+                transform: `translateX(-50%)`,
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : getLayerOrder(item),
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}

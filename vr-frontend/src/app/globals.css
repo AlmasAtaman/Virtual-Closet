@@ -227,6 +227,22 @@ html {
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.7);
 }
 
+/* Smooth clothing item animations */
+.clothing-item-smooth {
+  transition: all 0.2s ease-out;
+  transition-property: transform, width, height, left, top, bottom, right;
+}
+
+/* Ensure smooth transforms during resize */
+.clothing-item-smooth:not(.dragging) {
+  transition-duration: 0.2s;
+}
+
+/* Disable transitions during drag operations */
+.clothing-item-smooth.dragging {
+  transition: none;
+}
+
 /* Custom responsive container that fills full width */
 .responsive-container {
   width: 100%;
