@@ -4,7 +4,7 @@ import type React from "react"
 import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
-import { Upload, Link, X, Loader2, Check, Sparkles, ImageIcon, Plus, Zap } from "lucide-react"
+import { Upload, Link, X, Loader2, Check, Sparkles, ImageIcon, Plus, Zap, Shield } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -67,6 +67,8 @@ export default function UploadForm({
   const [isDragOver, setIsDragOver] = useState(false)
   const [quickMetadataFetched, setQuickMetadataFetched] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [showBotDetectionModal, setShowBotDetectionModal] = useState(false)
+  const [botDetectionUrl, setBotDetectionUrl] = useState<string>("")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const quickImageInputRef = useRef<HTMLInputElement>(null)
@@ -87,6 +89,8 @@ export default function UploadForm({
       setIsDragOver(false)
       setQuickMetadataFetched(false)
       setFetchError(null)
+      setShowBotDetectionModal(false)
+      setBotDetectionUrl("")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, currentViewMode])
@@ -351,12 +355,39 @@ export default function UploadForm({
 
       setTimeout(() => setUploadProgress(0), 1000);
       setQuickMetadataFetched(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Gemini metadata fetch failed:", error);
-      alert("Failed to fetch metadata. Please try again.");
+
+      // Check the error type from backend response
+      const axiosError = error as { response?: { status?: number; data?: { _errorType?: string; error?: string } } };
+      const errorType = axiosError.response?.data?._errorType;
+      const errorMessage = axiosError.response?.data?.error;
+
+      if (errorType === 'bot_detection' || axiosError.response?.status === 403) {
+        setBotDetectionUrl(scrapingUrl);
+        setShowBotDetectionModal(true);
+      } else {
+        // Use the user-friendly error message from backend, or fallback to generic
+        setFetchError(errorMessage || "Failed to fetch metadata. Please try again or upload the image manually.");
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle bot detection modal actions
+  const handleManualUpload = () => {
+    setShowBotDetectionModal(false);
+    // Keep the URL in sourceUrl field for reference
+    setFormData(prev => ({ ...prev, sourceUrl: botDetectionUrl }));
+    // The image upload area is already visible, so no need to do anything else
+  };
+
+  const handleTryDifferentUrl = () => {
+    setShowBotDetectionModal(false);
+    setScrapingUrl("");
+    setBotDetectionUrl("");
+    setFetchError(null);
   };
 
 
@@ -1166,6 +1197,60 @@ export default function UploadForm({
                     </Button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bot Detection Modal */}
+      <Dialog open={showBotDetectionModal} onOpenChange={setShowBotDetectionModal}>
+        <DialogContent className="max-w-md">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <DialogHeader className="text-center space-y-3">
+              <div className="mx-auto w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center">
+                <Shield className="w-8 h-8 text-blue-600" />
+              </div>
+              <DialogTitle className="text-xl font-semibold text-foreground">
+                This site protects against automated requests
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-4">
+              <p className="text-center text-muted-foreground leading-relaxed">
+                Some websites block automatic data extraction for security. No worries - you can upload the image manually instead.
+              </p>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={handleManualUpload}
+                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                  size="lg"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Image Manually
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={handleTryDifferentUrl}
+                  className="w-full transition-all duration-200"
+                  size="lg"
+                >
+                  <Link className="w-4 h-4 mr-2" />
+                  Try Different URL
+                </Button>
+              </div>
+
+              <div className="text-center pt-2">
+                <p className="text-xs text-muted-foreground">
+                  This is normal and happens with many shopping sites
+                </p>
               </div>
             </div>
           </motion.div>
