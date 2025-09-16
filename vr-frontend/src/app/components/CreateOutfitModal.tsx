@@ -467,8 +467,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     onCloseAction()
   }
 
-  const handleBackgroundClick = (e: React.MouseEvent) => {
+  const handleDeselectClick = (e: React.MouseEvent) => {
     // Only deselect if clicking the background, not interactive elements
+    e.stopPropagation() // Prevent modal close
     if (e.target === e.currentTarget) {
       setSelectedItemForResize(null)
     }
@@ -581,7 +582,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
             className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
-            onClick={handleBackgroundClick}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
@@ -613,7 +614,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             {/* Content */}
             <div className="flex h-[calc(95vh-180px)]">
               {/* Left Panel - Item Selection */}
-              <div className="w-80 border-r border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="w-80 border-r border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={handleDeselectClick}>
                 <div className="space-y-6">
                   {/* Outfit Name */}
                   <div>
@@ -772,7 +773,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Center Panel - Outfit Preview */}
               <div className="flex-1 flex flex-col">
-                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-8 flex items-center justify-center">
+                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-8 flex items-center justify-center" onClick={handleDeselectClick}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={animationKey}
@@ -789,7 +790,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Right Panel - Controls */}
               {selectedItemForResize && (
-                <div className="w-80 border-l border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="w-80 border-l border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={handleDeselectClick}>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground chrome:text-foreground mb-4">
                     Item Controls
                   </h3>
