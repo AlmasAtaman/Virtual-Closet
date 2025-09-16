@@ -4,7 +4,7 @@ import type React from "react"
 import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
-import { Upload, Link, X, Loader2, Check, Sparkles, ImageIcon, Plus, Zap, Clock } from "lucide-react"
+import { Upload, Link, X, Loader2, Check, Sparkles, ImageIcon, Plus, Zap } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
-import type { ClothingItem, ScrapedProduct } from "../types/clothing"
+import type { ClothingItem } from "../types/clothing"
 
 
 interface UploadFormProps {
@@ -36,7 +36,6 @@ export default function UploadForm({
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
   
   const [uploadMethod, setUploadMethod] = useState<"direct" | "url">("direct")
-  const [urlExtractionMode, setUrlExtractionMode] = useState<"quick" | "full">("quick")
   const [uploadTarget, setUploadTarget] = useState<"closet" | "wishlist">(currentViewMode)
   const [mode, setMode] = useState<"basic" | "advanced">("basic")
   const [isLoading, setIsLoading] = useState(false)
@@ -64,13 +63,9 @@ export default function UploadForm({
   const [formData, setFormData] = useState<Partial<ClothingItem>>(initialFormData)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>("")
-  const [scrapedProducts, setScrapedProducts] = useState<ScrapedProduct[]>([])
-  const [selectedScrapedImage, setSelectedScrapedImage] = useState<string>("")
   const [scrapingUrl, setScrapingUrl] = useState("")
   const [isDragOver, setIsDragOver] = useState(false)
-  const [isFetching, setIsFetching] = useState(false)
   const [quickMetadataFetched, setQuickMetadataFetched] = useState(false)
-  const [hasFetched, setHasFetched] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -79,7 +74,6 @@ export default function UploadForm({
   useEffect(() => {
     if (isOpen) {
       setUploadMethod("direct")
-      setUrlExtractionMode("quick")
       setUploadTarget(currentViewMode)
       setMode("basic")
       setIsLoading(false)
@@ -89,20 +83,16 @@ export default function UploadForm({
       setFormData(initialFormData)
       setSelectedFile(null)
       setImagePreview("")
-      setScrapedProducts([])
-      setSelectedScrapedImage("")
       setScrapingUrl("")
       setIsDragOver(false)
-      setIsFetching(false)
       setQuickMetadataFetched(false)
-      setHasFetched(false)
       setFetchError(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, currentViewMode])
 
   const isFormValid = () => {
-    const hasImage = imagePreview || selectedScrapedImage
+    const hasImage = imagePreview
 
     if (!hasImage) return false
 
@@ -369,80 +359,6 @@ export default function UploadForm({
     }
   };
 
-  const handleUrlScraping = async () => {
-    if (!scrapingUrl.trim()) return
-
-    setIsLoading(true)
-    setUploadProgress(0)
-
-    let progressInterval: NodeJS.Timeout | undefined
-
-    try {
-      progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
-          }
-          return prev + 10
-        })
-      }, 200)
-
-      const res = await axios.post(`${API_URL}/api/quick-scrape`, {
-        url: scrapingUrl,
-      })
-
-      const data = res.data
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
-
-      if (!data.imageGallery || !Array.isArray(data.imageGallery) || data.imageGallery.length === 0) {
-        throw new Error("No product images found at this URL.")
-      }
-
-      setScrapedProducts([
-        {
-          name: data.name || "",
-          brand: data.brand || "",
-          price: data.price || null,
-          images: data.imageGallery,
-          sourceUrl: data.sourceUrl || scrapingUrl,
-        },
-      ])
-      setSelectedScrapedImage(data.imageGallery[0])
-      setFormData((prev: Partial<ClothingItem>) => ({
-        ...prev,
-        name: data.name || prev.name,
-        brand: data.brand || prev.brand,
-        price: data.price || prev.price,
-        sourceUrl: data.sourceUrl || scrapingUrl,
-        type: normalizeAIValue(data.type, 'type') || prev.type,
-        occasion: data.occasion || prev.occasion,
-        style: data.style || prev.style,
-        fit: normalizeAIValue(data.fit, 'fit') || prev.fit,
-        color: data.color || prev.color,
-        material: normalizeAIValue(data.material, 'material') || prev.material,
-        season: normalizeAIValue(data.season, 'season') || prev.season,
-      }))
-
-      if (progressInterval) {
-        clearInterval(progressInterval)
-      }
-      setUploadProgress(100)
-      setHasFetched(true)
-    } catch (error) {
-      console.error("Scraping failed:", error)
-      alert(error instanceof Error ? error.message : "Scraping failed. Please try a different URL.")
-      if (progressInterval) {
-        clearInterval(progressInterval)
-      }
-    } finally {
-      setIsLoading(false)
-      setUploadProgress(0)
-    }
-  }
 
   // Function to fetch existing items and generate auto name
   const generateAutoName = async (): Promise<string> => {
@@ -512,10 +428,8 @@ export default function UploadForm({
 
       if (uploadMethod === "direct" && selectedFile) {
         finalImageFile = selectedFile
-      } else if (uploadMethod === "url" && urlExtractionMode === "quick" && selectedFile) {
+      } else if (uploadMethod === "url" && selectedFile) {
         finalImageFile = selectedFile
-      } else if (uploadMethod === "url" && urlExtractionMode === "full" && selectedScrapedImage) {
-        finalImageUrl = selectedScrapedImage
       }
 
       if (finalImageFile) {
@@ -600,11 +514,8 @@ export default function UploadForm({
       setFormData(initialFormData)
       setSelectedFile(null)
       setImagePreview("")
-      setScrapedProducts([])
-      setSelectedScrapedImage("")
       setScrapingUrl("")
       setUploadMethod("direct")
-      setUrlExtractionMode("quick")
       setMode("basic")
       setUploadTarget(currentViewMode)
 
@@ -788,114 +699,97 @@ export default function UploadForm({
                       transition={{ duration: 0.3 }}
                       className="space-y-4 flex flex-col flex-1"
                     >
-                      {/* Before metadata fetch: show only URL input, fetch button, and extraction mode toggle */}
-                      {((urlExtractionMode === "quick" && !quickMetadataFetched) || (urlExtractionMode === "full" && scrapedProducts.length === 0)) && !isFetching && (
-                        <motion.div
-                          key="url-input-step"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="space-y-4"
-                        >
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium">Product URL</Label>
-                            <div className="flex gap-2 w-full">
-                              <Input
-                                placeholder="Enter product URL..."
-                                value={scrapingUrl}
-                                onChange={e => { 
-                                  setScrapingUrl(e.target.value); 
-                                  setHasFetched(false); 
-                                  setFetchError(null);
-                                  setQuickMetadataFetched(false);
-                                  setScrapedProducts([]);
-                                }}
-                                className="flex-1"
-                                disabled={isLoading}
-                              />
-                              <Button
-                                onClick={
-                                  urlExtractionMode === "quick" 
-                                    ? handleGeminiMetadata 
-                                    : handleUrlScraping
-                                }
-                                disabled={!scrapingUrl.trim() || isLoading}
-                                className="px-6 w-[140px]"
-                              >
-                                {isLoading ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  "Fetch Info"
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                          {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
-                          
-                          <div className="relative pt-4">
-                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                              <div className="w-full border-t" />
-                            </div>
-                            <div className="relative flex justify-center">
-                              <span className="bg-background px-2 text-xs text-muted-foreground">Extraction Mode</span>
-                            </div>
-                          </div>
-
-                          <div className="flex w-full justify-center gap-2">
-                            <Button
-                              variant={urlExtractionMode === "quick" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => { setUrlExtractionMode("quick"); }}
-                              className="flex-1 flex items-center gap-2"
-                              disabled={isLoading}
-                            >
-                              <Zap className="w-4 h-4" /> Quick Metadata
-                            </Button>
-                            <Button
-                              variant={urlExtractionMode === "full" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => { setUrlExtractionMode("full"); }}
-                              className="flex-1 flex items-center gap-2"
-                              disabled={isLoading}
-                            >
-                              <Clock className="w-4 h-4" /> Full Scrape
-                            </Button>
-                          </div>
-                          <div className="text-xs text-muted-foreground text-center mt-2">
-                            {urlExtractionMode === "quick"
-                              ? "Fast (~2s) • you upload image manually"
-                              : "Takes longer (~10s) • auto-extracts images (beta—may not work on all sites)"}
-                          </div>
-                        </motion.div>
-                      )}
-                      
-                      {/* After quick metadata fetch: show only image upload area, no form fields */}
-                      {urlExtractionMode === "quick" && quickMetadataFetched && hasFetched && (
-                        <Card className="p-4 bg-background/50 backdrop-blur-sm border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col">
-                          <CardContent className="flex flex-col items-center justify-center flex-1">
-                            <div className="w-full text-center mb-4">
-                              <p className="text-lg font-medium text-foreground">Upload or Paste Product Image</p>
-                              <p className="text-sm text-muted-foreground mt-1">Drag & drop, click to upload, or paste from clipboard</p>
-                            </div>
-                            <input
-                              ref={quickImageInputRef}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                if (file) handleFileUpload(file)
+                      {/* URL Input Section */}
+                      <motion.div
+                        key="url-input-step"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-4"
+                      >
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Product URL</Label>
+                          <div className="flex gap-2 w-full">
+                            <Input
+                              placeholder="Enter product URL..."
+                              value={scrapingUrl}
+                              onChange={e => {
+                                setScrapingUrl(e.target.value);
+                                setFetchError(null);
+                                setQuickMetadataFetched(false);
                               }}
+                              className="flex-1"
+                              disabled={isLoading}
                             />
+                            <Button
+                              onClick={handleGeminiMetadata}
+                              disabled={!scrapingUrl.trim() || isLoading}
+                              className="px-6 w-[140px]"
+                            >
+                              {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Zap className="w-4 h-4 mr-1" />
+                                  Fetch Info
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
+
+                        {quickMetadataFetched && (
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Check className="w-4 h-4 text-primary" />
+                              <span className="text-sm font-medium text-foreground">
+                                Metadata extracted successfully!
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 ml-6">
+                              Now upload your product image below ↓
+                            </p>
+                          </div>
+                        )}
+                      </motion.div>
+                      
+                      {/* Always show image upload area after URL input */}
+                      <Card
+                        className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
+                          isDragOver
+                            ? "border-primary bg-primary/5 scale-[1.02]"
+                            : imagePreview
+                              ? "border-primary/50 bg-primary/5"
+                              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                        }`}
+                        onDrop={handleDrop}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          setIsDragOver(true)
+                        }}
+                        onDragLeave={() => setIsDragOver(false)}
+                        onClick={() => quickImageInputRef.current?.click()}
+                      >
+                        <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
+                          <AnimatePresence mode="wait">
                             {imagePreview ? (
-                              <div className="relative group w-full flex flex-col items-center">
-                                <Image
-                                  src={imagePreview || "/placeholder.svg"}
-                                  alt="Preview"
-                                  width={400}
-                                  height={256}
-                                  className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
-                                />
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="space-y-4"
+                              >
+                                <div className="relative group">
+                                  <Image
+                                    src={imagePreview || "/placeholder.svg"}
+                                    alt="Preview"
+                                    width={400}
+                                    height={256}
+                                    className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
+                                </div>
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -904,94 +798,42 @@ export default function UploadForm({
                                     setImagePreview("")
                                     setSelectedFile(null)
                                   }}
-                                  className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors mt-2"
+                                  className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
                                 >
-                                  <X className="w-4 h-4" /> Remove Image
+                                  <X className="w-4 h-4" />
+                                  Remove Image
                                 </Button>
-                              </div>
+                              </motion.div>
                             ) : (
-                              <div
-                                className="w-full h-32 flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
-                                onClick={() => quickImageInputRef.current?.click()}
-                                onDrop={handleDrop}
-                                onDragOver={(e) => {
-                                  e.preventDefault()
-                                  setIsDragOver(true)
-                                }}
-                                onDragLeave={() => setIsDragOver(false)}
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-center space-y-4 flex flex-col justify-center items-center h-full"
                               >
-                                <ImageIcon className="w-8 h-8 text-primary mb-2" />
-                                <span className="text-sm text-muted-foreground">Click or drag image here</span>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )}
-                      {/* Full Scrape image selection with proper scrolling */}
-                      {urlExtractionMode === "full" && scrapedProducts.length > 0 && !isLoading &&(
-                        <motion.div
-                          key="step3-full"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="flex flex-col flex-1 min-h-0 space-y-3"
-                        >
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium">Select Product Image</Label>
-                            <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                              {scrapedProducts[0]?.images?.length || 0} images found
-                            </div>
-                          </div>
-                          <div className="flex-1 min-h-0 max-h-[50vh] overflow-y-auto border rounded-lg p-3 bg-background/50">
-                            <div className="grid grid-cols-2 gap-3">
-                              {scrapedProducts.length > 0 && scrapedProducts[0].images?.map((image, index) => (
-                                <motion.div
-                                  key={index}
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ delay: index * 0.05 }}
-                                  className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                                    selectedScrapedImage === image
-                                      ? "border-primary shadow-lg scale-[1.02]"
-                                      : "border-border hover:border-primary/50 hover:scale-[1.01]"
-                                  }`}
-                                  style={{ height: 180 }}
-                                  onClick={() => setSelectedScrapedImage(image)}
-                                >
-                                  <Image
-                                    src={image || "/placeholder.svg"}
-                                    alt={`Product ${index + 1}`}
-                                    width={200}
-                                    height={180}
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                                    {index + 1}
-                                  </div>
-                                  <AnimatePresence>
-                                    {selectedScrapedImage === image && (
-                                      <motion.div
-                                        initial={{ opacity: 0, scale: 0.5 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.5 }}
-                                        className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg"
-                                      >
-                                        <Check className="w-3 h-3" />
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </motion.div>
-                              ))}
-                              {scrapedProducts.length === 0 && (
-                                <div className="col-span-2 text-center py-8 text-muted-foreground">
-                                  Enter a URL and click &quot;Full Scrape&quot; to view product images
+                                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <ImageIcon className="w-8 h-8 text-primary" />
                                 </div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
+                                <div>
+                                  <p className="text-lg font-medium text-foreground">Upload Product Image</p>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Upload while metadata is being fetched
+                                  </p>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </CardContent>
+                      </Card>
+                      <input
+                        ref={quickImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFileUpload(file)
+                        }}
+                      />
                     </motion.div>
                   )}
                 </div>
@@ -1285,11 +1127,7 @@ export default function UploadForm({
                       >
                         <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                           <span className="font-medium">
-                            {isSubmitting
-                              ? "Uploading..."
-                              : urlExtractionMode === "quick"
-                                ? "Fetching metadata..."
-                                : "Scraping..."}
+                            {isSubmitting ? "Uploading..." : "Fetching metadata..."}
                           </span>
                           <span className="font-mono">{uploadProgress}%</span>
                         </div>

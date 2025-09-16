@@ -1,13 +1,12 @@
 import axios from 'axios';
 import { extractProductData } from './quick.gemini.js';
 import * as cheerio from 'cheerio';
-import { scrapeProduct as playwrightScrapeProduct } from './scrape.controller.js';
 
 export async function scrapeProduct(req, res) {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
 
-  // Try quick scrape first
+  // Quick axios + Gemini extraction only
   try {
     const response = await axios.get(url, {
       timeout: 10000,
@@ -22,28 +21,35 @@ export async function scrapeProduct(req, res) {
     const mainContent = $('main').html() || $('body').html();
     const structured = await extractProductData(mainContent);
 
-    // If quick scrape found clothing, return it
+    // Return metadata if Gemini identifies this as clothing
     if (structured && structured.isClothing) {
       return res.json({
         ...structured,
         sourceUrl: url,
         _method: 'quick',
+        _extractionSuccess: true,
+        _hasMetadata: !!(structured.name || structured.brand || structured.price || structured.type)
       });
     } else {
-      // Otherwise, fall through to Playwright
-      console.log('Quick scrape did not find clothing, falling back to Playwright...');
+      // Return error if Gemini says this is not clothing
+      console.log('Quick scrape determined this is not a clothing item');
+      return res.status(400).json({
+        error: 'This URL does not appear to contain a clothing item according to AI analysis.',
+        _method: 'quick',
+        _extractionSuccess: false,
+        _reason: 'not_clothing'
+      });
     }
   } catch (err) {
-    console.warn('Quick scrape error, falling back to Playwright:', err.message, err.response?.status);
-    // Fall through to Playwright
-  }
-
-  // Fallback: Playwright scrape
-  try {
-    // Call the Playwright-based scrapeProduct, passing req and res
-    await playwrightScrapeProduct(req, res);
-  } catch (err) {
-    console.error('Playwright scrape also failed:', err.message);
-    res.status(500).json({ error: 'Both quick and full scrape failed', details: err.message });
+    console.warn('Quick scrape error:', err.message, err.response?.status);
+    // Return appropriate error status
+    const status = err.response?.status || 500;
+    return res.status(status).json({
+      error: err.message,
+      _method: 'quick',
+      _extractionSuccess: false,
+      _errorStatus: status,
+      sourceUrl: url
+    });
   }
 } 
