@@ -467,6 +467,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     onCloseAction()
   }
 
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    // Only deselect if clicking the background, not interactive elements
+    if (e.target === e.currentTarget) {
+      setSelectedItemForResize(null)
+    }
+  }
+
   const getLayerOrder = (item: ClothingItem) => {
     const itemType = item.type?.toLowerCase() || ""
 
@@ -525,7 +532,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : getLayerOrder(item),
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
-              onClick={() => setSelectedItemForResize(item.id)}
+              onClick={(e) => { e.stopPropagation(); setSelectedItemForResize(item.id); }}
             >
               <Image
                 src={item.url || "/placeholder.svg"}
@@ -574,7 +581,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
             className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleBackgroundClick}
           >
             {/* Header */}
             <div className="p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
@@ -588,15 +595,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </p>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Button variant="outline" onClick={shuffleOutfit} disabled={loadingClothing}>
+                  <Button variant="outline" onClick={(e) => { e.stopPropagation(); shuffleOutfit(); }} disabled={loadingClothing}>
                     <Shuffle className="w-4 h-4 mr-2" />
                     Shuffle
                   </Button>
-                  <Button variant="outline" onClick={resetLayout}>
+                  <Button variant="outline" onClick={(e) => { e.stopPropagation(); resetLayout(); }}>
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Reset Layout
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
+                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCloseModal(); }} className="rounded-full">
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
@@ -606,7 +613,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             {/* Content */}
             <div className="flex h-[calc(95vh-180px)]">
               {/* Left Panel - Item Selection */}
-              <div className="w-80 border-r border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto">
+              <div className="w-80 border-r border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="space-y-6">
                   {/* Outfit Name */}
                   <div>
@@ -618,6 +625,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       placeholder="Enter outfit name (optional)"
                       value={outfitName}
                       onChange={(e) => setOutfitName(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-border chrome:border-border rounded-lg bg-white dark:bg-background chrome:bg-background text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-500 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -630,7 +638,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     {selectedTop ? (
                       <div
                         className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setShowTopSelectModal(true)}
+                        onClick={(e) => { e.stopPropagation(); setShowTopSelectModal(true); }}
                       >
                         <Image
                           src={selectedTop.url || "/placeholder.svg"}
@@ -659,7 +667,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       <Button
                         variant="outline"
                         className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
-                        onClick={() => setShowTopSelectModal(true)}
+                        onClick={(e) => { e.stopPropagation(); setShowTopSelectModal(true); }}
                         disabled={loadingClothing}
                       >
                         <Plus className="w-6 h-6 mr-2" />
@@ -676,7 +684,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     {selectedBottom ? (
                       <div
                         className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setShowBottomSelectModal(true)}
+                        onClick={(e) => { e.stopPropagation(); setShowBottomSelectModal(true); }}
                       >
                         <Image
                           src={selectedBottom.url || "/placeholder.svg"}
@@ -705,7 +713,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       <Button
                         variant="outline"
                         className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
-                        onClick={() => setShowBottomSelectModal(true)}
+                        onClick={(e) => { e.stopPropagation(); setShowBottomSelectModal(true); }}
                         disabled={loadingClothing}
                       >
                         <Plus className="w-6 h-6 mr-2" />
@@ -722,7 +730,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     {selectedOuterwear ? (
                       <div
                         className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setShowOuterwearSelectModal(true)}
+                        onClick={(e) => { e.stopPropagation(); setShowOuterwearSelectModal(true); }}
                       >
                         <Image
                           src={selectedOuterwear.url || "/placeholder.svg"}
@@ -751,7 +759,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       <Button
                         variant="outline"
                         className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
-                        onClick={() => setShowOuterwearSelectModal(true)}
+                        onClick={(e) => { e.stopPropagation(); setShowOuterwearSelectModal(true); }}
                         disabled={loadingClothing}
                       >
                         <Plus className="w-6 h-6 mr-2" />
@@ -781,7 +789,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Right Panel - Controls */}
               {selectedItemForResize && (
-                <div className="w-80 border-l border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto">
+                <div className="w-80 border-l border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground chrome:text-foreground mb-4">
                     Item Controls
                   </h3>
@@ -821,6 +829,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                 onChange={(e) =>
                                   handleWidthChange(selectedItemForResize, Number.parseFloat(e.target.value))
                                 }
+                                onClick={(e) => e.stopPropagation()}
                                 className="w-full"
                               />
                             </div>
@@ -847,7 +856,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         <Button
                           variant="outline"
                           className="w-full bg-transparent"
-                          onClick={() => setSelectedItemForResize(null)}
+                          onClick={(e) => { e.stopPropagation(); setSelectedItemForResize(null); }}
                         >
                           Done Editing
                         </Button>
@@ -871,11 +880,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 )}
               </div>
               <div className="flex space-x-3">
-                <Button variant="outline" onClick={handleCloseModal}>
+                <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleCloseModal(); }}>
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleCreateOutfit}
+                  onClick={(e) => { e.stopPropagation(); handleCreateOutfit(); }}
                   disabled={!isFormValid() || isCreating}
                   className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                 >
