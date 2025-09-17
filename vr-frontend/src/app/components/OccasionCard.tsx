@@ -180,7 +180,6 @@ export default function OccasionCard({
   }
 
   const outfitCount = occasion.outfits?.length || 0
-  const firstOutfit = occasion.outfits?.[0]
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't handle card clicks when menu is open
@@ -254,58 +253,107 @@ export default function OccasionCard({
                   }}
                 />
               </div>
-            ) : firstOutfit && firstOutfit.clothingItems.length > 0 ? (
-              <div className="relative w-full h-full p-4">
-                {/* Main outfit preview */}
+            ) : occasion.outfits && occasion.outfits.length > 0 ? (
+              <div className="relative w-full h-full p-3">
+                {/* Folder thumbnail showing multiple outfits in a grid */}
                 <div className="relative w-full h-full">
                   {(() => {
-                    // Sort items by layer priority: outerwear (bottom layer), then others
-                    const getLayerPriority = (item: ClothingItem) => {
-                      const type = item.type?.toLowerCase() || ""
-                      if (type.includes("jacket") || type.includes("coat") || type.includes("blazer") || type.includes("sweater") || type.includes("cardigan")) {
-                        return 1 // Outerwear - bottom layer
-                      }
-                      if (type.includes("shirt") || type.includes("t-shirt") || type.includes("top") || type.includes("blouse")) {
-                        return 2 // Tops - middle layer
-                      }
-                      if (type.includes("pants") || type.includes("jeans") || type.includes("shorts") || type.includes("skirt") || type.includes("dress")) {
-                        return 3 // Bottoms - top layer (for visibility)
-                      }
-                      return 2 // Default to middle layer
-                    }
-                    
-                    const sortedItems = [...firstOutfit.clothingItems]
-                      .slice(0, 3)
-                      .sort((a, b) => getLayerPriority(a) - getLayerPriority(b))
+                    // Get a diverse sample of clothing items from all outfits
+                    const allClothingItems = occasion.outfits
+                      .flatMap(outfit => outfit.clothingItems)
+                      .filter(item => item.url) // Only include items with valid URLs
 
-                    return sortedItems.map((item, index) => (
-                      <img
-                        key={item.id}
-                        src={item.url || "/placeholder.svg"}
-                        alt={item.name || `Item ${index + 1}`}
-                        className="absolute object-contain"
-                        style={{
-                          left: `${(item.left || 50) - 10 + index * 2}%`,
-                          bottom: `${(item.bottom || 0) * 0.8 + index * 0.5}rem`,
-                          width: `${(item.width || 8) * 0.7}rem`,
-                          transform: "translateX(-50%)",
-                          zIndex: 10 + getLayerPriority(item),
-                          filter: index > 0 ? "brightness(0.9)" : "none",
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.svg"
-                        }}
-                      />
-                    ))
+                    if (allClothingItems.length === 0) return null
+
+                    // Create a diverse sample by type and outfit
+                    const sampleItems: ClothingItem[] = []
+                    const usedTypes = new Set<string>()
+                    const usedOutfits = new Set<string>()
+
+                    // First, try to get one item from each outfit
+                    for (const outfit of occasion.outfits.slice(0, 4)) {
+                      if (sampleItems.length >= 6) break
+                      const outfitItems = outfit.clothingItems.filter(item => item.url)
+                      if (outfitItems.length > 0 && !usedOutfits.has(outfit.id)) {
+                        // Prefer diverse types (tops, bottoms, outerwear)
+                        const preferredItem = outfitItems.find(item => {
+                          const type = item.type?.toLowerCase() || ""
+                          return !usedTypes.has(type) && (
+                            type.includes("shirt") || type.includes("t-shirt") ||
+                            type.includes("jacket") || type.includes("dress") ||
+                            type.includes("pants") || type.includes("skirt")
+                          )
+                        }) || outfitItems[0]
+
+                        sampleItems.push(preferredItem)
+                        usedTypes.add(preferredItem.type?.toLowerCase() || "")
+                        usedOutfits.add(outfit.id)
+                      }
+                    }
+
+                    // Fill remaining slots with diverse items
+                    while (sampleItems.length < 6 && sampleItems.length < allClothingItems.length) {
+                      const remainingItems = allClothingItems.filter(item =>
+                        !sampleItems.find(sample => sample.id === item.id)
+                      )
+                      if (remainingItems.length === 0) break
+
+                      // Prefer items of types we haven't used yet
+                      const diverseItem = remainingItems.find(item => {
+                        const type = item.type?.toLowerCase() || ""
+                        return !usedTypes.has(type)
+                      }) || remainingItems[0]
+
+                      sampleItems.push(diverseItem)
+                      usedTypes.add(diverseItem.type?.toLowerCase() || "")
+                    }
+
+                    // Arrange items in a grid-like layout for folder preview
+                    const gridPositions = [
+                      { left: 25, top: 15, size: 0.7, zIndex: 20 },  // Top left
+                      { left: 65, top: 25, size: 0.6, zIndex: 18 },  // Top right
+                      { left: 45, top: 45, size: 0.8, zIndex: 22 },  // Center (main focus)
+                      { left: 15, top: 65, size: 0.5, zIndex: 16 },  // Bottom left
+                      { left: 75, top: 70, size: 0.5, zIndex: 15 },  // Bottom right
+                      { left: 35, top: 80, size: 0.4, zIndex: 14 },  // Bottom center (background)
+                    ]
+
+                    return sampleItems.slice(0, 6).map((item, index) => {
+                      const position = gridPositions[index] || gridPositions[0]
+                      return (
+                        <img
+                          key={`${item.id}-${index}`}
+                          src={item.url || "/placeholder.svg"}
+                          alt={item.name || `Item ${index + 1}`}
+                          className="absolute object-contain rounded-sm"
+                          style={{
+                            left: `${position.left}%`,
+                            top: `${position.top}%`,
+                            width: `${(item.width || 6) * position.size}rem`,
+                            height: `${(item.width || 6) * position.size * 1.2}rem`,
+                            transform: "translate(-50%, -50%)",
+                            zIndex: position.zIndex,
+                            filter: index === 2 ? "none" : "brightness(0.85)", // Highlight center item
+                            opacity: index < 3 ? 1 : 0.8, // Fade background items
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.svg"
+                          }}
+                        />
+                      )
+                    })
                   })()}
                 </div>
 
-                {/* Stacked card effect for multiple outfits */}
+                {/* Folder effect - subtle overlay to indicate it's a collection */}
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-200/20 dark:to-slate-800/20 pointer-events-none rounded-lg" />
+
+                {/* Stacked folder effect for multiple outfits */}
                 {outfitCount > 1 && (
                   <>
-                    <div className="absolute inset-2 bg-white/60 dark:bg-slate-700/60 rounded-lg -z-10 transform rotate-1" />
+                    <div className="absolute inset-2 bg-white/40 dark:bg-slate-700/40 rounded-lg -z-10 transform rotate-1" />
                     {outfitCount > 2 && (
-                      <div className="absolute inset-1 bg-white/40 dark:bg-slate-600/40 rounded-lg -z-20 transform rotate-2" />
+                      <div className="absolute inset-1 bg-white/20 dark:bg-slate-600/20 rounded-lg -z-20 transform rotate-2" />
                     )}
                   </>
                 )}

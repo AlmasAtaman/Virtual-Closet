@@ -73,49 +73,62 @@ export default function ThumbnailEditorModal({
       ctx.imageSmoothingEnabled = true
       ctx.imageSmoothingQuality = "high"
 
-      // Fill with white background
-      ctx.fillStyle = "#ffffff"
-      ctx.fillRect(0, 0, thumbnailWidth, thumbnailHeight)
-
-      // Get the preview area dimensions (matches folder preview size)
-      const previewWidth = 240  // w-60 = 240px
-      const previewHeight = 320 // h-80 = 320px
+      // Use HTML2Canvas-like approach: capture exactly what's visible in preview
+      const previewElement = previewRef.current
+      const previewRect = previewElement.getBoundingClientRect()
       const img = imgRef.current
 
-      // Calculate the actual image dimensions as displayed
-      const imgNaturalWidth = img.naturalWidth
-      const imgNaturalHeight = img.naturalHeight
+      // Get the computed style of the image to match the exact rendering
+      const imgRect = img.getBoundingClientRect()
+      const previewWidth = previewRect.width
+      const previewHeight = previewRect.height
 
-      // Calculate displayed size maintaining aspect ratio
-      let displayWidth, displayHeight
-      const aspectRatio = imgNaturalWidth / imgNaturalHeight
+      // Calculate scale from preview size to canvas size
+      const scaleX = thumbnailWidth / previewWidth
+      const scaleY = thumbnailHeight / previewHeight
 
-      if (aspectRatio > previewWidth / previewHeight) {
-        // Image is wider than preview aspect ratio
-        displayHeight = previewHeight * imageScale
-        displayWidth = displayHeight * aspectRatio
-      } else {
-        // Image is taller than preview aspect ratio  
-        displayWidth = previewWidth * imageScale
-        displayHeight = displayWidth / aspectRatio
+      // Get image position relative to preview container
+      const imgLeft = imgRect.left - previewRect.left
+      const imgTop = imgRect.top - previewRect.top
+      const imgWidth = imgRect.width
+      const imgHeight = imgRect.height
+
+      // Create gradient background to match OccasionCard
+      const gradient = ctx.createLinearGradient(0, 0, thumbnailWidth, thumbnailHeight)
+      gradient.addColorStop(0, "#f1f5f9") // from-slate-100
+      gradient.addColorStop(1, "#e2e8f0") // to-slate-200
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, thumbnailWidth, thumbnailHeight)
+
+      // Calculate the visible portion of the image
+      const visibleLeft = Math.max(0, -imgLeft)
+      const visibleTop = Math.max(0, -imgTop)
+      const visibleRight = Math.min(imgWidth, previewWidth - imgLeft)
+      const visibleBottom = Math.min(imgHeight, previewHeight - imgTop)
+
+      if (visibleRight > visibleLeft && visibleBottom > visibleTop) {
+        // Calculate source coordinates in the original image
+        const imgNaturalWidth = img.naturalWidth
+        const imgNaturalHeight = img.naturalHeight
+
+        const sourceX = (visibleLeft / imgWidth) * imgNaturalWidth
+        const sourceY = (visibleTop / imgHeight) * imgNaturalHeight
+        const sourceWidth = ((visibleRight - visibleLeft) / imgWidth) * imgNaturalWidth
+        const sourceHeight = ((visibleBottom - visibleTop) / imgHeight) * imgNaturalHeight
+
+        // Calculate destination coordinates on canvas
+        const destX = Math.max(0, imgLeft) * scaleX
+        const destY = Math.max(0, imgTop) * scaleY
+        const destWidth = (visibleRight - visibleLeft) * scaleX
+        const destHeight = (visibleBottom - visibleTop) * scaleY
+
+        // Draw the visible portion of the image
+        ctx.drawImage(
+          img,
+          sourceX, sourceY, sourceWidth, sourceHeight,
+          destX, destY, destWidth, destHeight
+        )
       }
-
-      // Calculate the crop area in the original image coordinates
-      const centerX = previewWidth / 2
-      const centerY = previewHeight / 2
-
-      // Calculate what part of the image is visible in the preview area
-      const visibleX = centerX - imagePosition.x - displayWidth / 2
-      const visibleY = centerY - imagePosition.y - displayHeight / 2
-
-      // Convert to source image coordinates
-      const sourceX = Math.max(0, -visibleX * (imgNaturalWidth / displayWidth))
-      const sourceY = Math.max(0, -visibleY * (imgNaturalHeight / displayHeight))
-      const sourceWidth = Math.min(imgNaturalWidth, previewWidth * (imgNaturalWidth / displayWidth))
-      const sourceHeight = Math.min(imgNaturalHeight, previewHeight * (imgNaturalHeight / displayHeight))
-
-      // Draw the cropped portion to fill the entire canvas
-      ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, thumbnailWidth, thumbnailHeight)
 
       const base64 = canvas.toDataURL("image/jpeg", 0.85)
       resolve(base64)
@@ -183,21 +196,29 @@ export default function ThumbnailEditorModal({
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      ref={imgRef}
-                      src={imageUrl || "/placeholder.svg"}
-                      alt="Edit thumbnail"
-                      className="absolute select-none pointer-events-none w-full h-full object-cover"
-                      style={{
-                        transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageScale})`,
-                        transformOrigin: "center",
-                        maxWidth: "none",
-                        maxHeight: "none",
-                      }}
-                      draggable={false}
-                    />
-                    
+                    {/* Container for the cropped image preview */}
+                    <div className="relative w-full h-full overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        ref={imgRef}
+                        src={imageUrl || "/placeholder.svg"}
+                        alt="Edit thumbnail"
+                        className="absolute select-none pointer-events-none"
+                        style={{
+                          left: "50%",
+                          top: "50%",
+                          transform: `translate(calc(-50% + ${imagePosition.x}px), calc(-50% + ${imagePosition.y}px)) scale(${imageScale})`,
+                          transformOrigin: "center",
+                          width: "auto",
+                          height: "auto",
+                          minWidth: "100%",
+                          minHeight: "100%",
+                          objectFit: "cover",
+                        }}
+                        draggable={false}
+                      />
+                    </div>
+
                     {/* Overlay to show it's interactive */}
                     <div className="absolute inset-0 bg-blue-500/10 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                       <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
