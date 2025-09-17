@@ -281,13 +281,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     let newType: string
     switch (category) {
       case "top":
-        newType = "t-shirt"
+        newType = "T-Shirt"
         break
       case "bottom":
-        newType = "pants"
+        newType = "Pants"
         break
       case "outerwear":
-        newType = "jacket"
+        newType = "Jacket"
         break
       default:
         return item // Return unchanged if category is unknown
