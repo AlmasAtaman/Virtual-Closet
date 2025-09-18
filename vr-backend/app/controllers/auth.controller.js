@@ -99,20 +99,41 @@ export const signin = async (req, res) => {
 };
 
 export const signout = (req, res) => {
-  // Clear all possible auth cookies
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "Lax"
-  });
-  
-  // Clear any legacy NextAuth cookies if they exist
-  res.clearCookie("next-auth.session-token");
-  res.clearCookie("__Secure-next-auth.session-token");
-  res.clearCookie("next-auth.csrf-token");
-  res.clearCookie("__Host-next-auth.csrf-token");
-  
-  res.status(200).send({ message: "You've been signed out!" });
+  try {
+    // Clear the main accessToken cookie with matching options
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "None"
+    });
+
+    // Clear any legacy NextAuth cookies if they exist
+    res.clearCookie("next-auth.session-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "None"
+    });
+    res.clearCookie("__Secure-next-auth.session-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "None"
+    });
+    res.clearCookie("next-auth.csrf-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "None"
+    });
+    res.clearCookie("__Host-next-auth.csrf-token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "None"
+    });
+
+    res.status(200).send({ message: "You've been signed out!" });
+  } catch (err) {
+    console.error("Signout error:", err);
+    res.status(500).send({ message: "An error occurred during signout." });
+  }
 };
 
 export const forgotPassword = async (req, res) => {
