@@ -3,23 +3,23 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Search, X, Check, Heart } from "lucide-react"
-import LogOutButton from "../components/LogoutButton"
-import { ThemeToggle } from "../components/ThemeToggle"
-import UploadForm from "../components/UploadForm"
+import LogOutButton from "../../components/LogoutButton"
+import { ThemeToggle } from "../../components/ThemeToggle"
+import UploadForm from "../../components/UploadForm"
 import { useRouter } from "next/navigation"
-import ClothingGallery from "../components/ClothingGallery"
-import type { ClothingItem } from "../types/clothing"
+import ClothingGallery from "../../components/ClothingGallery"
+import type { ClothingItem } from "../../types/clothing"
 
 // Interface for ClothingGallery ref
 interface ClothingGalleryRef {
   refresh: () => Promise<void>;
   addClothingItem: (newItem: ClothingItem) => void;
 }
-import { Logo } from "../components/Logo"
+import { ThemedLogo as Logo } from "../../components/Logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import FilterSection, { type FilterAttribute } from "../components/FilterSection"
+import FilterSection, { type FilterAttribute } from "../../components/FilterSection"
 import { Badge } from "@/components/ui/badge"
 
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getBaseUrl, safeRedirect } from "../utils/url"
+import { getBaseUrl, safeRedirect } from "../../utils/url"
 
 export default function TestGooglePage() {
     const [baseUrl, setBaseUrl] = useState<string>("")
