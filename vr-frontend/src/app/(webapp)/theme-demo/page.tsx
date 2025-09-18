@@ -1,7 +1,7 @@
 "use client"
 
-import { ThemeToggle } from "../components/ThemeToggle"
-import { useTheme } from "../contexts/ThemeContext"
+import { ThemeToggle } from "../../components/ThemeToggle"
+import { useTheme } from "../../contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"

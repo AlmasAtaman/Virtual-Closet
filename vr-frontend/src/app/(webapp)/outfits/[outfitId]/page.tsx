@@ -7,8 +7,8 @@ import axios from "axios"
 import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, DollarSign, Sparkles, Shirt } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import OutfitCard from "../../components/OutfitCard"
-import ClothingItemSelectModal from "../../components/ClothingItemSelectModal"
+import OutfitCard from "../../../components/OutfitCard"
+import ClothingItemSelectModal from "../../../components/ClothingItemSelectModal"
 
 interface ClothingItem {
   id: string
