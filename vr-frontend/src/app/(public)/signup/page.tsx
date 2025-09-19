@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { getBaseUrl, safeRedirect } from "../utils/url";
+import { getBaseUrl, safeRedirect } from "../../utils/url";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
