@@ -19,7 +19,7 @@ export function RestrictedThemeProvider({ children }: { children: React.ReactNod
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
   const [isLoading, setIsLoading] = useState(true)
 
-  // Initialize theme from localStorage (public pages only)
+  // Initialize theme from localStorage (public pages only)s
   useEffect(() => {
     const initializeTheme = async () => {
       try {
