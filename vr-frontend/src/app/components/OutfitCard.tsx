@@ -251,7 +251,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     setDraggedItemId(null)
   }, [])
 
-  // Global mouse events for dragging
+  // Global mouse events for draggings
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
