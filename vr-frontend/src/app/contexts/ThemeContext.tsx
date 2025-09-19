@@ -215,23 +215,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
       if (isLoading) return
 
-      const updateTheme = () => {
-        let resolved: "light" | "dark" | "chrome" = "light"
+const updateTheme = () => {
+  let resolved: "light" | "dark" | "chrome" = "light"
 
-        if (theme === "system") {
-          resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-        } else {
-          resolved = theme as "light" | "dark" | "chrome"
-        }
+  if (theme === "system") {
+    resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  } else {
+    resolved = theme as "light" | "dark" | "chrome"
+  }
 
-    setResolvedTheme(resolved)
+  setResolvedTheme(resolved)
 
-    // CHANGED: Apply theme only to webapp container, not document root
-    const webappRoot = document.querySelector('.webapp-theme-root')
-    if (webappRoot) {
-      webappRoot.classList.remove("light", "dark", "chrome")
-      webappRoot.classList.add(resolved)
-    }
+  // Apply theme classes to BOTH document root (for Tailwind) AND webapp container (for scoping)
+// Apply theme classes ONLY to document root (for Tailwind)
+const documentRoot = document.documentElement
+documentRoot.classList.remove("light", "dark", "chrome")
+documentRoot.classList.add(resolved)
 
       setStoredTheme(theme)
 
