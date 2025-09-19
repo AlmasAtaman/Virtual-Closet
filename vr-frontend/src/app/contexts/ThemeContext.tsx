@@ -121,13 +121,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const applyCustomTheme = useCallback(
     (color: string) => {
       try {
-        const root = document.documentElement
+        const webappRoot = document.querySelector('.webapp-theme-root') as HTMLElement
+        if (!webappRoot) return
         const colors = generateThemeColors(color, resolvedTheme)
 
         // Apply the generated colors to CSS custom properties
         Object.entries(colors).forEach(([key, value]) => {
           const cssVar = key.replace(/([A-Z])/g, "-$1").toLowerCase()
-          root.style.setProperty(`--${cssVar}`, value)
+          webappRoot.style.setProperty(`--${cssVar}`, value)
         })
 
         setCustomColor(color)
@@ -141,7 +142,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const resetCustomTheme = useCallback(() => {
     try {
-      const root = document.documentElement
+    const webappRoot = document.querySelector('.webapp-theme-root') as HTMLElement
+    if (!webappRoot) return
 
       // Remove all custom color properties
       const colorProperties = [
@@ -179,9 +181,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         "sidebar-ring",
       ]
 
-      colorProperties.forEach((prop) => {
-        root.style.removeProperty(`--${prop}`)
-      })
+    colorProperties.forEach((prop) => {
+      webappRoot.style.removeProperty(`--${prop}`)
+    })
 
       setCustomColor(null)
       removeStoredCustomColor()
@@ -210,23 +212,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", handleStorageChange)
   }, [])
 
-  useEffect(() => {
-    if (isLoading) return
+    useEffect(() => {
+      if (isLoading) return
 
-    const updateTheme = () => {
-      let resolved: "light" | "dark" | "chrome" = "light"
+      const updateTheme = () => {
+        let resolved: "light" | "dark" | "chrome" = "light"
 
-      if (theme === "system") {
-        resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-      } else {
-        resolved = theme as "light" | "dark" | "chrome"
-      }
+        if (theme === "system") {
+          resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        } else {
+          resolved = theme as "light" | "dark" | "chrome"
+        }
 
-      setResolvedTheme(resolved)
+    setResolvedTheme(resolved)
 
-      const root = window.document.documentElement
-      root.classList.remove("light", "dark", "chrome")
-      root.classList.add(resolved)
+    // CHANGED: Apply theme only to webapp container, not document root
+    const webappRoot = document.querySelector('.webapp-theme-root')
+    if (webappRoot) {
+      webappRoot.classList.remove("light", "dark", "chrome")
+      webappRoot.classList.add(resolved)
+    }
 
       setStoredTheme(theme)
 
@@ -268,7 +273,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         isLoading,
       }}
     >
-      {children}
+      <div className="webapp-theme-root light">
+        {children}
+      </div>
     </ThemeContext.Provider>
   )
 }
