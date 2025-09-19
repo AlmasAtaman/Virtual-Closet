@@ -134,7 +134,7 @@ export default function Homepage() {
           </div>
           <div className="flex items-center gap-4">
             <Button onClick={() => router.push("/outfits")} variant="outline" className="gap-2">
-              <span className="hidden sm:inline">View</span> Outfits
+              <span className="hidden sm:inline">View </span>Outfits
             </Button>
             <ThemeToggle />
             <LogOutButton />

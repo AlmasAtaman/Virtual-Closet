@@ -2,11 +2,12 @@
 
 import type React from "react"
 import { motion } from "framer-motion"
-import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload } from "lucide-react"
+import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import ThumbnailEditorModal from "./ThumbnailEditorModal"
 
@@ -73,6 +74,9 @@ export default function OccasionCard({
   const [showThumbnailEditor, setShowThumbnailEditor] = useState(false)
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>("")
   const [isUpdatingThumbnail, setIsUpdatingThumbnail] = useState(false)
+  const [showRenameDialog, setShowRenameDialog] = useState(false)
+  const [newName, setNewName] = useState("")
+  const [isRenaming, setIsRenaming] = useState(false)
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -177,6 +181,52 @@ export default function OccasionCard({
     } finally {
       setIsUpdatingThumbnail(false)
     }
+  }
+
+  const handleRename = async () => {
+    const trimmedName = newName.trim()
+
+    if (!trimmedName) {
+      alert("Please enter a valid name.")
+      return
+    }
+
+    if (trimmedName === occasion.name) {
+      setShowRenameDialog(false)
+      return
+    }
+
+    setIsRenaming(true)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/${occasion.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: trimmedName,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to rename occasion")
+      }
+
+      onUpdate?.()
+      setShowRenameDialog(false)
+    } catch (error) {
+      console.error("Failed to rename occasion:", error)
+      alert("Failed to rename occasion. Please try again.")
+    } finally {
+      setIsRenaming(false)
+    }
+  }
+
+  const handleOpenRename = () => {
+    setNewName(occasion.name)
+    setShowRenameDialog(true)
+    setShowMenu(false)
   }
 
   const outfitCount = occasion.outfits?.length || 0
@@ -404,8 +454,7 @@ export default function OccasionCard({
                       className="w-full justify-start h-8 px-3 text-xs"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setShowMenu(false)
-                        // TODO: Implement edit functionality
+                        handleOpenRename()
                       }}
                     >
                       <Edit2 className="h-3 w-3 mr-2" />
@@ -545,6 +594,73 @@ export default function OccasionCard({
         onSave={handleSaveThumbnail}
         title="Edit Folder Thumbnail"
       />
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Folder</DialogTitle>
+          </DialogHeader>
+          <div className="p-2">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="rename-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Folder Name
+                </label>
+                <Input
+                  id="rename-input"
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Enter folder name"
+                  className="w-full"
+                  maxLength={50}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleRename()
+                    } else if (e.key === "Escape") {
+                      e.preventDefault()
+                      setShowRenameDialog(false)
+                    }
+                  }}
+                  autoFocus
+                />
+                <p className="text-xs text-slate-500 mt-1">{newName.length}/50 characters</p>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRenameDialog(false)}
+                  className="flex-1"
+                  disabled={isRenaming}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleRename}
+                  className="flex-1"
+                  disabled={isRenaming || !newName.trim() || newName.trim() === occasion.name}
+                >
+                  {isRenaming ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Renaming...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Rename
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }
