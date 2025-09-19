@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Edit, Trash2, MoveRight, Loader2, Save, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ClothingItem } from "../types/clothing"
-import { ConfirmDialog } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 
 interface EditForm {
@@ -28,11 +27,6 @@ interface EditForm {
   sourceUrl: string
 }
 
-interface Outfit {
-  id: string
-  name?: string
-  clothingItems: Array<{ id: string }>
-}
 
 interface ClothingDetailModalProps {
   item: ClothingItem
@@ -69,8 +63,6 @@ export default function ClothingDetailModal({
 }: ClothingDetailModalProps) {
   const [activeTab, setActiveTab] = useState<string>("general")
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(0)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [outfitsUsingThisItem, setOutfitsUsingThisItem] = useState<Outfit[]>([])
 
   // Find the current item index in the allItems array
   useEffect(() => {
@@ -114,29 +106,6 @@ export default function ClothingDetailModal({
     return `$${numPrice.toFixed(2)}`
   }
 
-  // Fetch all outfits and check if this item is used in any
-  const fetchOutfitsUsingItem = useCallback(async (itemId: string) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits`, { credentials: "include" })
-      if (!res.ok) return
-      const data = await res.json()
-      const outfits = data.outfits || []
-      const usedIn = outfits.filter((outfit: Outfit) =>
-        Array.isArray(outfit.clothingItems) && outfit.clothingItems.some((ci) => ci.id === itemId)
-      )
-      setOutfitsUsingThisItem(usedIn)
-    } catch {
-      setOutfitsUsingThisItem([])
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isOpen && allItems.length > 0 && allItems[currentItemIndex]?.id) {
-      fetchOutfitsUsingItem(allItems[currentItemIndex].id)
-    } else {
-      setOutfitsUsingThisItem([])
-    }
-  }, [isOpen, allItems, currentItemIndex, fetchOutfitsUsingItem])
 
   if (!isOpen) return null
 
@@ -571,27 +540,10 @@ export default function ClothingDetailModal({
                       <Edit className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} disabled={isDeleting} className="gap-2">
+                    <Button variant="destructive" onClick={() => onDelete(currentItem.key)} disabled={isDeleting} className="gap-2">
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       Delete
                     </Button>
-                    <ConfirmDialog
-                      open={showDeleteDialog}
-                      onOpenChange={setShowDeleteDialog}
-                      title="Delete Clothing Item"
-                      description={
-                        outfitsUsingThisItem.length > 0
-                          ? `This item is used in ${outfitsUsingThisItem.length} outfit${outfitsUsingThisItem.length > 1 ? 's' : ''}: ` +
-                            outfitsUsingThisItem.slice(0, 3).map((o) => o.name || `Outfit ${o.id.slice(0, 6)}`).join(', ') +
-                            (outfitsUsingThisItem.length > 3 ? `, +${outfitsUsingThisItem.length - 3} more` : '') +
-                            ". Deleting it will leave an empty space in those outfits. This action cannot be undone."
-                          : "Are you sure you want to delete this item? This action cannot be undone."
-                      }
-                      onConfirm={() => onDelete(currentItem.key)}
-                      confirmLabel="Delete"
-                      cancelLabel="Cancel"
-                      confirmVariant="destructive"
-                    />
                   </>
                 )}
               </div>
