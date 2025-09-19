@@ -506,7 +506,17 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
   const renderOutfitDisplay = () => {
     return (
-      <div className="relative w-44 h-80 mx-auto">
+      <div className="relative w-44 h-80 mx-auto bg-white dark:bg-slate-900 chrome:bg-card border-2 border-slate-200 dark:border-slate-700 chrome:border-border rounded-xl shadow-lg overflow-hidden">
+        {/* Canvas Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="w-full h-full" style={{
+            backgroundImage: `
+              radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0)
+            `,
+            backgroundSize: '20px 20px'
+          }} />
+        </div>
+
         {outfitItems.map((outfitItem, index) => {
           const item = outfitItem.item
 
@@ -599,7 +609,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden"
+            className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -790,8 +800,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="flex-1 flex flex-col">
-                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-8 flex items-center justify-center" onClick={handleDeselectClick}>
+              <div className="w-80 flex flex-col">
+                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-6 flex items-center justify-center" onClick={handleDeselectClick}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={animationKey}
@@ -799,6 +809,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ type: "spring", duration: 0.4 }}
+                      className="relative"
                     >
                       {renderOutfitDisplay()}
                     </motion.div>
