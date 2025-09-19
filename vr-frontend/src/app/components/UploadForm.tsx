@@ -566,7 +566,7 @@ export default function UploadForm({
   return (
     <AnimatePresence>
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
-        <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col overflow-hidden">
+        <DialogContent className="max-w-6xl max-h-[95vh] h-auto p-0 flex flex-col overflow-hidden">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -872,7 +872,7 @@ export default function UploadForm({
 
               {/* Right Column - Form */}
               <div className="lg:w-3/5 flex flex-col overflow-hidden">
-                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
+                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/20">
                   {/* Target Toggle */}
                   <Card className="p-4 bg-gradient-to-r from-background to-muted/20">
                     <div className="flex items-center justify-between">
@@ -938,7 +938,7 @@ export default function UploadForm({
                             onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
                           >
                             <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select type (optional - defaults to uncategorized)" />
+                              <SelectValue placeholder="Select type (optional - defaults to uncategorized)" className="text-muted-foreground" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="uncategorized">Uncategorized</SelectItem>
@@ -1071,7 +1071,7 @@ export default function UploadForm({
                             onValueChange={(value: string) => setFormData((prev) => ({ ...prev, fit: value }))}
                           >
                             <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select fit" />
+                              <SelectValue placeholder="Select fit" className="text-muted-foreground" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Slim">Slim</SelectItem>
@@ -1108,7 +1108,7 @@ export default function UploadForm({
                             onValueChange={(value: string) => setFormData((prev) => ({ ...prev, material: value }))}
                           >
                             <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select material" />
+                              <SelectValue placeholder="Select material" className="text-muted-foreground" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Cotton">Cotton</SelectItem>
@@ -1131,7 +1131,7 @@ export default function UploadForm({
                             onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
                           >
                             <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select season" />
+                              <SelectValue placeholder="Select season" className="text-muted-foreground" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Spring">Spring</SelectItem>
