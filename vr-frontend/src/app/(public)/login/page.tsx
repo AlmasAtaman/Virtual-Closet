@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { getBaseUrl, safeRedirect } from "../utils/url";
+import { getBaseUrl, safeRedirect } from "../../utils/url";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaGoogle, FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";

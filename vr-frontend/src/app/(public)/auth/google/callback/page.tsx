@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { getBaseUrl } from "../../../utils/url";
+import { getBaseUrl } from "../../../../utils/url";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function GoogleCallbackPage() {
