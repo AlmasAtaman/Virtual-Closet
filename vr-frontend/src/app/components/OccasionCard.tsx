@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { motion } from "framer-motion"
+import Image from "next/image"
 import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -294,13 +295,12 @@ export default function OccasionCard({
           <div className="flex-1 relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 chrome:from-muted chrome:to-accent overflow-hidden">
             {occasion.customThumbnail ? (
               <div className="relative w-full h-full">
-                <img
+                <Image
                   src={occasion.customThumbnail || "/placeholder.svg"}
                   alt={`${occasion.name} thumbnail`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/placeholder.svg"
-                  }}
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
             ) : occasion.outfits && occasion.outfits.length > 0 ? (
@@ -371,11 +371,9 @@ export default function OccasionCard({
                     return sampleItems.slice(0, 6).map((item, index) => {
                       const position = gridPositions[index] || gridPositions[0]
                       return (
-                        <img
+                        <div
                           key={`${item.id}-${index}`}
-                          src={item.url || "/placeholder.svg"}
-                          alt={item.name || `Item ${index + 1}`}
-                          className="absolute object-contain rounded-sm"
+                          className="absolute rounded-sm"
                           style={{
                             left: `${position.left}%`,
                             top: `${position.top}%`,
@@ -386,10 +384,15 @@ export default function OccasionCard({
                             filter: index === 2 ? "none" : "brightness(0.85)", // Highlight center item
                             opacity: index < 3 ? 1 : 0.8, // Fade background items
                           }}
-                          onError={(e) => {
-                            e.currentTarget.src = "/placeholder.svg"
-                          }}
-                        />
+                        >
+                          <Image
+                            src={item.url || "/placeholder.svg"}
+                            alt={item.name || `Item ${index + 1}`}
+                            fill
+                            className="object-contain rounded-sm"
+                            unoptimized
+                          />
+                        </div>
                       )
                     })
                   })()}
