@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Plus, Shuffle, RotateCcw, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -76,30 +76,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [outfitName, setOutfitName] = useState("")
   
   // Drag and drop and resize state
-  const [isEditing, setIsEditing] = useState(true) // Always in editing mode for CreateOutfitModal
+  const isEditing = true // Always in editing mode for CreateOutfitModal
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
 
-  useEffect(() => {
-    if (show) {
-      fetchClothingItems()
-    }
-  }, [show])
-
-  // Initialize categorized items when selected items change
-  useEffect(() => {
-    if (selectedTop || selectedBottom || selectedOuterwear) {
-      setEditedCategorizedItems(prev => {
-        const newItems = prev || { others: [] }
-        if (selectedTop) newItems.top = selectedTop
-        if (selectedBottom) newItems.bottom = selectedBottom
-        if (selectedOuterwear) newItems.outerwear = selectedOuterwear
-        return { ...newItems }
-      })
-    }
-  }, [selectedTop, selectedBottom, selectedOuterwear])
-
-  const fetchClothingItems = async () => {
+  const fetchClothingItems = useCallback(async () => {
     try {
       setLoadingClothing(true)
       const axios = createAuthenticatedAxios()
@@ -136,7 +117,26 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     } finally {
       setLoadingClothing(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (show) {
+      fetchClothingItems()
+    }
+  }, [show, fetchClothingItems])
+
+  // Initialize categorized items when selected items change
+  useEffect(() => {
+    if (selectedTop || selectedBottom || selectedOuterwear) {
+      setEditedCategorizedItems(prev => {
+        const newItems = prev || { others: [] }
+        if (selectedTop) newItems.top = selectedTop
+        if (selectedBottom) newItems.bottom = selectedBottom
+        if (selectedOuterwear) newItems.outerwear = selectedOuterwear
+        return { ...newItems }
+      })
+    }
+  }, [selectedTop, selectedBottom, selectedOuterwear])
 
   const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
     if (category === "top") {
