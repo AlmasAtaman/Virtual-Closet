@@ -157,9 +157,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const deltaX = e.clientX - dragStartPos.current.x
       const deltaY = e.clientY - dragStartPos.current.y
 
-      // Container size: w-80 = 320px, h-[32rem] = 512px
+      // Container size: w-80 = 320px, h-[36rem] = 576px (increased height)
       const containerWidth = 320
-      const containerHeight = 512
+      const containerHeight = 576
 
       const leftDelta = (deltaX / containerWidth) * 100
       const bottomDelta = -(deltaY / containerHeight) * 20
@@ -223,10 +223,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const response = await axios.get("/api/clothes")
 
       const allItems = response.data || []
+      
+      // FIXED: Use consistent categorization that matches ClothingItemSelectModal
       const categorizedItems = {
         tops: allItems.filter((item: ClothingItem) => {
           const type = item.type?.toLowerCase() || ""
-          return ["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)
+          // Only basic tops - moved sweater, hoodie, cardigan to outerwear
+          return ["t-shirt", "dress", "shirt", "blouse"].includes(type)
         }),
         bottoms: allItems.filter((item: ClothingItem) => {
           const type = item.type?.toLowerCase() || ""
@@ -234,7 +237,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         }),
         outerwear: allItems.filter((item: ClothingItem) => {
           const type = item.type?.toLowerCase() || ""
-          return ["jacket", "coat", "blazer", "vest"].includes(type)
+          // FIXED: Include sweater, hoodie, cardigan in outerwear to match ClothingItemSelectModal
+          return ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(type)
         }),
         allItems: allItems,
       }
@@ -320,15 +324,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     )
   }
 
+  // FIXED: Updated getItemCategory to match ClothingItemSelectModal
   const getItemCategory = (item: ClothingItem): string => {
     const type = item.type?.toLowerCase() || ""
-    if (["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)) {
+    if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
       return "top"
     }
     if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
       return "bottom"
     }
-    if (["jacket", "coat", "blazer", "vest"].includes(type)) {
+    if (["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(type)) {
       return "outerwear"
     }
     return "other"
@@ -416,7 +421,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
   const renderOutfitDisplay = () => {
     return (
-      <div className="relative w-80 h-[32rem] mx-auto bg-white dark:bg-slate-900 chrome:bg-card border-2 border-slate-200 dark:border-slate-700 chrome:border-border rounded-xl shadow-lg overflow-hidden">
+      // FIXED: Increased height from h-[32rem] to h-[36rem] to prevent bottom cutoff
+      <div className="relative w-80 h-[36rem] mx-auto bg-white dark:bg-slate-900 chrome:bg-card border-2 border-slate-200 dark:border-slate-700 chrome:border-border rounded-xl shadow-lg overflow-hidden">
         {/* Canvas Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="w-full h-full" style={{
