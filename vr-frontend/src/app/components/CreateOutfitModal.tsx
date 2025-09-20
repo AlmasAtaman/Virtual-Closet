@@ -135,18 +135,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }, [show, fetchClothingItems])
 
-  // Initialize categorized items when selected items change
-  useEffect(() => {
-    if (selectedTop || selectedBottom || selectedOuterwear) {
-      setEditedCategorizedItems(prev => {
-        const newItems = prev || { others: [] }
-        if (selectedTop) newItems.top = selectedTop
-        if (selectedBottom) newItems.bottom = selectedBottom
-        if (selectedOuterwear) newItems.outerwear = selectedOuterwear
-        return { ...newItems }
-      })
-    }
-  }, [selectedTop, selectedBottom, selectedOuterwear])
+  // Removed the useEffect that was overwriting positioned items
+  // The updateCategorizedItems function already handles positioning correctly
 
   // DRAG AND DROP SYSTEM - Copied from OutfitCard
   const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
