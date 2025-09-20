@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Plus, Shuffle, RotateCcw } from "lucide-react"
+import { X, Plus, Shuffle, RotateCcw, Move } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
@@ -231,7 +231,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-foreground">
-                    Create New Outfit
+                    Create Outfit
                   </h2>
                   <p className="text-slate-600 dark:text-muted-foreground text-sm mt-1">
                     Mix and match your clothing items with drag & drop positioning
@@ -255,7 +255,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
-              {/* Left Panel */}
+              {/* Left Panel - Outfit Details */}
               <div className="w-96 border-r border-slate-200 dark:border-border p-6 overflow-y-auto bg-white dark:bg-card">
                 {/* Outfit Name */}
                 <div className="mb-6">
@@ -450,7 +450,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 <div className="text-center py-12">
                   <div className="text-slate-400 dark:text-slate-500">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-muted flex items-center justify-center">
-                      <div className="text-2xl">🎯</div>
+                      <Move className="w-8 h-8" />
                     </div>
                     <p className="text-lg font-medium mb-2">No Item Is Selected</p>
                     <p className="text-sm">Select An Item for further controls</p>
