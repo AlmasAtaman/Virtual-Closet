@@ -223,14 +223,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden"
+            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
               {/* Left Panel - Outfit Details */}
-              <div className="w-96 border-r border-slate-200 dark:border-border p-6 overflow-y-auto bg-white dark:bg-card">
+              <div className="w-80 border-r border-slate-200 dark:border-border p-4 overflow-y-auto bg-white dark:bg-card">
                 {/* Outfit Name */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-2">
@@ -397,7 +397,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-muted/30">
+              <div className="flex-1 flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-muted/30">
                 {mockOutfit.clothingItems.length > 0 ? (
                   <div className="w-80">
                     <OutfitCard
@@ -416,7 +416,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Right Panel - Item Controls */}
-              <div className="w-80 border-l border-slate-200 dark:border-border p-6 bg-white dark:bg-card">
+              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground">
                     Item Controls
