@@ -69,6 +69,8 @@ interface OutfitCardProps {
   setEditedCategorizedItems?: (items: CategorizedOutfitItems) => void
   // NEW: Hide footer prop
   hideFooter?: boolean
+  // NEW: Hide item selection section
+  hideItemSelection?: boolean
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({
@@ -89,6 +91,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   setEditedCategorizedItems,
   // NEW: Hide footer prop
   hideFooter = false,
+  // NEW: Hide item selection section
+  hideItemSelection = false,
 }) => {
   // Drag state for detail view
   const [isDragging, setIsDragging] = useState(false)
@@ -535,7 +539,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         </Card>
 
         {/* Item Category Selection (only when editing) */}
-        {isEditing && onItemSelect && (
+        {isEditing && onItemSelect && !hideItemSelection && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Change Items</CardTitle>
