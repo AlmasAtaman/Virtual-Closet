@@ -492,30 +492,33 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gray-100 dark:bg-gray-800">
+              <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative">
                 {mockOutfit.clothingItems.length > 0 ? (
-                  <div className="w-80">
-                    <OutfitCard
-                      outfit={mockOutfit}
-                      onDelete={() => {}}
-                      onUpdate={() => {}}
-                      hideFooter={true}
-                      hideItemSelection={true}
-                      hideHeader={true}
-                      hideResizeControls={true}
-                      isDetailView={true}
-                      isEditing={isEditing}
-                      onItemSelect={handleItemSelectForResize}
-                      enableDragDrop={true}
-                      enableResize={true}
-                      editedCategorizedItems={editedCategorizedItems}
-                      setEditedCategorizedItems={setEditedCategorizedItems}
-                      selectedItemForResize={selectedItemForResize}
-                      setSelectedItemForResize={setSelectedItemForResize}
-                    />
-                  </div>
+                  <OutfitCard
+                    outfit={mockOutfit}
+                    onDelete={() => {}}
+                    onUpdate={() => {}}
+                    hideFooter={true}
+                    hideItemSelection={true}
+                    hideHeader={true}
+                    hideResizeControls={true}
+                    isDetailView={true}
+                    isEditing={isEditing}
+                    onItemSelect={handleItemSelectForResize}
+                    enableDragDrop={true}
+                    enableResize={true}
+                    editedCategorizedItems={editedCategorizedItems}
+                    setEditedCategorizedItems={setEditedCategorizedItems}
+                    selectedItemForResize={selectedItemForResize}
+                    setSelectedItemForResize={setSelectedItemForResize}
+                  />
                 ) : (
-                  <div className="w-80 h-80 bg-white dark:bg-gray-700 rounded-lg"></div>
+                  <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border">
+                    <div className="text-center text-muted-foreground">
+                      <div className="text-4xl mb-4">👗</div>
+                      <p className="text-sm">Select items to preview outfit</p>
+                    </div>
+                  </div>
                 )}
               </div>
 
