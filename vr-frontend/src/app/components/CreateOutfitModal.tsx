@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Plus, Shuffle, RotateCcw } from "lucide-react"
+import { X, Plus, Shuffle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
@@ -255,7 +255,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -339,14 +339,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       setSelectedOuterwear(randomOuterwear)
       updateCategorizedItems("outerwear", randomOuterwear)
     }
-  }
-
-  const resetLayout = () => {
-    setSelectedTop(null)
-    setSelectedBottom(null)
-    setSelectedOuterwear(null)
-    setEditedCategorizedItems({ others: [] })
-    setSelectedItemForResize(null)
   }
 
   const createOutfit = async () => {
