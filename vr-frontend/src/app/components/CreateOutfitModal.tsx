@@ -170,7 +170,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       // Update item position
       setOutfitItems((prev) =>
         prev.map((outfitItem) =>
-          outfitItem.item.id === draggedItemId ? { ...outfitItem, left: newLeft, bottom: newBottom } : outfitItem,
+          outfitItem.item.id === draggedItemId
+            ? { ...outfitItem, left: newLeft, bottom: newBottom }
+            : outfitItem,
         ),
       )
     },
@@ -182,181 +184,82 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setDraggedItemId(null)
   }, [])
 
-  // Global mouse events for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove)
-        document.removeEventListener("mouseup", handleMouseUp)
-      }
+      document.body.style.cursor = "grabbing"
+    } else {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "auto"
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "auto"
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
 
-  // RESIZE SYSTEM with smooth updates and throttling
-  const throttledWidthChange = useRef<NodeJS.Timeout | null>(null)
-
-  const handleWidthChange = useCallback((itemId: string, newWidth: number) => {
-    // Clear previous timeout
-    if (throttledWidthChange.current) {
-      clearTimeout(throttledWidthChange.current)
-    }
-
-    // Immediate update for responsive feedback
+  const handleWidthChange = (itemId: string, newWidth: number) => {
     setOutfitItems((prev) =>
-      prev.map((outfitItem) => (outfitItem.item.id === itemId ? { ...outfitItem, width: newWidth } : outfitItem)),
+      prev.map((outfitItem) =>
+        outfitItem.item.id === itemId ? { ...outfitItem, width: newWidth } : outfitItem,
+      ),
     )
-  }, [])
+  }
 
   useEffect(() => {
     if (show) {
       fetchClothingItems()
-    } else {
-      // Reset state when modal closes
-      setSelectedTop(null)
-      setSelectedBottom(null)
-      setSelectedOuterwear(null)
-      setOutfitItems([])
-      setOutfitName("")
-      setAnimationKey((prev) => prev + 1)
-      setSelectedItemForResize(null)
-      setDraggedItemId(null)
     }
   }, [show])
 
   const fetchClothingItems = async () => {
     try {
       setLoadingClothing(true)
+      const axios = createAuthenticatedAxios()
+      const response = await axios.get("/api/clothes")
 
-      // Fetch both closet and wishlist items
-      const [closetRes, wishlistRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=closet`, { withCredentials: true }),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=wishlist`, { withCredentials: true }),
-      ])
-
-      const closetItems: ClothingItem[] = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
-        ...item,
-        mode: "closet",
-      }))
-
-      const wishlistItems: ClothingItem[] = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({
-        ...item,
-        mode: "wishlist",
-      }))
-
-      const allItems = [...closetItems, ...wishlistItems]
-
-      const categorized: CategorizedClothing = {
-        tops: allItems.filter((item: ClothingItem) =>
-          ["t-shirt", "dress", "shirt", "blouse"].includes(item.type?.toLowerCase() || ""),
-        ),
-        bottoms: allItems.filter((item: ClothingItem) =>
-          ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || ""),
-        ),
-        outerwear: allItems.filter((item: ClothingItem) =>
-          ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(
-            item.type?.toLowerCase() || "",
-          ),
-        ),
+      const allItems = response.data || []
+      const categorizedItems = {
+        tops: allItems.filter((item: ClothingItem) => {
+          const type = item.type?.toLowerCase() || ""
+          return ["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)
+        }),
+        bottoms: allItems.filter((item: ClothingItem) => {
+          const type = item.type?.toLowerCase() || ""
+          return ["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)
+        }),
+        outerwear: allItems.filter((item: ClothingItem) => {
+          const type = item.type?.toLowerCase() || ""
+          return ["jacket", "coat", "blazer", "vest"].includes(type)
+        }),
         allItems: allItems,
       }
 
-      setClothingItems(categorized)
+      setClothingItems(categorizedItems)
     } catch (error) {
       console.error("Error fetching clothing items:", error)
+      setClothingItems({ tops: [], bottoms: [], outerwear: [], allItems: [] })
     } finally {
       setLoadingClothing(false)
     }
   }
 
-  // Auto-categorize uncategorized items based on the category they're selected in
-  const autoCategorizeItem = async (item: ClothingItem, category: "top" | "bottom" | "outerwear"): Promise<ClothingItem | null> => {
-    // Only auto-categorize items that are actually uncategorized
-    if (item.type !== "uncategorized") {
-      return item // Return the item unchanged if it's already categorized
-    }
-
-    // Determine the new type based on the category
-    let newType: string
+  const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
     switch (category) {
       case "top":
-        newType = "T-Shirt"
-        break
-      case "bottom":
-        newType = "Pants"
-        break
-      case "outerwear":
-        newType = "Jacket"
-        break
-      default:
-        return item // Return unchanged if category is unknown
-    }
-
-    try {
-      // Update the item in the database
-      await createAuthenticatedAxios().patch(
-        "/api/images/update",
-        { id: item.id, type: newType }
-      )
-
-      console.log(`Auto-categorized "${item.name || 'Unnamed item'}" as ${newType}`)
-
-      // Create updated item object
-      const updatedItem: ClothingItem = {
-        ...item,
-        type: newType
-      }
-
-      // Update local clothing items state
-      setClothingItems(prev => {
-        const newAllItems = prev.allItems.map(i => i.id === item.id ? updatedItem : i)
-
-        // Recategorize all items
-        const newCategorized = {
-          tops: newAllItems.filter((i: ClothingItem) =>
-            ["t-shirt", "dress", "shirt", "blouse"].includes(i.type?.toLowerCase() || "")
-          ),
-          bottoms: newAllItems.filter((i: ClothingItem) =>
-            ["pants", "skirt", "shorts", "jeans", "leggings"].includes(i.type?.toLowerCase() || "")
-          ),
-          outerwear: newAllItems.filter((i: ClothingItem) =>
-            ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(i.type?.toLowerCase() || "")
-          ),
-          allItems: newAllItems,
-        }
-
-        return newCategorized
-      })
-
-      return updatedItem
-    } catch (error) {
-      console.error("Failed to auto-categorize item:", error)
-      // Show a non-intrusive error message
-      console.warn(`Could not auto-categorize "${item.name || 'item'}". You can manually categorize it later.`)
-      // Return the original item if the update fails
-      return item
-    }
-  }
-
-  const handleItemSelect = async (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
-    // Attempt auto-categorization for uncategorized items
-    const finalItem = await autoCategorizeItem(item, category)
-
-    // Safety check - if auto-categorization failed, use the original item
-    const itemToSelect = finalItem || item
-
-    switch (category) {
-      case "top":
-        setSelectedTop(itemToSelect)
+        setSelectedTop(item)
         setShowTopSelectModal(false)
         break
       case "bottom":
-        setSelectedBottom(itemToSelect)
+        setSelectedBottom(item)
         setShowBottomSelectModal(false)
         break
       case "outerwear":
-        setSelectedOuterwear(itemToSelect)
+        setSelectedOuterwear(item)
         setShowOuterwearSelectModal(false)
         break
     }
@@ -375,10 +278,17 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         setSelectedOuterwear(null)
         break
     }
+    setSelectedItemForResize(null)
     setAnimationKey((prev) => prev + 1)
   }
 
   const shuffleOutfit = () => {
+    // Reset current selections
+    setSelectedTop(null)
+    setSelectedBottom(null)
+    setSelectedOuterwear(null)
+
+    // Select random items
     if (clothingItems.tops.length > 0) {
       const randomTop = clothingItems.tops[Math.floor(Math.random() * clothingItems.tops.length)]
       setSelectedTop(randomTop)
@@ -558,36 +468,36 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
               style={{
                 transform: `translateX(-50%)`,
-                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : getLayerOrder(item),
+                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 30 : getLayerOrder(item)
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
-              onClick={(e) => { e.stopPropagation(); setSelectedItemForResize(item.id); }}
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
+              }}
             >
               <Image
                 src={item.url || "/placeholder.svg"}
-                alt={item.name || ""}
+                alt={item.name || "Clothing item"}
                 width={200}
                 height={200}
-                className="w-full h-auto object-contain rounded-lg"
-                draggable={false}
+                className="w-full h-full object-contain pointer-events-none select-none"
                 unoptimized
+                draggable={false}
               />
-              <div className="absolute -top-2 -right-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-6 w-6 p-0 rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
-                  }}
-                >
-                  <Move className="w-3 h-3" />
-                </Button>
-              </div>
             </motion.div>
           )
         })}
+
+        {/* Empty state message */}
+        {outfitItems.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-500">
+            <div className="text-center">
+              <div className="text-4xl mb-2">👗</div>
+              <p className="text-sm">Drag clothing items here</p>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -601,38 +511,37 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           onClick={handleCloseModal}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", duration: 0.3 }}
-            className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white dark:bg-card chrome:bg-card rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
+            <div className="p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-slate-50 dark:bg-muted/30 chrome:bg-muted/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white chrome:text-foreground">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-foreground chrome:text-foreground">
                     Create New Outfit
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400 chrome:text-muted-foreground mt-1">
+                  <p className="text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground text-sm mt-1">
                     Mix and match your clothing items with drag & drop positioning
                   </p>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Button variant="outline" onClick={(e) => { e.stopPropagation(); shuffleOutfit(); }} disabled={loadingClothing}>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" onClick={shuffleOutfit} disabled={loadingClothing}>
                     <Shuffle className="w-4 h-4 mr-2" />
                     Shuffle
                   </Button>
-                  <Button variant="outline" onClick={(e) => { e.stopPropagation(); resetLayout(); }}>
+                  <Button variant="outline" size="sm" onClick={resetLayout}>
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Reset Layout
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCloseModal(); }} className="rounded-full">
+                  <Button variant="ghost" size="sm" onClick={handleCloseModal}>
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
@@ -640,167 +549,161 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             </div>
 
             {/* Content */}
-            <div className="flex h-[calc(95vh-180px)]">
-              {/* Left Panel - Item Selection */}
-              <div className="w-72 border-r border-slate-200 dark:border-border chrome:border-border p-4 overflow-y-auto" onClick={handleDeselectClick}>
-                <div className="space-y-6">
-                  {/* Outfit Name */}
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
-                      Outfit Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter outfit name (optional)"
-                      value={outfitName}
-                      onChange={(e) => setOutfitName(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-border chrome:border-border rounded-lg bg-white dark:bg-background chrome:bg-background text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-500 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left Panel - Compact Selection */}
+              <div className="w-72 border-r border-slate-200 dark:border-border chrome:border-border p-4 overflow-y-auto">
+                {/* Outfit Name */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground chrome:text-foreground mb-2">
+                    Outfit Name
+                  </label>
+                  <input
+                    type="text"
+                    value={outfitName}
+                    onChange={(e) => setOutfitName(e.target.value)}
+                    placeholder="Enter outfit name (optional)"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-border chrome:border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-background chrome:bg-background"
+                  />
+                </div>
 
+                {/* Compact Selection Areas */}
+                <div className="space-y-3">
                   {/* Top Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
-                      Top *
-                    </label>
-                    {selectedTop ? (
-                      <div
-                        className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={(e) => { e.stopPropagation(); setShowTopSelectModal(true); }}
-                      >
-                        <Image
-                          src={selectedTop.url || "/placeholder.svg"}
-                          alt={selectedTop.name || "Top item"}
-                          width={200}
-                          height={128}
-                          className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
-                          unoptimized
-                        />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground">
+                        Top *
+                      </label>
+                      {selectedTop && (
                         <Button
                           size="sm"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeItem("top")
-                          }}
+                          variant="outline"
+                          className="h-6 w-6 p-0"
+                          onClick={() => removeItem("top")}
                         >
                           <X className="w-3 h-3" />
                         </Button>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground truncate">
-                          {selectedTop.name || "Unnamed Top"}
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent justify-start"
+                      onClick={() => setShowTopSelectModal(true)}
+                      disabled={loadingClothing}
+                    >
+                      {selectedTop ? (
+                        <div className="flex items-center">
+                          <Image
+                            src={selectedTop.url}
+                            alt={selectedTop.name || "Top"}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain rounded mr-2"
+                            unoptimized
+                          />
+                          <span className="text-sm truncate">{selectedTop.name || "Unnamed Top"}</span>
                         </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
-                        onClick={(e) => { e.stopPropagation(); setShowTopSelectModal(true); }}
-                        disabled={loadingClothing}
-                      >
-                        <Plus className="w-6 h-6 mr-2" />
-                        Select Top
-                      </Button>
-                    )}
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Select Top
+                        </>
+                      )}
+                    </Button>
                   </div>
 
                   {/* Bottom Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
-                      Bottom *
-                    </label>
-                    {selectedBottom ? (
-                      <div
-                        className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={(e) => { e.stopPropagation(); setShowBottomSelectModal(true); }}
-                      >
-                        <Image
-                          src={selectedBottom.url || "/placeholder.svg"}
-                          alt={selectedBottom.name ||  "Bottom Item" }
-                          width={200}
-                          height={128}
-                          className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
-                          unoptimized
-                        />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground">
+                        Bottom *
+                      </label>
+                      {selectedBottom && (
                         <Button
                           size="sm"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeItem("bottom")
-                          }}
+                          variant="outline"
+                          className="h-6 w-6 p-0"
+                          onClick={() => removeItem("bottom")}
                         >
                           <X className="w-3 h-3" />
                         </Button>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground truncate">
-                          {selectedBottom.name || "Unnamed Bottom"}
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent justify-start"
+                      onClick={() => setShowBottomSelectModal(true)}
+                      disabled={loadingClothing}
+                    >
+                      {selectedBottom ? (
+                        <div className="flex items-center">
+                          <Image
+                            src={selectedBottom.url}
+                            alt={selectedBottom.name || "Bottom"}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain rounded mr-2"
+                            unoptimized
+                          />
+                          <span className="text-sm truncate">{selectedBottom.name || "Unnamed Bottom"}</span>
                         </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
-                        onClick={(e) => { e.stopPropagation(); setShowBottomSelectModal(true); }}
-                        disabled={loadingClothing}
-                      >
-                        <Plus className="w-6 h-6 mr-2" />
-                        Select Bottom
-                      </Button>
-                    )}
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Select Bottom
+                        </>
+                      )}
+                    </Button>
                   </div>
 
                   {/* Outerwear Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground mb-3">
-                      Outerwear
-                    </label>
-                    {selectedOuterwear ? (
-                      <div
-                        className="relative cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={(e) => { e.stopPropagation(); setShowOuterwearSelectModal(true); }}
-                      >
-                        <Image
-                          src={selectedOuterwear.url || "/placeholder.svg"}
-                          alt={selectedOuterwear.name || "Outerwear Item"}
-                          width={200}
-                          height={128}
-                          className="w-full h-32 object-contain rounded-lg border-2 border-green-200 bg-green-50"
-                          unoptimized
-                        />
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-foreground chrome:text-foreground">
+                        Outerwear
+                      </label>
+                      {selectedOuterwear && (
                         <Button
                           size="sm"
-                          variant="destructive"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeItem("outerwear")
-                          }}
+                          variant="outline"
+                          className="h-6 w-6 p-0"
+                          onClick={() => removeItem("outerwear")}
                         >
                           <X className="w-3 h-3" />
                         </Button>
-                        <div className="mt-2 text-xs text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground truncate">
-                          {selectedOuterwear.name || "Unnamed Outerwear"}
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent justify-start"
+                      onClick={() => setShowOuterwearSelectModal(true)}
+                      disabled={loadingClothing}
+                    >
+                      {selectedOuterwear ? (
+                        <div className="flex items-center">
+                          <Image
+                            src={selectedOuterwear.url}
+                            alt={selectedOuterwear.name || "Outerwear"}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain rounded mr-2"
+                            unoptimized
+                          />
+                          <span className="text-sm truncate">{selectedOuterwear.name || "Unnamed Outerwear"}</span>
                         </div>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full h-32 border-2 border-dashed border-slate-300 hover:border-blue-400 bg-transparent"
-                        onClick={(e) => { e.stopPropagation(); setShowOuterwearSelectModal(true); }}
-                        disabled={loadingClothing}
-                      >
-                        <Plus className="w-6 h-6 mr-2" />
-                        Add Outerwear
-                      </Button>
-                    )}
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Outerwear
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="w-96 flex flex-col">
+              <div className="flex-1 flex flex-col">
                 <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-4 flex items-center justify-center" onClick={handleDeselectClick}>
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -817,14 +720,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 </div>
               </div>
 
-              {/* Right Panel - Controls */}
-              {selectedItemForResize && (
-                <div className="w-72 border-l border-slate-200 dark:border-border chrome:border-border p-4 overflow-y-auto" onClick={handleDeselectClick}>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground chrome:text-foreground mb-4">
-                    Item Controls
-                  </h3>
+              {/* Right Panel - Always Visible Item Controls */}
+              <div className="w-72 border-l border-slate-200 dark:border-border chrome:border-border p-4 overflow-y-auto">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground chrome:text-foreground mb-4">
+                  Item Controls
+                </h3>
 
-                  {(() => {
+                {selectedItemForResize ? (
+                  (() => {
                     const selectedOutfitItem = outfitItems.find((item) => item.item.id === selectedItemForResize)
                     if (!selectedOutfitItem) return null
 
@@ -892,9 +795,21 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         </Button>
                       </div>
                     )
-                  })()}
-                </div>
-              )}
+                  })()
+                ) : (
+                  <div className="text-center text-slate-500 dark:text-muted-foreground chrome:text-muted-foreground">
+                    <div className="mb-4">
+                      <Move className="w-12 h-12 mx-auto opacity-30" />
+                    </div>
+                    <p className="text-sm leading-relaxed">
+                      No Item Is Selected
+                    </p>
+                    <p className="text-xs mt-2 text-slate-400 dark:text-muted-foreground/70 chrome:text-muted-foreground/70">
+                      Select An Item for further controls
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
