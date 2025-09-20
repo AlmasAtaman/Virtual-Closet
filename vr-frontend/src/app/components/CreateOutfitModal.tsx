@@ -204,11 +204,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
       const halfItemWidthPercent = itemWidthPercent / 2
 
-      // Fixed boundary calculations - allow full movement within container
-      const minLeft = halfItemWidthPercent
-      const maxLeft = 100 - halfItemWidthPercent
-      const minBottom = 0
-      const maxBottom = 20
+      // More permissive boundary calculations - allow items to reach edges
+      const minLeft = Math.max(0, halfItemWidthPercent - 5) // Allow items closer to left edge
+      const maxLeft = Math.min(100, 100 - halfItemWidthPercent + 5) // Allow items closer to right edge
+      const minBottom = -2 // Allow items slightly below bottom edge
+      const maxBottom = 22 // Allow items slightly above top edge
 
       const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
       const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
