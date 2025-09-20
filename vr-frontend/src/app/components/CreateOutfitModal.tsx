@@ -68,7 +68,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [outfitName, setOutfitName] = useState("")
   
   // Drag and drop and resize state
-  const isEditing = true
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
 
