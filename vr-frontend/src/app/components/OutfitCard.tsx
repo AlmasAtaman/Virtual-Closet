@@ -251,8 +251,34 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       const leftDelta = (deltaX / containerWidth) * 100
       const bottomDelta = -(deltaY / containerHeight) * 20
 
-      const newLeft = Math.max(0, Math.min(100, dragStartPos.current.itemLeft + leftDelta))
-      const newBottom = Math.max(0, Math.min(20, dragStartPos.current.itemBottom + bottomDelta))
+      // Get the current item to check its width for boundary calculations
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      // Calculate boundaries accounting for transform: translateX(-50%)
+      // Since items are centered on their left position, we need to account for half the item width
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100 // Convert rem to percentage
+      const halfItemWidthPercent = itemWidthPercent / 2
+
+      // Boundary calculations:
+      // - Left edge: item center can't go below half item width (so left edge touches container left)
+      // - Right edge: item center can't go above 100% minus half item width (so right edge touches container right)
+      // - Bottom edge: item can touch the bottom (0rem)
+      // - Top edge: item can reach the top, accounting for container height in rem (20rem)
+      const minLeft = halfItemWidthPercent
+      const maxLeft = 100 - halfItemWidthPercent
+      const minBottom = 0
+      const maxBottom = 20
+
+      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
 
       // Update item position
       const updatedItems = { ...editedCategorizedItems }
@@ -275,7 +301,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
   )
 
   const handleMouseUp = useCallback(() => {
