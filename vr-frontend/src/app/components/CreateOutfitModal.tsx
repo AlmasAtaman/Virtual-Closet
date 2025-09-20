@@ -637,7 +637,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Center Panel - Outfit Preview */}
               <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative">
-                {/* FIXED: Consistent sizing drag area that matches OutfitCard exactly */}
                 <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
                   <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
                     {editedCategorizedItems && (editedCategorizedItems.top || editedCategorizedItems.bottom || editedCategorizedItems.outerwear) ? (
@@ -651,8 +650,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 </div>
               </div>
 
-              {/* Right Panel - Item Controls */}
-              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card">
+              {/* Right Panel - Item Controls - FIXED WITH FLEXBOX */}
+              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground">
                     Item Controls
@@ -727,10 +726,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </div>
                 )}
 
+                {/* Flexible space that pushes buttons to bottom */}
                 <div className="flex-1"></div>
 
                 {/* Bottom buttons - stuck to bottom */}
-                <div className="mt-auto pt-6 border-t border-slate-200 dark:border-border">
+                <div className="pt-6 border-t border-slate-200 dark:border-border">
                   <p className="text-sm text-slate-600 dark:text-muted-foreground mb-4 text-center">
                     Select at least a top and bottom
                   </p>
@@ -758,7 +758,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 </div>
               </div>
             </div>
-
           </motion.div>
         </motion.div>
       </AnimatePresence>
