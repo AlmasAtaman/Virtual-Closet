@@ -404,6 +404,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       outfit={mockOutfit}
                       onDelete={() => {}}
                       onUpdate={() => {}}
+                      hideFooter={true}
                     />
                   </div>
                 ) : (

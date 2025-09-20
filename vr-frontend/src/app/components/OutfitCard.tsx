@@ -67,6 +67,8 @@ interface OutfitCardProps {
   enableResize?: boolean
   editedCategorizedItems?: CategorizedOutfitItems | null
   setEditedCategorizedItems?: (items: CategorizedOutfitItems) => void
+  // NEW: Hide footer prop
+  hideFooter?: boolean
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({
@@ -85,6 +87,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   enableResize = false,
   editedCategorizedItems,
   setEditedCategorizedItems,
+  // NEW: Hide footer prop
+  hideFooter = false,
 }) => {
   // Drag state for detail view
   const [isDragging, setIsDragging] = useState(false)
@@ -704,39 +708,41 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
           </div>
 
           {/* Outfit Info */}
-          <div className="p-4 bg-card border-t border-border">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-card-foreground truncate text-base">
-                {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
-              </h3>
-              <div className="flex items-center space-x-1 bg-muted px-2 py-1 rounded-full">
-                <Shirt className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">{(outfit.clothingItems || []).length}</span>
+          {!hideFooter && (
+            <div className="p-4 bg-card border-t border-border">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-card-foreground truncate text-base">
+                  {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
+                </h3>
+                <div className="flex items-center space-x-1 bg-muted px-2 py-1 rounded-full">
+                  <Shirt className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{(outfit.clothingItems || []).length}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-2 flex-wrap">
+                  {outfit.occasion && (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    >
+                      {outfit.occasion}
+                    </Badge>
+                  )}
+                  {outfit.season && (
+                    <Badge variant="outline" className="text-xs font-medium border-border text-muted-foreground">
+                      {outfit.season}
+                    </Badge>
+                  )}
+                </div>
+                {outfit.totalPrice && (
+                  <span className="text-sm font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                    ${outfit.totalPrice.toFixed(2)}
+                  </span>
+                )}
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex space-x-2 flex-wrap">
-                {outfit.occasion && (
-                  <Badge
-                    variant="secondary"
-                    className="text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                  >
-                    {outfit.occasion}
-                  </Badge>
-                )}
-                {outfit.season && (
-                  <Badge variant="outline" className="text-xs font-medium border-border text-muted-foreground">
-                    {outfit.season}
-                  </Badge>
-                )}
-              </div>
-              {outfit.totalPrice && (
-                <span className="text-sm font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-md">
-                  ${outfit.totalPrice.toFixed(2)}
-                </span>
-              )}
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
