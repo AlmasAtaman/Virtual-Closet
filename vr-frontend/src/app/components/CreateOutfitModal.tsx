@@ -287,7 +287,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const DEFAULT_POSITIONS = {
       top: { left: 8, bottom: 8.9, width: 10, scale: 1 },
       bottom: { left: 7.9, bottom: 0.2, width: 10, scale: 1 },
-      outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 1 },
+      outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 0.8 },
     }
 
     setEditedCategorizedItems(prev => {
