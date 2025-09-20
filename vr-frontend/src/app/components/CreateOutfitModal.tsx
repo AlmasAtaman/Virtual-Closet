@@ -425,7 +425,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               {/* Center Panel - Outfit Preview */}
               <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-muted/30">
                 {mockOutfit.clothingItems.length > 0 ? (
-                  <div className="w-full max-w-md">
+                  <div className="w-80">
                     <OutfitCard
                       outfit={mockOutfit}
                       onDelete={() => {}}
