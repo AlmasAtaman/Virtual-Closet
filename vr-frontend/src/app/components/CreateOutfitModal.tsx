@@ -226,32 +226,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-border bg-slate-50 dark:bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-foreground">
-                    Create Outfit
-                  </h2>
-                  <p className="text-slate-600 dark:text-muted-foreground text-sm mt-1">
-                    Mix and match your clothing items with drag & drop positioning
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={shuffleOutfit} disabled={loadingClothing}>
-                    <Shuffle className="w-4 h-4 mr-2" />
-                    Shuffle
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={resetLayout}>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset Layout
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={handleCloseModal}>
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
@@ -443,9 +417,25 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Right Panel - Item Controls */}
               <div className="w-80 border-l border-slate-200 dark:border-border p-6 bg-white dark:bg-card">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground mb-6">
-                  Item Controls
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground">
+                    Item Controls
+                  </h3>
+                  <Button variant="ghost" size="sm" onClick={handleCloseModal}>
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <Button variant="outline" size="sm" onClick={shuffleOutfit} disabled={loadingClothing} className="w-full">
+                    <Shuffle className="w-4 h-4 mr-2" />
+                    Shuffle
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={resetLayout} className="w-full">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reset Layout
+                  </Button>
+                </div>
                 
                 <div className="text-center py-12">
                   <div className="text-slate-400 dark:text-slate-500">
