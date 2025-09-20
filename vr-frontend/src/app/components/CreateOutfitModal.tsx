@@ -79,16 +79,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([])
 
   const DEFAULT_LAYOUT = {
-    top: { left: 45, bottom: 8, width: 10, scale: 1 },
-    bottom: { left: 50, bottom: 0, width: 10, scale: 1 },
-    outerwear: { left: 64, bottom: 9, width: 10, scale: 1 },
+    top: { left: 45, bottom: 12, width: 16, scale: 1.2 },
+    bottom: { left: 50, bottom: 0, width: 16, scale: 1.2 },
+    outerwear: { left: 64, bottom: 14, width: 16, scale: 1.2 },
   }
 
   const DEFAULTS = {
     left: 50,
     bottom: 0,
-    width: 10,
-    scale: 1,
+    width: 16,
+    scale: 1.2,
   }
 
   // Initialize outfit items when clothing items are selected
@@ -157,9 +157,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const deltaX = e.clientX - dragStartPos.current.x
       const deltaY = e.clientY - dragStartPos.current.y
 
-      // Container size: w-44 = 176px, h-80 = 320px
-      const containerWidth = 176
-      const containerHeight = 320
+      // Container size: w-80 = 320px, h-[32rem] = 512px
+      const containerWidth = 320
+      const containerHeight = 512
 
       const leftDelta = (deltaX / containerWidth) * 100
       const bottomDelta = -(deltaY / containerHeight) * 20
@@ -506,7 +506,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
   const renderOutfitDisplay = () => {
     return (
-      <div className="relative w-44 h-80 mx-auto bg-white dark:bg-slate-900 chrome:bg-card border-2 border-slate-200 dark:border-slate-700 chrome:border-border rounded-xl shadow-lg overflow-hidden">
+      <div className="relative w-80 h-[32rem] mx-auto bg-white dark:bg-slate-900 chrome:bg-card border-2 border-slate-200 dark:border-slate-700 chrome:border-border rounded-xl shadow-lg overflow-hidden">
         {/* Canvas Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="w-full h-full" style={{
@@ -642,7 +642,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             {/* Content */}
             <div className="flex h-[calc(95vh-180px)]">
               {/* Left Panel - Item Selection */}
-              <div className="w-80 border-r border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={handleDeselectClick}>
+              <div className="w-72 border-r border-slate-200 dark:border-border chrome:border-border p-4 overflow-y-auto" onClick={handleDeselectClick}>
                 <div className="space-y-6">
                   {/* Outfit Name */}
                   <div>
@@ -800,8 +800,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="w-80 flex flex-col">
-                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-6 flex items-center justify-center" onClick={handleDeselectClick}>
+              <div className="w-96 flex flex-col">
+                <div className="flex-1 bg-gradient-to-br from-muted/30 via-background to-muted/50 dark:from-background dark:via-muted/20 dark:to-card chrome:from-background chrome:via-muted chrome:to-card p-4 flex items-center justify-center" onClick={handleDeselectClick}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={animationKey}
@@ -819,7 +819,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Right Panel - Controls */}
               {selectedItemForResize && (
-                <div className="w-80 border-l border-slate-200 dark:border-border chrome:border-border p-6 overflow-y-auto" onClick={handleDeselectClick}>
+                <div className="w-72 border-l border-slate-200 dark:border-border chrome:border-border p-4 overflow-y-auto" onClick={handleDeselectClick}>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground chrome:text-foreground mb-4">
                     Item Controls
                   </h3>
@@ -844,7 +844,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               size="sm"
                               variant="outline"
                               onClick={() =>
-                                handleWidthChange(selectedItemForResize, Math.max(6, selectedOutfitItem.width - 0.5))
+                                handleWidthChange(selectedItemForResize, Math.max(10, selectedOutfitItem.width - 0.5))
                               }
                             >
                               <ZoomOut className="w-4 h-4" />
@@ -852,8 +852,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             <div className="flex-1 px-2">
                               <input
                                 type="range"
-                                min="6"
-                                max="15"
+                                min="10"
+                                max="25"
                                 step="0.1"
                                 value={selectedOutfitItem.width}
                                 onChange={(e) =>
@@ -867,7 +867,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               size="sm"
                               variant="outline"
                               onClick={() =>
-                                handleWidthChange(selectedItemForResize, Math.min(15, selectedOutfitItem.width + 0.5))
+                                handleWidthChange(selectedItemForResize, Math.min(25, selectedOutfitItem.width + 0.5))
                               }
                             >
                               <ZoomIn className="w-4 h-4" />
