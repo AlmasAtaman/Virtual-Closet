@@ -189,15 +189,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const leftDelta = (deltaX / containerWidth) * 100
       const bottomDelta = -(deltaY / containerHeight) * 20
 
-      // Get the current item (keeping this for potential future use, but not using width for boundaries)
-      const currentItem = [
-        editedCategorizedItems.outerwear,
-        editedCategorizedItems.top,
-        editedCategorizedItems.bottom,
-        editedCategorizedItems.shoe,
-        ...editedCategorizedItems.others
-      ].find(item => item?.id === draggedItemId)
-
       // Manual boundary controls - direct values for maximum dragging freedom
       const minLeft = -10    // Controls LEFT boundary (negative = can go past left edge)
       const maxLeft = 120    // Controls RIGHT boundary (>100 = can go past right edge)  
@@ -228,7 +219,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
   )
 
   const handleMouseUp = useCallback(() => {
