@@ -71,6 +71,13 @@ interface OutfitCardProps {
   hideFooter?: boolean
   // NEW: Hide item selection section
   hideItemSelection?: boolean
+  // NEW: Hide header/title section for clean preview
+  hideHeader?: boolean
+  // NEW: Hide resize controls (to be moved to parent component)
+  hideResizeControls?: boolean
+  // NEW: External control of selected item for resize
+  selectedItemForResize?: string | null
+  setSelectedItemForResize?: (id: string | null) => void
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({
@@ -93,11 +100,22 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   hideFooter = false,
   // NEW: Hide item selection section
   hideItemSelection = false,
+  // NEW: Hide header/title section for clean preview
+  hideHeader = false,
+  // NEW: Hide resize controls (to be moved to parent component)
+  hideResizeControls = false,
+  // NEW: External control of selected item for resize
+  selectedItemForResize: externalSelectedItemForResize,
+  setSelectedItemForResize: externalSetSelectedItemForResize,
 }) => {
   // Drag state for detail view
   const [isDragging, setIsDragging] = useState(false)
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
-  const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
+  const [internalSelectedItemForResize, setInternalSelectedItemForResize] = useState<string | null>(null)
+
+  // Use external state if provided, otherwise use internal state
+  const selectedItemForResize = externalSelectedItemForResize !== undefined ? externalSelectedItemForResize : internalSelectedItemForResize
+  const setSelectedItemForResize = externalSetSelectedItemForResize || setInternalSelectedItemForResize
   const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
     x: 0,
     y: 0,
@@ -110,7 +128,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       setSelectedItemForResize(null)
       setDraggedItemId(null)
     }
-  }, [isEditing])
+  }, [isEditing, setSelectedItemForResize])
 
   const DEFAULTS = {
     x: 0,
@@ -471,7 +489,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     return (
       <div className="space-y-6">
         {/* Resize Controls */}
-        {isEditing && selectedItemForResize && enableResize && (
+        {!hideResizeControls && isEditing && selectedItemForResize && enableResize && (
           <Card className="border-blue-200 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center space-x-2 text-blue-700 dark:text-blue-300">
@@ -515,25 +533,27 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
         {/* Enhanced Outfit Card for Detail View */}
         <Card className="w-full max-w-md mx-auto h-[500px] overflow-hidden bg-card shadow-lg border-0 ring-1 ring-border rounded-xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center space-x-2">
-                <Shirt className="w-5 h-5" />
-                <span>Outfit Preview</span>
-                {isEditing && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    Drag to reposition • Click to resize
-                  </Badge>
+          {!hideHeader && (
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center justify-between text-lg">
+                <div className="flex items-center space-x-2">
+                  <Shirt className="w-5 h-5" />
+                  <span>Outfit Preview</span>
+                  {isEditing && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      Drag to reposition • Click to resize
+                    </Badge>
+                  )}
+                </div>
+                {isEditing && selectedItemForResize && (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedItemForResize(null)}>
+                    <X className="w-4 h-4 mr-2" />
+                    Close Resize
+                  </Button>
                 )}
-              </div>
-              {isEditing && selectedItemForResize && (
-                <Button variant="outline" size="sm" onClick={() => setSelectedItemForResize(null)}>
-                  <X className="w-4 h-4 mr-2" />
-                  Close Resize
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
+              </CardTitle>
+            </CardHeader>
+          )}
           <CardContent className="p-0 flex-1 flex items-center justify-center">
             <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
               {renderOutfitDisplay()}

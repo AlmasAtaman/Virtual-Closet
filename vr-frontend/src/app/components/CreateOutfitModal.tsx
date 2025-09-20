@@ -501,6 +501,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       onUpdate={() => {}}
                       hideFooter={true}
                       hideItemSelection={true}
+                      hideHeader={true}
+                      hideResizeControls={true}
                       isDetailView={true}
                       isEditing={isEditing}
                       onItemSelect={handleItemSelectForResize}
@@ -508,6 +510,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       enableResize={true}
                       editedCategorizedItems={editedCategorizedItems}
                       setEditedCategorizedItems={setEditedCategorizedItems}
+                      selectedItemForResize={selectedItemForResize}
+                      setSelectedItemForResize={setSelectedItemForResize}
                     />
                   </div>
                 ) : (
