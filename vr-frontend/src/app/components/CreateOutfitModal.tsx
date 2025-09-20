@@ -202,10 +202,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       // Simple boundary calculations based on item size
       // These values are easy to adjust manually:
-      const leftBuffer = 83     // How far past left edge (adjust this number)
-      const rightBuffer = 0    // How far past right edge (adjust this number)  
-      const bottomBuffer = 6   // How far below bottom (adjust this number)
-      const topBuffer = -5      // How far above top (adjust this number)
+      const leftBuffer = 5     // How far past left edge (adjust this number)
+      const rightBuffer = 5    // How far past right edge (adjust this number)  
+      const bottomBuffer = 3   // How far below bottom (adjust this number)
+      const topBuffer = 5      // How far above top (adjust this number)
       
       // Calculate boundaries accounting for item width and transform: translateX(-50%)
       const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
@@ -218,6 +218,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
       const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+
+      // DEBUG: Print values while dragging (remove these console.logs when you're done)
+      console.log({
+        buffers: { leftBuffer, rightBuffer, bottomBuffer, topBuffer },
+        boundaries: { minLeft, maxLeft, minBottom, maxBottom },
+        position: { newLeft, newBottom },
+        itemWidth: itemWidth
+      })
 
       // Update item position
       const updatedItems = { ...editedCategorizedItems }
