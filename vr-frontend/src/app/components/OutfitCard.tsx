@@ -55,6 +55,9 @@ interface OutfitCardProps {
   isSelected?: boolean
   isMultiSelecting?: boolean
   onToggleSelect?: (outfitId: string) => void
+  // NEW: Select mode props (as requested by user)
+  selectMode?: boolean
+  onSelectToggle?: (checked: boolean) => void
   // NEW: Detail view props
   isDetailView?: boolean
   isEditing?: boolean
@@ -71,6 +74,9 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   isSelected = false,
   isMultiSelecting = false,
   onToggleSelect,
+  // NEW: Select mode props
+  selectMode = false,
+  onSelectToggle,
   // Detail view props
   isDetailView = false,
   isEditing = false,
@@ -294,10 +300,14 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   const handleCardClick = (e: React.MouseEvent) => {
     if (isDetailView) return // Don't handle clicks in detail view
 
-    if (isMultiSelecting) {
+    if (isMultiSelecting || selectMode) {
       e.preventDefault()
       e.stopPropagation()
-      onToggleSelect?.(outfit.id)
+      if (onToggleSelect) {
+        onToggleSelect(outfit.id)
+      } else if (onSelectToggle) {
+        onSelectToggle(!isSelected)
+      }
     } else {
       window.location.href = `/outfits/${outfit.id}`
     }
@@ -306,7 +316,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    onToggleSelect?.(outfit.id)
+    if (onToggleSelect) {
+      onToggleSelect(outfit.id)
+    } else if (onSelectToggle) {
+      onSelectToggle(!isSelected)
+    }
   }
 
   // RENDER OUTFIT DISPLAY - FIXED COORDINATE SYSTEM
@@ -656,11 +670,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       className="relative"
     >
       {/* Multi-select checkbox */}
-      {isMultiSelecting && (
+      {(isMultiSelecting || selectMode) && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-2 left-2 z-10"
+          className="absolute top-2 right-2 z-10"
         >
           <button
             onClick={handleCheckboxClick}
