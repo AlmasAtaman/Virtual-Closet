@@ -202,10 +202,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       // Simple boundary calculations based on item size
       // These values are easy to adjust manually:
-      const leftBuffer = 90     // How far past left edge (adjust this number)
-      const rightBuffer = 6    // How far past right edge (adjust this number)  
-      const bottomBuffer = 6   // How far below bottom (adjust this number)
-      const topBuffer = -5      // How far above top (adjust this number)
+      const leftBuffer = 80     // How far past left edge (adjust this number)
+      const rightBuffer = 3    // How far past right edge (adjust this number)  
+      const bottomBuffer = 5   // How far below bottom (adjust this number)
+      const topBuffer = -10      // How far above top (adjust this number)
       
       // Calculate boundaries accounting for item width and transform: translateX(-50%)
       const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
