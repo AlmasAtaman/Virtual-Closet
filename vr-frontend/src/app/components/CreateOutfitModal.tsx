@@ -492,7 +492,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="flex-1 flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-muted/30">
+              <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gray-100 dark:bg-gray-800">
                 {mockOutfit.clothingItems.length > 0 ? (
                   <div className="w-80">
                     <OutfitCard
@@ -511,11 +511,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     />
                   </div>
                 ) : (
-                  <div className="text-center text-slate-400 dark:text-slate-500">
-                    <div className="text-6xl mb-4">👗</div>
-                    <p className="text-lg font-medium mb-2">No items selected</p>
-                    <p className="text-sm">Choose a top and bottom to see your outfit preview</p>
-                  </div>
+                  <div className="w-80 h-80 bg-white dark:bg-gray-700 rounded-lg"></div>
                 )}
               </div>
 
@@ -606,22 +602,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </div>
                 )}
 
-                <div className="text-center py-8">
-                  <div className="text-slate-400 dark:text-slate-500">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-muted flex items-center justify-center">
-                      <Move className="w-8 h-8" />
-                    </div>
-                    <p className="text-lg font-medium mb-2">
-                      {selectedItemForResize ? "Item Selected" : "No Item Is Selected"}
-                    </p>
-                    <p className="text-sm">
-                      {selectedItemForResize 
-                        ? "Use the resize controls above or drag items in the preview" 
-                        : "Select An Item for further controls"
-                      }
-                    </p>
-                  </div>
-                </div>
+                <div className="flex-1"></div>
 
                 <div className="mt-auto pt-6 border-t border-slate-200 dark:border-border">
                   <p className="text-sm text-slate-600 dark:text-muted-foreground mb-4 text-center">
