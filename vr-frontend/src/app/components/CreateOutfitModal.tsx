@@ -204,7 +204,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       // These values are easy to adjust manually:
       const leftBuffer = 85.2     // How far past left edge (adjust this number)
       const rightBuffer = -5.7    // How far past right edge (adjust this number)  
-      const bottomBuffer = 5.6   // How far below bottom (adjust this number)
+      const bottomBuffer = 5.5   // How far below bottom (adjust this number)
       const topBuffer = -7.1      // How far above top (adjust this number)
       
       // Calculate boundaries accounting for item width and transform: translateX(-50%)
