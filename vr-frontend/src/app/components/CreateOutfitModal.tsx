@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Plus, Shuffle, RotateCcw, Move } from "lucide-react"
+import { X, Plus, Shuffle, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
@@ -57,12 +57,12 @@ interface MockOutfit {
 export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated }: CreateOutfitModalProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-  const createAuthenticatedAxios = () => {
+  const createAuthenticatedAxios = useCallback(() => {
     return axios.create({
       withCredentials: true,
       baseURL: API_URL
     })
-  }
+  }, [API_URL])
   
   const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null)
   const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null)
@@ -84,7 +84,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     try {
       setLoadingClothing(true)
       const axios = createAuthenticatedAxios()
-      
+
       const [closetResponse, wishlistResponse] = await Promise.all([
         axios.get("/api/images?mode=closet"),
         axios.get("/api/images?mode=wishlist")
@@ -93,7 +93,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const closetItems = closetResponse.data.clothingItems || []
       const wishlistItems = wishlistResponse.data.clothingItems || []
       const allItems = [...closetItems, ...wishlistItems]
-      
+
       const categorizedItems = {
         tops: allItems.filter((item: ClothingItem) => {
           const type = item.type?.toLowerCase() || ""
@@ -117,7 +117,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     } finally {
       setLoadingClothing(false)
     }
-  }, [])
+  }, [createAuthenticatedAxios])
 
   useEffect(() => {
     if (show) {
