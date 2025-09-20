@@ -202,10 +202,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       // Simple boundary calculations based on item size
       // These values are easy to adjust manually:
-      const leftBuffer = 80     // How far past left edge (adjust this number)
+      const leftBuffer = 90     // How far past left edge (adjust this number)
       const rightBuffer = 3    // How far past right edge (adjust this number)  
-      const bottomBuffer = 5   // How far below bottom (adjust this number)
-      const topBuffer = -10      // How far above top (adjust this number)
+      const bottomBuffer = 10   // How far below bottom (adjust this number)
+      const topBuffer = -5      // How far above top (adjust this number)
       
       // Calculate boundaries accounting for item width and transform: translateX(-50%)
       const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
@@ -219,12 +219,19 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
       const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
 
-      // DEBUG: Print values while dragging (remove these console.logs when you're done)
+      // DEBUG: Calculate what buffer values would be needed for current position
+      const neededLeftBuffer = halfItemWidth - newLeft
+      const neededRightBuffer = newLeft - (100 - halfItemWidth)
+      const neededBottomBuffer = -newBottom
+      const neededTopBuffer = newBottom - 20
+      
+      console.log("NEEDED BUFFER VALUES FOR THIS POSITION:")
       console.log({
-        buffers: { leftBuffer, rightBuffer, bottomBuffer, topBuffer },
-        boundaries: { minLeft, maxLeft, minBottom, maxBottom },
-        position: { newLeft, newBottom },
-        itemWidth: itemWidth
+        leftBuffer: Math.round(neededLeftBuffer * 10) / 10,
+        rightBuffer: Math.round(neededRightBuffer * 10) / 10,
+        bottomBuffer: Math.round(neededBottomBuffer * 10) / 10,
+        topBuffer: Math.round(neededTopBuffer * 10) / 10,
+        currentPosition: { newLeft: Math.round(newLeft * 10) / 10, newBottom: Math.round(newBottom * 10) / 10 }
       })
 
       // Update item position
