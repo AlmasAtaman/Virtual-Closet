@@ -202,10 +202,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       // Simple boundary calculations based on item size
       // These values are easy to adjust manually:
-      const leftBuffer = 85.2     // How far past left edge (adjust this number)
-      const rightBuffer = -5.7    // How far past right edge (adjust this number)  
-      const bottomBuffer = 5.5   // How far below bottom (adjust this number)
-      const topBuffer = -7.1      // How far above top (adjust this number)
+      const leftBuffer = 5     // How far past left edge (adjust this number)
+      const rightBuffer = 5    // How far past right edge (adjust this number)  
+      const bottomBuffer = 3   // How far below bottom (adjust this number)
+      const topBuffer = 5      // How far above top (adjust this number)
       
       // Calculate boundaries accounting for item width and transform: translateX(-50%)
       const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
@@ -671,17 +671,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </Button>
                 </div>
                 
-                <div className="space-y-4 mb-8">
-                  <Button variant="outline" size="sm" onClick={shuffleOutfit} disabled={loadingClothing} className="w-full">
-                    <Shuffle className="w-4 h-4 mr-2" />
-                    Shuffle
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={resetLayout} className="w-full">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset Layout
-                  </Button>
-                </div>
-                
                 {/* Resize Controls */}
                 {selectedItemForResize && (
                   <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30">
@@ -749,21 +738,31 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
                 <div className="flex-1"></div>
 
+                {/* Bottom buttons - stuck to bottom */}
                 <div className="mt-auto pt-6 border-t border-slate-200 dark:border-border">
                   <p className="text-sm text-slate-600 dark:text-muted-foreground mb-4 text-center">
                     Select at least a top and bottom
                   </p>
                   <div className="space-y-3">
-                    <Button variant="outline" onClick={handleCloseModal} className="w-full">
-                      Cancel
+                    {/* Shuffle button */}
+                    <Button variant="outline" size="sm" onClick={shuffleOutfit} disabled={loadingClothing} className="w-full">
+                      <Shuffle className="w-4 h-4 mr-2" />
+                      Shuffle
                     </Button>
-                    <Button 
-                      onClick={createOutfit} 
-                      disabled={!hasMinimumItems || isCreating}
-                      className="w-full"
-                    >
-                      {isCreating ? "Creating..." : "Create Outfit"}
-                    </Button>
+                    
+                    {/* Cancel and Create Outfit in same row */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button variant="outline" onClick={handleCloseModal} className="w-full">
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={createOutfit} 
+                        disabled={!hasMinimumItems || isCreating}
+                        className="w-full"
+                      >
+                        {isCreating ? "Creating..." : "Create Outfit"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
