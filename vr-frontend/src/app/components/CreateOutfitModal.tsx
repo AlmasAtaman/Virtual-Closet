@@ -437,7 +437,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </Button>
                 </div>
                 
-                <div className="text-center py-12">
+                <div className="text-center py-8">
                   <div className="text-slate-400 dark:text-slate-500">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-muted flex items-center justify-center">
                       <Move className="w-8 h-8" />
@@ -446,29 +446,27 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     <p className="text-sm">Select An Item for further controls</p>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-200 dark:border-border bg-slate-50 dark:bg-muted/30">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-600 dark:text-muted-foreground">
-                  Select at least a top and bottom
-                </p>
-                <div className="space-x-3">
-                  <Button variant="outline" onClick={handleCloseModal}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={createOutfit} 
-                    disabled={!hasMinimumItems || isCreating}
-                    className="min-w-[120px]"
-                  >
-                    {isCreating ? "Creating..." : "Create Outfit"}
-                  </Button>
+                <div className="mt-auto pt-6 border-t border-slate-200 dark:border-border">
+                  <p className="text-sm text-slate-600 dark:text-muted-foreground mb-4 text-center">
+                    Select at least a top and bottom
+                  </p>
+                  <div className="space-y-3">
+                    <Button variant="outline" onClick={handleCloseModal} className="w-full">
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={createOutfit} 
+                      disabled={!hasMinimumItems || isCreating}
+                      className="w-full"
+                    >
+                      {isCreating ? "Creating..." : "Create Outfit"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
+
           </motion.div>
         </motion.div>
       </AnimatePresence>
