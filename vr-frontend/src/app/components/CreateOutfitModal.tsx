@@ -500,6 +500,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       onDelete={() => {}}
                       onUpdate={() => {}}
                       hideFooter={true}
+                      hideItemSelection={true}
                       isDetailView={true}
                       isEditing={isEditing}
                       onItemSelect={handleItemSelectForResize}
