@@ -133,7 +133,7 @@ export default function ThumbnailEditorModal({
       const base64 = canvas.toDataURL("image/jpeg", 0.85)
       resolve(base64)
     })
-  }, [imagePosition, imageScale])
+  }, [])
 
   const handleSave = async () => {
     if (!imgRef.current) return
