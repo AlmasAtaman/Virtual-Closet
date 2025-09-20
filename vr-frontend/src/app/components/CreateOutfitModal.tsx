@@ -224,6 +224,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         currentPosition: { newLeft: Math.round(newLeft * 10) / 10, newBottom: Math.round(newBottom * 10) / 10 }
       })
 
+      // COORDINATE FINDER: Log exact coordinates for setting defaults
+      console.log("🎯 POSITION COORDINATES FOR DEFAULT POSITIONS:")
+      console.log(`Item ${draggedItemId} is at: left: ${Math.round(newLeft * 10) / 10}, bottom: ${Math.round(newBottom * 10) / 10}`)
+      console.log("Copy these values to update DEFAULT_POSITIONS in updateCategorizedItems function")
+
       // Update item position
       const updatedItems = { ...editedCategorizedItems }
       const updateItemPosition = (item: ClothingItem | undefined) => {
