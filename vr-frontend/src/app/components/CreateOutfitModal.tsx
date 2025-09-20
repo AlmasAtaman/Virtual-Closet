@@ -6,7 +6,6 @@ import { X, Plus, Shuffle, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
-import OutfitCard from "./OutfitCard"
 import Image from "next/image"
 import axios from "axios"
 
@@ -47,13 +46,6 @@ interface CategorizedOutfitItems {
   others: ClothingItem[]
 }
 
-interface MockOutfit {
-  id: string
-  name?: string
-  clothingItems: ClothingItem[]
-  totalPrice?: number
-}
-
 export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated }: CreateOutfitModalProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -76,9 +68,28 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [outfitName, setOutfitName] = useState("")
   
   // Drag and drop and resize state
-  const isEditing = true // Always in editing mode for CreateOutfitModal
+  const isEditing = true
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
+
+  // Drag state
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
+    x: 0,
+    y: 0,
+    itemLeft: 0,
+    itemBottom: 0,
+  })
+
+  const DEFAULTS = {
+    x: 0,
+    y: 0,
+    scale: 1,
+    left: 50,
+    bottom: 0,
+    width: 10,
+  }
 
   const fetchClothingItems = useCallback(async () => {
     try {
@@ -138,6 +149,112 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }, [selectedTop, selectedBottom, selectedOuterwear])
 
+  // DRAG AND DROP SYSTEM - Copied from OutfitCard
+  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
+    if (!editedCategorizedItems || !setEditedCategorizedItems) return
+
+    e.preventDefault()
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const allCurrentItems = [
+      editedCategorizedItems.outerwear,
+      editedCategorizedItems.top,
+      editedCategorizedItems.bottom,
+      editedCategorizedItems.shoe,
+      ...editedCategorizedItems.others,
+    ].filter(Boolean) as ClothingItem[]
+
+    const currentItem = allCurrentItems.find((item) => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: e.clientX,
+        y: e.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+      }
+    }
+  }
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+
+      const deltaX = e.clientX - dragStartPos.current.x
+      const deltaY = e.clientY - dragStartPos.current.y
+
+      // Container size: w-44 = 176px, h-80 = 320px
+      const containerWidth = 176
+      const containerHeight = 320
+
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
+
+      // Get the current item to check its width for boundary calculations
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      // Calculate boundaries accounting for transform: translateX(-50%)
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      const halfItemWidthPercent = itemWidthPercent / 2
+
+      // Fixed boundary calculations - allow full movement within container
+      const minLeft = halfItemWidthPercent
+      const maxLeft = 100 - halfItemWidthPercent
+      const minBottom = 0
+      const maxBottom = 20
+
+      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+
+      // Update item position
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemPosition = (item: ClothingItem | undefined) => {
+        if (item && item.id === draggedItemId) {
+          return {
+            ...item,
+            left: newLeft,
+            bottom: newBottom,
+          }
+        }
+        return item
+      }
+
+      updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+      updatedItems.top = updateItemPosition(updatedItems.top)
+      updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+      updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+      setEditedCategorizedItems(updatedItems)
+    },
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+  )
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse events for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
   const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
     if (category === "top") {
       setSelectedTop(item)
@@ -147,7 +264,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       setSelectedOuterwear(item)
     }
     
-    // Update the categorized items for drag and drop
     updateCategorizedItems(category, item)
   }
 
@@ -174,7 +290,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       setSelectedOuterwear(null)
     }
     
-    // Update the categorized items for drag and drop
     setEditedCategorizedItems(prev => {
       const newItems = prev || { others: [] }
       if (category === "top") {
@@ -214,27 +329,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setSelectedItemForResize(null)
   }
 
-  const handleItemSelectForResize = (category: "outerwear" | "top" | "bottom" | "shoe") => {
-    // This function will be called when user clicks on an item in the preview
-    // Find the item in the categorized items and set it for resize
-    if (!editedCategorizedItems) return
-    
-    let itemToSelect: ClothingItem | undefined
-    if (category === "outerwear") {
-      itemToSelect = editedCategorizedItems.outerwear
-    } else if (category === "top") {
-      itemToSelect = editedCategorizedItems.top
-    } else if (category === "bottom") {
-      itemToSelect = editedCategorizedItems.bottom
-    } else if (category === "shoe") {
-      itemToSelect = editedCategorizedItems.shoe
-    }
-    
-    if (itemToSelect) {
-      setSelectedItemForResize(itemToSelect.id)
-    }
-  }
-
   const createOutfit = async () => {
     const selectedItems = [selectedTop, selectedBottom, selectedOuterwear].filter(Boolean) as ClothingItem[]
     
@@ -245,7 +339,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
     setIsCreating(true)
     try {
-      // Use categorized items with their positioning data if available
       const itemsToUse = editedCategorizedItems ? [
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
@@ -290,14 +383,54 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     onCloseAction()
   }
 
-  // Create a mock outfit for the OutfitCard
-  const mockOutfit: MockOutfit = {
-    id: "preview",
-    name: outfitName || "New Outfit",
-    clothingItems: [selectedTop, selectedBottom, selectedOuterwear].filter(Boolean) as ClothingItem[],
-    totalPrice: [selectedTop, selectedBottom, selectedOuterwear]
-      .filter(Boolean)
-      .reduce((total, item) => total + (item?.price || 0), 0)
+  // Custom outfit display - matches OutfitCard exactly
+  const renderOutfitDisplay = () => {
+    if (!editedCategorizedItems) return null
+
+    const allCurrentItems = [
+      editedCategorizedItems.outerwear,
+      editedCategorizedItems.top,
+      editedCategorizedItems.bottom,
+      editedCategorizedItems.shoe,
+      ...editedCategorizedItems.others,
+    ].filter(Boolean) as ClothingItem[]
+
+    return (
+      <div className="relative w-44 h-80 mx-auto">
+        {allCurrentItems.map((item, index) => {
+          return (
+            <motion.div
+              key={`${item.id}-${item.width ?? 10}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`absolute cursor-move hover:shadow-lg transition-shadow ${
+                draggedItemId === item.id ? "z-50 shadow-2xl" : ""
+              } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
+              style={{
+                left: `${item.left ?? DEFAULTS.left}%`,
+                bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
+                width: `${item.width ?? DEFAULTS.width}rem`,
+                transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
+                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+              }}
+              onMouseDown={(e) => handleMouseDown(e, item.id)}
+              onClick={() => setSelectedItemForResize(item.id)}
+            >
+              <Image
+                src={item.url || "/placeholder.svg"}
+                alt={item.name || ""}
+                width={100}
+                height={120}
+                className="w-full h-auto object-contain rounded-lg"
+                draggable={false}
+                unoptimized
+              />
+            </motion.div>
+          )
+        })}
+      </div>
+    )
   }
 
   const hasMinimumItems = selectedTop && selectedBottom
@@ -321,7 +454,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
               {/* Left Panel - Outfit Details */}
@@ -493,33 +625,19 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
               {/* Center Panel - Outfit Preview */}
               <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative">
-                {mockOutfit.clothingItems.length > 0 ? (
-                  <OutfitCard
-                    outfit={mockOutfit}
-                    onDelete={() => {}}
-                    onUpdate={() => {}}
-                    hideFooter={true}
-                    hideItemSelection={true}
-                    hideHeader={true}
-                    hideResizeControls={true}
-                    isDetailView={true}
-                    isEditing={isEditing}
-                    onItemSelect={handleItemSelectForResize}
-                    enableDragDrop={true}
-                    enableResize={true}
-                    editedCategorizedItems={editedCategorizedItems}
-                    setEditedCategorizedItems={setEditedCategorizedItems}
-                    selectedItemForResize={selectedItemForResize}
-                    setSelectedItemForResize={setSelectedItemForResize}
-                  />
-                ) : (
-                  <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border">
-                    <div className="text-center text-muted-foreground">
-                      <div className="text-4xl mb-4">👗</div>
-                      <p className="text-sm">Select items to preview outfit</p>
-                    </div>
+                {/* FIXED: Consistent sizing drag area that matches OutfitCard exactly */}
+                <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
+                  <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
+                    {editedCategorizedItems && (editedCategorizedItems.top || editedCategorizedItems.bottom || editedCategorizedItems.outerwear) ? (
+                      renderOutfitDisplay()
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <div className="text-4xl mb-4">👗</div>
+                        <p className="text-sm">Select items to preview outfit</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Right Panel - Item Controls */}
