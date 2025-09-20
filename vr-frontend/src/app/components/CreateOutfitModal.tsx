@@ -189,7 +189,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const leftDelta = (deltaX / containerWidth) * 100
       const bottomDelta = -(deltaY / containerHeight) * 20
 
-      // Get the current item to check its width for boundary calculations
+      // Get the current item (keeping this for potential future use, but not using width for boundaries)
       const currentItem = [
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
@@ -198,13 +198,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         ...editedCategorizedItems.others
       ].find(item => item?.id === draggedItemId)
 
-      const itemWidth = currentItem?.width ?? DEFAULTS.width
-
-      // Calculate boundaries accounting for transform: translateX(-50%)
-      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
-      const halfItemWidthPercent = itemWidthPercent / 2
-
-      // More permissive boundary calculations - allow items to reach edges
+      // Manual boundary controls - direct values for maximum dragging freedom
       const minLeft = -10    // Controls LEFT boundary (negative = can go past left edge)
       const maxLeft = 120    // Controls RIGHT boundary (>100 = can go past right edge)  
       const minBottom = -15  // Controls BOTTOM boundary (negative = can go below bottom)
