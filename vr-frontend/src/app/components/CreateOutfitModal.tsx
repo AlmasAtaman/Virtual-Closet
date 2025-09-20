@@ -412,17 +412,24 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         {allCurrentItems.map((item, index) => {
           return (
             <motion.div
-              key={`${item.id}-${item.width ?? 10}`}
+              key={item.id}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                width: `${item.width ?? DEFAULTS.width}rem`
+              }}
+              transition={{ 
+                opacity: { delay: index * 0.1 },
+                y: { delay: index * 0.1 },
+                width: { duration: 0.2, ease: "easeOut" }
+              }}
               className={`absolute cursor-move hover:shadow-lg transition-shadow ${
                 draggedItemId === item.id ? "z-50 shadow-2xl" : ""
               } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
               style={{
                 left: `${item.left ?? DEFAULTS.left}%`,
                 bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
-                width: `${item.width ?? DEFAULTS.width}rem`,
                 transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
               }}
