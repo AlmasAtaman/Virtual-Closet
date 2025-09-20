@@ -285,9 +285,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const updateCategorizedItems = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
     // Default positions for each category (matching OutfitCard)
     const DEFAULT_POSITIONS = {
-      outerwear: { left: 64, bottom: 9, width: 10, scale: 1 },
-      top: { left: 45, bottom: 8, width: 10, scale: 1 },
-      bottom: { left: 50, bottom: 0, width: 10, scale: 1 },
+      top: { left: -3.3, bottom: 8.3, width: 10, scale: 1 },
+      bottom: { left: -4, bottom: 0.1, width: 10, scale: 1 },
+      outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 1 },
     }
 
     setEditedCategorizedItems(prev => {
