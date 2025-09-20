@@ -189,11 +189,32 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const leftDelta = (deltaX / containerWidth) * 100
       const bottomDelta = -(deltaY / containerHeight) * 20
 
-      // Manual boundary controls - direct values for maximum dragging freedom
-      const minLeft = -10    // Controls LEFT boundary (negative = can go past left edge)
-      const maxLeft = 120    // Controls RIGHT boundary (>100 = can go past right edge)  
-      const minBottom = -15  // Controls BOTTOM boundary (negative = can go below bottom)
-      const maxBottom = 25   // Controls TOP boundary (higher = can go above top)
+      // Get the current item to check its width for boundary calculations
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      // Simple boundary calculations based on item size
+      // These values are easy to adjust manually:
+      const leftBuffer = 5     // How far past left edge (adjust this number)
+      const rightBuffer = 5    // How far past right edge (adjust this number)  
+      const bottomBuffer = 3   // How far below bottom (adjust this number)
+      const topBuffer = 5      // How far above top (adjust this number)
+      
+      // Calculate boundaries accounting for item width and transform: translateX(-50%)
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      const halfItemWidth = itemWidthPercent / 2
+      
+      const minLeft = halfItemWidth - leftBuffer    // Left boundary
+      const maxLeft = 100 - halfItemWidth + rightBuffer  // Right boundary  
+      const minBottom = -bottomBuffer  // Bottom boundary
+      const maxBottom = 20 + topBuffer  // Top boundary
 
       const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
       const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
