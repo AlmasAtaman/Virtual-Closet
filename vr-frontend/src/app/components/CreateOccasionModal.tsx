@@ -340,7 +340,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                                 bottom: `${(item.bottom || 0) * 0.6}rem`, // Reduced from 0.6 to 0.3 to bring items closer together
                                                 width: `${(item.width || 8) * 0.5}rem`,
                                                 transform: "translateX(-50%)",
-                                                zIndex: item.type === 'outerwear' ? 10 : item.type === 'top' ? 5 : 1,
+                                                zIndex: outfit.clothingItems.length - index,
                                               }}
                                             />
                                           )
