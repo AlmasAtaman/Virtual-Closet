@@ -320,13 +320,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                     {outfit.clothingItems.length > 0 ? (
                                       <div className="relative w-full h-full">
                                         {outfit.clothingItems.map((item, index) => {
-                                          // Much simpler coordinate adjustment for the smaller preview cards
+                                          // Adjust positioning for CreateOccasionModal preview cards
                                           let adjustedLeft = item.left ?? 50;
                                           
-                                          // Only apply a small adjustment to center items better in the smaller preview
+                                          // Center items better for the modal preview
                                           if (adjustedLeft !== 50) {
-                                            // Scale down the adjustment for the smaller preview cards
-                                            const adjustment = (adjustedLeft - 50) * 0.8; // Reduce adjustment by 20%
+                                            const adjustment = (adjustedLeft - 50) * 0.5; // Change this to adjust horizontal spread (0.5 = less spread, 1.0 = more spread)
                                             adjustedLeft = 50 + adjustment;
                                           }
 
@@ -337,12 +336,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                               alt={item.name || `Clothing item ${index + 1}`}
                                               width={200}
                                               height={200}
-                                              className="absolute object-contain max-w-[80%] max-h-[80%]"
+                                              className="absolute object-contain max-w-[70%] max-h-[70%]" // Change max-w and max-h to make items smaller/larger
                                               unoptimized
                                               style={{
                                                 left: `${adjustedLeft}%`,
-                                                bottom: `${(item.bottom || 0) * 0.8}rem`,
-                                                width: `${(item.width || 8) * 0.6}rem`,
+                                                bottom: `${(item.bottom || 0) * 0.6}rem`, // Change 0.6 to adjust vertical spacing (higher = more spacing)
+                                                width: `${(item.width || 8) * 0.5}rem`, // Change 0.5 to adjust item width (higher = wider items)
                                                 transform: "translateX(-50%)",
                                                 zIndex: index,
                                               }}
