@@ -446,7 +446,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
-              onClick={() => setSelectedItemForResize(item.id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedItemForResize(item.id)
+              }}
             >
               <Image
                 src={item.url || "/placeholder.svg"}
@@ -478,26 +481,17 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           onClick={handleCloseModal}
         >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
-          onClick={(e) => {
-            e.stopPropagation()
-            // Deselect item when clicking anywhere on the modal (but not on interactive elements)
-            if (
-              e.target === e.currentTarget ||
-              (e.target as HTMLElement).closest('.deselect-area')
-            ) {
-              setSelectedItemForResize(null)
-            }
-          }}
-        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Main Content */}
-              <div className="flex-1 flex overflow-hidden deselect-area">
-                {/* Left Panel - Outfit Details */}
-              <div className="w-80 border-r border-slate-200 dark:border-border p-4 overflow-y-auto bg-white dark:bg-card deselect-area">
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left Panel - Outfit Details */}
+              <div className="w-80 border-r border-slate-200 dark:border-border p-4 overflow-y-auto bg-white dark:bg-card" onClick={() => setSelectedItemForResize(null)}>
                 {/* Outfit Name */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-2">
@@ -509,6 +503,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     value={outfitName}
                     onChange={(e) => setOutfitName(e.target.value)}
                     className="w-full"
+                    onClick={(e) => e.stopPropagation()}
                   />
                 </div>
 
@@ -519,7 +514,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </label>
                   <div className="relative">
                     <div
-                      onClick={() => setShowTopSelectModal(true)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowTopSelectModal(true)
+                      }}
                       className="border-2 border-dashed border-slate-300 dark:border-border rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors bg-slate-50 dark:bg-muted/30 min-h-[200px] flex flex-col items-center justify-center"
                     >
                       {selectedTop ? (
@@ -553,7 +551,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     </div>
                     {selectedTop && (
                       <button
-                        onClick={() => handleRemoveItem("top")}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveItem("top")
+                        }}
                         className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
                         <X className="w-4 h-4" />
@@ -569,7 +570,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </label>
                   <div className="relative">
                     <div
-                      onClick={() => setShowBottomSelectModal(true)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowBottomSelectModal(true)
+                      }}
                       className="border-2 border-dashed border-slate-300 dark:border-border rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors bg-slate-50 dark:bg-muted/30 min-h-[200px] flex flex-col items-center justify-center"
                     >
                       {selectedBottom ? (
@@ -603,7 +607,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     </div>
                     {selectedBottom && (
                       <button
-                        onClick={() => handleRemoveItem("bottom")}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveItem("bottom")
+                        }}
                         className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
                         <X className="w-4 h-4" />
@@ -619,7 +626,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </label>
                   <div className="relative">
                     <div
-                      onClick={() => setShowOuterwearSelectModal(true)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowOuterwearSelectModal(true)
+                      }}
                       className="border-2 border-dashed border-slate-300 dark:border-border rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors bg-slate-50 dark:bg-muted/30 min-h-[140px] flex flex-col items-center justify-center"
                     >
                       {selectedOuterwear ? (
@@ -653,7 +663,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     </div>
                     {selectedOuterwear && (
                       <button
-                        onClick={() => handleRemoveItem("outerwear")}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveItem("outerwear")
+                        }}
                         className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
                         <X className="w-4 h-4" />
@@ -664,14 +677,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-                <div 
-                  className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
-                  onClick={(e) => {
-                    if (e.target === e.currentTarget) {
-                      setSelectedItemForResize(null)
-                    }
-                  }}
-                >                
+              <div 
+                className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setSelectedItemForResize(null)
+                  }
+                }}
+              >                
                 <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
                   <div 
                     className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center"
@@ -681,7 +694,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       }
                     }}
                   >
-                      {editedCategorizedItems && (editedCategorizedItems.top || editedCategorizedItems.bottom || editedCategorizedItems.outerwear) ? (
+                    {editedCategorizedItems && (editedCategorizedItems.top || editedCategorizedItems.bottom || editedCategorizedItems.outerwear) ? (
                       renderOutfitDisplay()
                     ) : (
                       <div className="text-center text-muted-foreground">
@@ -693,7 +706,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Right Panel - Item Controls - FIXED WITH FLEXBOX */}
-              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col deselect-area">
+              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col" onClick={(e) => {
+                // Only deselect if not clicking on interactive elements
+                if (!(e.target as HTMLElement).closest('input, button, .resize-control')) {
+                    setSelectedItemForResize(null)
+                }
+              }}>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground">
                     Item Controls
@@ -705,7 +723,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 
                 {/* Resize Controls */}
                 {selectedItemForResize && (
-                  <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30">
+                  <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30 resize-control">
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-foreground mb-3">
                       Resize Item
                     </h4>
@@ -757,6 +775,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               })
                             }}
                             className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
                           />
                           <div className="flex justify-between text-xs text-slate-500 mt-1">
                             <span>Small</span>
@@ -778,18 +797,27 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </p>
                   <div className="space-y-3">
                     {/* Shuffle button */}
-                    <Button variant="outline" size="sm" onClick={shuffleOutfit} disabled={loadingClothing} className="w-full">
+                    <Button variant="outline" size="sm" onClick={(e) => {
+                      e.stopPropagation()
+                      shuffleOutfit()
+                    }} disabled={loadingClothing} className="w-full">
                       <Shuffle className="w-4 h-4 mr-2" />
                       Shuffle
                     </Button>
                     
                     {/* Cancel and Create Outfit in same row */}
                     <div className="grid grid-cols-2 gap-3">
-                      <Button variant="outline" onClick={handleCloseModal} className="w-full">
+                      <Button variant="outline" onClick={(e) => {
+                        e.stopPropagation()
+                        handleCloseModal()
+                      }} className="w-full">
                         Cancel
                       </Button>
                       <Button 
-                        onClick={createOutfit} 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          createOutfit()
+                        }}
                         disabled={!hasMinimumItems || isCreating}
                         className="w-full"
                       >
