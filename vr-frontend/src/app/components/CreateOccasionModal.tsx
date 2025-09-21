@@ -343,7 +343,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
 
                                 {/* Outfit Preview */}
                                 <div className="grid grid-cols-2 gap-2 h-24">
-                                  {outfit.clothingItems.slice(0, 4).map((item, index) => (
+                                  {outfit.clothingItems.slice(0, 4).map((item) => (
                                     <div key={item.id} className="relative bg-slate-100 dark:bg-slate-800 chrome:bg-slate-100 rounded-lg overflow-hidden">
                                       <Image
                                         src={item.url}
