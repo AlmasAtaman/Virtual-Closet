@@ -323,12 +323,9 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                           // Adjust positioning for CreateOccasionModal preview cards
                                           let adjustedLeft = item.left ?? 50;
                                           
-                                          // Center items better for the modal preview
-                                          if (adjustedLeft !== 50) {
-                                            const adjustment = (adjustedLeft - 50) * 0.5; // Change this to adjust horizontal spread (0.5 = less spread, 1.0 = more spread)
-                                            adjustedLeft = 50 + adjustment;
-                                          }
-
+                                          // Move items more to the left and center them
+                                          adjustedLeft = adjustedLeft - 100; // Move everything 10% to the left
+                                          
                                           return (
                                             <Image
                                               key={item.id}
@@ -336,12 +333,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                               alt={item.name || `Clothing item ${index + 1}`}
                                               width={200}
                                               height={200}
-                                              className="absolute object-contain max-w-[70%] max-h-[70%]" // Change max-w and max-h to make items smaller/larger
+                                              className="absolute object-contain max-w-[70%] max-h-[70%]"
                                               unoptimized
                                               style={{
                                                 left: `${adjustedLeft}%`,
-                                                bottom: `${(item.bottom || 0) * 0.6}rem`, // Change 0.6 to adjust vertical spacing (higher = more spacing)
-                                                width: `${(item.width || 8) * 0.5}rem`, // Change 0.5 to adjust item width (higher = wider items)
+                                                bottom: `${(item.bottom || 0) * 0.3}rem`, // Reduced from 0.6 to 0.3 to bring items closer together
+                                                width: `${(item.width || 8) * 0.5}rem`,
                                                 transform: "translateX(-50%)",
                                                 zIndex: index,
                                               }}
