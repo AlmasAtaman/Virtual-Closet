@@ -293,22 +293,48 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setEditedCategorizedItems(prev => {
       const newItems = prev || { others: [] }
       
-      // Create new item with default position for the category
-      const itemWithDefaults = {
-        ...item,
-        left: DEFAULT_POSITIONS[category].left,
-        bottom: DEFAULT_POSITIONS[category].bottom,
-        width: DEFAULT_POSITIONS[category].width,
-        scale: DEFAULT_POSITIONS[category].scale,
+      if (category === "top") {
+        // When adding a top, place it in top position
+        newItems.top = {
+          ...item,
+          left: DEFAULT_POSITIONS.top.left,
+          bottom: DEFAULT_POSITIONS.top.bottom,
+          width: DEFAULT_POSITIONS.top.width,
+          scale: DEFAULT_POSITIONS.top.scale,
+        }
+        
+        // If there's outerwear, move it back to its default position
+        if (newItems.outerwear) {
+          newItems.outerwear = {
+            ...newItems.outerwear,
+            left: DEFAULT_POSITIONS.outerwear.left,
+            bottom: DEFAULT_POSITIONS.outerwear.bottom,
+            width: DEFAULT_POSITIONS.outerwear.width,
+            scale: DEFAULT_POSITIONS.outerwear.scale,
+          }
+        }
+      } else if (category === "bottom") {
+        newItems.bottom = {
+          ...item,
+          left: DEFAULT_POSITIONS.bottom.left,
+          bottom: DEFAULT_POSITIONS.bottom.bottom,
+          width: DEFAULT_POSITIONS.bottom.width,
+          scale: DEFAULT_POSITIONS.bottom.scale,
+        }
+      } else if (category === "outerwear") {
+        // If there's no top, put outerwear in top position
+        const shouldUseTopPosition = !newItems.top
+        const position = shouldUseTopPosition ? DEFAULT_POSITIONS.top : DEFAULT_POSITIONS.outerwear
+        
+        newItems.outerwear = {
+          ...item,
+          left: position.left,
+          bottom: position.bottom,
+          width: position.width,
+          scale: position.scale,
+        }
       }
       
-      if (category === "top") {
-        newItems.top = itemWithDefaults
-      } else if (category === "bottom") {
-        newItems.bottom = itemWithDefaults
-      } else if (category === "outerwear") {
-        newItems.outerwear = itemWithDefaults
-      }
       return { ...newItems }
     })
   }
@@ -324,13 +350,31 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     
     setEditedCategorizedItems(prev => {
       const newItems = prev || { others: [] }
+      
       if (category === "top") {
         newItems.top = undefined
+        
+        // If there's outerwear and no top, move outerwear to top position
+        if (newItems.outerwear) {
+          const DEFAULT_POSITIONS = {
+            top: { left: 8, bottom: 8.9, width: 10, scale: 1 },
+            outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 0.8 },
+          }
+          
+          newItems.outerwear = {
+            ...newItems.outerwear,
+            left: DEFAULT_POSITIONS.top.left,
+            bottom: DEFAULT_POSITIONS.top.bottom,
+            width: DEFAULT_POSITIONS.top.width,
+            scale: DEFAULT_POSITIONS.top.scale,
+          }
+        }
       } else if (category === "bottom") {
         newItems.bottom = undefined
       } else if (category === "outerwear") {
         newItems.outerwear = undefined
       }
+      
       return { ...newItems }
     })
   }
