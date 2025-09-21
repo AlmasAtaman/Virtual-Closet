@@ -516,9 +516,6 @@ const ClothingGallery = forwardRef(
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col min-h-[60vh] flex-1">
             <Card className="flex flex-col items-center justify-center py-12 px-4 h-full min-h-[60vh] flex-1">
-              <div className="mb-4 rounded-full bg-muted p-6">
-                <span className="text-4xl">👕</span>
-              </div>
               <h3 className="mb-2 text-xl font-semibold">No items found</h3>
               <p className="text-center text-muted-foreground max-w-md mb-6">
                 {searchQuery || selectedTags.length > 0

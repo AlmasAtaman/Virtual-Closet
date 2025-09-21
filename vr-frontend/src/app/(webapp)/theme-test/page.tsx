@@ -23,9 +23,6 @@ export default function ThemeTestPage() {
             </CardHeader>
             <CardContent>
               <div className="aspect-square bg-white dark:bg-slate-800 chrome:bg-slate-700 rounded-lg flex items-center justify-center mb-4 clothing-image">
-                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 chrome:from-slate-600 chrome:to-blue-700 rounded-lg flex items-center justify-center">
-                  👕
-                </div>
               </div>
               <h3 className="font-medium mb-2">Sample T-Shirt</h3>
               <div className="flex gap-2 mb-2">

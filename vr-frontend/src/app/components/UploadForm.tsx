@@ -890,7 +890,7 @@ export default function UploadForm({
                           variant={uploadTarget === "wishlist" ? "default" : "secondary"}
                           className="px-3 py-1 font-medium transition-all duration-200"
                         >
-                          {uploadTarget === "wishlist" ? "✨ Wishlist" : "👕 My Closet"}
+                          {uploadTarget === "wishlist" ? "✨ Wishlist" : "My Closet"}
                         </Badge>
                       </div>
                     </div>
