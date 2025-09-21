@@ -655,10 +655,24 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative">
+                <div 
+                  className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setSelectedItemForResize(null)
+                    }
+                  }}
+                >                
                 <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
-                  <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
-                    {editedCategorizedItems && (editedCategorizedItems.top || editedCategorizedItems.bottom || editedCategorizedItems.outerwear) ? (
+                  <div 
+                    className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center"
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) {
+                        setSelectedItemForResize(null)
+                      }
+                    }}
+                  >
+                      {editedCategorizedItems && (editedCategorizedItems.top || editedCategorizedItems.bottom || editedCategorizedItems.outerwear) ? (
                       renderOutfitDisplay()
                     ) : (
                       <div className="text-center text-muted-foreground">
