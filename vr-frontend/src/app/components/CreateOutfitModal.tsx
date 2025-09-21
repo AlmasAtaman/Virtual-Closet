@@ -511,7 +511,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     )
   }
 
-  const hasMinimumItems = selectedTop && selectedBottom
+  const hasMinimumItems = selectedTop || selectedBottom || selectedOuterwear
 
   // Get the selected item for resize controls
   const getSelectedResizeItem = () => {
@@ -871,7 +871,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 {/* Bottom buttons - stuck to bottom */}
                 <div className="pt-6 border-t border-slate-200 dark:border-border">
                   <p className="text-sm text-slate-600 dark:text-muted-foreground mb-4 text-center">
-                    Select at least a top and bottom
+                    Select at least one clothing item
                   </p>
                   <div className="space-y-3">
                     {/* Shuffle button */}
