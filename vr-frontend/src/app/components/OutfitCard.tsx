@@ -395,12 +395,12 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
             if (isPants) {
               // Special adjustment just for pants
-              adjustedLeft = adjustedLeft - 30 // <-- Change this number to move pants left/right
+              adjustedLeft = adjustedLeft - 20 // <-- Change this number to move pants left/right
             } else {
               // Regular adjustment for all other items (shirts, jackets, etc.)
               const distanceFromCenter = Math.abs(adjustedLeft - 50)
               const adjustmentFactor = Math.max(0.7, 1 - distanceFromCenter / 100)
-              const baseAdjustment = 25
+              const baseAdjustment = 5
               const finalAdjustment = baseAdjustment * adjustmentFactor
               adjustedLeft = adjustedLeft - finalAdjustment
             }
