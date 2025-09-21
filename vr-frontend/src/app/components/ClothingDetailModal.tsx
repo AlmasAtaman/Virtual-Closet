@@ -183,19 +183,34 @@ export default function ClothingDetailModal({
               <div className="p-6 overflow-y-auto flex-grow">
                 {/* Title and Source URL - always visible */}
                 <div className="mb-4">
-                  <h2 className="text-2xl font-bold">{isEditing ? "Edit Item" : currentItem.name}</h2>
-                  {currentItem.sourceUrl && (
-                    <div className="mt-1">
-                      <a
-                        href={currentItem.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View product page
-                      </a>
-                    </div>
+                  {isEditing ? (
+                    <Input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          onEdit()
+                        }
+                      }}
+                      placeholder="Item name"
+                      className="text-2xl font-bold border-none bg-transparent p-0 focus:ring-0 focus:border-none"
+                    />
+                  ) : (
+                    <h2 className="text-2xl font-bold">{currentItem.name}</h2>
                   )}
+                    {currentItem.sourceUrl && (
+                      <div className="mt-1">
+                        <a
+                          href={currentItem.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          View product page
+                        </a>
+                      </div>
+                    )}
                 </div>
 
 
@@ -213,15 +228,6 @@ export default function ClothingDetailModal({
                         <div>
                           <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
                           <div className="space-y-4">
-                            <div>
-                              <label className="text-sm font-medium mb-1 block">Name</label>
-                              <Input
-                                value={editForm.name}
-                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                placeholder="Item name"
-                              />
-                            </div>
-
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <label className="text-sm font-medium mb-1 block">Type</label>

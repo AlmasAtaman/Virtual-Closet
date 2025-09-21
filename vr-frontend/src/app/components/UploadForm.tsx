@@ -565,648 +565,658 @@ export default function UploadForm({
 
   return (
     <AnimatePresence>
-      <Dialog open={isOpen} onOpenChange={onCloseAction}>
-        <DialogContent className="max-w-6xl max-h-[95vh] h-auto p-0 flex flex-col overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex flex-col h-full"
-          >
-            {/* Header */}
-            <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-background to-muted/20">
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Add New Clothing Item
-              </DialogTitle>
-            </DialogHeader>
+      {isOpen && (
+        <Dialog key="upload-modal" open={isOpen} onOpenChange={onCloseAction}>
+          <DialogContent className="max-w-6xl w-[95vw] h-[85vh] max-h-[85vh] p-0 flex flex-col overflow-hidden">
+              <motion.div
+              key="upload-modal-content"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="flex flex-col h-full"
+            >
+              {/* Header */}
+              <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-background to-muted/20">
+                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  Add New Clothing Item
+                </DialogTitle>
+              </DialogHeader>
 
-            <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
-              {/* Left Column - Image Upload */}
-              <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10 flex flex-col">
-                <div className="space-y-6 flex flex-col flex-1">
-                  {/* Upload Method Toggle */}
-                  <Card className="p-1 bg-background/50 backdrop-blur-sm">
-                    <div className="flex gap-1">
-                      <Button
-                        variant={uploadMethod === "direct" ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setUploadMethod("direct")}
-                        className="flex-1 transition-all duration-200"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Direct Upload
-                      </Button>
-                      <Button
-                        variant={uploadMethod === "url" ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setUploadMethod("url")}
-                        className="flex-1 transition-all duration-200"
-                      >
-                        <Link className="w-4 h-4 mr-2" />
-                        From URL
-                      </Button>
-                    </div>
-                  </Card>
-                  {/* Direct Upload Flow */}
-                  {uploadMethod === "direct" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-4 flex flex-col flex-1"
-                    >
-                      <Card
-                        className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
-                          isDragOver
-                            ? "border-primary bg-primary/5 scale-[1.02]"
-                            : imagePreview
-                              ? "border-primary/50 bg-primary/5"
-                              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
-                        }`}
-                        onDrop={handleDrop}
-                        onDragOver={(e) => {
-                          e.preventDefault()
-                          setIsDragOver(true)
-                        }}
-                        onDragLeave={() => setIsDragOver(false)}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
-                          <AnimatePresence mode="wait">
-                            {imagePreview ? (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                className="space-y-4"
-                              >
-                                <div className="relative group">
-                                  <Image
-                                    src={imagePreview || "/placeholder.svg"}
-                                    alt="Preview"
-                                    width={400}
-                                    height={256}
-                                    className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setImagePreview("")
-                                    setSelectedFile(null)
-                                  }}
-                                  className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                                >
-                                  <X className="w-4 h-4" />
-                                  Remove Image
-                                </Button>
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-center space-y-4 flex flex-col justify-center items-center h-full"
-                              >
-                                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <ImageIcon className="w-8 h-8 text-primary" />
-                                </div>
-                                <div>
-                                  <p className="text-lg font-medium text-foreground">Upload or Copy, Paste a Image</p>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    Up to 10MB • Paste from clipboard
-                                  </p>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </CardContent>
-                      </Card>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file)
-                        }}
-                      />
-                      <AnimatePresence>
-                        {imagePreview && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                          >
-                            <Button
-                              onClick={handleAutoFill}
-                              disabled={isAutoFilling || !selectedFile}
-                              className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
-                              size="lg"
-                            >
-                              {isAutoFilling ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              ) : (
-                                <Sparkles className="w-4 h-4 mr-2" />
-                              )}
-                              {isAutoFilling ? "Analyzing..." : "Auto-fill with AI"}
-                            </Button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  )}
-                  {/* From URL 3-step Flow */}
-                  {uploadMethod === "url" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-4 flex flex-col flex-1"
-                    >
-                      {/* URL Input Section */}
-                      <motion.div
-                        key="url-input-step"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="space-y-4"
-                      >
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">Product URL</Label>
-                          <div className="flex gap-2 w-full">
-                            <Input
-                              placeholder="Enter product URL..."
-                              value={scrapingUrl}
-                              onChange={e => {
-                                setScrapingUrl(e.target.value);
-                                setFetchError(null);
-                                setQuickMetadataFetched(false);
-                              }}
-                              className="flex-1"
-                              disabled={isLoading}
-                            />
-                            <Button
-                              onClick={handleGeminiMetadata}
-                              disabled={!scrapingUrl.trim() || isLoading}
-                              className="px-6 w-[140px]"
-                            >
-                              {isLoading ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Zap className="w-4 h-4 mr-1" />
-                                  Fetch Info
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                        {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
-
-                        {quickMetadataFetched && (
-                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <Check className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">
-                                Metadata extracted successfully!
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1 ml-6">
-                              Now upload your product image below ↓
-                            </p>
-                          </div>
-                        )}
-                      </motion.div>
-                      
-                      {/* Always show image upload area after URL input */}
-                      <Card
-                        className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
-                          isDragOver
-                            ? "border-primary bg-primary/5 scale-[1.02]"
-                            : imagePreview
-                              ? "border-primary/50 bg-primary/5"
-                              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
-                        }`}
-                        onDrop={handleDrop}
-                        onDragOver={(e) => {
-                          e.preventDefault()
-                          setIsDragOver(true)
-                        }}
-                        onDragLeave={() => setIsDragOver(false)}
-                        onClick={() => quickImageInputRef.current?.click()}
-                      >
-                        <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
-                          <AnimatePresence mode="wait">
-                            {imagePreview ? (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                className="space-y-4"
-                              >
-                                <div className="relative group">
-                                  <Image
-                                    src={imagePreview || "/placeholder.svg"}
-                                    alt="Preview"
-                                    width={400}
-                                    height={256}
-                                    className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setImagePreview("")
-                                    setSelectedFile(null)
-                                  }}
-                                  className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                                >
-                                  <X className="w-4 h-4" />
-                                  Remove Image
-                                </Button>
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-center space-y-4 flex flex-col justify-center items-center h-full"
-                              >
-                                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <ImageIcon className="w-8 h-8 text-primary" />
-                                </div>
-                                <div>
-                                  <p className="text-lg font-medium text-foreground">Upload Product Image</p>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    Upload while metadata is being fetched
-                                  </p>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </CardContent>
-                      </Card>
-                      <input
-                        ref={quickImageInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleFileUpload(file)
-                        }}
-                      />
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Column - Form */}
-              <div className="lg:w-3/5 flex flex-col overflow-hidden">
-                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/20">
-                  {/* Target Toggle */}
-                  <Card className="p-4 bg-gradient-to-r from-background to-muted/20">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Add to:</Label>
-                      <div className="flex items-center gap-3">
-                        <Switch
-                          checked={uploadTarget === "wishlist"}
-                          onCheckedChange={(checked: boolean) => {
-                            setUploadTarget(checked ? "wishlist" : "closet")
-                            setFormData((prev) => ({ ...prev, mode: checked ? "wishlist" : "closet" }))
-                          }}
-                          className="data-[state=checked]:bg-primary"
-                        />
-                        <Badge
-                          variant={uploadTarget === "wishlist" ? "default" : "secondary"}
-                          className="px-3 py-1 font-medium transition-all duration-200"
+              <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
+                {/* Left Column - Image Upload */}
+                <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10 flex flex-col min-h-0">
+                  <div className="space-y-6 flex flex-col flex-1">
+                    {/* Upload Method Toggle */}
+                    <Card className="p-1 bg-background/50 backdrop-blur-sm">
+                      <div className="flex gap-1">
+                        <Button
+                          variant={uploadMethod === "direct" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setUploadMethod("direct")}
+                          className="flex-1 transition-all duration-200"
                         >
-                          {uploadTarget === "wishlist" ? "✨ Wishlist" : "My Closet"}
-                        </Badge>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Direct Upload
+                        </Button>
+                        <Button
+                          variant={uploadMethod === "url" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setUploadMethod("url")}
+                          className="flex-1 transition-all duration-200"
+                        >
+                          <Link className="w-4 h-4 mr-2" />
+                          From URL
+                        </Button>
                       </div>
-                    </div>
-                  </Card>
-
-                  <Separator />
-
-                  {/* Form Tabs */}
-                  <Tabs value={mode} onValueChange={(value) => setMode(value as "basic" | "advanced")}>
-                    <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50">
-                      <TabsTrigger value="basic" className="transition-all duration-200">
-                        Basic Details
-                      </TabsTrigger>
-                      <TabsTrigger value="advanced" className="transition-all duration-200">
-                        Advanced Details
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="basic" className="space-y-6 mt-6">
+                    </Card>
+                    {/* Direct Upload Flow */}
+                    {uploadMethod === "direct" && (
                       <motion.div
+                        key="direct-upload"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        className="space-y-4 flex flex-col flex-1"
                       >
-                        <div className="space-y-2">
-                          <Label htmlFor="name" className="text-sm font-medium">
-                            Name
-                          </Label>
-                          <Input
-                            id="name"
-                            placeholder="e.g., Classic Denim Jacket (optional - auto-names if empty)"
-                            value={formData.name || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="type" className="text-sm font-medium">
-                            Type
-                          </Label>
-                          <Select
-                            value={formData.type || ""}
-                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
-                          >
-                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select type (optional - defaults to uncategorized)" className="text-muted-foreground" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="uncategorized">Uncategorized</SelectItem>
-                              <SelectItem value="T-Shirt">T-Shirt</SelectItem>
-                              <SelectItem value="Hoodie">Hoodie</SelectItem>
-                              <SelectItem value="Jacket">Jacket</SelectItem>
-                              <SelectItem value="Pants">Pants</SelectItem>
-                              <SelectItem value="Shoes">Shoes</SelectItem>
-                              <SelectItem value="Hat">Hat</SelectItem>
-                              <SelectItem value="Sweater">Sweater</SelectItem>
-                              <SelectItem value="Shorts">Shorts</SelectItem>
-                              <SelectItem value="Dress">Dress</SelectItem>
-                              <SelectItem value="Skirt">Skirt</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="brand" className="text-sm font-medium">
-                            Brand
-                          </Label>
-                          <Input
-                            id="brand"
-                            placeholder="e.g., Levi's, Nike, Zara"
-                            value={formData.brand || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="price" className="text-sm font-medium">
-                            Price {uploadTarget === "wishlist" && "*"}
-                          </Label>
-                          <Input
-                            id="price"
-                            type="number"
-                            placeholder="0.00"
-                            value={formData.price ?? ""}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                price: e.target.value ? Number.parseFloat(e.target.value) : undefined,
-                              }))
-                            }
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                      </motion.div>
-
-                      <AnimatePresence>
-                        {uploadTarget === "wishlist" && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-2"
-                          >
-                            <Label htmlFor="sourceUrl" className="text-sm font-medium">
-                              Source URL *
-                            </Label>
-                            <Input
-                              id="sourceUrl"
-                              placeholder="https://..."
-                              value={formData.sourceUrl || ""}
-                              onChange={(e) => setFormData((prev) => ({ ...prev, sourceUrl: e.target.value }))}
-                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-sm font-medium">
-                          Notes
-                        </Label>
-                        <Textarea
-                          id="notes"
-                          placeholder="Additional notes about this item..."
-                          maxLength={100}
-                          value={formData.notes || ""}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                          className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 resize-none"
-                          rows={3}
+                        <Card
+                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
+                            isDragOver
+                              ? "border-primary bg-primary/5 scale-[1.02]"
+                              : imagePreview
+                                ? "border-primary/50 bg-primary/5"
+                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                          }`}
+                          onDrop={handleDrop}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setIsDragOver(true)
+                          }}
+                          onDragLeave={() => setIsDragOver(false)}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
+                            <AnimatePresence mode="wait">
+                              {imagePreview ? (
+                                <motion.div
+                                  key="image-preview"
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  className="space-y-4"
+                                >
+                                  <div className="relative group">
+                                    <Image
+                                      src={imagePreview || "/placeholder.svg"}
+                                      alt="Preview"
+                                      width={400}
+                                      height={256}
+                                      className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setImagePreview("")
+                                      setSelectedFile(null)
+                                    }}
+                                    className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                    Remove Image
+                                  </Button>
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="upload-placeholder"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="text-center space-y-4 flex flex-col justify-center items-center h-full"
+                                >
+                                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <ImageIcon className="w-8 h-8 text-primary" />
+                                  </div>
+                                  <div>
+                                    <p className="text-lg font-medium text-foreground">Upload or Copy, Paste a Image</p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      Up to 10MB • Paste from clipboard
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </CardContent>
+                        </Card>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleFileUpload(file)
+                          }}
                         />
-                        <p className="text-xs text-muted-foreground text-right">{formData.notes?.length || 0}/100</p>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="advanced" className="space-y-6 mt-6">
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                      >
-                        <div className="space-y-2">
-                          <Label htmlFor="occasion" className="text-sm font-medium">
-                            Occasion
-                          </Label>
-                          <Input
-                            id="occasion"
-                            placeholder="e.g., Casual, Formal, Work"
-                            value={formData.occasion || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, occasion: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="style" className="text-sm font-medium">
-                            Style
-                          </Label>
-                          <Input
-                            id="style"
-                            placeholder="e.g., Vintage, Modern, Bohemian"
-                            value={formData.style || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, style: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="fit" className="text-sm font-medium">
-                            Fit
-                          </Label>
-                          <Select
-                            value={formData.fit || ""}
-                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, fit: value }))}
-                          >
-                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select fit" className="text-muted-foreground" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Slim">Slim</SelectItem>
-                              <SelectItem value="Regular">Regular</SelectItem>
-                              <SelectItem value="Oversized">Oversized</SelectItem>
-                              <SelectItem value="Baggy">Baggy</SelectItem>
-                              <SelectItem value="Crop">Crop</SelectItem>
-                              <SelectItem value="Skinny">Skinny</SelectItem>
-                              <SelectItem value="Tapered">Tapered</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="color" className="text-sm font-medium">
-                            Color
-                          </Label>
-                          <Input
-                            id="color"
-                            placeholder="e.g., Navy Blue, Black, Red"
-                            value={formData.color || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="material" className="text-sm font-medium">
-                            Material
-                          </Label>
-                          <Select
-                            value={formData.material || ""}
-                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, material: value }))}
-                          >
-                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select material" className="text-muted-foreground" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Cotton">Cotton</SelectItem>
-                              <SelectItem value="Linen">Linen</SelectItem>
-                              <SelectItem value="Denim">Denim</SelectItem>
-                              <SelectItem value="Leather">Leather</SelectItem>
-                              <SelectItem value="Knit">Knit</SelectItem>
-                              <SelectItem value="Polyester">Polyester</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="season" className="text-sm font-medium">
-                            Season
-                          </Label>
-                          <Select
-                            value={formData.season || ""}
-                            onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
-                          >
-                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                              <SelectValue placeholder="Select season" className="text-muted-foreground" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Spring">Spring</SelectItem>
-                              <SelectItem value="Summer">Summer</SelectItem>
-                              <SelectItem value="Fall">Fall</SelectItem>
-                              <SelectItem value="Winter">Winter</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </motion.div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-
-                {/* Footer Actions */}
-                <div className="border-t bg-gradient-to-r from-background to-muted/20 p-6">
-                  <AnimatePresence>
-                    {(isSubmitting || isLoading) && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mb-4"
-                      >
-                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                          <span className="font-medium">
-                            {isSubmitting ? "Uploading..." : "Fetching metadata..."}
-                          </span>
-                          <span className="font-mono">{uploadProgress}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <motion.div
-                            className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${uploadProgress}%` }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                          />
-                        </div>
+                        <AnimatePresence>
+                          {imagePreview && (
+                            <motion.div
+                              key="auto-fill-button"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <Button
+                                onClick={handleAutoFill}
+                                disabled={isAutoFilling || !selectedFile}
+                                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                                size="lg"
+                              >
+                                {isAutoFilling ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4 mr-2" />
+                                )}
+                                {isAutoFilling ? "Analyzing..." : "Auto-fill with AI"}
+                              </Button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                    {/* From URL 3-step Flow */}
+                    {uploadMethod === "url" && (
+                      <motion.div
+                        key="url-upload"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4 flex flex-col flex-1"
+                      >
+                        {/* URL Input Section */}
+                        <motion.div
+                          key="url-input-step"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="space-y-4"
+                        >
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Product URL</Label>
+                            <div className="flex gap-2 w-full">
+                              <Input
+                                placeholder="Enter product URL..."
+                                value={scrapingUrl}
+                                onChange={e => {
+                                  setScrapingUrl(e.target.value);
+                                  setFetchError(null);
+                                  setQuickMetadataFetched(false);
+                                }}
+                                className="flex-1"
+                                disabled={isLoading}
+                              />
+                              <Button
+                                onClick={handleGeminiMetadata}
+                                disabled={!scrapingUrl.trim() || isLoading}
+                                className="px-6 w-[140px]"
+                              >
+                                {isLoading ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Zap className="w-4 h-4 mr-1" />
+                                    Fetch Info
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                          {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
 
-                  <div className="flex gap-3 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={onCloseAction}
-                      disabled={isSubmitting}
-                      className="px-6 transition-all duration-200"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={!isFormValid() || isSubmitting}
-                      className="px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Plus className="w-4 h-4 mr-2" />
+                          {quickMetadataFetched && (
+                            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                              <div className="flex items-center gap-2">
+                                <Check className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-medium text-foreground">
+                                  Metadata extracted successfully!
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1 ml-6">
+                                Now upload your product image below ↓
+                              </p>
+                            </div>
+                          )}
+                        </motion.div>
+                        
+                        {/* Always show image upload area after URL input */}
+                        <Card
+                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
+                            isDragOver
+                              ? "border-primary bg-primary/5 scale-[1.02]"
+                              : imagePreview
+                                ? "border-primary/50 bg-primary/5"
+                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                          }`}
+                          onDrop={handleDrop}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setIsDragOver(true)
+                          }}
+                          onDragLeave={() => setIsDragOver(false)}
+                          onClick={() => quickImageInputRef.current?.click()}
+                        >
+                          <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
+                            <AnimatePresence mode="wait">
+                              {imagePreview ? (
+                                <motion.div
+                                  key="url-image-preview"
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  className="space-y-4"
+                                >
+                                  <div className="relative group">
+                                    <Image
+                                      src={imagePreview || "/placeholder.svg"}
+                                      alt="Preview"
+                                      width={400}
+                                      height={256}
+                                      className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setImagePreview("")
+                                      setSelectedFile(null)
+                                    }}
+                                    className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                    Remove Image
+                                  </Button>
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="url-upload-placeholder"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="text-center space-y-4 flex flex-col justify-center items-center h-full"
+                                >
+                                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <ImageIcon className="w-8 h-8 text-primary" />
+                                  </div>
+                                  <div>
+                                    <p className="text-lg font-medium text-foreground">Upload Product Image</p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      Upload while metadata is being fetched
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </CardContent>
+                        </Card>
+                        <input
+                          ref={quickImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleFileUpload(file)
+                          }}
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column - Form */}
+                  <div className="lg:w-3/5 flex flex-col overflow-hidden min-h-0">
+                    <div className="p-6 space-y-6 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/20" style={{minHeight: 0}}>
+                    {/* Target Toggle */}
+                    <Card className="p-4 bg-gradient-to-r from-background to-muted/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-semibold">Add to:</Label>
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={uploadTarget === "wishlist"}
+                            onCheckedChange={(checked: boolean) => {
+                              setUploadTarget(checked ? "wishlist" : "closet")
+                              setFormData((prev) => ({ ...prev, mode: checked ? "wishlist" : "closet" }))
+                            }}
+                            className="data-[state=checked]:bg-primary"
+                          />
+                          <Badge
+                            variant={uploadTarget === "wishlist" ? "default" : "secondary"}
+                            className="px-3 py-1 font-medium transition-all duration-200"
+                          >
+                            {uploadTarget === "wishlist" ? "✨ Wishlist" : "My Closet"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Separator />
+
+                    {/* Form Tabs */}
+                    <Tabs value={mode} onValueChange={(value) => setMode(value as "basic" | "advanced")}>
+                      <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50">
+                        <TabsTrigger value="basic" className="transition-all duration-200">
+                          Basic Details
+                        </TabsTrigger>
+                        <TabsTrigger value="advanced" className="transition-all duration-200">
+                          Advanced Details
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="basic" className="space-y-6 mt-6">
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        >
+                          <div className="space-y-2">
+                            <Label htmlFor="name" className="text-sm font-medium">
+                              Name
+                            </Label>
+                            <Input
+                              id="name"
+                              placeholder="e.g., Classic Denim Jacket (optional - auto-names if empty)"
+                              value={formData.name || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="type" className="text-sm font-medium">
+                              Type
+                            </Label>
+                            <Select
+                              value={formData.type || ""}
+                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                            >
+                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                                <SelectItem value="T-Shirt">T-Shirt</SelectItem>
+                                <SelectItem value="Hoodie">Hoodie</SelectItem>
+                                <SelectItem value="Jacket">Jacket</SelectItem>
+                                <SelectItem value="Pants">Pants</SelectItem>
+                                <SelectItem value="Shoes">Shoes</SelectItem>
+                                <SelectItem value="Hat">Hat</SelectItem>
+                                <SelectItem value="Sweater">Sweater</SelectItem>
+                                <SelectItem value="Shorts">Shorts</SelectItem>
+                                <SelectItem value="Dress">Dress</SelectItem>
+                                <SelectItem value="Skirt">Skirt</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="brand" className="text-sm font-medium">
+                              Brand
+                            </Label>
+                            <Input
+                              id="brand"
+                              placeholder="e.g., Levi's, Nike, Zara"
+                              value={formData.brand || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="price" className="text-sm font-medium">
+                              Price {uploadTarget === "wishlist" && "*"}
+                            </Label>
+                            <Input
+                              id="price"
+                              type="number"
+                              placeholder="0.00"
+                              value={formData.price ?? ""}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  price: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                                }))
+                              }
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+                        </motion.div>
+
+                        <AnimatePresence>
+                          {uploadTarget === "wishlist" && (
+                            <motion.div
+                              key="wishlist-url-field"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="space-y-2"
+                            >
+                              <Label htmlFor="sourceUrl" className="text-sm font-medium">
+                                Source URL *
+                              </Label>
+                              <Input
+                                id="sourceUrl"
+                                placeholder="https://..."
+                                value={formData.sourceUrl || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, sourceUrl: e.target.value }))}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="notes" className="text-sm font-medium">
+                            Notes
+                          </Label>
+                          <Textarea
+                            id="notes"
+                            placeholder="Additional notes about this item..."
+                            maxLength={100}
+                            value={formData.notes || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 resize-none"
+                            rows={3}
+                          />
+                          <p className="text-xs text-muted-foreground text-right">{formData.notes?.length || 0}/100</p>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="advanced" className="space-y-6 mt-6">
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        >
+                          <div className="space-y-2">
+                            <Label htmlFor="occasion" className="text-sm font-medium">
+                              Occasion
+                            </Label>
+                            <Input
+                              id="occasion"
+                              placeholder="e.g., Casual, Formal, Work"
+                              value={formData.occasion || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, occasion: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="style" className="text-sm font-medium">
+                              Style
+                            </Label>
+                            <Input
+                              id="style"
+                              placeholder="e.g., Vintage, Modern, Bohemian"
+                              value={formData.style || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, style: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="fit" className="text-sm font-medium">
+                              Fit
+                            </Label>
+                            <Select
+                              value={formData.fit || ""}
+                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, fit: value }))}
+                            >
+                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Slim">Slim</SelectItem>
+                                <SelectItem value="Regular">Regular</SelectItem>
+                                <SelectItem value="Oversized">Oversized</SelectItem>
+                                <SelectItem value="Baggy">Baggy</SelectItem>
+                                <SelectItem value="Crop">Crop</SelectItem>
+                                <SelectItem value="Skinny">Skinny</SelectItem>
+                                <SelectItem value="Tapered">Tapered</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="color" className="text-sm font-medium">
+                              Color
+                            </Label>
+                            <Input
+                              id="color"
+                              placeholder="e.g., Navy Blue, Black, Red"
+                              value={formData.color || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="material" className="text-sm font-medium">
+                              Material
+                            </Label>
+                            <Select
+                              value={formData.material || ""}
+                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, material: value }))}
+                            >
+                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">                                <SelectValue placeholder="Select material" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Cotton">Cotton</SelectItem>
+                                <SelectItem value="Linen">Linen</SelectItem>
+                                <SelectItem value="Denim">Denim</SelectItem>
+                                <SelectItem value="Leather">Leather</SelectItem>
+                                <SelectItem value="Knit">Knit</SelectItem>
+                                <SelectItem value="Polyester">Polyester</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="season" className="text-sm font-medium">
+                              Season
+                            </Label>
+                            <Select
+                              value={formData.season || ""}
+                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
+                            >
+                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">                                <SelectValue placeholder="Select season" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Spring">Spring</SelectItem>
+                                <SelectItem value="Summer">Summer</SelectItem>
+                                <SelectItem value="Fall">Fall</SelectItem>
+                                <SelectItem value="Winter">Winter</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </motion.div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="border-t bg-gradient-to-r from-background to-muted/20 p-6">
+                    <AnimatePresence>
+                      {(isSubmitting || isLoading) && (
+                        <motion.div
+                          key="upload-progress"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mb-4"
+                        >
+                          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                            <span className="font-medium">
+                              {isSubmitting ? "Uploading..." : "Fetching metadata..."}
+                            </span>
+                            <span className="font-mono">{uploadProgress}%</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${uploadProgress}%` }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                            />
+                          </div>
+                        </motion.div>
                       )}
-                      {isSubmitting ? "Adding..." : "Add Item"}
-                    </Button>
+                    </AnimatePresence>
+
+                    <div className="flex gap-3 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={onCloseAction}
+                        disabled={isSubmitting}
+                        className="px-6 transition-all duration-200"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={!isFormValid() || isSubmitting}
+                        className="px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4 mr-2" />
+                        )}
+                        {isSubmitting ? "Adding..." : "Add Item"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        </DialogContent>
-      </Dialog>
+            </motion.div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Bot Detection Modal */}
-      <Dialog open={showBotDetectionModal} onOpenChange={setShowBotDetectionModal}>
+      <Dialog key="bot-detection-modal" open={showBotDetectionModal} onOpenChange={setShowBotDetectionModal}>
         <DialogContent className="max-w-md">
           <motion.div
+            key="bot-detection-content"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}

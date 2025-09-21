@@ -513,26 +513,17 @@ const ClothingGallery = forwardRef(
               <p className="text-sm text-muted-foreground">Loading your wardrobe...</p>
             </div>
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="flex flex-col min-h-[60vh] flex-1">
-            <Card className="flex flex-col items-center justify-center py-12 px-4 h-full min-h-[60vh] flex-1">
-              <h3 className="mb-2 text-xl font-semibold">No items found</h3>
-              <p className="text-center text-muted-foreground max-w-md mb-6">
-                {searchQuery || selectedTags.length > 0
-                  ? "Try adjusting your search or filters to find what you're looking for."
-                  : "Your wardrobe is empty. Add some clothing items to get started."}
-              </p>
-              {viewMode === "closet" && !searchQuery && selectedTags.length === 0 && (
-                <Button
-                  onClick={openUploadModal}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Your First Item
-                </Button>
-              )}
-            </Card>
-          </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex flex-col min-h-[60vh] flex-1">
+              <Card className="flex flex-col items-center justify-center py-12 px-4 h-full min-h-[60vh] flex-1">
+                <h3 className="mb-2 text-xl font-semibold">No items found</h3>
+                <p className="text-center text-muted-foreground max-w-md">
+                  {searchQuery || selectedTags.length > 0
+                    ? "Try adjusting your search or filters to find what you're looking for."
+                    : "Your wardrobe is empty. Add some clothing items to get started."}
+                </p>
+              </Card>
+            </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">            
             <AnimatePresence>
