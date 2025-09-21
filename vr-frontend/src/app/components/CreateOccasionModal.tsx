@@ -324,7 +324,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                           let adjustedLeft = item.left ?? 50;
                                           
                                           // Move items more to the left and center them
-                                          adjustedLeft = adjustedLeft - 50; // Move everything 10% to the left
+                                          adjustedLeft = adjustedLeft + 5; // Move everything 10% to the left
                                           
                                           return (
                                             <Image
