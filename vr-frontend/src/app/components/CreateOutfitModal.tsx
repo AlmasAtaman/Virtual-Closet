@@ -469,6 +469,21 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
   const hasMinimumItems = selectedTop && selectedBottom
 
+  // Get the selected item for resize controls
+  const getSelectedResizeItem = () => {
+    if (!editedCategorizedItems || !selectedItemForResize) return null
+    
+    const allCurrentItems = [
+      editedCategorizedItems?.outerwear,
+      editedCategorizedItems?.top,
+      editedCategorizedItems?.bottom,
+      editedCategorizedItems?.shoe,
+      ...(editedCategorizedItems?.others || [])
+    ].filter(Boolean) as ClothingItem[]
+    
+    return allCurrentItems.find((item) => item.id === selectedItemForResize)
+  }
+
   if (!show) return null
 
   return (
@@ -705,7 +720,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 </div>
               </div>
 
-              {/* Right Panel - Item Controls - FIXED WITH FLEXBOX */}
+              {/* Right Panel - Item Controls */}
               <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col" onClick={(e) => {
                 // Only deselect if not clicking on interactive elements
                 if (!(e.target as HTMLElement).closest('input, button, .resize-control')) {
@@ -721,32 +736,24 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </Button>
                 </div>
                 
-                {/* Resize Controls */}
-                {selectedItemForResize && (
-                  <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30 resize-control">
-                    <h4 className="text-sm font-semibold text-slate-900 dark:text-foreground mb-3">
-                      Resize Item
-                    </h4>
-                    {(() => {
-                      const allCurrentItems = [
-                        editedCategorizedItems?.outerwear,
-                        editedCategorizedItems?.top,
-                        editedCategorizedItems?.bottom,
-                        editedCategorizedItems?.shoe,
-                        ...(editedCategorizedItems?.others || [])
-                      ].filter(Boolean) as ClothingItem[]
-                      
-                      const selectedItem = allCurrentItems.find((item) => item.id === selectedItemForResize)
-                      if (!selectedItem) return null
-
+                {/* Resize Controls - Always visible */}
+                <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30 resize-control">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-foreground mb-3">
+                    Resize Item
+                  </h4>
+                  {(() => {
+                    const selectedItem = getSelectedResizeItem()
+                    
+                    if (!selectedItem) {
+                      // Show grayed out state when no item selected
                       return (
                         <div>
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {selectedItem.name || "Item"}
+                            <span className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                              Select an item to adjust the size
                             </span>
-                            <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
-                              {(selectedItem.width ?? 10).toFixed(1)}rem
+                            <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 px-2 py-1 rounded">
+                              --
                             </span>
                           </div>
                           <input
@@ -754,38 +761,65 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             min="6"
                             max="20"
                             step="0.1"
-                            value={selectedItem.width ?? 10}
-                            onChange={(e) => {
-                              const newWidth = parseFloat(e.target.value)
-                              setEditedCategorizedItems(prev => {
-                                if (!prev) return prev
-                                const updated = { ...prev }
-                                const updateItemWidth = (item: ClothingItem | undefined) => {
-                                  if (item && item.id === selectedItemForResize) {
-                                    return { ...item, width: newWidth }
-                                  }
-                                  return item
-                                }
-                                updated.outerwear = updateItemWidth(updated.outerwear)
-                                updated.top = updateItemWidth(updated.top)
-                                updated.bottom = updateItemWidth(updated.bottom)
-                                updated.shoe = updateItemWidth(updated.shoe)
-                                updated.others = updated.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
-                                return updated
-                              })
-                            }}
-                            className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
+                            value={10}
+                            disabled
+                            className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-not-allowed opacity-50"
                           />
-                          <div className="flex justify-between text-xs text-slate-500 mt-1">
+                          <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-1">
                             <span>Small</span>
                             <span>Large</span>
                           </div>
                         </div>
                       )
-                    })()}
-                  </div>
-                )}
+                    }
+
+                    // Show active state when item is selected
+                    return (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {selectedItem.name || "Item"}
+                          </span>
+                          <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+                            {(selectedItem.width ?? 10).toFixed(1)}rem
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="6"
+                          max="20"
+                          step="0.1"
+                          value={selectedItem.width ?? 10}
+                          onChange={(e) => {
+                            const newWidth = parseFloat(e.target.value)
+                            setEditedCategorizedItems(prev => {
+                              if (!prev) return prev
+                              const updated = { ...prev }
+                              const updateItemWidth = (item: ClothingItem | undefined) => {
+                                if (item && item.id === selectedItemForResize) {
+                                  return { ...item, width: newWidth }
+                                }
+                                return item
+                              }
+                              updated.outerwear = updateItemWidth(updated.outerwear)
+                              updated.top = updateItemWidth(updated.top)
+                              updated.bottom = updateItemWidth(updated.bottom)
+                              updated.shoe = updateItemWidth(updated.shoe)
+                              updated.others = updated.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
+                              return updated
+                            })
+                          }}
+                          className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex justify-between text-xs text-slate-500 mt-1">
+                          <span>Small</span>
+                          <span>Large</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
 
                 {/* Flexible space that pushes buttons to bottom */}
                 <div className="flex-1"></div>
