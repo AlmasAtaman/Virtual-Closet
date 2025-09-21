@@ -88,6 +88,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
     }
 
     setIsCreating(true)
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
         method: "POST",
@@ -159,49 +160,58 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={`bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col ${
-            step === "name" ? "!max-w-md" : ""
-          }`}
+          className="bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
-          <AnimatePresence mode="wait">
-            {step === "name" && (
-              <motion.div
-                key="name-step"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="p-6"
-              >
-                {/* Simple Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Folder className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Create Occasion Folder</h2>
-                      <p className="text-sm text-slate-600 dark:text-muted-foreground">Name your folder</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                <Folder className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white chrome:text-foreground">Create Occasion Folder</h2>
+                <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                  {step === "name" ? "Name your folder" : "Select outfits to organize"}
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
 
-                {/* Compact Form */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="folder-name" className="text-sm font-medium text-slate-700 dark:text-foreground">
+          <div className="p-6 flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              {step === "name" && (
+                <motion.div
+                  key="name-step"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-6"
+                >
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">📁</div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white chrome:text-foreground mb-2">
+                      What should we call this folder?
+                    </h3>
+                    <p className="text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground text-sm">
+                      Choose a name that describes the occasion or event
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 max-w-md mx-auto">
+                    <Label htmlFor="occasion-name" className="text-sm font-medium text-slate-700 dark:text-foreground chrome:text-foreground">
                       Folder Name
                     </Label>
                     <Input
-                      id="folder-name"
+                      id="occasion-name"
                       value={occasionName}
                       onChange={(e) => setOccasionName(e.target.value)}
                       placeholder="e.g., Work Outfits, Date Night, Casual Friday..."
-                      className="w-full"
+                      className="text-center bg-white dark:bg-background chrome:bg-background border-slate-300 dark:border-border chrome:border-border text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-500 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground"
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && occasionName.trim()) {
                           handleNameNext()
@@ -211,154 +221,159 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                     />
                   </div>
 
-                  <Button
-                    onClick={handleNameNext}
-                    disabled={!occasionName.trim()}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Next: Select Outfits
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-            {step === "selection" && (
-              <motion.div
-                key="selection-step"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col h-full"
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
-                      <Folder className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white chrome:text-foreground">Create Occasion Folder</h2>
-                      <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
-                        Select outfits to organize
-                      </p>
-                    </div>
+                  <div className="flex justify-center pt-6">
+                    <Button
+                      onClick={handleNameNext}
+                      disabled={!occasionName.trim()}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 text-white"
+                    >
+                      Next: Select Outfits
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
+                </motion.div>
+              )}
 
-                <div className="p-6 flex-1 overflow-y-auto">
-                  <div className="space-y-6">
-                    {/* Step indicator */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white chrome:text-foreground">
-                          Adding outfits to &quot;{occasionName}&quot;
-                        </h3>
-                        <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
-                          {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => setStep("name")}
-                        className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
-                      >
-                        ← Back
-                      </Button>
-                    </div>
-
-                    {/* Search */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                      <Input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search outfits..."
-                        className="pl-10 bg-white dark:bg-background chrome:bg-background border-slate-300 dark:border-border chrome:border-border"
-                      />
-                    </div>
-
-                    {/* Optional message */}
-                    <div className="bg-blue-50 dark:bg-blue-950/20 chrome:bg-blue-50 border border-blue-200 dark:border-blue-800 chrome:border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-700 dark:text-blue-300 chrome:text-blue-700">
-                        💡 You can create an empty folder and add outfits later if you prefer.
+              {step === "selection" && (
+                <motion.div
+                  key="selection-step"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-6"
+                >
+                  {/* Step indicator */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-white chrome:text-foreground">
+                        Adding outfits to &quot;{occasionName}&quot;
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                        {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
                       </p>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStep("name")}
+                      className="gap-2"
+                    >
+                      Back
+                    </Button>
+                  </div>
 
-                    {/* Outfits Grid */}
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-muted-foreground chrome:text-muted-foreground" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search outfits..."
+                      className="pl-10 bg-white dark:bg-background chrome:bg-background border-slate-300 dark:border-border chrome:border-border text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-500 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground"
+                    />
+                  </div>
+
+                  {/* Outfits Grid */}
+                  <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
                     {loading ? (
-                      <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {Array.from({ length: 8 }).map((_, index) => (
+                          <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-muted chrome:bg-muted rounded-lg animate-pulse" />
+                        ))}
                       </div>
                     ) : filteredOutfits.length === 0 ? (
                       <div className="text-center py-12">
-                        <div className="text-4xl mb-4">👔</div>
-                        <h3 className="text-lg font-medium text-slate-900 dark:text-white chrome:text-foreground mb-2">
-                          {searchQuery ? "No matching outfits" : "No outfits found"}
-                        </h3>
-                        <p className="text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
-                          {searchQuery
-                            ? "Try adjusting your search or create an empty folder."
-                            : "Create your first outfit to get started."}
+                        <p className="text-slate-500 dark:text-muted-foreground chrome:text-muted-foreground">
+                          {searchQuery ? "No outfits match your search" : "No outfits found"}
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredOutfits.map((outfit) => (
                           <motion.div
                             key={outfit.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="relative"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.2 }}
                           >
                             <Card
-                              className={`cursor-pointer transition-all duration-200 border-2 ${
+                              className={`cursor-pointer transition-all duration-200 ${
                                 selectedOutfitIds.includes(outfit.id)
-                                  ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800 chrome:ring-blue-200"
-                                  : "border-slate-200 dark:border-border chrome:border-border hover:border-slate-300 dark:hover:border-slate-600 chrome:hover:border-slate-300"
+                                  ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 chrome:bg-blue-50"
+                                  : "hover:ring-2 hover:ring-slate-300 dark:hover:ring-border chrome:hover:ring-border"
                               }`}
                               onClick={() => toggleOutfitSelection(outfit.id)}
                             >
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-slate-900 dark:text-white chrome:text-foreground truncate">
-                                      {outfit.name || "Untitled Outfit"}
-                                    </h4>
-                                    <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
-                                      {outfit.clothingItems.length} item{outfit.clothingItems.length !== 1 ? "s" : ""}
-                                    </p>
-                                  </div>
-                                  {selectedOutfitIds.includes(outfit.id) && (
-                                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
-                                      <Check className="w-4 h-4 text-white" />
+                              <CardContent className="p-3">
+                                {/* Outfit Preview */}
+                                <div className="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-muted dark:to-card chrome:from-muted chrome:to-card rounded-lg mb-3 relative flex items-center justify-center overflow-hidden">
+                                  {outfit.clothingItems.length > 0 ? (
+                                    <div className="relative w-full h-full">
+                                      {outfit.clothingItems.map((item, index) => {
+                                        // Much simpler coordinate adjustment for the smaller preview cards
+                                        let adjustedLeft = item.left ?? 50;
+                                        
+                                        // Only apply a small adjustment to center items better in the smaller preview
+                                        if (adjustedLeft !== 50) {
+                                          // Scale down the adjustment for the smaller preview cards
+                                          const adjustment = (adjustedLeft - 50) * 0.8; // Reduce adjustment by 20%
+                                          adjustedLeft = 50 + adjustment;
+                                        }
+
+                                        return (
+                                          <Image
+                                            key={item.id}
+                                            src={item.url}
+                                            alt={item.name || `Clothing item ${index + 1}`}
+                                            width={200}
+                                            height={200}
+                                            className="absolute object-contain max-w-[80%] max-h-[80%]"
+                                            unoptimized
+                                            style={{
+                                              left: `${adjustedLeft}%`,
+                                              bottom: `${(item.bottom || 0) * 0.8}rem`,
+                                              width: `${(item.width || 8) * 0.6}rem`,
+                                              transform: "translateX(-50%)",
+                                              zIndex: index,
+                                            }}
+                                          />
+                                        )
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="text-slate-400 dark:text-muted-foreground chrome:text-muted-foreground text-center">
+                                      <div className="text-2xl mb-1">👗</div>
+                                      <p className="text-xs">Empty Outfit</p>
                                     </div>
                                   )}
+                                  
+                                  {/* Selection indicator */}
+                                  <div className="absolute top-2 right-2">
+                                    <div
+                                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                        selectedOutfitIds.includes(outfit.id)
+                                          ? "bg-blue-500 border-blue-500"
+                                          : "bg-white border-slate-300 dark:bg-background dark:border-border chrome:bg-background chrome:border-border"
+                                      }`}
+                                    >
+                                      {selectedOutfitIds.includes(outfit.id) && (
+                                        <Check className="w-3 h-3 text-white" />
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
 
-                                {/* Outfit Preview */}
-                                <div className="grid grid-cols-2 gap-2 h-24">
-                                  {outfit.clothingItems.slice(0, 4).map((item) => (
-                                    <div key={item.id} className="relative bg-slate-100 dark:bg-slate-800 chrome:bg-slate-100 rounded-lg overflow-hidden">
-                                      <Image
-                                        src={item.url}
-                                        alt={item.name || "Clothing Item"}
-                                        fill
-                                        className="object-contain"
-                                        unoptimized
-                                      />
-                                    </div>
-                                  ))}
-                                  {outfit.clothingItems.length > 4 && (
-                                    <div className="bg-slate-100 dark:bg-slate-800 chrome:bg-slate-100 rounded-lg flex items-center justify-center">
-                                      <span className="text-xs text-slate-600 dark:text-slate-400 chrome:text-slate-600">
-                                        +{outfit.clothingItems.length - 4}
-                                      </span>
-                                    </div>
-                                  )}
+                                {/* Outfit Info */}
+                                <div className="space-y-1">
+                                  <h4 className="font-medium text-sm text-slate-900 dark:text-white chrome:text-foreground truncate">
+                                    {outfit.name || "Untitled Outfit"}
+                                  </h4>
+                                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-muted-foreground chrome:text-muted-foreground">
+                                    <span>{outfit.clothingItems.length} items</span>
+                                    {outfit.totalPrice && (
+                                      <span>${outfit.totalPrice.toFixed(2)}</span>
+                                    )}
+                                  </div>
                                 </div>
                               </CardContent>
                             </Card>
@@ -367,46 +382,48 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-border chrome:border-border bg-slate-50 dark:bg-card chrome:bg-slate-50">
-                  <div className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
-                    {selectedOutfitIds.length === 0 ? (
-                      "You can create an empty folder and add outfits later"
-                    ) : (
-                      <div className="flex items-center text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
-                        <Check className="w-4 h-4 mr-1" />
-                        {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
-                      </div>
-                    )}
+          {/* Footer */}
+          {step === "selection" && (
+            <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-border chrome:border-border bg-slate-50 dark:bg-muted/30 chrome:bg-muted/30 flex-shrink-0">
+              <div className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                {selectedOutfitIds.length === 0 ? (
+                  "You can create an empty folder and add outfits later"
+                ) : (
+                  <div className="flex items-center text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                    <Check className="w-4 h-4 mr-1" />
+                    {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
                   </div>
-                  <div className="flex space-x-3">
-                    <Button variant="outline" onClick={handleCloseModal}>
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleCreateOccasion}
-                      disabled={isCreating}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-                    >
-                      {isCreating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Create Folder
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                )}
+              </div>
+              <div className="flex space-x-3">
+                <Button variant="outline" onClick={handleCloseModal}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateOccasion}
+                  disabled={isCreating}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Folder
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
