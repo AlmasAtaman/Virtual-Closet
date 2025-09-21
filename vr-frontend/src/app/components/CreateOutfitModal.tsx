@@ -478,17 +478,26 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           onClick={handleCloseModal}
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
+          onClick={(e) => {
+            e.stopPropagation()
+            // Deselect item when clicking anywhere on the modal (but not on interactive elements)
+            if (
+              e.target === e.currentTarget ||
+              (e.target as HTMLElement).closest('.deselect-area')
+            ) {
+              setSelectedItemForResize(null)
+            }
+          }}
+        >
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden">
-              {/* Left Panel - Outfit Details */}
-              <div className="w-80 border-r border-slate-200 dark:border-border p-4 overflow-y-auto bg-white dark:bg-card">
+              <div className="flex-1 flex overflow-hidden deselect-area">
+                {/* Left Panel - Outfit Details */}
+              <div className="w-80 border-r border-slate-200 dark:border-border p-4 overflow-y-auto bg-white dark:bg-card deselect-area">
                 {/* Outfit Name */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-2">
@@ -684,7 +693,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Right Panel - Item Controls - FIXED WITH FLEXBOX */}
-              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col">
+              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col deselect-area">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground">
                     Item Controls
