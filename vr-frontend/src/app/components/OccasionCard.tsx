@@ -224,10 +224,19 @@ export default function OccasionCard({
     }
   }
 
-  const handleOpenRename = () => {
+  const handleOpenRename = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+    }
     setNewName(occasion.name)
     setShowRenameDialog(true)
     setShowMenu(false)
+  }
+
+  // Handle clicking on the folder name to rename
+  const handleNameClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    handleOpenRename()
   }
 
   const outfitCount = occasion.outfits?.length || 0
@@ -328,11 +337,7 @@ export default function OccasionCard({
                         // Prefer diverse types (tops, bottoms, outerwear)
                         const preferredItem = outfitItems.find(item => {
                           const type = item.type?.toLowerCase() || ""
-                          return !usedTypes.has(type) && (
-                            type.includes("shirt") || type.includes("t-shirt") ||
-                            type.includes("jacket") || type.includes("dress") ||
-                            type.includes("pants") || type.includes("skirt")
-                          )
+                          return !usedTypes.has(type) && ["top", "bottom", "outerwear", "shoe"].includes(type)
                         }) || outfitItems[0]
 
                         sampleItems.push(preferredItem)
@@ -341,60 +346,39 @@ export default function OccasionCard({
                       }
                     }
 
-                    // Fill remaining slots with diverse items
-                    while (sampleItems.length < 6 && sampleItems.length < allClothingItems.length) {
-                      const remainingItems = allClothingItems.filter(item =>
-                        !sampleItems.find(sample => sample.id === item.id)
-                      )
-                      if (remainingItems.length === 0) break
-
-                      // Prefer items of types we haven't used yet
-                      const diverseItem = remainingItems.find(item => {
-                        const type = item.type?.toLowerCase() || ""
-                        return !usedTypes.has(type)
-                      }) || remainingItems[0]
-
-                      sampleItems.push(diverseItem)
-                      usedTypes.add(diverseItem.type?.toLowerCase() || "")
+                    // Fill remaining slots with other items if needed
+                    if (sampleItems.length < 6) {
+                      for (const item of allClothingItems) {
+                        if (sampleItems.length >= 6) break
+                        if (!sampleItems.some(existing => existing.id === item.id)) {
+                          sampleItems.push(item)
+                        }
+                      }
                     }
 
-                    // Arrange items in a grid-like layout for folder preview
-                    const gridPositions = [
-                      { left: 25, top: 15, size: 0.7, zIndex: 20 },  // Top left
-                      { left: 65, top: 25, size: 0.6, zIndex: 18 },  // Top right
-                      { left: 45, top: 45, size: 0.8, zIndex: 22 },  // Center (main focus)
-                      { left: 15, top: 65, size: 0.5, zIndex: 16 },  // Bottom left
-                      { left: 75, top: 70, size: 0.5, zIndex: 15 },  // Bottom right
-                      { left: 35, top: 80, size: 0.4, zIndex: 14 },  // Bottom center (background)
-                    ]
-
-                    return sampleItems.slice(0, 6).map((item, index) => {
-                      const position = gridPositions[index] || gridPositions[0]
-                      return (
-                        <div
-                          key={`${item.id}-${index}`}
-                          className="absolute rounded-sm"
-                          style={{
-                            left: `${position.left}%`,
-                            top: `${position.top}%`,
-                            width: `${(item.width || 6) * position.size}rem`,
-                            height: `${(item.width || 6) * position.size * 1.2}rem`,
-                            transform: "translate(-50%, -50%)",
-                            zIndex: position.zIndex,
-                            filter: index === 2 ? "none" : "brightness(0.85)", // Highlight center item
-                            opacity: index < 3 ? 1 : 0.8, // Fade background items
-                          }}
-                        >
-                          <Image
-                            src={item.url || "/placeholder.svg"}
-                            alt={item.name || `Item ${index + 1}`}
-                            fill
-                            className="object-contain rounded-sm"
-                            unoptimized
-                          />
-                        </div>
-                      )
-                    })
+                    return sampleItems.slice(0, 6).map((item, index) => (
+                      <div
+                        key={`${item.id}-${index}`}
+                        className="absolute"
+                        style={{
+                          left: `${(index % 3) * 28}%`,
+                          top: `${Math.floor(index / 3) * 45}%`,
+                          width: "35%",
+                          height: "40%",
+                          zIndex: index === 0 ? 10 : 10 - index,
+                          filter: index === 0 ? "none" : "brightness(0.85)", // Highlight center item
+                          opacity: index < 3 ? 1 : 0.8, // Fade background items
+                        }}
+                      >
+                        <Image
+                          src={item.url || "/placeholder.svg"}
+                          alt={item.name || `Item ${index + 1}`}
+                          fill
+                          className="object-contain rounded-sm"
+                          unoptimized
+                        />
+                      </div>
+                    ))
                   })()}
                 </div>
 
@@ -424,116 +408,100 @@ export default function OccasionCard({
 
             {/* Floating action menu */}
             <div
-              className={`absolute top-3 right-3 transition-opacity ${showMenu ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+              className={`absolute top-3 right-3 transition-opacity ${showMenu ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                }`}
             >
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 bg-white/90 dark:bg-slate-800/90 chrome:bg-card/90 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 chrome:hover:bg-card shadow-sm"
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }}
+                  className="h-8 w-8 bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 chrome:bg-card/80 chrome:hover:bg-card backdrop-blur-sm rounded-full shadow-md border border-slate-200/50 dark:border-slate-600/50 chrome:border-border/50"
                   onClick={(e) => {
-                    e.preventDefault()
                     e.stopPropagation()
-                    setShowMenu(true)
+                    setShowMenu(!showMenu)
                   }}
+                  disabled={isDeleting || isUpdatingThumbnail}
                 >
-                  <MoreVertical className="h-4 w-4" />
+                  {isDeleting || isUpdatingThumbnail ? (
+                    <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                  ) : (
+                    <MoreVertical className="w-4 h-4 text-slate-600 dark:text-slate-300 chrome:text-foreground" />
+                  )}
                 </Button>
 
+                {/* Dropdown Menu */}
                 {showMenu && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    className="absolute right-0 top-9 bg-white dark:bg-slate-800 chrome:bg-popover rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border py-1 min-w-[140px] z-50"
-                    onClick={(e) => e.stopPropagation()}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ duration: 0.1 }}
+                    className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-800 chrome:bg-card rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 chrome:border-border z-50"
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start h-8 px-3 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOpenRename()
-                      }}
-                    >
-                      <Edit2 className="h-3 w-3 mr-2" />
-                      Rename
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start h-8 px-3 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowMenu(false)
-                        setShowThumbnailInput(true)
-                      }}
-                    >
-                      <Camera className="h-3 w-3 mr-2" />
-                      {occasion.customThumbnail ? "Change Thumbnail" : "Set Thumbnail"}
-                    </Button>
-                    {occasion.customThumbnail && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start h-8 px-3 text-xs"
+                    <div className="py-1">
+                      <button
+                        onClick={handleOpenRename}
+                        className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-200 chrome:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700 chrome:hover:bg-accent flex items-center gap-3 transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Rename Folder
+                      </button>
+                      <button
                         onClick={(e) => {
                           e.stopPropagation()
+                          setShowThumbnailInput(true)
                           setShowMenu(false)
-                          handleRemoveThumbnail()
                         }}
-                        disabled={isUpdatingThumbnail}
+                        className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-200 chrome:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700 chrome:hover:bg-accent flex items-center gap-3 transition-colors"
                       >
-                        <Upload className="h-3 w-3 mr-2" />
-                        Remove Thumbnail
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start h-8 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                    >
-                      <Trash2 className="h-3 w-3 mr-2" />
-                      {isDeleting ? "Deleting..." : "Delete"}
-                    </Button>
+                        <Camera className="w-4 h-4" />
+                        Set Custom Thumbnail
+                      </button>
+                      {occasion.customThumbnail && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveThumbnail()
+                            setShowMenu(false)
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-200 chrome:text-foreground hover:bg-slate-100 dark:hover:bg-slate-700 chrome:hover:bg-accent flex items-center gap-3 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          Remove Thumbnail
+                        </button>
+                      )}
+                      <div className="border-t border-slate-200 dark:border-slate-600 chrome:border-border my-1" />
+                      <button
+                        onClick={handleDelete}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 chrome:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete Folder
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </div>
             </div>
-
-            {/* Outfit count badge */}
-            {outfitCount > 0 && (
-              <div className="absolute bottom-3 left-3">
-                <Badge
-                  variant="secondary"
-                  className="bg-white/90 dark:bg-slate-800/90 chrome:bg-card/90 text-slate-700 dark:text-slate-300 chrome:text-card-foreground text-xs px-2 py-1 backdrop-blur-sm"
-                >
-                  {outfitCount} outfit{outfitCount !== 1 ? "s" : ""}
-                </Badge>
-              </div>
-            )}
           </div>
 
-          {/* Folder Info */}
-          <div className="p-4 bg-white dark:bg-slate-800 chrome:bg-card border-t border-slate-100 dark:border-slate-700 chrome:border-border">
+          {/* Folder Name and Info */}
+          <div className="p-4 border-t border-slate-200 dark:border-slate-700 chrome:border-border bg-white/50 dark:bg-slate-800/50 chrome:bg-card/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-white chrome:text-card-foreground truncate text-sm mb-1">
+                {/* Clickable folder name for renaming */}
+                <h3 
+                  className="font-semibold text-slate-900 dark:text-white chrome:text-foreground text-base mb-1 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
+                  onClick={handleNameClick}
+                  title="Click to rename"
+                >
                   {occasion.name}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 chrome:text-muted-foreground">
+                <p className="text-sm text-slate-500 dark:text-slate-400 chrome:text-muted-foreground">
                   {outfitCount === 0 ? "Empty folder" : `${outfitCount} outfit${outfitCount !== 1 ? "s" : ""}`}
                 </p>
               </div>
-              <div className="flex items-center gap-1 ml-2">
-                <Folder className="w-4 h-4 text-blue-500" />
-              </div>
+              {/* Removed the folder icon from here */}
             </div>
           </div>
         </CardContent>
