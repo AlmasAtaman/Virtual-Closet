@@ -485,7 +485,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden"
+            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden border-2 border-slate-200 dark:border-slate-700"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main Content */}
