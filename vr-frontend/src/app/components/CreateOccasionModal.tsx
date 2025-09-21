@@ -159,11 +159,9 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={`bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl flex flex-col ${
-            step === "name" 
-              ? "w-full max-w-md" // Small width for name step
-              : "w-full max-w-4xl" // Large width for selection step
-          } max-h-[90vh]`}
+          className={`bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col ${
+            step === "name" ? "!max-w-md" : ""
+          }`}
           onClick={(e) => e.stopPropagation()}
         >
           <AnimatePresence mode="wait">
