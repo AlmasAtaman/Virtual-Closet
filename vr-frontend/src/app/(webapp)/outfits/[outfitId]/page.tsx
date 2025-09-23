@@ -1,13 +1,27 @@
 "use client"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, use, useCallback } from "react"
+import { useEffect, useState, use, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import axios from "axios"
-import { ArrowLeft, Edit3, Trash2, Save, X, AlertTriangle, DollarSign, Sparkles, Shirt } from "lucide-react"
+import { 
+  ArrowLeft, 
+  Edit3, 
+  Trash2, 
+  Save, 
+  X, 
+  DollarSign, 
+  Shirt, 
+  Folder,
+  Plus,
+  Settings
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import OutfitCard from "../../../components/OutfitCard"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
+import { Badge } from "@/components/ui/badge"
 import ClothingItemSelectModal from "../../../components/ClothingItemSelectModal"
 
 interface ClothingItem {
@@ -34,7 +48,7 @@ interface CategorizedOutfitItems {
   outerwear?: ClothingItem
   top?: ClothingItem
   bottom?: ClothingItem
-  shoe?: ClothingItem // Keep shoe support for compatibility
+  shoe?: ClothingItem
   others: ClothingItem[]
 }
 
@@ -67,11 +81,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const { outfitId } = use(params)
   const router = useRouter()
 
+  // Core state
   const [outfit, setOutfit] = useState<Outfit | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  
+  // Clothing and edit state
   const [allClothingItems, setAllClothingItems] = useState<ClothingItem[]>([])
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [selectedModalState, setSelectedModalState] = useState<{
@@ -79,11 +96,13 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     isOpen: boolean
   }>({ category: "top", isOpen: false })
 
-  // Folder/Occasion related state
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // Drag and resize state
+  const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  
+  // Folder state
   const [outfitFolders, setOutfitFolders] = useState<Occasion[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [allFolders, setAllFolders] = useState<Occasion[]>([])
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -93,7 +112,24 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     notes: "",
   })
 
-  // Calculate total price from clothing items
+  // Drag refs
+  const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
+    x: 0,
+    y: 0,
+    itemLeft: 0,
+    itemBottom: 0,
+  })
+
+  const DEFAULTS = {
+    x: 0,
+    y: 0,
+    scale: 1,
+    left: 50,
+    bottom: 0,
+    width: 10,
+  }
+
+  // Calculate total price
   const calculateTotalPrice = useCallback((items: ClothingItem[]): number => {
     return items.reduce((total, item) => {
       const price = typeof item.price === "number" ? item.price : 0
@@ -101,44 +137,27 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     }, 0)
   }, [])
 
-  const getCurrentItems = useCallback((): ClothingItem[] => {
-    if (isEditing && editedCategorizedItems) {
-      return [
-        editedCategorizedItems.outerwear,
-        editedCategorizedItems.top,
-        editedCategorizedItems.bottom,
-        editedCategorizedItems.shoe,
-        ...(editedCategorizedItems.others || []),
-      ].filter(Boolean) as ClothingItem[]
-    }
-    return outfit?.clothingItems || []
-  }, [isEditing, editedCategorizedItems, outfit])
-
-  const currentTotalPrice = calculateTotalPrice(getCurrentItems())
-
-  // Fetch functions - defined before useEffect to avoid hoisting issues
-
-const fetchOutfit = useCallback(async () => {
+  // Fetch outfit data
+  const fetchOutfit = useCallback(async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, {
-        withCredentials: true,
-      })
-
-      // The backend returns { outfit: transformedOutfit }
-
-      const outfitData = response.data.outfit || response.data
-
-      setOutfit(outfitData)
+      setLoading(true)
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`,
+        { withCredentials: true }
+      )
+      setOutfit(response.data.outfit)
     } catch (error) {
       console.error("Failed to fetch outfit:", error)
+      router.push("/outfits")
     } finally {
       setLoading(false)
     }
-  }, [outfitId])
+  }, [outfitId, router])
 
-const fetchAllClothingItems = useCallback(async () => {
+  // Fetch all clothing items
+  const fetchAllClothingItems = useCallback(async () => {
     try {
-      const [closetRes, wishlistRes] = await Promise.all([
+      const [closetResponse, wishlistResponse] = await Promise.all([
         axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/images?mode=closet`, {
           withCredentials: true,
         }),
@@ -147,35 +166,28 @@ const fetchAllClothingItems = useCallback(async () => {
         }),
       ])
 
-      const closetItems = (closetRes.data.clothingItems || []).map((item: ClothingItem) => ({
-        ...item,
-        mode: "closet" as const,
-      }))
-
-      const wishlistItems = (wishlistRes.data.clothingItems || []).map((item: ClothingItem) => ({
-        ...item,
-        mode: "wishlist" as const,
-      }))
-
-      const allItems = [...closetItems, ...wishlistItems]
-      setAllClothingItems(allItems)
+      const closetItems = closetResponse.data.clothingItems || []
+      const wishlistItems = wishlistResponse.data.clothingItems || []
+      setAllClothingItems([...closetItems, ...wishlistItems])
     } catch (error) {
       console.error("Failed to fetch clothing items:", error)
     }
   }, [])
 
-const fetchOutfitFolders = useCallback(async () => {
+  // Fetch outfit folders
+  const fetchOutfitFolders = useCallback(async () => {
     if (!outfitId) return
 
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
-        withCredentials: true,
-      })
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`,
+        { withCredentials: true }
+      )
       const occasions = response.data.occasions || []
 
       // Filter occasions that contain this outfit
       const foldersWithOutfit = occasions.filter((occasion: Occasion) =>
-        occasion.outfits.some((outfitInFolder) => outfitInFolder.id === outfitId),
+        occasion.outfits.some((outfitInFolder) => outfitInFolder.id === outfitId)
       )
 
       setOutfitFolders(foldersWithOutfit)
@@ -184,25 +196,12 @@ const fetchOutfitFolders = useCallback(async () => {
     }
   }, [outfitId])
 
-const fetchAllFolders = useCallback(async () => {
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
-        withCredentials: true,
-      })
-      setAllFolders(response.data.occasions || [])
-    } catch (error) {
-      console.error("Failed to fetch folders:", error)
-    }
-  }, [])
-
-  // useEffect hooks
+  // Initialize data
   useEffect(() => {
     fetchOutfit()
     fetchAllClothingItems()
-    fetchAllFolders()
-  }, [outfitId, fetchOutfit, fetchAllClothingItems, fetchAllFolders])
+  }, [fetchOutfit, fetchAllClothingItems])
 
-  // Fetch outfit folders after we have the outfit data
   useEffect(() => {
     if (outfit?.id) {
       fetchOutfitFolders()
@@ -220,17 +219,11 @@ const fetchAllFolders = useCallback(async () => {
     }
   }, [outfit])
 
-  const handleEdit = () => {
-    if (!outfit) return
+  // Categorize items for editing
+  const categorizeItems = useCallback((items: ClothingItem[]): CategorizedOutfitItems => {
+    const categorized: CategorizedOutfitItems = { others: [] }
 
-    setIsEditing(true)
-
-    // Initialize edited categorized items
-    const categorized: CategorizedOutfitItems = {
-      others: [],
-    }
-
-    outfit.clothingItems.forEach((item) => {
+    items.forEach((item) => {
       const type = item.type?.toLowerCase() || ""
       if (["t-shirt", "dress", "shirt", "blouse", "sweater", "hoodie", "cardigan"].includes(type)) {
         if (!categorized.top) categorized.top = item
@@ -241,7 +234,7 @@ const fetchAllFolders = useCallback(async () => {
       } else if (["jacket", "coat", "blazer", "vest"].includes(type)) {
         if (!categorized.outerwear) categorized.outerwear = item
         else categorized.others.push(item)
-      } else if (["shoes", "sneakers", "boots", "sandals"].includes(type)) {
+      } else if (["shoe", "shoes", "sneakers", "boots", "sandals"].includes(type)) {
         if (!categorized.shoe) categorized.shoe = item
         else categorized.others.push(item)
       } else {
@@ -249,41 +242,259 @@ const fetchAllFolders = useCallback(async () => {
       }
     })
 
-    setEditedCategorizedItems(categorized)
+    return categorized
+  }, [])
+
+  // Handle edit mode
+  const handleEdit = () => {
+    if (!outfit) return
+    setIsEditing(true)
+    setEditedCategorizedItems(categorizeItems(outfit.clothingItems))
   }
 
+  // Drag and drop handlers - EXACT copy from CreateOutfitModal
+  const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
+    if (!editedCategorizedItems || !setEditedCategorizedItems) return
+
+    e.preventDefault()
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const allCurrentItems = [
+      editedCategorizedItems.outerwear,
+      editedCategorizedItems.top,
+      editedCategorizedItems.bottom,
+      editedCategorizedItems.shoe,
+      ...editedCategorizedItems.others,
+    ].filter(Boolean) as ClothingItem[]
+
+    const currentItem = allCurrentItems.find((item) => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: e.clientX,
+        y: e.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+      }
+    }
+  }
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+
+      const deltaX = e.clientX - dragStartPos.current.x
+      const deltaY = e.clientY - dragStartPos.current.y
+
+      // Container size: w-44 = 176px, h-80 = 320px
+      const containerWidth = 176
+      const containerHeight = 320
+
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
+
+      // Get the current item to check its width for boundary calculations
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      // Simple boundary calculations based on item size
+      // These values are easy to adjust manually:
+      const leftBuffer = 85.2     // How far past left edge (adjust this number)
+      const rightBuffer = -5.7    // How far past right edge (adjust this number)  
+      const bottomBuffer = 5.5   // How far below bottom (adjust this number)
+      const topBuffer = -7.1      // How far above top (adjust this number)
+      
+      // Calculate boundaries accounting for item width and transform: translateX(-50%)
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      const halfItemWidth = itemWidthPercent / 2
+      
+      const minLeft = halfItemWidth - leftBuffer    // Left boundary
+      const maxLeft = 100 - halfItemWidth + rightBuffer  // Right boundary  
+      const minBottom = -bottomBuffer  // Bottom boundary
+      const maxBottom = 20 + topBuffer  // Top boundary
+
+      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+
+      // DEBUG: Calculate what buffer values would be needed for current position
+      const neededLeftBuffer = halfItemWidth - newLeft
+      const neededRightBuffer = newLeft - (100 - halfItemWidth)
+      const neededBottomBuffer = -newBottom
+      const neededTopBuffer = newBottom - 20
+      
+      console.log("NEEDED BUFFER VALUES FOR THIS POSITION:")
+      console.log({
+        leftBuffer: Math.round(neededLeftBuffer * 10) / 10,
+        rightBuffer: Math.round(neededRightBuffer * 10) / 10,
+        bottomBuffer: Math.round(neededBottomBuffer * 10) / 10,
+        topBuffer: Math.round(neededTopBuffer * 10) / 10,
+        currentPosition: { newLeft: Math.round(newLeft * 10) / 10, newBottom: Math.round(newBottom * 10) / 10 }
+      })
+
+      // COORDINATE FINDER: Log exact coordinates for setting defaults
+      console.log("🎯 POSITION COORDINATES FOR DEFAULT POSITIONS:")
+      console.log(`Item ${draggedItemId} is at: left: ${Math.round(newLeft * 10) / 10}, bottom: ${Math.round(newBottom * 10) / 10}`)
+      console.log("Copy these values to update DEFAULT_POSITIONS in updateCategorizedItems function")
+
+      // Update item position
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemPosition = (item: ClothingItem | undefined) => {
+        if (item && item.id === draggedItemId) {
+          return {
+            ...item,
+            left: newLeft,
+            bottom: newBottom,
+          }
+        }
+        return item
+      }
+
+      updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+      updatedItems.top = updateItemPosition(updatedItems.top)
+      updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+      updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+      setEditedCategorizedItems(updatedItems)
+    },
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+  )
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse events for dragging - EXACT copy from CreateOutfitModal
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
+  // Item selection handlers
+  const handleItemSelect = (category: "outerwear" | "top" | "bottom" | "shoe") => {
+    setSelectedModalState({ category, isOpen: true })
+  }
+
+  const handleItemSelectFromModal = (category: string, item: ClothingItem) => {
+    if (!editedCategorizedItems) return
+
+    const positionedItem = {
+      ...item,
+      left: item.left ?? DEFAULTS.left,
+      bottom: item.bottom ?? DEFAULTS.bottom,
+      scale: item.scale ?? DEFAULTS.scale,
+      width: item.width ?? DEFAULTS.width,
+    }
+
+    setEditedCategorizedItems(prev => {
+      if (!prev) return prev
+
+      if (category === "outerwear") {
+        return { ...prev, outerwear: positionedItem }
+      } else if (category === "top") {
+        return { ...prev, top: positionedItem }
+      } else if (category === "bottom") {
+        return { ...prev, bottom: positionedItem }
+      } else if (category === "shoe") {
+        return { ...prev, shoe: positionedItem }
+      }
+      return prev
+    })
+
+    setSelectedModalState({ category: "top", isOpen: false })
+  }
+
+  // Remove item handler
+  const handleRemoveItem = (category: string) => {
+    if (!editedCategorizedItems) return
+
+    setEditedCategorizedItems(prev => {
+      if (!prev) return prev
+
+      if (category === "outerwear") {
+        return { ...prev, outerwear: undefined }
+      } else if (category === "top") {
+        return { ...prev, top: undefined }
+      } else if (category === "bottom") {
+        return { ...prev, bottom: undefined }
+      } else if (category === "shoe") {
+        return { ...prev, shoe: undefined }
+      }
+      return prev
+    })
+
+    // Clear selection if removing the selected item
+    if (selectedItemForResize && 
+        ((category === "outerwear" && editedCategorizedItems.outerwear?.id === selectedItemForResize) ||
+         (category === "top" && editedCategorizedItems.top?.id === selectedItemForResize) ||
+         (category === "bottom" && editedCategorizedItems.bottom?.id === selectedItemForResize) ||
+         (category === "shoe" && editedCategorizedItems.shoe?.id === selectedItemForResize))) {
+      setSelectedItemForResize(null)
+    }
+  }
+
+  // Save changes
   const handleSave = async () => {
     if (!outfit || !editedCategorizedItems) return
 
     try {
-      const allCurrentItems = getCurrentItems()
-      const totalPrice = calculateTotalPrice(allCurrentItems)
+      const allItems = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others,
+      ].filter(Boolean) as ClothingItem[]
 
       const updatedOutfit = {
-        ...outfit,
-        name: editForm.name,
-        occasion: editForm.occasion,
-        season: editForm.season,
-        notes: editForm.notes,
-        clothingItems: allCurrentItems,
-        totalPrice: totalPrice,
+        ...editForm,
+        price: calculateTotalPrice(allItems),
+        clothingItems: allItems.map(item => ({
+          id: item.id,
+          x: item.x ?? DEFAULTS.x,
+          y: item.y ?? DEFAULTS.y,
+          scale: item.scale ?? DEFAULTS.scale,
+          left: item.left ?? DEFAULTS.left,
+          bottom: item.bottom ?? DEFAULTS.bottom,
+          width: item.width ?? DEFAULTS.width,
+        })),
       }
 
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, updatedOutfit, {
-        withCredentials: true,
-      })
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`,
+        updatedOutfit,
+        { withCredentials: true }
+      )
 
-      setOutfit(updatedOutfit)
+      await fetchOutfit()
       setIsEditing(false)
       setEditedCategorizedItems(null)
+      setSelectedItemForResize(null)
     } catch (error) {
       console.error("Failed to save outfit:", error)
+      alert("Failed to save changes. Please try again.")
     }
   }
 
+  // Cancel edit
   const handleCancel = () => {
     setIsEditing(false)
     setEditedCategorizedItems(null)
+    setSelectedItemForResize(null)
     if (outfit) {
       setEditForm({
         name: outfit.name || "",
@@ -294,83 +505,167 @@ const fetchAllFolders = useCallback(async () => {
     }
   }
 
+  // Delete outfit
   const handleDelete = async () => {
-    setIsDeleting(true)
+    if (!outfit) return
+
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`, {
-        withCredentials: true,
-      })
+      setIsDeleting(true)
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/outfits/${outfitId}`,
+        { withCredentials: true }
+      )
       router.push("/outfits")
     } catch (error) {
       console.error("Failed to delete outfit:", error)
+      alert("Failed to delete outfit. Please try again.")
+    } finally {
       setIsDeleting(false)
+      setShowDeleteDialog(false)
     }
   }
 
-  // FIXED: Direct function reference instead of wrapper
-  const handleOpenSelectModal = (category: "outerwear" | "top" | "bottom" | "shoe") => {
-    // Filter out shoe category if you don't want to support it
-    if (category === "shoe") {
-      return
+  // Render outfit display - EXACT copy from CreateOutfitModal
+  const renderOutfitDisplay = () => {
+    if (!editedCategorizedItems && (!outfit?.clothingItems || outfit.clothingItems.length === 0)) {
+      return (
+        <div className="text-center text-muted-foreground">
+          <p className="text-sm">Select items to preview outfit</p>
+        </div>
+      )
     }
-    setSelectedModalState({ category, isOpen: true })
+
+    const allCurrentItems = isEditing && editedCategorizedItems 
+      ? [
+          editedCategorizedItems.outerwear,
+          editedCategorizedItems.top,
+          editedCategorizedItems.bottom,
+          editedCategorizedItems.shoe,
+          ...editedCategorizedItems.others,
+        ].filter(Boolean) as ClothingItem[]
+      : outfit?.clothingItems || []
+
+    return (
+      <div className="relative w-44 h-80 mx-auto">
+        {allCurrentItems.map((item, index) => {
+          return (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                width: `${item.width ?? DEFAULTS.width}rem`
+              }}
+              transition={{ 
+                opacity: { delay: index * 0.1 },
+                y: { delay: index * 0.1 },
+                width: { duration: 0.2, ease: "easeOut" }
+              }}
+              className={`absolute ${isEditing ? 'cursor-move' : 'cursor-default'} hover:shadow-lg transition-shadow ${
+                draggedItemId === item.id ? "z-50 shadow-2xl" : ""
+              } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
+              style={{
+                left: `${item.left ?? DEFAULTS.left}%`,
+                bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
+                transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
+                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+              }}
+              onMouseDown={isEditing ? (e) => handleMouseDown(e, item.id) : undefined}
+              onClick={isEditing ? (e) => {
+                e.stopPropagation()
+                setSelectedItemForResize(item.id)
+              } : undefined}
+            >
+              <Image
+                src={item.url || "/placeholder.svg"}
+                alt={item.name || ""}
+                width={100}
+                height={120}
+                className="w-full h-auto object-contain rounded-lg"
+                draggable={false}
+                unoptimized
+              />
+            </motion.div>
+          )
+        })}
+      </div>
+    )
   }
 
-  const handleItemSelected = (item: ClothingItem) => {
-    if (!editedCategorizedItems) return
-
-    const newCategorizedItems = { ...editedCategorizedItems }
-    const category = selectedModalState.category
-    const currentItem = newCategorizedItems[category]
-
-    // Default positions for each category (matching CreateOutfitModal)
-    const DEFAULT_POSITIONS = {
-      outerwear: { left: 64, bottom: 9, width: 10, scale: 1 },
-      top: { left: 45, bottom: 8, width: 10, scale: 1 },
-      bottom: { left: 50, bottom: 0, width: 10, scale: 1 },
-      shoe: { left: 50, bottom: 0, width: 10, scale: 1 },
-    }
-
-    // Create new item with preserved position or default position
-    const newItem = { ...item }
+  // Get selected item for resize controls
+  const getSelectedResizeItem = () => {
+    if (!editedCategorizedItems || !selectedItemForResize) return null
     
-    if (currentItem) {
-      // Preserve position if replacing an existing item of the same type
-      newItem.left = currentItem.left
-      newItem.bottom = currentItem.bottom
-      newItem.width = currentItem.width
-      newItem.scale = currentItem.scale
-      newItem.x = currentItem.x
-      newItem.y = currentItem.y
-    } else {
-      // Use default position for new clothing type
-      const defaultPos = DEFAULT_POSITIONS[category]
-      newItem.left = defaultPos.left
-      newItem.bottom = defaultPos.bottom
-      newItem.width = defaultPos.width
-      newItem.scale = defaultPos.scale
-    }
-
-    newCategorizedItems[category] = newItem
-
-    // Remove item from others if it was there
-    newCategorizedItems.others = newCategorizedItems.others.filter((i) => i.id !== item.id)
-
-    setEditedCategorizedItems(newCategorizedItems)
-    setSelectedModalState({ ...selectedModalState, isOpen: false })
+    const allCurrentItems = [
+      editedCategorizedItems?.outerwear,
+      editedCategorizedItems?.top,
+      editedCategorizedItems?.bottom,
+      editedCategorizedItems?.shoe,
+      ...(editedCategorizedItems?.others || [])
+    ].filter(Boolean) as ClothingItem[]
+    
+    return allCurrentItems.find((item) => item.id === selectedItemForResize)
   }
 
+  // Render folder display
+  const renderFolderDisplay = () => {
+    if (outfitFolders.length === 0) {
+      return (
+        <div className="text-sm text-muted-foreground">
+          This outfit is in 0 folders
+        </div>
+      )
+    }
+
+    if (outfitFolders.length <= 2) {
+      return (
+        <div className="space-y-2">
+          <div className="text-sm font-medium text-foreground">
+            This outfit is in {outfitFolders.length} folder{outfitFolders.length > 1 ? 's' : ''}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {outfitFolders.map((folder) => (
+              <Badge key={folder.id} variant="secondary" className="text-xs">
+                <Folder className="w-3 h-3 mr-1" />
+                {folder.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    const displayFolders = outfitFolders.slice(0, 2)
+    const remainingCount = outfitFolders.length - 2
+
+    return (
+      <div className="space-y-2">
+        <div className="text-sm font-medium text-foreground">
+          This outfit is in {outfitFolders.length} folders
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {displayFolders.map((folder) => (
+            <Badge key={folder.id} variant="secondary" className="text-xs">
+              <Folder className="w-3 h-3 mr-1" />
+              {folder.name}
+            </Badge>
+          ))}
+          <Badge variant="outline" className="text-xs">
+            +{remainingCount} Folder{remainingCount > 1 ? 's' : ''}
+          </Badge>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-            <Sparkles className="w-8 h-8 text-white animate-pulse" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">Loading outfit...</h2>
-          <p className="text-muted-foreground">Please wait while we fetch your outfit details.</p>
-        </motion.div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading outfit...</p>
+        </div>
       </div>
     )
   }
@@ -378,429 +673,568 @@ const fetchAllFolders = useCallback(async () => {
   if (!outfit) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-            <AlertTriangle className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">Outfit not found</h2>
-          <p className="text-muted-foreground mb-6">The outfit you&apos;re looking for doesn&apos;t exist.</p>
-          <Button onClick={() => router.push("/outfits")} variant="outline">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground mb-4">Outfit not found</p>
+          <Button onClick={() => router.push("/outfits")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Outfits
           </Button>
-        </motion.div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="w-full max-w-none px-4 lg:px-6 xl:px-8 2xl:px-12 py-8">
-        {/* Navigation */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <Button onClick={() => router.push("/outfits")} variant="outline" className="group hover:bg-accent">
-            <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
-            Back to Outfits
-          </Button>
-        </motion.div>
+      <div className="flex h-screen">
+        {/* Left Sidebar - Clothing Items */}
+        <div className="w-80 border-r border-border bg-card p-6 overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/outfits")}
+              className="p-2"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex gap-2">
+              {!isEditing ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleCancel}>
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleSave}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-          {/* Left Side - Outfit Preview (3 columns) */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="xl:col-span-3"
-          >
-            <Card className="shadow-xl border border-border rounded-2xl overflow-hidden bg-card">
-              <div className="bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative">
-                <OutfitCard
-                  outfit={outfit}
-                  isDetailView={true}
-                  isEditing={isEditing}
-                  enableDragDrop={isEditing}
-                  enableResize={isEditing}
-                  editedCategorizedItems={editedCategorizedItems}
-                  setEditedCategorizedItems={setEditedCategorizedItems}
-                  onItemSelect={undefined}
-                  allClothingItems={allClothingItems}
-                />
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Right Side - Details Panel (2 columns) */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="xl:col-span-2 space-y-6"
-          >
-            {/* Header Card */}
-            <Card className="shadow-lg border border-border rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white pb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl font-bold mb-2">
-                      {outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || "Unknown"}`}
-                    </CardTitle>
-                    <p className="text-blue-100 text-sm">
-                      {isEditing ? "Edit your outfit details" : "View and manage your outfit"}
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-6">
-                {/* Price Display */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border border-green-200 dark:border-green-800">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg">
-                        <DollarSign className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-green-700 dark:text-green-300">Total Value</p>
-                        <p className="text-xs text-green-600 dark:text-green-400">
-                          Based on {getCurrentItems().length} items
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        ${currentTotalPrice.toFixed(2)}
-                      </p>
-                      {isEditing && <p className="text-xs text-green-600 dark:text-green-400">Auto-calculated</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-3">
-                  {isEditing ? (
-                    <>
-                      <Button
-                        onClick={handleSave}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </Button>
-                      <Button onClick={handleCancel} variant="outline" className="flex-1 bg-transparent">
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={handleEdit}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                      >
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        Edit Outfit
-                      </Button>
-                      <Button
-                        onClick={() => setShowDeleteDialog(true)}
-                        variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Items Overview Card - Changes based on edit mode */}
-            <Card className="shadow-lg border border-border rounded-2xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2 text-lg">
-                  <Shirt className="w-5 h-5 text-blue-600" />
-                  <span>{isEditing ? "Change Items" : `Items (${getCurrentItems().length})`}</span>
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
+          {/* Outfit Info */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Outfit Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="outfit-name">Name</Label>
                 {isEditing ? (
-                  /* Edit Mode - Category Selection Grid (smaller, harmonious sizing) */
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Outerwear */}
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="cursor-pointer"
-                      onClick={() => handleOpenSelectModal("outerwear")}
-                    >
-                      <div className="h-20 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 p-3">
-                        {editedCategorizedItems?.outerwear ? (
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <Image
-                                src={editedCategorizedItems.outerwear.url || "/placeholder.svg"}
-                                alt={editedCategorizedItems.outerwear.name || "Outerwear"}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                {editedCategorizedItems.outerwear.name || "Outerwear"}
-                              </p>
-                              <p className="text-xs text-blue-600 dark:text-blue-400 capitalize">
-                                {editedCategorizedItems.outerwear.type}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Shirt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Add Outerwear</p>
-                              <p className="text-xs text-blue-600 dark:text-blue-400">Click to select</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-
-                    {/* Top */}
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="cursor-pointer"
-                      onClick={() => handleOpenSelectModal("top")}
-                    >
-                      <div className="h-20 border-2 border-dashed border-green-300 hover:border-green-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-green-50 dark:bg-green-950/30 p-3">
-                        {editedCategorizedItems?.top ? (
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <Image
-                                src={editedCategorizedItems.top.url || "/placeholder.svg"}
-                                alt={editedCategorizedItems.top.name || "Top"}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-green-900 dark:text-green-100 truncate">
-                                {editedCategorizedItems.top.name || "Top"}
-                              </p>
-                              <p className="text-xs text-green-600 dark:text-green-400 capitalize">
-                                {editedCategorizedItems.top.type}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Shirt className="w-6 h-6 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-green-700 dark:text-green-300">Add Top</p>
-                              <p className="text-xs text-green-600 dark:text-green-400">Click to select</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-
-                    {/* Bottom */}
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="cursor-pointer"
-                      onClick={() => handleOpenSelectModal("bottom")}
-                    >
-                      <div className="h-20 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 p-3">
-                        {editedCategorizedItems?.bottom ? (
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <Image
-                                src={editedCategorizedItems.bottom.url || "/placeholder.svg"}
-                                alt={editedCategorizedItems.bottom.name || "Bottom"}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100 truncate">
-                                {editedCategorizedItems.bottom.name || "Bottom"}
-                              </p>
-                              <p className="text-xs text-blue-600 dark:text-blue-400 capitalize">
-                                {editedCategorizedItems.bottom.type}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Shirt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Add Bottom</p>
-                              <p className="text-xs text-blue-600 dark:text-blue-400">Click to select</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-
-                    {/* Others (if any exist) */}
-                    {editedCategorizedItems?.others && editedCategorizedItems.others.length > 0 && (
-                      <motion.div whileHover={{ scale: 1.02 }} className="cursor-pointer">
-                        <div className="h-20 border-2 border-dashed border-gray-300 hover:border-gray-500 transition-all duration-200 hover:shadow-md rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-950/30 p-3">
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Shirt className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Others</p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {editedCategorizedItems.others.length} items
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
+                  <Input
+                    id="outfit-name"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Outfit name"
+                  />
                 ) : (
-                  /* View Mode - Items List */
-                  <div className="grid grid-cols-2 gap-3">
-                    {getCurrentItems().map((item, index) => (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="group relative bg-muted rounded-lg p-3 hover:bg-muted/80 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-background rounded-lg flex items-center justify-center overflow-hidden border border-border">
-                            <Image
-                              src={item.url || "/placeholder.svg"}
-                              alt={item.name || "Item"}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover"
-                              unoptimized
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
-                              {item.name || item.type || "Unnamed Item"}
-                            </p>
-                            <div className="flex items-center justify-between mt-1">
-                              <p className="text-xs text-muted-foreground capitalize">{item.type}</p>
-                              {item.price && item.price > 0 && (
-                                <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                                  ${item.price.toFixed(2)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                  <div className="text-sm font-medium">
+                    {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
                   </div>
                 )}
+              </div>
+
+              <div>
+                <Label htmlFor="outfit-occasion">Occasion</Label>
+                {isEditing ? (
+                  <Input
+                    id="outfit-occasion"
+                    value={editForm.occasion}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, occasion: e.target.value }))}
+                    placeholder="e.g., Work, Casual, Date"
+                  />
+                ) : (
+                  <div className="text-sm">
+                    {outfit.occasion || "No occasion set"}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="outfit-season">Season</Label>
+                {isEditing ? (
+                  <Input
+                    id="outfit-season"
+                    value={editForm.season}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, season: e.target.value }))}
+                    placeholder="e.g., Spring, Summer, Fall, Winter"
+                  />
+                ) : (
+                  <div className="text-sm">
+                    {outfit.season || "No season set"}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label>Total Price</Label>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-semibold">
+                    ${isEditing && editedCategorizedItems 
+                      ? calculateTotalPrice([
+                          editedCategorizedItems.outerwear,
+                          editedCategorizedItems.top,
+                          editedCategorizedItems.bottom,
+                          editedCategorizedItems.shoe,
+                          ...editedCategorizedItems.others
+                        ].filter(Boolean) as ClothingItem[]).toFixed(2)
+                      : (outfit.totalPrice || 0).toFixed(2)
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label>Items Count</Label>
+                <div className="flex items-center gap-2">
+                  <Shirt className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    {isEditing && editedCategorizedItems 
+                      ? [
+                          editedCategorizedItems.outerwear,
+                          editedCategorizedItems.top,
+                          editedCategorizedItems.bottom,
+                          editedCategorizedItems.shoe,
+                          ...editedCategorizedItems.others
+                        ].filter(Boolean).length
+                      : outfit.clothingItems.length
+                    } items
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Folders Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Folder className="w-5 h-5" />
+                Folders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderFolderDisplay()}
+            </CardContent>
+          </Card>
+
+          {/* Edit Mode - Item Selection */}
+          {isEditing && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Add Items</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleItemSelect("outerwear")}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Outerwear
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleItemSelect("top")}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Top
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleItemSelect("bottom")}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Bottom
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleItemSelect("shoe")}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Shoes
+                </Button>
               </CardContent>
             </Card>
-          </motion.div>
+          )}
         </div>
+
+        {/* Center - Outfit Preview */}
+        <div className="flex-1 flex flex-col">
+          {/* Preview Header */}
+          <div className="border-b border-border p-4 bg-card">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">
+                {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
+              </h1>
+              <div className="flex items-center gap-2">
+                {outfit.occasion && (
+                  <Badge variant="secondary">{outfit.occasion}</Badge>
+                )}
+                {outfit.season && (
+                  <Badge variant="outline">{outfit.season}</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Draggable Preview Area - EXACT SAME as CreateOutfitModal */}
+<div 
+  className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
+  onClick={(e) => {
+    if (e.target === e.currentTarget) {
+      setSelectedItemForResize(null)
+    }
+  }}
+>                
+<div className="w-full max-w-xs mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
+    <div 
+      className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full flex items-center justify-center"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setSelectedItemForResize(null)
+        }
+      }}
+    >
+      {renderOutfitDisplay()}
+    </div>
+  </div>
+</div>
+        </div>
+
+        {/* Right Sidebar - Item Controls */}
+        {isEditing && (
+          <div className="w-80 border-l border-border bg-card p-6 overflow-y-auto">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Item Controls</h3>
+                
+                {/* Resize Controls - EXACT copy from CreateOutfitModal */}
+                <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30 resize-control">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-foreground mb-3">
+                    Resize Item
+                  </h4>
+                  {(() => {
+                    const selectedItem = getSelectedResizeItem()
+                    if (!selectedItem) {
+                      return (
+                        <p className="text-sm text-muted-foreground">
+                          Click on an item in the preview to resize it
+                        </p>
+                      )
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-2">
+                            Selected: {selectedItem.name || "Untitled"}
+                          </label>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-foreground mb-2">
+                            Item Width
+                          </label>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-slate-500 dark:text-muted-foreground">Width:</span>
+                            <span className="text-xs font-medium text-slate-900 dark:text-foreground">
+                              {(selectedItem.width ?? 10).toFixed(1)}rem
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="6"
+                            max="20"
+                            step="0.1"
+                            value={selectedItem.width ?? 10}
+                            onChange={(e) => {
+                              const newWidth = parseFloat(e.target.value)
+                              setEditedCategorizedItems(prev => {
+                                if (!prev) return prev
+                                const updated = { ...prev }
+                                const updateItemWidth = (item: ClothingItem | undefined) => {
+                                  if (item && item.id === selectedItemForResize) {
+                                    return { ...item, width: newWidth }
+                                  }
+                                  return item
+                                }
+                                updated.outerwear = updateItemWidth(updated.outerwear)
+                                updated.top = updateItemWidth(updated.top)
+                                updated.bottom = updateItemWidth(updated.bottom)
+                                updated.shoe = updateItemWidth(updated.shoe)
+                                updated.others = updated.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
+                                return updated
+                              })
+                            }}
+                            className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>Small</span>
+                            <span>Large</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* Current Items List */}
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold mb-3">Current Items</h4>
+                  <div className="space-y-2">
+                    {editedCategorizedItems && (
+                      <>
+                        {editedCategorizedItems.outerwear && (
+                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 relative">
+                                <Image
+                                  src={editedCategorizedItems.outerwear.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover rounded"
+                                  unoptimized
+                                />
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium">
+                                  {editedCategorizedItems.outerwear.name || "Untitled"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Outerwear
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem("outerwear")}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+
+                        {editedCategorizedItems.top && (
+                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 relative">
+                                <Image
+                                  src={editedCategorizedItems.top.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover rounded"
+                                  unoptimized
+                                />
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium">
+                                  {editedCategorizedItems.top.name || "Untitled"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Top
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem("top")}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+
+                        {editedCategorizedItems.bottom && (
+                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 relative">
+                                <Image
+                                  src={editedCategorizedItems.bottom.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover rounded"
+                                  unoptimized
+                                />
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium">
+                                  {editedCategorizedItems.bottom.name || "Untitled"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Bottom
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem("bottom")}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+
+                        {editedCategorizedItems.shoe && (
+                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 relative">
+                                <Image
+                                  src={editedCategorizedItems.shoe.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover rounded"
+                                  unoptimized
+                                />
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium">
+                                  {editedCategorizedItems.shoe.name || "Untitled"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Shoes
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem("shoe")}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+
+                        {editedCategorizedItems.others.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-2 border border-border rounded bg-background">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 relative">
+                                <Image
+                                  src={item.url}
+                                  alt=""
+                                  fill
+                                  className="object-cover rounded"
+                                  unoptimized
+                                />
+                              </div>
+                              <div>
+                                <div className="text-xs font-medium">
+                                  {item.name || "Untitled"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.type || "Other"}
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditedCategorizedItems(prev => {
+                                  if (!prev) return prev
+                                  return {
+                                    ...prev,
+                                    others: prev.others.filter(otherItem => otherItem.id !== item.id)
+                                  }
+                                })
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {editedCategorizedItems && 
+                     !editedCategorizedItems.outerwear && 
+                     !editedCategorizedItems.top && 
+                     !editedCategorizedItems.bottom && 
+                     !editedCategorizedItems.shoe && 
+                     editedCategorizedItems.others.length === 0 && (
+                      <div className="text-sm text-muted-foreground text-center py-4">
+                        No items in outfit
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AnimatePresence>
-        {showDeleteDialog && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowDeleteDialog(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-background rounded-2xl p-6 max-w-md w-full shadow-2xl border border-border"
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="p-2 bg-red-100 dark:bg-red-950/30 rounded-lg">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Delete Outfit</h3>
-                  <p className="text-sm text-muted-foreground">This action cannot be undone</p>
-                </div>
-              </div>
-
-              <p className="text-foreground mb-6">
-                Are you sure you want to delete &quot;{outfit?.name || `Outfit ${outfit?.id?.substring(0, 6) || "Unknown"}`}
-                &quot;? This will permanently remove the outfit from your wardrobe.
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                Delete Outfit
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Are you sure you want to delete this outfit? This action cannot be undone.
               </p>
-
-              <div className="flex space-x-3">
+              <div className="flex gap-2 justify-end">
                 <Button
-                  onClick={() => setShowDeleteDialog(false)}
                   variant="outline"
-                  className="flex-1"
+                  onClick={() => setShowDeleteDialog(false)}
                   disabled={isDeleting}
                 >
                   Cancel
                 </Button>
                 <Button
+                  variant="destructive"
                   onClick={handleDelete}
-                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
                   disabled={isDeleting}
                 >
-                  {isDeleting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Outfit
-                    </>
-                  )}
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </Button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Clothing Item Selection Modal */}
-      {selectedModalState.isOpen && (
-        <ClothingItemSelectModal
-          isOpen={selectedModalState.isOpen}
-          onCloseAction={() => setSelectedModalState({ ...selectedModalState, isOpen: false })}
-          onSelectItem={handleItemSelected}
-          clothingItems={allClothingItems}
-          viewMode="closet"
-          selectedCategory={selectedModalState.category}
-        />
+            </CardContent>
+          </Card>
+        </div>
       )}
+
+      {/* Selection Modals */}
+      <ClothingItemSelectModal
+        isOpen={selectedModalState.isOpen}
+        onCloseAction={() => setSelectedModalState({ category: "top", isOpen: false })}
+        clothingItems={allClothingItems}
+        onSelectItem={(item) => handleItemSelectFromModal(selectedModalState.category, item)}
+        viewMode="closet"
+        selectedCategory={selectedModalState.category}
+      />
     </div>
   )
 }
