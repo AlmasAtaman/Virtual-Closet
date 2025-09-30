@@ -128,9 +128,8 @@ export default function Homepage() {
       {/* Header Section */}
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Logo />
-            <span className="text-xl font-semibold tracking-tight">VrC</span>
           </div>
           <div className="flex items-center gap-4">
             <Button onClick={() => router.push("/outfits")} variant="outline" className="gap-2">
