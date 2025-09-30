@@ -9,7 +9,7 @@ export const getBaseUrl = (): string => {
   }
   
   // During build/SSR, use environment variable or fallback
-  return process.env.NEXT_PUBLIC_SITE_URL || 'https://vestko.vercel.app';
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vestko.com';
 };
 
 /**
