@@ -548,8 +548,8 @@ export default function OccasionCard({
                   onChange={(e) => handleZoomChange(Number(e.target.value))}
                   className="w-2 h-24 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-vertical"
                   style={{
-                    writingMode: 'bt-lr' as any,
-                    WebkitAppearance: 'slider-vertical' as any
+                    writingMode: 'bt-lr' as React.CSSProperties['writingMode'],
+                    WebkitAppearance: 'slider-vertical' as React.CSSProperties['WebkitAppearance']
                   }}
                 />
                 <span className="text-xs text-slate-600 mt-2 font-medium">
