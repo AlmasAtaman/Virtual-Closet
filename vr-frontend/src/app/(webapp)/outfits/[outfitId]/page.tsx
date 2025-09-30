@@ -14,13 +14,11 @@ import {
   Shirt, 
   Folder,
   Plus,
-  Settings
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import ClothingItemSelectModal from "../../../components/ClothingItemSelectModal"
 
@@ -30,8 +28,6 @@ interface ClothingItem {
   url: string
   type?: string
   brand?: string
-  occasion?: string
-  season?: string
   notes?: string
   price?: number
   key?: string
@@ -48,15 +44,12 @@ interface CategorizedOutfitItems {
   outerwear?: ClothingItem
   top?: ClothingItem
   bottom?: ClothingItem
-  shoe?: ClothingItem
   others: ClothingItem[]
 }
 
 interface Outfit {
   id: string
   name?: string
-  occasion?: string
-  season?: string
   notes?: string
   price?: number
   totalPrice?: number
@@ -92,7 +85,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   const [allClothingItems, setAllClothingItems] = useState<ClothingItem[]>([])
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [selectedModalState, setSelectedModalState] = useState<{
-    category: "outerwear" | "top" | "bottom" | "shoe"
+    category: "outerwear" | "top" | "bottom"
     isOpen: boolean
   }>({ category: "top", isOpen: false })
 
@@ -107,8 +100,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   // Edit form state
   const [editForm, setEditForm] = useState({
     name: "",
-    occasion: "",
-    season: "",
     notes: "",
   })
 
@@ -124,9 +115,14 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     x: 0,
     y: 0,
     scale: 1,
-    left: 50,
-    bottom: 0,
     width: 10,
+    // Default positions for each category - matching CreateOutfitModal
+    positions: {
+      top: { left: 8, bottom: 8.9, width: 10, scale: 1 },
+      bottom: { left: 7.9, bottom: 0.2, width: 10, scale: 1 },
+      outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 0.8 },
+      others: { left: 50, bottom: 0, width: 10, scale: 1 }
+    }
   }
 
   // Calculate total price
@@ -212,8 +208,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     if (outfit) {
       setEditForm({
         name: outfit.name || "",
-        occasion: outfit.occasion || "",
-        season: outfit.season || "",
         notes: outfit.notes || "",
       })
     }
@@ -234,9 +228,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       } else if (["jacket", "coat", "blazer", "vest"].includes(type)) {
         if (!categorized.outerwear) categorized.outerwear = item
         else categorized.others.push(item)
-      } else if (["shoe", "shoes", "sneakers", "boots", "sandals"].includes(type)) {
-        if (!categorized.shoe) categorized.shoe = item
-        else categorized.others.push(item)
       } else {
         categorized.others.push(item)
       }
@@ -252,9 +243,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setEditedCategorizedItems(categorizeItems(outfit.clothingItems))
   }
 
-  // Drag and drop handlers - EXACT copy from CreateOutfitModal
+  // Drag and drop handlers
   const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
-    if (!editedCategorizedItems || !setEditedCategorizedItems) return
+    if (!editedCategorizedItems) return
 
     e.preventDefault()
     setIsDragging(true)
@@ -264,7 +255,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       editedCategorizedItems.outerwear,
       editedCategorizedItems.top,
       editedCategorizedItems.bottom,
-      editedCategorizedItems.shoe,
       ...editedCategorizedItems.others,
     ].filter(Boolean) as ClothingItem[]
 
@@ -273,15 +263,15 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       dragStartPos.current = {
         x: e.clientX,
         y: e.clientY,
-        itemLeft: currentItem.left ?? DEFAULTS.left,
-        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+        itemLeft: currentItem.left ?? DEFAULTS.positions.others.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.positions.others.bottom,
       }
     }
   }
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+      if (!isDragging || !draggedItemId || !editedCategorizedItems) return
 
       const deltaX = e.clientX - dragStartPos.current.x
       const deltaY = e.clientY - dragStartPos.current.y
@@ -298,50 +288,28 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
         editedCategorizedItems.bottom,
-        editedCategorizedItems.shoe,
         ...editedCategorizedItems.others
       ].find(item => item?.id === draggedItemId)
 
       const itemWidth = currentItem?.width ?? DEFAULTS.width
 
       // Simple boundary calculations based on item size
-      // These values are easy to adjust manually:
-      const leftBuffer = 85.2     // How far past left edge (adjust this number)
-      const rightBuffer = -5.7    // How far past right edge (adjust this number)  
-      const bottomBuffer = 5.5   // How far below bottom (adjust this number)
-      const topBuffer = -7.1      // How far above top (adjust this number)
+      const leftBuffer = 85.2     
+      const rightBuffer = -5.7    
+      const bottomBuffer = 5.5   
+      const topBuffer = -7.1      
       
       // Calculate boundaries accounting for item width and transform: translateX(-50%)
       const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
       const halfItemWidth = itemWidthPercent / 2
       
-      const minLeft = halfItemWidth - leftBuffer    // Left boundary
-      const maxLeft = 100 - halfItemWidth + rightBuffer  // Right boundary  
-      const minBottom = -bottomBuffer  // Bottom boundary
-      const maxBottom = 20 + topBuffer  // Top boundary
+      const minLeft = halfItemWidth - leftBuffer    
+      const maxLeft = 100 - halfItemWidth + rightBuffer  
+      const minBottom = -bottomBuffer  
+      const maxBottom = 20 + topBuffer  
 
       const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
       const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
-
-      // DEBUG: Calculate what buffer values would be needed for current position
-      const neededLeftBuffer = halfItemWidth - newLeft
-      const neededRightBuffer = newLeft - (100 - halfItemWidth)
-      const neededBottomBuffer = -newBottom
-      const neededTopBuffer = newBottom - 20
-      
-      console.log("NEEDED BUFFER VALUES FOR THIS POSITION:")
-      console.log({
-        leftBuffer: Math.round(neededLeftBuffer * 10) / 10,
-        rightBuffer: Math.round(neededRightBuffer * 10) / 10,
-        bottomBuffer: Math.round(neededBottomBuffer * 10) / 10,
-        topBuffer: Math.round(neededTopBuffer * 10) / 10,
-        currentPosition: { newLeft: Math.round(newLeft * 10) / 10, newBottom: Math.round(newBottom * 10) / 10 }
-      })
-
-      // COORDINATE FINDER: Log exact coordinates for setting defaults
-      console.log("🎯 POSITION COORDINATES FOR DEFAULT POSITIONS:")
-      console.log(`Item ${draggedItemId} is at: left: ${Math.round(newLeft * 10) / 10}, bottom: ${Math.round(newBottom * 10) / 10}`)
-      console.log("Copy these values to update DEFAULT_POSITIONS in updateCategorizedItems function")
 
       // Update item position
       const updatedItems = { ...editedCategorizedItems }
@@ -359,12 +327,11 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
       updatedItems.top = updateItemPosition(updatedItems.top)
       updatedItems.bottom = updateItemPosition(updatedItems.bottom)
-      updatedItems.shoe = updateItemPosition(updatedItems.shoe)
       updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+    [isDragging, draggedItemId, editedCategorizedItems, DEFAULTS.width],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -372,7 +339,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setDraggedItemId(null)
   }, [])
 
-  // Global mouse events for dragging - EXACT copy from CreateOutfitModal
+  // Global mouse events for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
@@ -385,34 +352,64 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   }, [isDragging, handleMouseMove, handleMouseUp])
 
   // Item selection handlers
-  const handleItemSelect = (category: "outerwear" | "top" | "bottom" | "shoe") => {
+  const handleItemSelect = (category: "outerwear" | "top" | "bottom") => {
     setSelectedModalState({ category, isOpen: true })
   }
 
   const handleItemSelectFromModal = (category: string, item: ClothingItem) => {
     if (!editedCategorizedItems) return
 
-    const positionedItem = {
-      ...item,
-      left: item.left ?? DEFAULTS.left,
-      bottom: item.bottom ?? DEFAULTS.bottom,
-      scale: item.scale ?? DEFAULTS.scale,
-      width: item.width ?? DEFAULTS.width,
-    }
-
     setEditedCategorizedItems(prev => {
-      if (!prev) return prev
-
-      if (category === "outerwear") {
-        return { ...prev, outerwear: positionedItem }
-      } else if (category === "top") {
-        return { ...prev, top: positionedItem }
+      const newItems = prev || { others: [] }
+      
+      if (category === "top") {
+        // If there's already a top, keep its position; otherwise use default
+        const existingTop = newItems.top
+        newItems.top = {
+          ...item,
+          left: existingTop?.left ?? DEFAULTS.positions.top.left,
+          bottom: existingTop?.bottom ?? DEFAULTS.positions.top.bottom,
+          width: existingTop?.width ?? DEFAULTS.positions.top.width,
+          scale: existingTop?.scale ?? DEFAULTS.positions.top.scale,
+        }
+        
+        // If there's outerwear, adjust its position based on whether there's a top
+        if (newItems.outerwear) {
+          newItems.outerwear = {
+            ...newItems.outerwear,
+            left: DEFAULTS.positions.outerwear.left,
+            bottom: DEFAULTS.positions.outerwear.bottom,
+            width: DEFAULTS.positions.outerwear.width,
+            scale: DEFAULTS.positions.outerwear.scale,
+          }
+        }
       } else if (category === "bottom") {
-        return { ...prev, bottom: positionedItem }
-      } else if (category === "shoe") {
-        return { ...prev, shoe: positionedItem }
+        // If there's already a bottom, keep its position; otherwise use default
+        const existingBottom = newItems.bottom
+        newItems.bottom = {
+          ...item,
+          left: existingBottom?.left ?? DEFAULTS.positions.bottom.left,
+          bottom: existingBottom?.bottom ?? DEFAULTS.positions.bottom.bottom,
+          width: existingBottom?.width ?? DEFAULTS.positions.bottom.width,
+          scale: existingBottom?.scale ?? DEFAULTS.positions.bottom.scale,
+        }
+      } else if (category === "outerwear") {
+        // If there's already outerwear, keep its position
+        // If no existing outerwear, use top position if no top exists, otherwise outerwear position
+        const existingOuterwear = newItems.outerwear
+        const shouldUseTopPosition = !newItems.top && !existingOuterwear
+        const position = shouldUseTopPosition ? DEFAULTS.positions.top : DEFAULTS.positions.outerwear
+        
+        newItems.outerwear = {
+          ...item,
+          left: existingOuterwear?.left ?? position.left,
+          bottom: existingOuterwear?.bottom ?? position.bottom,
+          width: existingOuterwear?.width ?? position.width,
+          scale: existingOuterwear?.scale ?? position.scale,
+        }
       }
-      return prev
+      
+      return { ...newItems }
     })
 
     setSelectedModalState({ category: "top", isOpen: false })
@@ -431,8 +428,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         return { ...prev, top: undefined }
       } else if (category === "bottom") {
         return { ...prev, bottom: undefined }
-      } else if (category === "shoe") {
-        return { ...prev, shoe: undefined }
       }
       return prev
     })
@@ -441,8 +436,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     if (selectedItemForResize && 
         ((category === "outerwear" && editedCategorizedItems.outerwear?.id === selectedItemForResize) ||
          (category === "top" && editedCategorizedItems.top?.id === selectedItemForResize) ||
-         (category === "bottom" && editedCategorizedItems.bottom?.id === selectedItemForResize) ||
-         (category === "shoe" && editedCategorizedItems.shoe?.id === selectedItemForResize))) {
+         (category === "bottom" && editedCategorizedItems.bottom?.id === selectedItemForResize))) {
       setSelectedItemForResize(null)
     }
   }
@@ -456,7 +450,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
         editedCategorizedItems.bottom,
-        editedCategorizedItems.shoe,
         ...editedCategorizedItems.others,
       ].filter(Boolean) as ClothingItem[]
 
@@ -467,9 +460,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           id: item.id,
           x: item.x ?? DEFAULTS.x,
           y: item.y ?? DEFAULTS.y,
-          scale: item.scale ?? DEFAULTS.scale,
-          left: item.left ?? DEFAULTS.left,
-          bottom: item.bottom ?? DEFAULTS.bottom,
+          scale: item.scale ?? DEFAULTS.positions.others.scale,
+          left: item.left ?? DEFAULTS.positions.others.left,
+          bottom: item.bottom ?? DEFAULTS.positions.others.bottom,
           width: item.width ?? DEFAULTS.width,
         })),
       }
@@ -498,8 +491,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     if (outfit) {
       setEditForm({
         name: outfit.name || "",
-        occasion: outfit.occasion || "",
-        season: outfit.season || "",
         notes: outfit.notes || "",
       })
     }
@@ -525,7 +516,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     }
   }
 
-  // Render outfit display - EXACT copy from CreateOutfitModal
+  // Render outfit display
   const renderOutfitDisplay = () => {
     if (!editedCategorizedItems && (!outfit?.clothingItems || outfit.clothingItems.length === 0)) {
       return (
@@ -540,7 +531,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           editedCategorizedItems.outerwear,
           editedCategorizedItems.top,
           editedCategorizedItems.bottom,
-          editedCategorizedItems.shoe,
           ...editedCategorizedItems.others,
         ].filter(Boolean) as ClothingItem[]
       : outfit?.clothingItems || []
@@ -566,9 +556,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 draggedItemId === item.id ? "z-50 shadow-2xl" : ""
               } ${selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""}`}
               style={{
-                left: `${item.left ?? DEFAULTS.left}%`,
-                bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
-                transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
+                left: `${item.left ?? DEFAULTS.positions.others.left}%`,
+                bottom: `${item.bottom ?? DEFAULTS.positions.others.bottom}rem`,
+                transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.positions.others.scale})`,
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
               }}
               onMouseDown={isEditing ? (e) => handleMouseDown(e, item.id) : undefined}
@@ -601,7 +591,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       editedCategorizedItems?.outerwear,
       editedCategorizedItems?.top,
       editedCategorizedItems?.bottom,
-      editedCategorizedItems?.shoe,
       ...(editedCategorizedItems?.others || [])
     ].filter(Boolean) as ClothingItem[]
     
@@ -687,7 +676,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex h-screen">
-        {/* Left Sidebar - Clothing Items */}
+        {/* Left Sidebar - Outfit Info */}
         <div className="w-80 border-r border-border bg-card p-6 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -753,33 +742,17 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               </div>
 
               <div>
-                <Label htmlFor="outfit-occasion">Occasion</Label>
+                <Label htmlFor="outfit-notes">Notes</Label>
                 {isEditing ? (
                   <Input
-                    id="outfit-occasion"
-                    value={editForm.occasion}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, occasion: e.target.value }))}
-                    placeholder="e.g., Work, Casual, Date"
+                    id="outfit-notes"
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Add notes about this outfit..."
                   />
                 ) : (
                   <div className="text-sm">
-                    {outfit.occasion || "No occasion set"}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="outfit-season">Season</Label>
-                {isEditing ? (
-                  <Input
-                    id="outfit-season"
-                    value={editForm.season}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, season: e.target.value }))}
-                    placeholder="e.g., Spring, Summer, Fall, Winter"
-                  />
-                ) : (
-                  <div className="text-sm">
-                    {outfit.season || "No season set"}
+                    {outfit.notes || "No notes"}
                   </div>
                 )}
               </div>
@@ -794,7 +767,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                           editedCategorizedItems.outerwear,
                           editedCategorizedItems.top,
                           editedCategorizedItems.bottom,
-                          editedCategorizedItems.shoe,
                           ...editedCategorizedItems.others
                         ].filter(Boolean) as ClothingItem[]).toFixed(2)
                       : (outfit.totalPrice || 0).toFixed(2)
@@ -813,7 +785,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                           editedCategorizedItems.outerwear,
                           editedCategorizedItems.top,
                           editedCategorizedItems.bottom,
-                          editedCategorizedItems.shoe,
                           ...editedCategorizedItems.others
                         ].filter(Boolean).length
                       : outfit.clothingItems.length
@@ -836,49 +807,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               {renderFolderDisplay()}
             </CardContent>
           </Card>
-
-          {/* Edit Mode - Item Selection */}
-          {isEditing && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Add Items</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => handleItemSelect("outerwear")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Outerwear
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => handleItemSelect("top")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Top
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => handleItemSelect("bottom")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Bottom
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => handleItemSelect("shoe")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Shoes
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Center - Outfit Preview */}
@@ -889,50 +817,200 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
               <h1 className="text-2xl font-bold">
                 {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
               </h1>
-              <div className="flex items-center gap-2">
-                {outfit.occasion && (
-                  <Badge variant="secondary">{outfit.occasion}</Badge>
-                )}
-                {outfit.season && (
-                  <Badge variant="outline">{outfit.season}</Badge>
-                )}
-              </div>
             </div>
           </div>
 
-          {/* Draggable Preview Area - EXACT SAME as CreateOutfitModal */}
-<div 
-  className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
-  onClick={(e) => {
-    if (e.target === e.currentTarget) {
-      setSelectedItemForResize(null)
-    }
-  }}
->                
-<div className="w-full max-w-xs mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
-    <div 
-      className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full flex items-center justify-center"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          setSelectedItemForResize(null)
-        }
-      }}
-    >
-      {renderOutfitDisplay()}
-    </div>
-  </div>
-</div>
+          {/* Draggable Preview Area */}
+          <div 
+            className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedItemForResize(null)
+              }
+            }}
+          >                
+            <div className="w-full max-w-xs mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
+              <div 
+                className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full flex items-center justify-center"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setSelectedItemForResize(null)
+                  }
+                }}
+              >
+                {renderOutfitDisplay()}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Right Sidebar - Item Controls */}
+        {/* Right Sidebar - Current Items Management */}
         {isEditing && (
           <div className="w-80 border-l border-border bg-card p-6 overflow-y-auto">
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Item Controls</h3>
+                <h3 className="text-lg font-semibold mb-4">Current Items</h3>
                 
-                {/* Resize Controls - EXACT copy from CreateOutfitModal */}
-                <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30 resize-control">
+                <div className="space-y-3">
+                  {/* Outerwear */}
+                  <div className="border border-border rounded-lg bg-background">
+                    {editedCategorizedItems?.outerwear ? (
+                      <div 
+                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleItemSelect("outerwear")}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 relative">
+                            <Image
+                              src={editedCategorizedItems.outerwear.url}
+                              alt=""
+                              fill
+                              className="object-cover rounded"
+                              unoptimized
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">
+                              {editedCategorizedItems.outerwear.name || "Untitled"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Outerwear
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveItem("outerwear")
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="w-full p-3 h-auto justify-start"
+                        onClick={() => handleItemSelect("outerwear")}
+                      >
+                        <Plus className="w-4 h-4 mr-3" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Add Outerwear</div>
+                          <div className="text-xs text-muted-foreground">Jackets, coats, blazers</div>
+                        </div>
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Top */}
+                  <div className="border border-border rounded-lg bg-background">
+                    {editedCategorizedItems?.top ? (
+                      <div 
+                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleItemSelect("top")}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 relative">
+                            <Image
+                              src={editedCategorizedItems.top.url}
+                              alt=""
+                              fill
+                              className="object-cover rounded"
+                              unoptimized
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">
+                              {editedCategorizedItems.top.name || "Untitled"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Top
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveItem("top")
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="w-full p-3 h-auto justify-start"
+                        onClick={() => handleItemSelect("top")}
+                      >
+                        <Plus className="w-4 h-4 mr-3" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Add Top</div>
+                          <div className="text-xs text-muted-foreground">Shirts, blouses, sweaters</div>
+                        </div>
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Bottom */}
+                  <div className="border border-border rounded-lg bg-background">
+                    {editedCategorizedItems?.bottom ? (
+                      <div 
+                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleItemSelect("bottom")}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 relative">
+                            <Image
+                              src={editedCategorizedItems.bottom.url}
+                              alt=""
+                              fill
+                              className="object-cover rounded"
+                              unoptimized
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">
+                              {editedCategorizedItems.bottom.name || "Untitled"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Bottom
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveItem("bottom")
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="w-full p-3 h-auto justify-start"
+                        onClick={() => handleItemSelect("bottom")}
+                      >
+                        <Plus className="w-4 h-4 mr-3" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Add Bottom</div>
+                          <div className="text-xs text-muted-foreground">Pants, skirts, shorts</div>
+                        </div>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Resize Controls */}
+                <div className="mt-8 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30">
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-foreground mb-3">
                     Resize Item
                   </h4>
@@ -984,7 +1062,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                                 updated.outerwear = updateItemWidth(updated.outerwear)
                                 updated.top = updateItemWidth(updated.top)
                                 updated.bottom = updateItemWidth(updated.bottom)
-                                updated.shoe = updateItemWidth(updated.shoe)
                                 updated.others = updated.others.map(updateItemWidth).filter(Boolean) as ClothingItem[]
                                 return updated
                               })
@@ -1000,190 +1077,6 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </div>
                     )
                   })()}
-                </div>
-
-                {/* Current Items List */}
-                <div className="mt-6">
-                  <h4 className="text-sm font-semibold mb-3">Current Items</h4>
-                  <div className="space-y-2">
-                    {editedCategorizedItems && (
-                      <>
-                        {editedCategorizedItems.outerwear && (
-                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 relative">
-                                <Image
-                                  src={editedCategorizedItems.outerwear.url}
-                                  alt=""
-                                  fill
-                                  className="object-cover rounded"
-                                  unoptimized
-                                />
-                              </div>
-                              <div>
-                                <div className="text-xs font-medium">
-                                  {editedCategorizedItems.outerwear.name || "Untitled"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Outerwear
-                                </div>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem("outerwear")}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-
-                        {editedCategorizedItems.top && (
-                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 relative">
-                                <Image
-                                  src={editedCategorizedItems.top.url}
-                                  alt=""
-                                  fill
-                                  className="object-cover rounded"
-                                  unoptimized
-                                />
-                              </div>
-                              <div>
-                                <div className="text-xs font-medium">
-                                  {editedCategorizedItems.top.name || "Untitled"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Top
-                                </div>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem("top")}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-
-                        {editedCategorizedItems.bottom && (
-                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 relative">
-                                <Image
-                                  src={editedCategorizedItems.bottom.url}
-                                  alt=""
-                                  fill
-                                  className="object-cover rounded"
-                                  unoptimized
-                                />
-                              </div>
-                              <div>
-                                <div className="text-xs font-medium">
-                                  {editedCategorizedItems.bottom.name || "Untitled"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Bottom
-                                </div>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem("bottom")}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-
-                        {editedCategorizedItems.shoe && (
-                          <div className="flex items-center justify-between p-2 border border-border rounded bg-background">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 relative">
-                                <Image
-                                  src={editedCategorizedItems.shoe.url}
-                                  alt=""
-                                  fill
-                                  className="object-cover rounded"
-                                  unoptimized
-                                />
-                              </div>
-                              <div>
-                                <div className="text-xs font-medium">
-                                  {editedCategorizedItems.shoe.name || "Untitled"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Shoes
-                                </div>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem("shoe")}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-
-                        {editedCategorizedItems.others.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between p-2 border border-border rounded bg-background">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 relative">
-                                <Image
-                                  src={item.url}
-                                  alt=""
-                                  fill
-                                  className="object-cover rounded"
-                                  unoptimized
-                                />
-                              </div>
-                              <div>
-                                <div className="text-xs font-medium">
-                                  {item.name || "Untitled"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {item.type || "Other"}
-                                </div>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditedCategorizedItems(prev => {
-                                  if (!prev) return prev
-                                  return {
-                                    ...prev,
-                                    others: prev.others.filter(otherItem => otherItem.id !== item.id)
-                                  }
-                                })
-                              }}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </>
-                    )}
-
-                    {editedCategorizedItems && 
-                     !editedCategorizedItems.outerwear && 
-                     !editedCategorizedItems.top && 
-                     !editedCategorizedItems.bottom && 
-                     !editedCategorizedItems.shoe && 
-                     editedCategorizedItems.others.length === 0 && (
-                      <div className="text-sm text-muted-foreground text-center py-4">
-                        No items in outfit
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>

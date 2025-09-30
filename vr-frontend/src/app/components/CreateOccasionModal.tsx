@@ -161,7 +161,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className={`bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col ${
-            step === "name" ? "max-w-md" : "max-w-4xl"
+            step === "name" ? "max-w-md" : "max-w-6xl"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -178,7 +178,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 {/* Simple Header for Name Step */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
                       <Folder className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -215,7 +215,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                   <Button
                     onClick={handleNameNext}
                     disabled={!occasionName.trim()}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-black hover:bg-gray-800 text-white"
                   >
                     Next: Select Outfits
                   </Button>
@@ -232,10 +232,10 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 transition={{ duration: 0.2 }}
                 className="flex flex-col h-full"
               >
-                {/* Header for Selection Step - Same as Original */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-border chrome:border-border bg-gradient-to-r from-blue-50 to-purple-50 dark:from-card dark:to-muted chrome:from-card chrome:to-secondary">
+                {/* Header for Selection Step */}
+                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-border chrome:border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
                       <Folder className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -245,7 +245,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
+                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full hover:bg-gray-100">
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
@@ -266,7 +266,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                         variant="outline"
                         size="sm"
                         onClick={() => setStep("name")}
-                        className="gap-2"
+                        className="gap-2 rounded-lg border-slate-300 hover:bg-gray-100"
                       >
                         Back
                       </Button>
@@ -279,16 +279,16 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search outfits..."
-                        className="pl-10 bg-white dark:bg-background chrome:bg-background border-slate-300 dark:border-border chrome:border-border text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-500 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground"
+                        className="pl-10 rounded-lg bg-white dark:bg-background chrome:bg-background border-slate-300 dark:border-border chrome:border-border text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-400 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
                       />
                     </div>
 
                     {/* Outfits Grid - Restored Original Design */}
-                    <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+                    <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 420px)' }}>
                       {loading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                           {Array.from({ length: 8 }).map((_, index) => (
-                            <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-muted chrome:bg-muted rounded-lg animate-pulse" />
+                            <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-muted chrome:bg-muted rounded-xl animate-pulse" />
                           ))}
                         </div>
                       ) : filteredOutfits.length === 0 ? (
@@ -298,7 +298,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                           </p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                           {filteredOutfits.map((outfit) => (
                             <motion.div
                               key={outfit.id}
@@ -307,16 +307,16 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                               transition={{ duration: 0.2 }}
                             >
                               <Card
-                                className={`cursor-pointer transition-all duration-200 ${
+                                className={`cursor-pointer transition-all duration-200 rounded-xl border ${
                                   selectedOutfitIds.includes(outfit.id)
-                                    ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 chrome:bg-blue-50"
-                                    : "hover:ring-2 hover:ring-slate-300 dark:hover:ring-border chrome:hover:ring-border"
+                                    ? "ring-2 ring-black bg-gray-50 border-black dark:bg-gray-900/20 chrome:bg-gray-50"
+                                    : "border-slate-200 hover:border-gray-400 hover:shadow-md dark:hover:ring-border chrome:hover:ring-border"
                                 }`}
                                 onClick={() => toggleOutfitSelection(outfit.id)}
                               >
-                                <CardContent className="p-3">
+                                <CardContent className="p-4">
                                   {/* Outfit Preview - Original Design */}
-                                  <div className="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-muted dark:to-card chrome:from-muted chrome:to-card rounded-lg mb-3 relative flex items-center justify-center overflow-hidden">
+                                  <div className="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-muted dark:to-card chrome:from-muted chrome:to-card rounded-xl mb-2 relative flex items-center justify-center overflow-hidden">
                                     {outfit.clothingItems.length > 0 ? (
                                       <div className="relative w-full h-full">
                                         {outfit.clothingItems.map((item, index) => {
@@ -358,7 +358,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                       <div
                                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                           selectedOutfitIds.includes(outfit.id)
-                                            ? "bg-blue-500 border-blue-500"
+                                            ? "bg-black border-black"
                                             : "bg-white border-slate-300 dark:bg-background dark:border-border chrome:bg-background chrome:border-border"
                                         }`}
                                       >
@@ -391,8 +391,8 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                   </div>
                 </div>
 
-                {/* Footer - Same as Original */}
-                <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-border chrome:border-border bg-slate-50 dark:bg-muted/30 chrome:bg-muted/30 flex-shrink-0">
+                {/* Footer */}
+                <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-border chrome:border-border bg-white dark:bg-muted/30 chrome:bg-muted/30 flex-shrink-0">
                   <div className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
                     {selectedOutfitIds.length === 0 ? (
                       "You can create an empty folder and add outfits later"
@@ -404,13 +404,13 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                     )}
                   </div>
                   <div className="flex space-x-3">
-                    <Button variant="outline" onClick={handleCloseModal}>
+                    <Button variant="outline" onClick={handleCloseModal} className="rounded-lg border-slate-300 hover:bg-gray-100">
                       Cancel
                     </Button>
                     <Button
                       onClick={handleCreateOccasion}
                       disabled={isCreating}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                      className="bg-black hover:bg-gray-800 text-white rounded-lg"
                     >
                       {isCreating ? (
                         <>
