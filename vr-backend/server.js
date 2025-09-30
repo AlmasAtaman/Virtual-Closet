@@ -20,9 +20,11 @@ const port = process.env.PORT || 8000;
 app.use(cors({
   origin: [
     "https://vestko.vercel.app",
-    "http://localhost:3000", 
-    "http://localhost:3001", 
-    "http://localhost:3002", 
+    "https://vestko.com",
+    "https://www.vestko.com",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
     "http://localhost:3003"
   ],
   credentials: true,
