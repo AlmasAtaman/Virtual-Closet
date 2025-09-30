@@ -4,7 +4,7 @@ import { useEffect, useState, forwardRef, useImperativeHandle, useCallback } fro
 import axios from "axios";
 import Fuse from "fuse.js";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, MoveRight, Loader2, Plus } from "lucide-react";
+import { Trash2, MoveRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clothing, FilterAttribute } from "./FilterSection";
@@ -57,7 +57,7 @@ type ClothingGalleryProps = {
 };
 
 const ClothingGallery = forwardRef(
-  ({ viewMode, openUploadModal, searchQuery = "", selectedTags, setSelectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly, priceSort }: ClothingGalleryProps, ref ) => {
+  ({ viewMode, searchQuery = "", selectedTags, setSelectedTags, priceRange, clothingItems, setClothingItems, isMultiSelecting, setIsMultiSelecting, showFavoritesOnly, setShowFavoritesOnly, priceSort }: ClothingGalleryProps, ref ) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _unusedSetSelectedTags = setSelectedTags;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

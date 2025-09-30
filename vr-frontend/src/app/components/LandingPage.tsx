@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Palette, Star, ChevronDown, Sparkles, TrendingUp, Camera, Cloud } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, ChevronDown, Sparkles, TrendingUp, Camera, Cloud } from "lucide-react";
 
 // Logo component
 function Logo() {
@@ -366,7 +365,7 @@ export default function LandingPage() {
                       AI Outfit Recommendations
                     </h3>
                     <p className="text-lg leading-relaxed" style={{ color: '#6b7280' }}>
-                      Get personalized outfit suggestions based on weather, occasion, and your style preferences. Never have a "nothing to wear" moment again.
+                      Get personalized outfit suggestions based on weather, occasion, and your style preferences. Never have a &ldquo;nothing to wear&rdquo; moment again.
                     </p>
                   </div>
 
@@ -396,7 +395,7 @@ export default function LandingPage() {
                       Weather Integration
                     </h3>
                     <p className="text-lg leading-relaxed" style={{ color: '#6b7280' }}>
-                      Outfit suggestions automatically adjust based on real-time weather data, ensuring you're always dressed appropriately.
+                      Outfit suggestions automatically adjust based on real-time weather data, ensuring you&apos;re always dressed appropriately.
                     </p>
                   </div>
 
