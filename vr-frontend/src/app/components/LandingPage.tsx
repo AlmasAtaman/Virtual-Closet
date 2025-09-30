@@ -455,7 +455,7 @@ export default function LandingPage() {
                     <Star className="h-8 w-8" style={{ fill: '#FFD700', color: '#FFD700' }} />
                   </div>
                   <p className="text-lg leading-relaxed font-serif italic" style={{ color: '#2b2b2b' }}>
-                    "No more 'I have nothing to wear' moments when I can literally see my entire closet on one screen."
+                    &ldquo;No more &lsquo;I have nothing to wear&rsquo; moments when I can literally see my entire closet on one screen.&rdquo;
                   </p>
                   <div className="flex items-center gap-4">
                     <Image
@@ -487,7 +487,7 @@ export default function LandingPage() {
                     <Star className="h-8 w-8" style={{ fill: '#FFD700', color: '#FFD700' }} />
                   </div>
                   <p className="text-lg leading-relaxed font-serif italic" style={{ color: '#2b2b2b' }}>
-                    "The outfit combination feature is brilliant. I've discovered so many new looks from clothes I already own."
+                    &ldquo;The outfit combination feature is brilliant. I&rsquo;ve discovered so many new looks from clothes I already own.&rdquo;
                   </p>
                   <div className="flex items-center gap-4">
                     <Image
@@ -519,7 +519,7 @@ export default function LandingPage() {
                     <Star className="h-8 w-8" style={{ fill: '#FFD700', color: '#FFD700' }} />
                   </div>
                   <p className="text-lg leading-relaxed font-serif italic" style={{ color: '#2b2b2b' }}>
-                    "I love keeping my Wishlist right next my actual closet. It helps me make smarter shopping decisions."
+                    &ldquo;I love keeping my Wishlist right next my actual closet. It helps me make smarter shopping decisions.&rdquo;
                   </p>
                   <div className="flex items-center gap-4">
                     <Image
