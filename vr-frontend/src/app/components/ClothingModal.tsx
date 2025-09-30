@@ -70,7 +70,7 @@ const ClothingModal: React.FC<ClothingModalProps> = ({ isOpen, onCloseAction, cl
           />
         </div>
 
-        {/* Navigation Arrows Overlay */}
+        {/* Navigation Arrow Overlay */}
         {clothingItems.length > 1 && (
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-2 sm:px-4 z-20">
             {currentItemIndex > 0 && (
