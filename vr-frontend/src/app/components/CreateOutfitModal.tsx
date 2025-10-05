@@ -544,16 +544,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white dark:bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden border-2 border-slate-200 dark:border-slate-700"
+            className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden border-2 border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
               {/* Left Panel - Outfit Details */}
-              <div className="w-80 border-r border-slate-200 dark:border-border p-4 overflow-y-auto bg-white dark:bg-card" onClick={() => setSelectedItemForResize(null)}>
+              <div className="w-80 border-r border-border p-4 overflow-y-auto bg-card" onClick={() => setSelectedItemForResize(null)}>
                 {/* Outfit Name */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Outfit Name
                   </label>
                   <Input
@@ -568,7 +568,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
                 {/* Top Selection */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-3">
+                  <label className="block text-sm font-medium text-foreground mb-3">
                     Top *
                   </label>
                   <div className="relative">
@@ -577,7 +577,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         e.stopPropagation()
                         setShowTopSelectModal(true)
                       }}
-                      className="border-2 border-dashed border-slate-300 dark:border-border rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors bg-slate-50 dark:bg-muted/30 min-h-[200px] flex flex-col items-center justify-center"
+                      className="border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 min-h-[200px] flex flex-col items-center justify-center"
                     >
                       {selectedTop ? (
                         <div className="w-full">
@@ -591,18 +591,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             />
                           </div>
                           <div className="text-center">
-                            <p className="font-medium text-slate-900 dark:text-foreground">
+                            <p className="font-medium text-foreground">
                               {selectedTop.name || "Untitled"}
                             </p>
-                            <p className="text-sm text-slate-500 dark:text-muted-foreground capitalize">
+                            <p className="text-sm text-muted-foreground capitalize">
                               {selectedTop.type}
                             </p>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center">
-                          <Plus className="w-8 h-8 text-slate-400 dark:text-muted-foreground mx-auto mb-2" />
-                          <span className="text-sm text-slate-600 dark:text-muted-foreground">
+                          <Plus className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                          <span className="text-sm text-muted-foreground">
                             Select Top
                           </span>
                         </div>
@@ -624,7 +624,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
                 {/* Bottom Selection */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-3">
+                  <label className="block text-sm font-medium text-foreground mb-3">
                     Bottom *
                   </label>
                   <div className="relative">
@@ -633,7 +633,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         e.stopPropagation()
                         setShowBottomSelectModal(true)
                       }}
-                      className="border-2 border-dashed border-slate-300 dark:border-border rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors bg-slate-50 dark:bg-muted/30 min-h-[200px] flex flex-col items-center justify-center"
+                      className="border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 min-h-[200px] flex flex-col items-center justify-center"
                     >
                       {selectedBottom ? (
                         <div className="w-full">
@@ -647,18 +647,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             />
                           </div>
                           <div className="text-center">
-                            <p className="font-medium text-slate-900 dark:text-foreground">
+                            <p className="font-medium text-foreground">
                               {selectedBottom.name || "Untitled"}
                             </p>
-                            <p className="text-sm text-slate-500 dark:text-muted-foreground capitalize">
+                            <p className="text-sm text-muted-foreground capitalize">
                               {selectedBottom.type}
                             </p>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center">
-                          <Plus className="w-8 h-8 text-slate-400 dark:text-muted-foreground mx-auto mb-2" />
-                          <span className="text-sm text-slate-600 dark:text-muted-foreground">
+                          <Plus className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                          <span className="text-sm text-muted-foreground">
                             Select Bottom
                           </span>
                         </div>
@@ -680,7 +680,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
                 {/* Outerwear Selection */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-foreground mb-3">
+                  <label className="block text-sm font-medium text-foreground mb-3">
                     Outerwear
                   </label>
                   <div className="relative">
@@ -689,7 +689,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         e.stopPropagation()
                         setShowOuterwearSelectModal(true)
                       }}
-                      className="border-2 border-dashed border-slate-300 dark:border-border rounded-xl p-4 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors bg-slate-50 dark:bg-muted/30 min-h-[140px] flex flex-col items-center justify-center"
+                      className="border-2 border-dashed border-border rounded-xl p-4 cursor-pointer hover:border-primary/50 transition-colors bg-muted/30 min-h-[140px] flex flex-col items-center justify-center"
                     >
                       {selectedOuterwear ? (
                         <div className="w-full">
@@ -703,18 +703,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             />
                           </div>
                           <div className="text-center">
-                            <p className="font-medium text-slate-900 dark:text-foreground text-sm">
+                            <p className="font-medium text-foreground text-sm">
                               {selectedOuterwear.name || "Untitled"}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-muted-foreground capitalize">
+                            <p className="text-xs text-muted-foreground capitalize">
                               {selectedOuterwear.type}
                             </p>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center">
-                          <Plus className="w-6 h-6 text-slate-400 dark:text-muted-foreground mx-auto mb-2" />
-                          <span className="text-sm text-slate-600 dark:text-muted-foreground">
+                          <Plus className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
+                          <span className="text-sm text-muted-foreground">
                             Add Outerwear
                           </span>
                         </div>
@@ -765,14 +765,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Right Panel - Item Controls */}
-              <div className="w-80 border-l border-slate-200 dark:border-border p-4 bg-white dark:bg-card flex flex-col" onClick={(e) => {
+              <div className="w-80 border-l border-border p-4 bg-card flex flex-col" onClick={(e) => {
                 // Only deselect if not clicking on interactive elements
                 if (!(e.target as HTMLElement).closest('input, button, .resize-control')) {
                     setSelectedItemForResize(null)
                 }
               }}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Item Controls
                   </h3>
                   <Button variant="ghost" size="sm" onClick={handleCloseModal}>
@@ -781,8 +781,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 </div>
                 
                 {/* Resize Controls - Always visible */}
-                <div className="mb-6 p-4 border border-slate-200 dark:border-border rounded-lg bg-slate-50 dark:bg-muted/30 resize-control">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-foreground mb-3">
+                <div className="mb-6 p-4 border border-border rounded-lg bg-muted/30 resize-control">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">
                     Resize Item
                   </h4>
                   {(() => {
@@ -793,10 +793,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       return (
                         <div>
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                            <span className="text-sm font-medium text-muted-foreground">
                               Select an item to adjust the size
                             </span>
-                            <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 px-2 py-1 rounded">
+                            <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
                               --
                             </span>
                           </div>
@@ -807,9 +807,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             step="0.1"
                             value={10}
                             disabled
-                            className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-not-allowed opacity-50"
+                            className="w-full h-2 bg-muted rounded-lg appearance-none cursor-not-allowed opacity-50"
                           />
-                          <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
                             <span>Small</span>
                             <span>Large</span>
                           </div>
@@ -821,10 +821,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     return (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          <span className="text-sm font-medium text-foreground">
                             {selectedItem.name || "Item"}
                           </span>
-                          <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-muted px-2 py-1 rounded">
                             {(selectedItem.width ?? 10).toFixed(1)}rem
                           </span>
                         </div>
@@ -853,10 +853,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               return updated
                             })
                           }}
-                          className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
                         />
-                        <div className="flex justify-between text-xs text-slate-500 mt-1">
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
                           <span>Small</span>
                           <span>Large</span>
                         </div>
@@ -869,8 +869,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 <div className="flex-1"></div>
 
                 {/* Bottom buttons - stuck to bottom */}
-                <div className="pt-6 border-t border-slate-200 dark:border-border">
-                  <p className="text-sm text-slate-600 dark:text-muted-foreground mb-4 text-center">
+                <div className="pt-6 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-4 text-center">
                     Select at least one clothing item
                   </p>
                   <div className="space-y-3">
