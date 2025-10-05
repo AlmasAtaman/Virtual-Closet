@@ -1,13 +1,21 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Use the new SDK for better compatibility
+import { GoogleGenAI } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const client = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
 
+/**
+ * Extract product data from HTML content
+ * This is used by the Playwright scraper as a fallback
+ * Note: The URL context approach (quick.gemini.v2.js) is preferred
+ */
 export async function extractProductData(html) {
-  
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const model = "gemini-2.5-flash";
 
     const prompt = `
     You are a product metadata extractor for fashion e-commerce.
@@ -67,9 +75,11 @@ export async function extractProductData(html) {
     `.trim();
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = (await result.response.text()).trim();
-
+    const result = await client.models.generateContent({
+      model: model,
+      contents: [prompt]
+    });
+    const text = result.text.trim();
 
     const cleaned = text.replace(/```json|```/g, "").trim();
     const match = cleaned.match(/\{[\s\S]*?\}/);

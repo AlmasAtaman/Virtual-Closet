@@ -1,24 +1,31 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const client = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
 
 export async function getClothingInfoFromImage(imagePath) {
   const imageBuffer = fs.readFileSync(imagePath);
 
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = "gemini-2.5-flash";
 
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        data: imageBuffer.toString("base64"),
-        mimeType: "image/jpeg",
-      },
-    },
-    `
+  const result = await client.models.generateContent({
+    model: model,
+    contents: [
+      {
+        parts: [
+          {
+            inlineData: {
+              data: imageBuffer.toString("base64"),
+              mimeType: "image/jpeg",
+            },
+          },
+          {
+            text: `
     You are a fashion labeling assistant.
 
     You will be given an image of a **single clothing item (no human)**. Your job is to:
@@ -74,10 +81,13 @@ export async function getClothingInfoFromImage(imagePath) {
 
     Only return valid JSON. No explanation, formatting, or comments.
       `
-    ,
-  ]);
+          }
+        ]
+      }
+    ]
+  });
 
-  const text = result.response.text();
+  const text = result.text;
 
   try {
     // Extract JSON using regex

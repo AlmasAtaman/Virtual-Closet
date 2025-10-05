@@ -19,7 +19,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.806.0",
     "@aws-sdk/s3-request-presigner": "^3.806.0",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.22.0",
     "@panva/hkdf": "^1.2.1",
     "@prisma/client": "^6.7.0",
     "axios": "^1.9.0",

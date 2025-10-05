@@ -749,12 +749,18 @@ export default function UploadForm({
                             <Label className="text-sm font-medium">Product URL</Label>
                             <div className="flex gap-2 w-full">
                               <Input
-                                placeholder="Enter product URL..."
+                                placeholder="Enter product URL and press Enter..."
                                 value={scrapingUrl}
                                 onChange={e => {
                                   setScrapingUrl(e.target.value);
                                   setFetchError(null);
                                   setQuickMetadataFetched(false);
+                                }}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter' && scrapingUrl.trim() && !isLoading) {
+                                    e.preventDefault();
+                                    handleGeminiMetadata();
+                                  }
                                 }}
                                 className="flex-1"
                                 disabled={isLoading}
