@@ -160,7 +160,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={`bg-white dark:bg-background chrome:bg-background rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col ${
+          className={`bg-background rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col ${
             step === "name" ? "max-w-md" : "max-w-6xl"
           }`}
           onClick={(e) => e.stopPropagation()}
@@ -178,12 +178,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 {/* Simple Header for Name Step */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                      <Folder className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                      <Folder className="w-4 h-4 text-primary-foreground" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Create Occasion Folder</h2>
-                      <p className="text-sm text-slate-600 dark:text-muted-foreground">Name your folder</p>
+                      <h2 className="text-lg font-semibold text-foreground">Create Occasion Folder</h2>
+                      <p className="text-sm text-muted-foreground">Name your folder</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
@@ -194,7 +194,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 {/* Compact Form */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="folder-name" className="text-sm font-medium text-slate-700 dark:text-foreground">
+                    <Label htmlFor="folder-name" className="text-sm font-medium text-foreground">
                       Folder Name
                     </Label>
                     <Input
@@ -215,7 +215,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                   <Button
                     onClick={handleNameNext}
                     disabled={!occasionName.trim()}
-                    className="w-full bg-black hover:bg-gray-800 text-white"
+                    className="w-full"
                   >
                     Next: Select Outfits
                   </Button>
@@ -233,19 +233,19 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 className="flex flex-col h-full"
               >
                 {/* Header for Selection Step */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-border chrome:border-border">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
-                      <Folder className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                      <Folder className="w-5 h-5 text-primary-foreground" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white chrome:text-foreground">Create Occasion Folder</h2>
-                      <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                      <h2 className="text-xl font-bold text-foreground">Create Occasion Folder</h2>
+                      <p className="text-sm text-muted-foreground">
                         Select outfits to organize
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full hover:bg-gray-100">
+                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
@@ -255,10 +255,10 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                     {/* Step indicator */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white chrome:text-foreground">
+                        <h3 className="font-semibold text-foreground">
                           Adding outfits to &quot;{occasionName}&quot;
                         </h3>
-                        <p className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
                         </p>
                       </div>
@@ -266,7 +266,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                         variant="outline"
                         size="sm"
                         onClick={() => setStep("name")}
-                        className="gap-2 rounded-lg border-slate-300 hover:bg-gray-100"
+                        className="gap-2 rounded-lg"
                       >
                         Back
                       </Button>
@@ -274,12 +274,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
 
                     {/* Search */}
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-muted-foreground chrome:text-muted-foreground" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search outfits..."
-                        className="pl-10 rounded-lg bg-white dark:bg-background chrome:bg-background border-slate-300 dark:border-border chrome:border-border text-slate-900 dark:text-foreground chrome:text-foreground placeholder-slate-400 dark:placeholder-muted-foreground chrome:placeholder-muted-foreground focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
+                        className="pl-10 rounded-lg"
                       />
                     </div>
 
@@ -288,12 +288,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                       {loading ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                           {Array.from({ length: 8 }).map((_, index) => (
-                            <div key={index} className="aspect-[3/4] bg-slate-200 dark:bg-muted chrome:bg-muted rounded-xl animate-pulse" />
+                            <div key={index} className="aspect-[3/4] bg-muted rounded-xl animate-pulse" />
                           ))}
                         </div>
                       ) : filteredOutfits.length === 0 ? (
                         <div className="text-center py-12">
-                          <p className="text-slate-500 dark:text-muted-foreground chrome:text-muted-foreground">
+                          <p className="text-muted-foreground">
                             {searchQuery ? "No outfits match your search" : "No outfits found"}
                           </p>
                         </div>
@@ -309,14 +309,14 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                               <Card
                                 className={`cursor-pointer transition-all duration-200 rounded-xl border ${
                                   selectedOutfitIds.includes(outfit.id)
-                                    ? "ring-2 ring-black bg-gray-50 border-black dark:bg-gray-900/20 chrome:bg-gray-50"
-                                    : "border-slate-200 hover:border-gray-400 hover:shadow-md dark:hover:ring-border chrome:hover:ring-border"
+                                    ? "ring-2 ring-primary bg-primary/5 border-primary"
+                                    : "border-border hover:border-primary/50 hover:shadow-md"
                                 }`}
                                 onClick={() => toggleOutfitSelection(outfit.id)}
                               >
                                 <CardContent className="p-4">
                                   {/* Outfit Preview - Original Design */}
-                                  <div className="aspect-[3/4] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-muted dark:to-card chrome:from-muted chrome:to-card rounded-xl mb-2 relative flex items-center justify-center overflow-hidden">
+                                  <div className="aspect-[3/4] bg-gradient-to-br from-muted/50 to-muted rounded-xl mb-2 relative flex items-center justify-center overflow-hidden">
                                     {outfit.clothingItems.length > 0 ? (
                                       <div className="relative w-full h-full">
                                         {outfit.clothingItems.map((item, index) => {
@@ -347,7 +347,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                         })}
                                       </div>
                                     ) : (
-                                      <div className="text-slate-400 dark:text-muted-foreground chrome:text-muted-foreground text-center">
+                                      <div className="text-muted-foreground text-center">
                                         <div className="text-2xl mb-1">👗</div>
                                         <p className="text-xs">Empty Outfit</p>
                                       </div>
@@ -358,12 +358,12 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                                       <div
                                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                           selectedOutfitIds.includes(outfit.id)
-                                            ? "bg-black border-black"
-                                            : "bg-white border-slate-300 dark:bg-background dark:border-border chrome:bg-background chrome:border-border"
+                                            ? "bg-primary border-primary"
+                                            : "bg-background border-border"
                                         }`}
                                       >
                                         {selectedOutfitIds.includes(outfit.id) && (
-                                          <Check className="w-3 h-3 text-white" />
+                                          <Check className="w-3 h-3 text-primary-foreground" />
                                         )}
                                       </div>
                                     </div>
@@ -371,10 +371,10 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
 
                                   {/* Outfit Info */}
                                   <div className="space-y-1">
-                                    <h4 className="font-medium text-sm text-slate-900 dark:text-white chrome:text-foreground truncate">
+                                    <h4 className="font-medium text-sm text-foreground truncate">
                                       {outfit.name || "Untitled Outfit"}
                                     </h4>
-                                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-muted-foreground chrome:text-muted-foreground">
+                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
                                       <span>{outfit.clothingItems.length} items</span>
                                       {outfit.totalPrice && (
                                         <span>${outfit.totalPrice.toFixed(2)}</span>
@@ -392,25 +392,25 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-border chrome:border-border bg-white dark:bg-muted/30 chrome:bg-muted/30 flex-shrink-0">
-                  <div className="text-sm text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                <div className="flex items-center justify-between p-6 border-t border-border bg-muted/30 flex-shrink-0">
+                  <div className="text-sm text-muted-foreground">
                     {selectedOutfitIds.length === 0 ? (
                       "You can create an empty folder and add outfits later"
                     ) : (
-                      <div className="flex items-center text-slate-600 dark:text-muted-foreground chrome:text-muted-foreground">
+                      <div className="flex items-center text-muted-foreground">
                         <Check className="w-4 h-4 mr-1" />
                         {selectedOutfitIds.length} outfit{selectedOutfitIds.length !== 1 ? "s" : ""} selected
                       </div>
                     )}
                   </div>
                   <div className="flex space-x-3">
-                    <Button variant="outline" onClick={handleCloseModal} className="rounded-lg border-slate-300 hover:bg-gray-100">
+                    <Button variant="outline" onClick={handleCloseModal} className="rounded-lg">
                       Cancel
                     </Button>
                     <Button
                       onClick={handleCreateOccasion}
                       disabled={isCreating}
-                      className="bg-black hover:bg-gray-800 text-white rounded-lg"
+                      className="rounded-lg"
                     >
                       {isCreating ? (
                         <>
