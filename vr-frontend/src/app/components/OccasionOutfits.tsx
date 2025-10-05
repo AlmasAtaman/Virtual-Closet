@@ -193,12 +193,9 @@ export default function OccasionOutfits({ occasionId, onBack, onOccasionUpdated 
             <ArrowLeft className="w-4 h-4" />
             Back to Occasions
           </Button>
-          <div className="flex items-center gap-2">
-            <Folder className="w-5 h-5 text-purple-500" />
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {occasion.name}
-            </h1>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {occasion.name}
+          </h1>
         </div>
         
         <div className="text-sm text-slate-600 dark:text-slate-400">
