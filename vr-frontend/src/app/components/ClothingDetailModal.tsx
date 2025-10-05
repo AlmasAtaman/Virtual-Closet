@@ -121,7 +121,7 @@ export default function ClothingDetailModal({
         onClick={onClose}
       >
         <motion.div
-          className="relative w-[900px] h-[550px] bg-background rounded-xl shadow-2xl flex flex-col overflow-hidden"
+          className="relative w-full max-w-[900px] h-auto max-h-[90vh] md:h-[550px] bg-background rounded-xl shadow-2xl flex flex-col overflow-hidden"
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -129,10 +129,10 @@ export default function ClothingDetailModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-xl font-semibold">{isEditing ? "Edit Item" : "Clothing Details"}</h2>
+          <div className="flex items-center justify-between p-4 md:p-6 border-b">
+            <h2 className="text-lg md:text-xl font-semibold">{isEditing ? "Edit Item" : "Clothing Details"}</h2>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={onClose}>
+              <Button variant="ghost" size="icon" onClick={onClose} className="min-w-[44px] min-h-[44px]">
                 <X className="h-5 w-5" />
               </Button>
             </div>
@@ -140,7 +140,7 @@ export default function ClothingDetailModal({
 
           <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
             {/* Image Section */}
-            <div className="md:w-1/2 p-6 flex items-center justify-center bg-muted/30">
+            <div className="md:w-1/2 p-4 md:p-6 flex items-center justify-center bg-muted/30">
               <div className="relative w-full h-full flex flex-col items-center justify-center">
                 {/* Heart icon in top-right */}
                 <div className="absolute top-4 right-4 z-30">
@@ -180,7 +180,7 @@ export default function ClothingDetailModal({
 
             {/* Details Section */}
             <div className="md:w-1/2 flex flex-col overflow-hidden">
-              <div className="p-6 overflow-y-auto flex-grow">
+              <div className="p-4 md:p-6 overflow-y-auto flex-grow">
                 {/* Title and Source URL - always visible */}
                 <div className="mb-4">
                   {isEditing ? (
@@ -518,13 +518,13 @@ export default function ClothingDetailModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-auto flex justify-end gap-2 p-4 border-t">
+              <div className="mt-auto flex flex-col sm:flex-row justify-end gap-2 p-4 md:p-6 border-t">
                 {isEditing ? (
                   <>
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    <Button variant="outline" onClick={() => setIsEditing(false)} className="min-h-[44px] w-full sm:w-auto">
                       Cancel
                     </Button>
-                    <Button onClick={onEdit} className="gap-2">
+                    <Button onClick={onEdit} className="gap-2 min-h-[44px] w-full sm:w-auto">
                       <Save className="h-4 w-4" />
                       Save Changes
                     </Button>
@@ -536,17 +536,18 @@ export default function ClothingDetailModal({
                         variant="outline"
                         onClick={() => onMoveToCloset(currentItem)}
                         disabled={isMoving}
-                        className="gap-2"
+                        className="gap-2 min-h-[44px] w-full sm:w-auto"
                       >
                         {isMoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoveRight className="h-4 w-4" />}
-                        Move to Closet
+                        <span className="hidden sm:inline">Move to Closet</span>
+                        <span className="sm:hidden">Move</span>
                       </Button>
                     )}
-                    <Button variant="outline" onClick={() => setIsEditing(true)} className="gap-2">
+                    <Button variant="outline" onClick={() => setIsEditing(true)} className="gap-2 min-h-[44px] w-full sm:w-auto">
                       <Edit className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button variant="destructive" onClick={() => onDelete(currentItem.key)} disabled={isDeleting} className="gap-2">
+                    <Button variant="destructive" onClick={() => onDelete(currentItem.key)} disabled={isDeleting} className="gap-2 min-h-[44px] w-full sm:w-auto">
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       Delete
                     </Button>
@@ -557,12 +558,12 @@ export default function ClothingDetailModal({
           </div>
         </motion.div>
 
-        {/* Left arrow */}
+        {/* Left arrow - hidden on mobile */}
         {!isEditing && allItems.length > 1 && currentItemIndex > 0 && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-1/2 top-1/2 -translate-y-1/2 -ml-[508px] rounded-full bg-background/80 hover:bg-background shadow-md z-50"
+            className="hidden md:flex absolute left-1/2 top-1/2 -translate-y-1/2 -ml-[508px] rounded-full bg-background/80 hover:bg-background shadow-md z-50 min-w-[44px] min-h-[44px]"
             onClick={(e) => {
               e.stopPropagation()
               navigateItem("prev")
@@ -572,12 +573,12 @@ export default function ClothingDetailModal({
           </Button>
         )}
 
-        {/* Right arrow */}
+        {/* Right arrow - hidden on mobile */}
         {!isEditing && allItems.length > 1 && currentItemIndex < allItems.length - 1 && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1/2 top-1/2 -translate-y-1/2 -mr-[508px] rounded-full bg-background/80 hover:bg-background shadow-md z-50"
+            className="hidden md:flex absolute right-1/2 top-1/2 -translate-y-1/2 -mr-[508px] rounded-full bg-background/80 hover:bg-background shadow-md z-50 min-w-[44px] min-h-[44px]"
             onClick={(e) => {
               e.stopPropagation()
               navigateItem("next")

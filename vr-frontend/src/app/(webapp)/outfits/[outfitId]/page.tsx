@@ -339,17 +339,116 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     setDraggedItemId(null)
   }, [])
 
-  // Global mouse events for dragging
+  // Touch event handlers for mobile drag-and-drop
+  const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
+    if (!editedCategorizedItems) return
+    const touch = e.touches[0]
+
+    e.preventDefault()
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const allCurrentItems = [
+      editedCategorizedItems.outerwear,
+      editedCategorizedItems.top,
+      editedCategorizedItems.bottom,
+      ...editedCategorizedItems.others,
+    ].filter(Boolean) as ClothingItem[]
+
+    const currentItem = allCurrentItems.find((item) => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.positions.others.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.positions.others.bottom,
+      }
+    }
+  }
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!isDragging || !draggedItemId || !editedCategorizedItems) return
+
+      e.preventDefault()
+      const touch = e.touches[0]
+
+      const deltaX = touch.clientX - dragStartPos.current.x
+      const deltaY = touch.clientY - dragStartPos.current.y
+
+      const containerWidth = 176
+      const containerHeight = 320
+
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
+
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      const leftBuffer = 85.2
+      const rightBuffer = -5.7
+      const bottomBuffer = 5.5
+      const topBuffer = -7.1
+
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      const halfItemWidth = itemWidthPercent / 2
+
+      const minLeft = halfItemWidth - leftBuffer
+      const maxLeft = 100 - halfItemWidth + rightBuffer
+      const minBottom = -bottomBuffer
+      const maxBottom = 20 + topBuffer
+
+      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemPosition = (item: ClothingItem | undefined) => {
+        if (item && item.id === draggedItemId) {
+          return {
+            ...item,
+            left: newLeft,
+            bottom: newBottom,
+          }
+        }
+        return item
+      }
+
+      updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+      updatedItems.top = updateItemPosition(updatedItems.top)
+      updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+      updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+      setEditedCategorizedItems(updatedItems)
+    },
+    [isDragging, draggedItemId, editedCategorizedItems, DEFAULTS.width],
+  )
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse and touch events for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
+      document.addEventListener("touchmove", handleTouchMove, { passive: false })
+      document.addEventListener("touchend", handleTouchEnd)
       return () => {
         document.removeEventListener("mousemove", handleMouseMove)
         document.removeEventListener("mouseup", handleMouseUp)
+        document.removeEventListener("touchmove", handleTouchMove)
+        document.removeEventListener("touchend", handleTouchEnd)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
   // Item selection handlers
   const handleItemSelect = (category: "outerwear" | "top" | "bottom") => {
@@ -562,6 +661,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
               }}
               onMouseDown={isEditing ? (e) => handleMouseDown(e, item.id) : undefined}
+              onTouchStart={isEditing ? (e) => handleTouchStart(e, item.id) : undefined}
               onClick={isEditing ? (e) => {
                 e.stopPropagation()
                 setSelectedItemForResize(item.id)
@@ -675,9 +775,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex h-screen">
+      <div className="flex flex-col md:flex-row h-auto md:h-screen">
         {/* Left Sidebar - Outfit Info */}
-        <div className="w-80 border-r border-border bg-card p-6 overflow-y-auto">
+        <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-border bg-card p-4 md:p-6 overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <Button
@@ -810,9 +910,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         </div>
 
         {/* Center - Outfit Preview */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-[400px] md:min-h-0">
           {/* Preview Header */}
-          <div className="border-b border-border p-4 bg-card">
+          <div className="border-b border-border p-4 md:p-6 bg-card">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">
                 {outfit.name || `Outfit ${outfit.id.substring(0, 6)}`}
@@ -821,15 +921,15 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
           </div>
 
           {/* Draggable Preview Area */}
-          <div 
-            className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
+          <div
+            className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-4 md:p-8 relative"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setSelectedItemForResize(null)
               }
             }}
-          >                
-            <div className="w-full max-w-xs mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
+          >
+            <div className="w-full max-w-xs mx-auto h-[400px] md:h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
               <div 
                 className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full flex items-center justify-center"
                 onClick={(e) => {
@@ -846,7 +946,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
 
         {/* Right Sidebar - Current Items Management */}
         {isEditing && (
-          <div className="w-80 border-l border-border bg-card p-6 overflow-y-auto">
+          <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-border bg-card p-4 md:p-6 overflow-y-auto">
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-4">Current Items</h3>

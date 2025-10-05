@@ -258,17 +258,120 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setDraggedItemId(null)
   }, [])
 
-  // Global mouse events for dragging
+  // Touch event handlers for mobile drag-and-drop
+  const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
+    if (!editedCategorizedItems) return
+    const touch = e.touches[0]
+
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const allCurrentItems = [
+      editedCategorizedItems.outerwear,
+      editedCategorizedItems.top,
+      editedCategorizedItems.bottom,
+      editedCategorizedItems.shoe,
+      ...editedCategorizedItems.others,
+    ].filter(Boolean) as ClothingItem[]
+
+    const currentItem = allCurrentItems.find((item) => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+      }
+    }
+  }
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+
+      e.preventDefault() // Prevent scrolling while dragging
+      const touch = e.touches[0]
+
+      const deltaX = touch.clientX - dragStartPos.current.x
+      const deltaY = touch.clientY - dragStartPos.current.y
+
+      // Container size: w-44 = 176px, h-80 = 320px
+      const containerWidth = 176
+      const containerHeight = 320
+
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
+
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      const leftBuffer = 85.2
+      const rightBuffer = -5.7
+      const bottomBuffer = 5.5
+      const topBuffer = -7.1
+
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      const halfItemWidth = itemWidthPercent / 2
+
+      const minLeft = halfItemWidth - leftBuffer
+      const maxLeft = 100 - halfItemWidth + rightBuffer
+      const minBottom = -bottomBuffer
+      const maxBottom = 20 + topBuffer
+
+      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+
+      // Update item position
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemPosition = (item: ClothingItem | undefined) => {
+        if (item && item.id === draggedItemId) {
+          return {
+            ...item,
+            left: newLeft,
+            bottom: newBottom,
+          }
+        }
+        return item
+      }
+
+      updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+      updatedItems.top = updateItemPosition(updatedItems.top)
+      updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+      updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+      setEditedCategorizedItems(updatedItems)
+    },
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+  )
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse and touch events for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
+      document.addEventListener("touchmove", handleTouchMove, { passive: false })
+      document.addEventListener("touchend", handleTouchEnd)
       return () => {
         document.removeEventListener("mousemove", handleMouseMove)
         document.removeEventListener("mouseup", handleMouseUp)
+        document.removeEventListener("touchmove", handleTouchMove)
+        document.removeEventListener("touchend", handleTouchEnd)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
   const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
     if (category === "top") {
@@ -490,6 +593,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
+              onTouchStart={(e) => handleTouchStart(e, item.id)}
               onClick={(e) => {
                 e.stopPropagation()
                 setSelectedItemForResize(item.id)
@@ -544,13 +648,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden border-2 border-border"
+            className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border-2 border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
               {/* Left Panel - Outfit Details */}
-              <div className="w-80 border-r border-border p-4 overflow-y-auto bg-card" onClick={() => setSelectedItemForResize(null)}>
+              <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-border p-4 overflow-y-auto bg-card" onClick={() => setSelectedItemForResize(null)}>
                 {/* Outfit Name */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -614,9 +718,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           e.stopPropagation()
                           handleRemoveItem("top")
                         }}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                        className="absolute top-2 right-2 min-w-[44px] min-h-[44px] w-11 h-11 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     )}
                   </div>
@@ -670,9 +774,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           e.stopPropagation()
                           handleRemoveItem("bottom")
                         }}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                        className="absolute top-2 right-2 min-w-[44px] min-h-[44px] w-11 h-11 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     )}
                   </div>
@@ -726,9 +830,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           e.stopPropagation()
                           handleRemoveItem("outerwear")
                         }}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                        className="absolute top-2 right-2 min-w-[44px] min-h-[44px] w-11 h-11 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     )}
                   </div>
@@ -736,15 +840,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Center Panel - Outfit Preview */}
-              <div 
-                className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-8 relative"
+              <div
+                className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/50 p-4 md:p-8 relative"
                 onClick={(e) => {
                   if (e.target === e.currentTarget) {
                     setSelectedItemForResize(null)
                   }
                 }}
-              >                
-                <div className="w-full max-w-md mx-auto h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
+              >
+                <div className="w-full max-w-xs md:max-w-md mx-auto h-[400px] md:h-[500px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden">
                   <div 
                     className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center"
                     onClick={(e) => {
@@ -765,7 +869,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               </div>
 
               {/* Right Panel - Item Controls */}
-              <div className="w-80 border-l border-border p-4 bg-card flex flex-col" onClick={(e) => {
+              <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-border p-4 bg-card flex flex-col" onClick={(e) => {
                 // Only deselect if not clicking on interactive elements
                 if (!(e.target as HTMLElement).closest('input, button, .resize-control')) {
                     setSelectedItemForResize(null)

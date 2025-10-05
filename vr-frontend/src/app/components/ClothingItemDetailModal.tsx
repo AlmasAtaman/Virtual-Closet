@@ -79,11 +79,11 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"
             onClick={onCloseAction} // Close modal when clicking outside content
         >
             <div
-                className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full max-h-[90vh] overflow-y-auto text-white"
+                className="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg max-w-sm w-full max-h-[90vh] overflow-y-auto text-white"
                 onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing modal
             >
                 <h2 className="text-xl font-bold mb-4">Clothing Item Details</h2>
@@ -133,21 +133,21 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-4">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2">
                     <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        className="bg-blue-500 text-white px-4 py-3 sm:py-2 rounded hover:bg-blue-600 min-h-[44px] font-medium"
                         onClick={handleEdit}
                     >
                         Edit
                     </button>
                     <button
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                        className="bg-red-500 text-white px-4 py-3 sm:py-2 rounded hover:bg-red-600 min-h-[44px] font-medium"
                         onClick={handleDelete}
                     >
                         Delete
                     </button>
                     <button
-                        className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                        className="bg-gray-500 text-white px-4 py-3 sm:py-2 rounded hover:bg-gray-600 min-h-[44px] font-medium"
                         onClick={onCloseAction}
                     >
                         Close

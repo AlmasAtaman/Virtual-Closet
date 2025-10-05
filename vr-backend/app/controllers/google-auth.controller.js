@@ -78,11 +78,13 @@ export const googleAuth = async (req, res) => {
     const authorities = user.roles.map(role => `ROLE_${role.name.toUpperCase()}`);
 
     // Set the same cookie as manual login
+    // For mobile browsers and cross-origin requests, we need secure: true with sameSite: "None"
     res.cookie("accessToken", jwtToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: "None", 
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        secure: true, // Required for sameSite: "None" to work on mobile
+        sameSite: "None",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/' // Explicitly set path
       });
 
     res.status(200).json({
@@ -179,11 +181,13 @@ export const googleCallback = async (req, res) => {
     const authorities = user.roles.map(role => `ROLE_${role.name.toUpperCase()}`);
 
     // Set the same cookie as manual login
+    // For mobile browsers and cross-origin requests, we need secure: true with sameSite: "None"
   res.cookie("accessToken", jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: "None", 
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      secure: true, // Required for sameSite: "None" to work on mobile
+      sameSite: "None",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/' // Explicitly set path
     });
 
 

@@ -100,10 +100,7 @@ export default function UploadForm({
 
     if (!hasImage) return false
 
-    if (uploadTarget === "wishlist") {
-      return formData.price !== undefined && formData.sourceUrl?.trim()
-    }
-
+    // Both closet and wishlist can be uploaded without any required parameters
     return true
   }
 
@@ -986,7 +983,7 @@ export default function UploadForm({
 
                           <div className="space-y-2">
                             <Label htmlFor="price" className="text-sm font-medium">
-                              Price {uploadTarget === "wishlist" && "*"}
+                              Price
                             </Label>
                             <Input
                               id="price"
@@ -1014,7 +1011,7 @@ export default function UploadForm({
                               className="space-y-2"
                             >
                               <Label htmlFor="sourceUrl" className="text-sm font-medium">
-                                Source URL *
+                                Source URL
                               </Label>
                               <Input
                                 id="sourceUrl"

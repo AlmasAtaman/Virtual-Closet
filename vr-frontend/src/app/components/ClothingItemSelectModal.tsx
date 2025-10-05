@@ -135,7 +135,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                   Choose from your {selectedCategory || "clothing"} collection
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={onCloseAction} className="rounded-full">
+              <Button variant="ghost" size="icon" onClick={onCloseAction} className="rounded-full min-w-[44px] min-h-[44px]">
                 <X className="w-5 h-5" />
               </Button>
             </div>
@@ -184,12 +184,12 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 </div>
 
                 {/* View Type Toggle */}
-                <div className="flex rounded-lg border border-border">
+                <div className="hidden sm:flex rounded-lg border border-border">
                   <Button
                     variant={viewType === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewType("grid")}
-                    className="rounded-r-none"
+                    className="rounded-r-none min-h-[44px]"
                   >
                     <Grid className="w-4 h-4" />
                   </Button>
@@ -197,7 +197,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                     variant={viewType === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewType("list")}
-                    className="rounded-l-none"
+                    className="rounded-l-none min-h-[44px]"
                   >
                     <List className="w-4 h-4" />
                   </Button>

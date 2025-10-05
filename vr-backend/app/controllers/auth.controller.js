@@ -39,9 +39,10 @@ export const signup = async (req, res) => {
 
     res.cookie("accessToken", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true, // Required for sameSite: "None" to work on mobile
         sameSite: "None",
-        maxAge: 30 * 24 * 60 * 60 * 1000
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: '/' // Explicitly set path
       });
 
     res.status(200).send({
@@ -80,9 +81,10 @@ export const signin = async (req, res) => {
 
     res.cookie("accessToken", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true, // Required for sameSite: "None" to work on mobile
         sameSite: "None",
-        maxAge: 30 * 24 * 60 * 60 * 1000
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: '/' // Explicitly set path
       });
 
       
@@ -103,30 +105,35 @@ export const signout = (req, res) => {
     // Clear the main accessToken cookie with matching options
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: "None"
+      secure: true,
+      sameSite: "None",
+      path: '/'
     });
 
     // Clear any legacy NextAuth cookies if they exist
     res.clearCookie("next-auth.session-token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: "None"
+      secure: true,
+      sameSite: "None",
+      path: '/'
     });
     res.clearCookie("__Secure-next-auth.session-token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: "None"
+      secure: true,
+      sameSite: "None",
+      path: '/'
     });
     res.clearCookie("next-auth.csrf-token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: "None"
+      secure: true,
+      sameSite: "None",
+      path: '/'
     });
     res.clearCookie("__Host-next-auth.csrf-token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: "None"
+      secure: true,
+      sameSite: "None",
+      path: '/'
     });
 
     res.status(200).send({ message: "You've been signed out!" });

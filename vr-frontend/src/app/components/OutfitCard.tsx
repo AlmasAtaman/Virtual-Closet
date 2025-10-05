@@ -309,17 +309,105 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     setDraggedItemId(null)
   }, [])
 
-  // Global mouse events for draggings
+  // Touch event handlers for mobile drag-and-drop
+  const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
+    if (!isDetailView || !isEditing || !enableDragDrop || !setEditedCategorizedItems) return
+
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setDraggedItemId(itemId)
+
+    const currentItem = allCurrentItems.find((item) => item.id === itemId)
+    if (currentItem) {
+      dragStartPos.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        itemLeft: currentItem.left ?? DEFAULTS.left,
+        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+      }
+    }
+  }
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
+
+      e.preventDefault()
+      const touch = e.touches[0]
+
+      const deltaX = touch.clientX - dragStartPos.current.x
+      const deltaY = touch.clientY - dragStartPos.current.y
+
+      const containerWidth = 176
+      const containerHeight = 320
+
+      const leftDelta = (deltaX / containerWidth) * 100
+      const bottomDelta = -(deltaY / containerHeight) * 20
+
+      const currentItem = [
+        editedCategorizedItems.outerwear,
+        editedCategorizedItems.top,
+        editedCategorizedItems.bottom,
+        editedCategorizedItems.shoe,
+        ...editedCategorizedItems.others
+      ].find(item => item?.id === draggedItemId)
+
+      const itemWidth = currentItem?.width ?? DEFAULTS.width
+
+      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      const halfItemWidthPercent = itemWidthPercent / 2
+
+      const minLeft = halfItemWidthPercent
+      const maxLeft = 100 - halfItemWidthPercent
+      const minBottom = 0
+      const maxBottom = 20
+
+      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
+      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+
+      const updatedItems = { ...editedCategorizedItems }
+      const updateItemPosition = (item: ClothingItem | undefined) => {
+        if (item && item.id === draggedItemId) {
+          return {
+            ...item,
+            left: newLeft,
+            bottom: newBottom,
+          }
+        }
+        return item
+      }
+
+      updatedItems.outerwear = updateItemPosition(updatedItems.outerwear)
+      updatedItems.top = updateItemPosition(updatedItems.top)
+      updatedItems.bottom = updateItemPosition(updatedItems.bottom)
+      updatedItems.shoe = updateItemPosition(updatedItems.shoe)
+      updatedItems.others = updatedItems.others.map(updateItemPosition).filter(Boolean) as ClothingItem[]
+
+      setEditedCategorizedItems(updatedItems)
+    },
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+  )
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false)
+    setDraggedItemId(null)
+  }, [])
+
+  // Global mouse and touch events for dragging
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
+      document.addEventListener("touchmove", handleTouchMove, { passive: false })
+      document.addEventListener("touchend", handleTouchEnd)
       return () => {
         document.removeEventListener("mousemove", handleMouseMove)
         document.removeEventListener("mouseup", handleMouseUp)
+        document.removeEventListener("touchmove", handleTouchMove)
+        document.removeEventListener("touchend", handleTouchEnd)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
   // RESIZE SYSTEM
   const handleWidthChange = useCallback(
@@ -424,6 +512,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
                 }}
                 onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
+                onTouchStart={(e) => enableDragDrop && handleTouchStart(e, item.id)}
                 onClick={() => enableResize && setSelectedItemForResize(item.id)}
               >
               <Image

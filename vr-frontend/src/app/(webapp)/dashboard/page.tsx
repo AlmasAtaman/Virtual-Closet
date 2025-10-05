@@ -74,15 +74,15 @@ export default function Homepage() {
 
   const handleUploadComplete = useCallback(
     (target: "closet" | "wishlist", newItem: ClothingItem) => {
-      setClothingItems((prevItems) => [newItem, ...prevItems])
+      // Switch to target tab first to ensure correct filtering
+      setViewMode(target)
 
-      if (viewMode !== target) {
-        setViewMode(target)
-      }
+      // Then add the item
+      setClothingItems((prevItems) => [newItem, ...prevItems])
 
       setShowModal(false)
     },
-    [viewMode],
+    [],
   )
 
   const handleOpenUploadModal = useCallback(() => {
@@ -146,7 +146,7 @@ export default function Homepage() {
         {/* Tabs full width on top */}
         <div className="mb-6">
           <Tabs
-            defaultValue={viewMode}
+            value={viewMode}
             onValueChange={(value) => setViewMode(value as "closet" | "wishlist")}
             className="w-full"
           >
