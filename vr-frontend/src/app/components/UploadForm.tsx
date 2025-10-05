@@ -585,7 +585,7 @@ export default function UploadForm({
 
               <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
                 {/* Left Column - Image Upload */}
-                <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10 flex flex-col min-h-0">
+                <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10 flex flex-col min-h-0 overflow-y-auto">
                   <div className="space-y-6 flex flex-col flex-1">
                     {/* Upload Method Toggle */}
                     <Card className="p-1 bg-background/50 backdrop-blur-sm">
@@ -621,7 +621,7 @@ export default function UploadForm({
                         className="space-y-4 flex flex-col flex-1"
                       >
                         <Card
-                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
+                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex flex-col ${
                             isDragOver
                               ? "border-primary bg-primary/5 scale-[1.02]"
                               : imagePreview
@@ -636,7 +636,7 @@ export default function UploadForm({
                           onDragLeave={() => setIsDragOver(false)}
                           onClick={() => fileInputRef.current?.click()}
                         >
-                          <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
+                          <CardContent className="p-8 flex flex-col justify-center items-center min-h-[300px]">
                             <AnimatePresence mode="wait">
                               {imagePreview ? (
                                 <motion.div
@@ -800,7 +800,7 @@ export default function UploadForm({
                         
                         {/* Always show image upload area after URL input */}
                         <Card
-                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex-1 flex flex-col ${
+                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex flex-col ${
                             isDragOver
                               ? "border-primary bg-primary/5 scale-[1.02]"
                               : imagePreview
@@ -815,7 +815,7 @@ export default function UploadForm({
                           onDragLeave={() => setIsDragOver(false)}
                           onClick={() => quickImageInputRef.current?.click()}
                         >
-                          <CardContent className="p-8 flex-1 flex flex-col justify-center items-center">
+                          <CardContent className="p-8 flex flex-col justify-center items-center min-h-[300px]">
                             <AnimatePresence mode="wait">
                               {imagePreview ? (
                                 <motion.div
