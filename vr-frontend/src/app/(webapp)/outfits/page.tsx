@@ -70,6 +70,7 @@ export default function OutfitsPage() {
   const [selectedOccasionIds, setSelectedOccasionIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDeleteOccasionsDialog, setShowDeleteOccasionsDialog] = useState(false)
   const [showAddToFolderModal, setShowAddToFolderModal] = useState(false)
   const router = useRouter()
 
@@ -210,15 +211,7 @@ export default function OutfitsPage() {
   }
 
   const handleDeleteSelectedOccasions = async () => {
-    if (selectedOccasionIds.length === 0) return
-
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedOccasionIds.length} folder${selectedOccasionIds.length > 1 ? "s" : ""}? This will remove the folders but keep your outfits.`,
-      )
-    ) {
-      return
-    }
+    setShowDeleteOccasionsDialog(false)
 
     try {
       setIsDeleting(true)
@@ -423,7 +416,7 @@ export default function OutfitsPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={handleDeleteSelectedOccasions}
+                  onClick={() => setShowDeleteOccasionsDialog(true)}
                   disabled={isDeleting}
                   className="gap-2"
                 >
@@ -584,13 +577,25 @@ export default function OutfitsPage() {
         onOccasionCreated={handleOccasionCreated}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Outfits Confirmation Dialog */}
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         title="Delete Selected Outfits"
         description={`Are you sure you want to delete ${selectedOutfitIds.length} outfit${selectedOutfitIds.length > 1 ? "s" : ""}? This will only delete the outfit records - your clothing items will remain in your closet. This action cannot be undone.`}
         onConfirm={handleDeleteSelected}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmVariant="destructive"
+      />
+
+      {/* Delete Folders Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteOccasionsDialog}
+        onOpenChange={setShowDeleteOccasionsDialog}
+        title={`Delete ${selectedOccasionIds.length} Folder${selectedOccasionIds.length > 1 ? "s" : ""}?`}
+        description="This will remove the folders but keep your outfits. Your outfits will still be accessible from the Outfits tab."
+        onConfirm={handleDeleteSelectedOccasions}
         confirmLabel="Delete"
         cancelLabel="Cancel"
         confirmVariant="destructive"
