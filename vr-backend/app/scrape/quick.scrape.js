@@ -10,13 +10,10 @@ export async function scrapeProduct(req, res) {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
 
-  console.log(`[Quick Scrape FINAL] Processing URL: ${url}`);
-
   try {
     const structured = await extractProductDataFromUrl(url);
 
     if (structured._error) {
-      console.warn('[Quick Scrape] Gemini extraction error:', structured._error);
       return res.status(500).json({
         error: 'Failed to extract product data. Please try again or enter details manually.',
         _method: 'hybrid-v1',
@@ -28,7 +25,6 @@ export async function scrapeProduct(req, res) {
     }
 
     if (structured && structured.isClothing) {
-      console.log('[Quick Scrape] ✅ Clothing detected | Price:', structured.price, '| Color:', structured.color);
       return res.json({
         ...structured,
         sourceUrl: url,
@@ -37,7 +33,6 @@ export async function scrapeProduct(req, res) {
         _hasMetadata: !!(structured.name || structured.brand || structured.price || structured.type)
       });
     } else {
-      console.log('[Quick Scrape] ❌ Not a clothing item');
       return res.status(400).json({
         error: 'This URL does not appear to contain a clothing item according to AI analysis.',
         _method: 'hybrid-v1',
@@ -47,8 +42,6 @@ export async function scrapeProduct(req, res) {
       });
     }
   } catch (err) {
-    console.error('[Quick Scrape] Unexpected error:', err);
-
     return res.status(500).json({
       error: 'An unexpected error occurred while processing the URL. Please try again.',
       _method: 'grounding-v3',

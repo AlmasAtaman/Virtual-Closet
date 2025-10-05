@@ -87,9 +87,6 @@ export async function extractProductData(html) {
 
     return JSON.parse(match[0]);
   } catch (err) {
-    console.error("‼️ Gemini crashed or returned bad JSON:", err);
-
-
     return {
       isClothing: false,
       name: null,
