@@ -41,6 +41,7 @@ interface Outfit {
   notes?: string
   price?: number
   totalPrice?: number
+  outerwearOnTop?: boolean // Layer order preference
   clothingItems: ClothingItem[]
   isFavorite?: boolean
   createdAt?: string

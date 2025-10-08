@@ -16,6 +16,7 @@ async function transformOutfitData(outfit) {
     notes: outfit.notes,
     price: outfit.totalPrice,
     totalPrice: outfit.totalPrice,
+    outerwearOnTop: outfit.outerwearOnTop ?? false, // Include layer order preference
     clothingItems: await Promise.all(
       outfit.outfitClothing.map(async (oc) => {
         const { url: presignedUrl, error: presignError } = await getPresignedUrl(oc.clothing.key)
@@ -77,7 +78,7 @@ router.get("/", authMiddleware, async (req, res) => {
 // Create a new outfit
 router.post("/", authMiddleware, async (req, res) => {
   const userId = req.user.id
-  const { clothingItems, name } = req.body
+  const { clothingItems, name, outerwearOnTop } = req.body
 
 
   if (!clothingItems || !Array.isArray(clothingItems)) {
@@ -91,6 +92,7 @@ router.post("/", authMiddleware, async (req, res) => {
       data: {
         userId: userId,
         name: name || null,
+        outerwearOnTop: outerwearOnTop ?? false, // Store layer order preference
         outfitClothing: {
           create: clothingItems.map((item) => ({
             clothing: {
@@ -161,7 +163,7 @@ router.get("/:outfitId", authMiddleware, async (req, res) => {
 router.put("/:outfitId", authMiddleware, async (req, res) => {
   const userId = req.user.id
   const { outfitId } = req.params
-  const { name, occasion, season, notes, price, clothingItems } = req.body
+  const { name, occasion, season, notes, price, clothingItems, outerwearOnTop } = req.body
 
   try {
     // Verify the outfit belongs to the user
@@ -187,6 +189,7 @@ router.put("/:outfitId", authMiddleware, async (req, res) => {
           season,
           notes,
           totalPrice: price ? Number.parseFloat(price) : null,
+          ...(outerwearOnTop !== undefined && { outerwearOnTop }), // Update layer order if provided
         },
       })
 

@@ -18,6 +18,7 @@ interface ClothingItem {
 
 interface Outfit {
     id: string;
+    outerwearOnTop?: boolean;
     clothingItems: ClothingItem[];
 }
 

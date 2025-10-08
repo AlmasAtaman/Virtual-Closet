@@ -53,6 +53,7 @@ interface Outfit {
   notes?: string
   price?: number
   totalPrice?: number
+  outerwearOnTop?: boolean // Layer order preference
   clothingItems: ClothingItem[]
   isFavorite?: boolean
   createdAt?: string
@@ -102,6 +103,9 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     name: "",
     notes: "",
   })
+
+  // Layer order state
+  const [outerwearOnTop, setOuterwearOnTop] = useState(false)
 
   // Drag refs
   const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
@@ -210,6 +214,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         name: outfit.name || "",
         notes: outfit.notes || "",
       })
+      // Load saved layer order preference
+      setOuterwearOnTop(outfit.outerwearOnTop ?? false)
     }
   }, [outfit])
 
@@ -555,6 +561,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
       const updatedOutfit = {
         ...editForm,
         price: calculateTotalPrice(allItems),
+        outerwearOnTop: outerwearOnTop, // Include layer order preference
         clothingItems: allItems.map(item => ({
           id: item.id,
           x: item.x ?? DEFAULTS.x,
@@ -592,6 +599,8 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
         name: outfit.name || "",
         notes: outfit.notes || "",
       })
+      // Reset layer order to saved value
+      setOuterwearOnTop(outfit.outerwearOnTop ?? false)
     }
   }
 
@@ -637,16 +646,37 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
     return (
       <div className="relative w-44 h-80 mx-auto">
         {allCurrentItems.map((item, index) => {
+          // Calculate z-index based on layer order preference
+          let zIndex = index
+          if (draggedItemId === item.id) {
+            zIndex = 50
+          } else if (selectedItemForResize === item.id) {
+            zIndex = 40
+          } else {
+            // Apply custom layer ordering based on outfit preference
+            const itemType = item.type?.toLowerCase() || ""
+            const isOuterwear = ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)
+            const isTop = ["t-shirt", "dress", "shirt", "blouse"].includes(itemType)
+
+            if (outerwearOnTop && isOuterwear) {
+              zIndex = 30 // Outerwear on top
+            } else if (!outerwearOnTop && isTop) {
+              zIndex = 30 // Top on top (default)
+            } else {
+              zIndex = index
+            }
+          }
+
           return (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ 
-                opacity: 1, 
+              animate={{
+                opacity: 1,
                 y: 0,
                 width: `${item.width ?? DEFAULTS.width}rem`
               }}
-              transition={{ 
+              transition={{
                 opacity: { delay: index * 0.1 },
                 y: { delay: index * 0.1 },
                 width: { duration: 0.2, ease: "easeOut" }
@@ -658,7 +688,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 left: `${item.left ?? DEFAULTS.positions.others.left}%`,
                 bottom: `${item.bottom ?? DEFAULTS.positions.others.bottom}rem`,
                 transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.positions.others.scale})`,
-                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+                zIndex: zIndex,
               }}
               onMouseDown={isEditing ? (e) => handleMouseDown(e, item.id) : undefined}
               onTouchStart={isEditing ? (e) => handleTouchStart(e, item.id) : undefined}
@@ -880,7 +910,7 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                 <div className="flex items-center gap-2">
                   <Shirt className="w-4 h-4 text-muted-foreground" />
                   <span>
-                    {isEditing && editedCategorizedItems 
+                    {isEditing && editedCategorizedItems
                       ? [
                           editedCategorizedItems.outerwear,
                           editedCategorizedItems.top,
@@ -1177,6 +1207,27 @@ export default function OutfitDetailPage({ params }: OutfitDetailPageProps) {
                       </div>
                     )
                   })()}
+                </div>
+
+                {/* Layer Order Toggle - Separate Section */}
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold mb-3">
+                    Layer Order
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      {outerwearOnTop ? "Outerwear on top" : "Tops on top (default)"}
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={outerwearOnTop}
+                        onChange={(e) => setOuterwearOnTop(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

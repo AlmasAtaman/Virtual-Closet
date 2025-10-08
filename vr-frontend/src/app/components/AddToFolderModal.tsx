@@ -24,6 +24,7 @@ interface Outfit {
   notes?: string
   price?: number
   totalPrice?: number
+  outerwearOnTop?: boolean
   clothingItems: ClothingItem[]
   isFavorite?: boolean
   createdAt?: string

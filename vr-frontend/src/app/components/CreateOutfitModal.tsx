@@ -70,6 +70,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   // Drag and drop and resize state
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
+  const [outerwearOnTop, setOuterwearOnTop] = useState(false) // Layer order toggle
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false)
@@ -532,6 +533,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       await axios.post("/api/outfits", {
         clothingItems: clothingData,
         name: outfitName || null,
+        outerwearOnTop: outerwearOnTop, // Include layer order preference
       })
 
       onOutfitCreated()
@@ -551,6 +553,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setOutfitName("")
     setEditedCategorizedItems(null)
     setSelectedItemForResize(null)
+    setOuterwearOnTop(false) // Reset layer order toggle
     onCloseAction()
   }
 
@@ -569,16 +572,37 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     return (
       <div className="relative w-44 h-80 mx-auto">
         {allCurrentItems.map((item, index) => {
+          // Calculate z-index based on layer order preference
+          let zIndex = index
+          if (draggedItemId === item.id) {
+            zIndex = 50
+          } else if (selectedItemForResize === item.id) {
+            zIndex = 40
+          } else {
+            // Apply custom layer ordering
+            const itemType = item.type?.toLowerCase() || ""
+            const isOuterwear = ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)
+            const isTop = ["t-shirt", "dress", "shirt", "blouse"].includes(itemType)
+
+            if (outerwearOnTop && isOuterwear) {
+              zIndex = 30 // Outerwear on top
+            } else if (!outerwearOnTop && isTop) {
+              zIndex = 30 // Top on top
+            } else {
+              zIndex = index
+            }
+          }
+
           return (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ 
-                opacity: 1, 
+              animate={{
+                opacity: 1,
                 y: 0,
                 width: `${item.width ?? DEFAULTS.width}rem`
               }}
-              transition={{ 
+              transition={{
                 opacity: { delay: index * 0.1 },
                 y: { delay: index * 0.1 },
                 width: { duration: 0.2, ease: "easeOut" }
@@ -590,7 +614,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 left: `${item.left ?? DEFAULTS.left}%`,
                 bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
                 transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
-                zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+                zIndex: zIndex,
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
               onTouchStart={(e) => handleTouchStart(e, item.id)}
@@ -967,6 +991,30 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       </div>
                     )
                   })()}
+                </div>
+
+                {/* Layer Order Toggle */}
+                <div className="mb-6 p-4 border border-border rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-1">
+                        Layer Order
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        {outerwearOnTop ? "Outerwear on top" : "Tops on top (default)"}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={outerwearOnTop}
+                        onChange={(e) => setOuterwearOnTop(e.target.checked)}
+                        className="sr-only peer"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Flexible space that pushes buttons to bottom */}

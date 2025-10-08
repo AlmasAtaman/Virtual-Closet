@@ -35,6 +35,7 @@ interface Outfit {
   notes?: string
   price?: number
   totalPrice?: number
+  outerwearOnTop?: boolean // Layer order preference
   clothingItems: ClothingItem[]
   isFavorite?: boolean
   createdAt?: string
@@ -509,7 +510,24 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
                   bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
                   width: `${item.width ?? DEFAULTS.width}rem`,
                   transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
-                  zIndex: draggedItemId === item.id ? 50 : selectedItemForResize === item.id ? 40 : index,
+                  zIndex: (() => {
+                    if (draggedItemId === item.id) return 50
+                    if (selectedItemForResize === item.id) return 40
+
+                    // Apply custom layer ordering based on outfit preference
+                    const itemType = item.type?.toLowerCase() || ""
+                    const isOuterwear = ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)
+                    const isTop = ["t-shirt", "dress", "shirt", "blouse"].includes(itemType)
+                    const outerwearOnTop = outfit.outerwearOnTop ?? false
+
+                    if (outerwearOnTop && isOuterwear) {
+                      return 30 // Outerwear on top
+                    } else if (!outerwearOnTop && isTop) {
+                      return 30 // Top on top (default)
+                    } else {
+                      return index
+                    }
+                  })(),
                 }}
                 onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
                 onTouchStart={(e) => enableDragDrop && handleTouchStart(e, item.id)}

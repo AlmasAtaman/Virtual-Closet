@@ -65,6 +65,7 @@ model Outfit {
   season      String?   // optional - added this field
   notes       String?   // optional - added this field
   totalPrice  Float?    // optional
+  outerwearOnTop Boolean @default(false) // Layer order: false = tops on top (default), true = outerwear on top
   createdAt   DateTime  @default(now())
   occasions Occasion[] @relation("OutfitOccasions")
   userId       String
