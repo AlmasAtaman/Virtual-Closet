@@ -108,21 +108,23 @@ export const googleAuth = async (req, res) => {
 export const googleCallback = async (req, res) => {
   try {
     const { code, redirect_uri } = req.body;
-    
+
     if (!code) {
       return res.status(400).json({ message: "Authorization code is required" });
     }
 
+    // Create a new OAuth2Client instance with redirect_uri for this request
+    const oauth2Client = new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri
+    );
 
     // Exchange authorization code for tokens
-    const { tokens } = await googleClient.getToken({
-      code,
-      redirect_uri
-    });
-
+    const { tokens } = await oauth2Client.getToken(code);
 
     // Verify ID token and get user info
-    const ticket = await googleClient.verifyIdToken({
+    const ticket = await oauth2Client.verifyIdToken({
       idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
@@ -168,7 +170,6 @@ export const googleCallback = async (req, res) => {
           include: { roles: true }
         });
       }
-    } else {
     }
 
     // Generate JWT token using the same format as manual login
@@ -182,7 +183,7 @@ export const googleCallback = async (req, res) => {
 
     // Set the same cookie as manual login
     // For mobile browsers and cross-origin requests, we need secure: true with sameSite: "None"
-  res.cookie("accessToken", jwtToken, {
+    res.cookie("accessToken", jwtToken, {
       httpOnly: true,
       secure: true, // Required for sameSite: "None" to work on mobile
       sameSite: "None",
