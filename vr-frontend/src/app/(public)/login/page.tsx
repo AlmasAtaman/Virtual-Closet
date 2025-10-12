@@ -31,6 +31,7 @@ export default function LoginPage(){
     const [isSuccess, setIsSuccess] = useState(false); // New state for message type (success/error)
     const [loading, setLoading] = useState(false); // New state for loading indicator
     const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+    const [errors, setErrors] = useState({ username: "", password: "" });
 
     const router = useRouter();
 
@@ -69,6 +70,27 @@ export default function LoginPage(){
         e.preventDefault();
         setMessage(""); // Clear previous messages
         setIsSuccess(false);
+        setErrors({ username: "", password: "" });
+
+        // Custom validation
+        const newErrors = { username: "", password: "" };
+        let hasError = false;
+
+        if (!username.trim()) {
+            newErrors.username = "Username is required";
+            hasError = true;
+        }
+
+        if (!password) {
+            newErrors.password = "Password is required";
+            hasError = true;
+        }
+
+        if (hasError) {
+            setErrors(newErrors);
+            return;
+        }
+
         setLoading(true); // Set loading to true on form submission
 
         try {
@@ -130,29 +152,36 @@ export default function LoginPage(){
                     <div className="flex-1 h-px bg-gray-200" />
                 </div>
                 {/* Form */}
-                <form onSubmit={checkUser} className="flex flex-col gap-4">
+                <form onSubmit={checkUser} className="flex flex-col gap-4" noValidate>
                     <div className="relative">
                         <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            className="w-full rounded-lg border border-gray-200 pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
+                            className={`w-full rounded-lg border ${errors.username ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
                             placeholder="Username"
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            onChange={(e) => {
+                                setUsername(e.target.value);
+                                if (errors.username) setErrors({...errors, username: ""});
+                            }}
                             autoComplete="username"
-                            required
                         />
+                        {errors.username && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.username}</p>
+                        )}
                     </div>
                     <div className="relative">
                         <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type={showPassword ? "text" : "password"}
-                            className="w-full rounded-lg border border-gray-200 pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
+                            className={`w-full rounded-lg border ${errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
                             placeholder="Password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (errors.password) setErrors({...errors, password: ""});
+                            }}
                             autoComplete="current-password"
-                            required
                         />
                         <button
                             type="button"
@@ -161,6 +190,9 @@ export default function LoginPage(){
                         >
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </button>
+                        {errors.password && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>
+                        )}
                     </div>
                     <div className="text-right text-sm">
                         <Link href="/forgot-password" className="text-gray-700 hover:underline">

@@ -15,6 +15,7 @@ export default function SignUp(){
     const [isSuccess, setIsSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [errors, setErrors] = useState({ username: "", email: "", password: "" });
 
     const router = useRouter();
 
@@ -55,6 +56,38 @@ export default function SignUp(){
         e.preventDefault();
         setMessage("");
         setIsSuccess(false);
+        setErrors({ username: "", email: "", password: "" });
+
+        // Custom validation
+        const newErrors = { username: "", email: "", password: "" };
+        let hasError = false;
+
+        if (!username.trim()) {
+            newErrors.username = "Username is required";
+            hasError = true;
+        }
+
+        if (!email.trim()) {
+            newErrors.email = "Email is required";
+            hasError = true;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = "Please enter a valid email address";
+            hasError = true;
+        }
+
+        if (!password) {
+            newErrors.password = "Password is required";
+            hasError = true;
+        } else if (password.length < 6) {
+            newErrors.password = "Password must be at least 6 characters";
+            hasError = true;
+        }
+
+        if (hasError) {
+            setErrors(newErrors);
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -114,41 +147,53 @@ export default function SignUp(){
                     <div className="flex-1 h-px bg-gray-200" />
                 </div>
                 {/* Form */}
-                <form onSubmit={addUser} className="flex flex-col gap-4">
+                <form onSubmit={addUser} className="flex flex-col gap-4" noValidate>
                     <div className="relative">
                         <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            className="w-full rounded-lg border border-gray-200 pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
+                            className={`w-full rounded-lg border ${errors.username ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
                             placeholder="Username"
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            onChange={(e) => {
+                                setUsername(e.target.value);
+                                if (errors.username) setErrors({...errors, username: ""});
+                            }}
                             autoComplete="username"
-                            required
                         />
+                        {errors.username && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.username}</p>
+                        )}
                     </div>
                     <div className="relative">
                         <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="email"
-                            className="w-full rounded-lg border border-gray-200 pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
+                            className={`w-full rounded-lg border ${errors.email ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
                             placeholder="Email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (errors.email) setErrors({...errors, email: ""});
+                            }}
                             autoComplete="email"
-                            required
                         />
+                        {errors.email && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>
+                        )}
                     </div>
                     <div className="relative">
                         <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type={showPassword ? "text" : "password"}
-                            className="w-full rounded-lg border border-gray-200 pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-500 transition"
+                            className={`w-full rounded-lg border ${errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
                             placeholder="Password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (errors.password) setErrors({...errors, password: ""});
+                            }}
                             autoComplete="new-password"
-                            required
                         />
                         <button
                             type="button"
@@ -157,6 +202,9 @@ export default function SignUp(){
                         >
                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                         </button>
+                        {errors.password && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>
+                        )}
                     </div>
                     {/* Display feedback message */}
                     {message && (
