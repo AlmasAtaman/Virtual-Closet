@@ -258,6 +258,12 @@ export default function OutfitsPage() {
                 <Logo />
               </div>
               <div className="flex items-center gap-4">
+                <Button onClick={() => router.push("/settings")} variant="outline" className="gap-2">
+                  Settings
+                </Button>
+                <Button onClick={() => router.push("/dashboard")} variant="outline" className="gap-2">
+                  Closet
+                </Button>
                 <ThemeToggle />
                 <LogOutButton />
               </div>

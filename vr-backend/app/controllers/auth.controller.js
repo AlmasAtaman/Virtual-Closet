@@ -5,6 +5,7 @@ import { jwtConfig } from "../config/auth.config.js";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
 import { v4 as uuidv4 } from "uuid";
+import { deleteFileFromS3 } from "../utils/s3Helpers.js";
 
 const prisma = db.prisma;
 
@@ -222,5 +223,160 @@ export const resetPassword = async (req, res) => {
   } catch (err) {
     console.error("Reset password error:", err);
     res.status(500).send({ message: "An error occurred while processing your request." });
+  }
+};
+
+// Account Management Controllers
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Fetch all user's clothing items to get their S3 keys
+    const clothingItems = await prisma.clothing.findMany({
+      where: { userId },
+      select: { key: true }
+    });
+
+    // Delete all associated images from S3
+    const deletePromises = clothingItems.map(item =>
+      deleteFileFromS3(item.key).catch(err => {
+        console.error(`Failed to delete S3 file ${item.key}:`, err);
+        // Continue even if some S3 deletions fail
+      })
+    );
+    await Promise.all(deletePromises);
+
+    // Delete the user (cascade will handle clothing, outfits, and occasions)
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    // Clear the accessToken cookie
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: '/'
+    });
+
+    res.status(200).send({ message: "Your account has been deleted successfully." });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    res.status(500).send({ message: "An error occurred while deleting your account." });
+  }
+};
+
+export const changeEmail = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { newEmail, password } = req.body;
+
+    if (!newEmail || !password) {
+      return res.status(400).send({ message: "New email and password are required." });
+    }
+
+    // Verify user's current password
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).send({ message: "User not found." });
+    }
+
+    // Check if user has a password (Google OAuth users might not)
+    if (!user.password) {
+      return res.status(400).send({ message: "Cannot change email for OAuth accounts using this method." });
+    }
+
+    const validPassword = bcrypt.compareSync(password, user.password);
+    if (!validPassword) {
+      return res.status(401).send({ message: "Invalid password." });
+    }
+
+    // Check if new email is already in use
+    const existingUser = await prisma.user.findUnique({
+      where: { email: newEmail }
+    });
+
+    if (existingUser) {
+      return res.status(400).send({ message: "This email is already in use." });
+    }
+
+    // Update email
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { email: newEmail }
+    });
+
+    // Generate new JWT with updated email
+    const token = jwt.sign(
+      { id: updatedUser.id, username: updatedUser.username, email: updatedUser.email },
+      jwtConfig.secret,
+      { expiresIn: '30d', algorithm: 'HS256', allowInsecureKeySizes: true }
+    );
+
+    res.cookie("accessToken", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: '/'
+    });
+
+    res.status(200).send({
+      message: "Email updated successfully.",
+      email: updatedUser.email
+    });
+  } catch (err) {
+    console.error("Change email error:", err);
+    res.status(500).send({ message: "An error occurred while updating your email." });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).send({ message: "Current password and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).send({ message: "New password must be at least 6 characters long." });
+    }
+
+    // Verify user's current password
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).send({ message: "User not found." });
+    }
+
+    // Check if user has a password (Google OAuth users might not)
+    if (!user.password) {
+      return res.status(400).send({ message: "Cannot change password for OAuth accounts." });
+    }
+
+    const validPassword = bcrypt.compareSync(currentPassword, user.password);
+    if (!validPassword) {
+      return res.status(401).send({ message: "Current password is incorrect." });
+    }
+
+    // Update password
+    const hashedPassword = bcrypt.hashSync(newPassword, 8);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    });
+
+    res.status(200).send({ message: "Password updated successfully." });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).send({ message: "An error occurred while updating your password." });
   }
 };

@@ -29,4 +29,9 @@ export default function(app) {
       email: req.user.email,
     });
   });
+
+  // Account management routes
+  app.delete("/api/auth/account", authMiddleware, authController.deleteAccount);
+  app.put("/api/auth/email", authMiddleware, authController.changeEmail);
+  app.put("/api/auth/password", authMiddleware, authController.changePassword);
 }
