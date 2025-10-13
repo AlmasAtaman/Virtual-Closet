@@ -172,16 +172,94 @@ export const forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
+    // Create professional HTML email template
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td align="center" style="padding: 40px 0;">
+              <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <!-- Header -->
+                <tr>
+                  <td style="padding: 40px 40px 20px 40px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #1a1a1a;">Password Reset Request</h1>
+                  </td>
+                </tr>
 
-    // Use the new sendEmail helper
+                <!-- Body -->
+                <tr>
+                  <td style="padding: 0 40px 30px 40px;">
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 24px; color: #4a5568;">
+                      Hello,
+                    </p>
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 24px; color: #4a5568;">
+                      We received a request to reset your password for your Vestko account. Click the button below to create a new password:
+                    </p>
+
+                    <!-- Button -->
+                    <table role="presentation" style="margin: 30px 0; width: 100%;">
+                      <tr>
+                        <td align="center">
+                          <a href="${resetUrl}" style="display: inline-block; padding: 14px 40px; background-color: #000000; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">Reset Password</a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 20px 0; font-size: 14px; line-height: 20px; color: #718096;">
+                      Or copy and paste this link into your browser:
+                    </p>
+                    <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #3182ce; word-break: break-all;">
+                      ${resetUrl}
+                    </p>
+
+                    <!-- Warning Box -->
+                    <table role="presentation" style="width: 100%; margin: 30px 0; border-left: 4px solid #f59e0b; background-color: #fffbeb;">
+                      <tr>
+                        <td style="padding: 16px 20px;">
+                          <p style="margin: 0; font-size: 14px; line-height: 20px; color: #92400e;">
+                            <strong>Important:</strong> This link will expire in 1 hour for security reasons.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 20px 0 0 0; font-size: 14px; line-height: 20px; color: #718096;">
+                      If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 30px 40px; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0; font-size: 12px; line-height: 18px; color: #a0aec0; text-align: center;">
+                      This email was sent by Vestko. If you have any questions, please contact our support team.
+                    </p>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; line-height: 18px; color: #a0aec0; text-align: center;">
+                      &copy; ${new Date().getFullYear()} Vestko. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    // Send the password reset email
     await sendEmail({
       email: user.email,
-      subject: 'Password Reset Request',
-      html: `
-        <p>You requested a password reset</p>
-        <p>Click this <a href="${resetUrl}">link</a> to reset your password.</p>
-        <p>This link is valid for 1 hour.</p>
-      `,
+      subject: 'Reset Your Vestko Password',
+      html: emailHtml,
     });
 
     res.status(200).send({ message: "If an account with that email exists, a password reset link has been sent." });
