@@ -77,7 +77,7 @@ export default function LoginPage(){
         let hasError = false;
 
         if (!username.trim()) {
-            newErrors.username = "Username is required";
+            newErrors.username = "Username or email is required";
             hasError = true;
         }
 
@@ -158,7 +158,7 @@ export default function LoginPage(){
                         <input
                             type="text"
                             className={`w-full rounded-lg border ${errors.username ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
-                            placeholder="Username"
+                            placeholder="Username or Email"
                             value={username}
                             onChange={(e) => {
                                 setUsername(e.target.value);
