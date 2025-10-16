@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Check, X, Loader2, Folder } from "lucide-react"
+import { ArrowLeft, Check, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import OutfitCard from "./OutfitCard"
 
