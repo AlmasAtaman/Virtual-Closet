@@ -11,10 +11,12 @@ export default function SignUp(){
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [errors, setErrors] = useState({ username: "", email: "", password: "" });
 
     const router = useRouter();
@@ -81,6 +83,12 @@ export default function SignUp(){
         } else if (password.length < 6) {
             newErrors.password = "Password must be at least 6 characters";
             hasError = true;
+        }
+
+        if (password !== confirmPassword) {
+            setMessage("Passwords do not match");
+            setIsSuccess(false);
+            return;
         }
 
         if (hasError) {
@@ -186,7 +194,7 @@ export default function SignUp(){
                         <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type={showPassword ? "text" : "password"}
-                            className={`w-full rounded-lg border ${errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-4 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
+                            className={`w-full rounded-lg border ${errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-200 focus:ring-gray-300'} pl-10 pr-10 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition`}
                             placeholder="Password"
                             value={password}
                             onChange={(e) => {
@@ -205,6 +213,24 @@ export default function SignUp(){
                         {errors.password && (
                             <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>
                         )}
+                    </div>
+                    <div className="relative">
+                        <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="w-full rounded-lg border border-gray-200 focus:ring-gray-300 pl-10 pr-10 py-2 text-base text-gray-900 focus:outline-none focus:ring-2 focus:border-gray-500 transition"
+                            placeholder="Confirm Password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            autoComplete="new-password"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
                     </div>
                     {/* Display feedback message */}
                     {message && (

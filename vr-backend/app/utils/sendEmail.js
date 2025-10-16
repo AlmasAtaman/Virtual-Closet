@@ -1,10 +1,24 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend lazily to prevent crashes on server startup if API key is missing
+let resend = null;
+
+const getResendClient = () => {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set. Please configure it in your Railway dashboard.');
+    }
+    resend = new Resend(apiKey);
+  }
+  return resend;
+};
 
 const sendEmail = async (options) => {
   try {
-    const { data, error } = await resend.emails.send({
+    const client = getResendClient();
+
+    const { data, error } = await client.emails.send({
       from: 'noreply@vestko.com',
       to: options.email,
       subject: options.subject,
