@@ -5,6 +5,36 @@ import { getClothingInfoFromImage } from './geminiLabeler.js';
 import { uploadToS3 } from '../../s3.mjs';
 import { standardizeImage } from './standardizeImage.js';
 
+/**
+ * Lightweight function for auto-fill: ONLY analyzes image with Gemini
+ * Does NOT remove background, standardize, or upload to S3
+ * Used by the "Auto-fill with AI" button
+ */
+export async function analyzeImageWithGemini(imageBuffer) {
+  let tempPath = null;
+
+  try {
+    // Write temp file for Gemini (it needs a file path)
+    tempPath = `temp_gemini_${Date.now()}.jpg`;
+    fs.writeFileSync(tempPath, imageBuffer);
+
+    // Call Gemini API to analyze the image
+    const clothingData = await getClothingInfoFromImage(tempPath);
+
+    // Cleanup temp file
+    if (tempPath && fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+
+    return clothingData;
+  } catch (error) {
+    // Cleanup on error
+    if (tempPath && fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+    throw error;
+  }
+}
 
 export async function processImage(imageData, userId, options = {}) {
   const { type, data, originalname } = imageData;
