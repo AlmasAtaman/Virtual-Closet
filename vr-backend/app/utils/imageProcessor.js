@@ -6,8 +6,9 @@ import { uploadToS3 } from '../../s3.mjs';
 import { standardizeImage } from './standardizeImage.js';
 
 
-export async function processImage(imageData, userId) {
+export async function processImage(imageData, userId, options = {}) {
   const { type, data, originalname } = imageData;
+  const { skipGemini = false } = options;
   let tempImagePath;
   let cleanedImagePath;
   let standardizedPath;
@@ -17,14 +18,14 @@ export async function processImage(imageData, userId) {
     if (type === 'url') {
       try {
         // Download image from URL
-        const response = await axios.get(data, { 
+        const response = await axios.get(data, {
           responseType: 'arraybuffer',
           timeout: 10000, // 10 second timeout
           validateStatus: function (status) {
             return status >= 200 && status < 300; // Only accept 2xx status codes
           }
         });
-        
+
         if (!response.data || response.data.length === 0) {
           throw new Error('Empty response from image URL');
         }
@@ -46,8 +47,16 @@ export async function processImage(imageData, userId) {
     // 1. Remove background
     cleanedImagePath = await removeBackground(tempImagePath);
 
-    // 2. Get clothing info
-    const clothingData = await getClothingInfoFromImage(cleanedImagePath);
+    // 2. Get clothing info (conditionally)
+    let clothingData = null;
+    if (!skipGemini) {
+      // BONUS OPTIMIZATION: Use original image (tempImagePath) instead of cleaned image
+      // Gemini can analyze the original - no need to wait for background removal!
+      clothingData = await getClothingInfoFromImage(tempImagePath);
+    } else {
+      // For final submit without auto-fill, just mark as clothing without full analysis
+      clothingData = { isClothing: true, type: null };
+    }
 
     // 3.5 Resize to standard canvas based on clothing type
     standardizedPath = `standardized_${Date.now()}_${originalname || 'clothing.png'}`;

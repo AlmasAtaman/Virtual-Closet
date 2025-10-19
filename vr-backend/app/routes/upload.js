@@ -22,11 +22,12 @@ router.post("/", authMiddleware, upload.single("image"), async (req, res) => {
 
   try {
     // FIXED: Pass null for userId to skip S3 upload in auto-fill
+    // Enable Gemini for auto-fill (skipGemini: false)
     const result = await processImage({
       type: 'file',
       data: file.buffer,
       originalname: file.originalname
-    }, null); // Changed: null instead of userId
+    }, null, { skipGemini: false }); // Changed: null instead of userId, enable Gemini for auto-fill
 
     return res.status(200).json({
       clothingData: result.clothingData,
@@ -135,17 +136,19 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
   let processedResult;
   try {
     if (file) {
+      // Skip Gemini for final submit - form already has data! Saves 1.5 seconds
       processedResult = await processImage({
         type: 'file',
         data: file.buffer,
         originalname: file.originalname
-      }, userId);
+      }, userId, { skipGemini: true });
     } else if (imageUrl) {
+      // Skip Gemini for final submit - form already has data! Saves 1.5 seconds
       processedResult = await processImage({
         type: 'url',
         data: imageUrl,
         originalname: 'scraped_image.jpg' // Provide a default originalname for URL images
-      }, userId);
+      }, userId, { skipGemini: true });
     } else {
       return res.status(400).json({ message: "No image data provided for processing." });
     }
