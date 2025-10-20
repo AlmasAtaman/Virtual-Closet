@@ -6,7 +6,6 @@ import { processImage, analyzeImageWithGemini } from '../utils/imageProcessor.js
 import { PrismaClient } from '@prisma/client';
 import { deleteImage } from "../controllers/image.controller.js";
 import { v4 as uuidv4 } from "uuid";
-import { scrapeProduct as quickScrapeProduct } from '../scrape/quick.scrape.js';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -296,8 +295,5 @@ router.patch("/:id/favorite", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Failed to update favorite" });
   }
 });
-
-// Add quick scrape endpoint
-router.post('/api/quick-scrape', quickScrapeProduct);
 
 export default router;
