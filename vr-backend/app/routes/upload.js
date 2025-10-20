@@ -132,24 +132,45 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
   const file = req.file;
   const imageUrl = req.body.imageUrl; // Get imageUrl from body for URL uploads
 
+  console.log(`\n🚀 ============ FINAL-SUBMIT ENDPOINT ============`);
+  console.log(`👤 User ID: ${userId}`);
+  console.log(`📋 Form data received:`);
+  console.log(`   - name: "${name}"`);
+  console.log(`   - type/category: "${type}"`);
+  console.log(`   - brand: "${brand}"`);
+  console.log(`   - mode: "${mode}"`);
+  console.log(`   - hasFile: ${!!file}`);
+  console.log(`   - hasImageUrl: ${!!imageUrl}`);
+
   if (!userId || (!file && !imageUrl)) return res.status(400).json({ message: "Bad Request: Missing userId or image data" });
+
+  // Validate that category/type is provided
+  if (!type || type.trim() === '') {
+    console.log(`❌ Validation failed: Category is required but missing or empty`);
+    return res.status(400).json({ message: "Category is required. Please select a clothing category." });
+  }
+
+  console.log(`✅ Category validation passed: "${type}"`);
 
   let processedResult;
   try {
     if (file) {
       // Skip Gemini for final submit - form already has data! Saves 1.5 seconds
+      // Pass the category from the form to ensure consistent sizing
+      console.log(`\n📸 Processing file upload with category: "${type}"`);
       processedResult = await processImage({
         type: 'file',
         data: file.buffer,
         originalname: file.originalname
-      }, userId, { skipGemini: true });
+      }, userId, { skipGemini: true, category: type });
     } else if (imageUrl) {
       // Skip Gemini for final submit - form already has data! Saves 1.5 seconds
+      // Pass the category from the form to ensure consistent sizing
       processedResult = await processImage({
         type: 'url',
         data: imageUrl,
         originalname: 'scraped_image.jpg' // Provide a default originalname for URL images
-      }, userId, { skipGemini: true });
+      }, userId, { skipGemini: true, category: type });
     } else {
       return res.status(400).json({ message: "No image data provided for processing." });
     }

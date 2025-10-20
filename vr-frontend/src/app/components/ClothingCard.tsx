@@ -18,21 +18,10 @@ interface ClothingCardProps {
   viewMode?: "closet" | "wishlist"
 }
 
-// Helper to scale image by clothing type
+// Images are now standardized on the backend with category-specific canvas sizes
+// No need for frontend scaling - just use consistent object-contain
 const getImageScaleClass = (type?: string) => {
-  switch ((type || "").toLowerCase()) {
-    case "pants":
-      return "scale-110"
-    case "hoodie":
-    case "sweater":
-    case "jacket":
-      return "scale-115"
-    case "t-shirt":
-    case "shirt":
-      return "scale-130"
-    default:
-      return "scale-120"
-  }
+  return "scale-100" // No scaling - backend standardization handles consistent sizing
 }
 
 export default function ClothingCard({

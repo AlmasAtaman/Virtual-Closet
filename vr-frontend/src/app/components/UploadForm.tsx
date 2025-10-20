@@ -97,10 +97,11 @@ export default function UploadForm({
 
   const isFormValid = () => {
     const hasImage = imagePreview
+    const hasCategory = formData.type && formData.type.trim() !== ''
 
     if (!hasImage) return false
+    if (!hasCategory) return false // Category is now required for consistent sizing
 
-    // Both closet and wishlist can be uploaded without any required parameters
     return true
   }
 
@@ -942,30 +943,37 @@ export default function UploadForm({
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="type" className="text-sm font-medium">
-                              Type
+                            <Label htmlFor="type" className="text-sm font-medium flex items-center gap-2">
+                              Category
+                              <span className="text-red-500">*</span>
                             </Label>
                             <Select
                               value={formData.type || ""}
                               onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                              required
                             >
-                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">                                <SelectValue placeholder="Select type" />
+                              <SelectTrigger className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${!formData.type ? 'border-orange-300 bg-orange-50/30 dark:border-orange-500 dark:bg-orange-950/50' : ''}`}>
+                                <SelectValue placeholder="Select category to continue..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="uncategorized">Uncategorized</SelectItem>
                                 <SelectItem value="T-Shirt">T-Shirt</SelectItem>
-                                <SelectItem value="Hoodie">Hoodie</SelectItem>
                                 <SelectItem value="Jacket">Jacket</SelectItem>
+                                <SelectItem value="Sweater">Sweater</SelectItem>
                                 <SelectItem value="Pants">Pants</SelectItem>
+                                <SelectItem value="Shorts">Shorts</SelectItem>
                                 <SelectItem value="Shoes">Shoes</SelectItem>
                                 <SelectItem value="Hat">Hat</SelectItem>
-                                <SelectItem value="Sweater">Sweater</SelectItem>
-                                <SelectItem value="Shorts">Shorts</SelectItem>
-                                <SelectItem value="Dress">Dress</SelectItem>
                                 <SelectItem value="Skirt">Skirt</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
+                                <SelectItem value="Dress">Dress</SelectItem>
+                                <SelectItem value="Bag">Bag</SelectItem>
                               </SelectContent>
                             </Select>
+                            {!formData.type && (
+                              <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                                <span className="w-1 h-1 bg-orange-600 dark:bg-orange-400 rounded-full"></span>
+                                Select a category for consistent sizing
+                              </p>
+                            )}
                           </div>
 
                           <div className="space-y-2">

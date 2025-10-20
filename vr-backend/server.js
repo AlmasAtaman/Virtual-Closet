@@ -52,19 +52,46 @@ app.use('/api/occasions', occasionRoutes);
 
 // Initial role seeding
 async function initial() {
-  const count = await db.prisma.role.count();
-  if (count === 0) {
-    await db.prisma.role.createMany({
-      data: [
-        { name: 'user' },
-        { name: 'moderator' },
-        { name: 'admin' }
-      ]
-    });
+  try {
+    const count = await db.prisma.role.count();
+    if (count === 0) {
+      await db.prisma.role.createMany({
+        data: [
+          { name: 'user' },
+          { name: 'moderator' },
+          { name: 'admin' }
+        ]
+      });
+      console.log('✅ Initial roles seeded successfully');
+    } else {
+      console.log('✅ Database connected - roles already exist');
+    }
+  } catch (error) {
+    console.error('❌ Database initialization error:', error.message);
+    console.error('Make sure your database is running and .env is configured correctly');
+    // Don't exit - let the server run even if DB connection fails initially
   }
 }
 
-app.listen(port, async () => {
+const server = app.listen(port, async () => {
   console.log(`Server is running on port ${port}`);
   await initial();
+  console.log(`✅ Server ready to accept requests`);
+});
+
+// Prevent the process from exiting
+server.on('listening', () => {
+  console.log(`✅ Server is actively listening on port ${port}`);
+});
+
+server.on('error', (error) => {
+  console.error('❌ Server error:', error);
+});
+
+// Keep the process alive
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
 });
