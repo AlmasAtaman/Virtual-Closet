@@ -17,8 +17,21 @@ const geistMono = Geist_Mono({
 config.autoAddCss = false;
 
 export const metadata: Metadata = {
-  title: "VirtualCloset - Your Digital Wardrobe",
+  title: "Vestko",
   description: "Organize your wardrobe and create stunning outfits with AI-powered fashion assistance",
+  icons: {
+    icon: [
+      {
+        url: "/VestkoBlack.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/VestkoWhite.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    apple: "/VestkoBlack.png",
+  },
 };
 
 export const viewport: Viewport = {
