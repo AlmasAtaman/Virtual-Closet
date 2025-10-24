@@ -20,6 +20,10 @@ export interface ClothingItem {
   createdAt?: string
   updatedAt?: string
   isFavorite: boolean
+  // Optimistic loading fields
+  processingStatus?: "pending" | "processing" | "completed" | "failed"
+  processingError?: string
+  originalImageUrl?: string // Original image URL before processing (for preview during processing)
   // Layout fields for outfit positioning
   x?: number
   y?: number

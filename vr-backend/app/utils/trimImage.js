@@ -40,8 +40,10 @@ export async function trimTransparentPixels(inputPath, outputPath) {
     console.log(`✅ Trimmed dimensions: ${trimmedMetadata.width}x${trimmedMetadata.height}`);
     console.log(`📊 Reduction: ${Math.round((1 - (trimmedMetadata.width * trimmedMetadata.height) / (metadata.width * metadata.height)) * 100)}% smaller`);
 
-    // Save the trimmed image
-    await sharp(trimmedImage).toFile(outputPath);
+    // Save the trimmed image as PNG to preserve transparency
+    await sharp(trimmedImage)
+      .png() // Force PNG format to maintain alpha channel
+      .toFile(outputPath);
 
     console.log(`💾 Trimmed image saved: ${outputPath}`);
     console.log(`============ TRIM COMPLETE ============\n`);

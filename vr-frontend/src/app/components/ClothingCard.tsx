@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
 import { Heart, Check } from "lucide-react"
+import { CompactLoadingPlaceholder } from "./LoadingImagePlaceholder"
 
 interface ClothingCardProps {
   item: ClothingItem
@@ -82,13 +83,19 @@ export default function ClothingCard({
           }}
         >
           {item.url ? (
-            <Image
-              src={item.url || "/placeholder.svg"}
-              alt={item.name || "Clothing item"}
-              fill
-              className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
-              unoptimized
-            />
+            <>
+              <Image
+                src={item.url || "/placeholder.svg"}
+                alt={item.name || "Clothing item"}
+                fill
+                className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+                unoptimized
+              />
+              {/* Show loading overlay if image is still processing */}
+              {item.processingStatus && item.processingStatus !== 'completed' && (
+                <CompactLoadingPlaceholder status={item.processingStatus} />
+              )}
+            </>
           ) : (
             <div className="flex items-center justify-center w-full h-full">
               <span className="text-3xl">👕</span>

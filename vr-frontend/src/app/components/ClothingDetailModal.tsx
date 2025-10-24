@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Edit, Trash2, MoveRight, Loader2, Save, ChevronLeft, ChevronRight, Heart } from "lucide-react"
+import { X, Edit, Trash2, MoveRight, Loader2, Save, ChevronLeft, ChevronRight, Heart, RefreshCw, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,6 +43,7 @@ interface ClothingDetailModalProps {
   isMoving: boolean
   allItems?: ClothingItem[] // Added to support navigation
   onToggleFavorite?: (id: string, newState: boolean) => void
+  onRetryProcessing?: (id: string) => void
 }
 
 export default function ClothingDetailModal({
@@ -60,6 +61,7 @@ export default function ClothingDetailModal({
   isMoving,
   allItems = [],
   onToggleFavorite,
+  onRetryProcessing,
 }: ClothingDetailModalProps) {
   const [activeTab, setActiveTab] = useState<string>("general")
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(0)
@@ -165,16 +167,49 @@ export default function ClothingDetailModal({
                     </Badge>
                   </div>
                 )}
-                <motion.img
-                  key={currentItem.id}
-                  src={currentItem.url}
-                  alt={currentItem.name}
-                  className="max-h-[400px] max-w-full object-contain p-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                />
+                <div className="relative">
+                  <motion.img
+                    key={currentItem.id}
+                    src={currentItem.url}
+                    alt={currentItem.name}
+                    className="max-h-[400px] max-w-full object-contain p-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  {/* Processing status indicator */}
+                  {currentItem.processingStatus && currentItem.processingStatus !== 'completed' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg">
+                      {currentItem.processingStatus === 'failed' ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <AlertCircle className="w-12 h-12 text-red-500" />
+                          <p className="text-white text-sm font-medium">Processing Failed</p>
+                          {currentItem.processingError && (
+                            <p className="text-white/80 text-xs max-w-xs text-center px-4">{currentItem.processingError}</p>
+                          )}
+                          {onRetryProcessing && (
+                            <Button
+                              onClick={() => onRetryProcessing(currentItem.id)}
+                              size="sm"
+                              className="mt-2"
+                            >
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Retry Processing
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="w-12 h-12 text-white animate-spin" />
+                          <p className="text-white text-sm font-medium">
+                            {currentItem.processingStatus === 'pending' ? 'Queued for processing...' : 'Processing image...'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

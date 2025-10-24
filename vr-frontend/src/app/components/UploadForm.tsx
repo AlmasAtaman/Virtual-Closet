@@ -503,15 +503,16 @@ export default function UploadForm({
         })
       }, 200)
 
-      const res = await axios.post(`${API_URL}/api/images/final-submit`, submitFormData, {
+      // Use optimistic endpoint instead of final-submit
+      const res = await axios.post(`${API_URL}/api/images/create-optimistic`, submitFormData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       })
 
       clearInterval(progressInterval)
       setUploadProgress(100)
-      console.log('✅ Final submission successful');
-      
+      console.log('✅ Optimistic submission successful - item will process in background');
+
       const { item: newItem } = res.data
 
       const clothingItem: ClothingItem = {
@@ -533,7 +534,10 @@ export default function UploadForm({
         mode: newItem.mode,
         sourceUrl: newItem.sourceUrl,
         tags: newItem.tags,
-        isFavorite: newItem.isFavorite || false
+        isFavorite: newItem.isFavorite || false,
+        processingStatus: newItem.processingStatus || "pending",
+        processingError: newItem.processingError,
+        originalImageUrl: newItem.originalImageUrl
       }
 
       if (onUploadComplete) {

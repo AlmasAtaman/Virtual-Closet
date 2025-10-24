@@ -55,6 +55,9 @@ model Clothing {
   userId    String
   mode       String   @default("closet")
   isFavorite Boolean @default(false)
+  processingStatus String @default("completed") // pending | processing | completed | failed
+  processingError  String? // Error message if processing failed
+  originalImageUrl String? // Original image URL before processing (for preview during processing)
   outfits     OutfitClothing[]
 }
 

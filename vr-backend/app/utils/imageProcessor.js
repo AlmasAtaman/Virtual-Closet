@@ -67,7 +67,10 @@ export async function processImage(imageData, userId, options = {}) {
     // This ensures all items are standardized based on actual garment size,
     // not the original photo dimensions with empty space
     console.log(`\n✂️  STEP 2: Trimming transparent pixels...`);
-    trimmedImagePath = `trimmed_${Date.now()}_${originalname || 'clothing.png'}`;
+    // IMPORTANT: Always save as PNG to preserve transparency!
+    // JPG format doesn't support alpha channel and converts transparent pixels to black
+    const baseName = (originalname || 'clothing.png').replace(/\.[^.]+$/, '');
+    trimmedImagePath = `trimmed_${Date.now()}_${baseName}.png`;
     const trimmedDimensions = await trimTransparentPixels(cleanedImagePath, trimmedImagePath);
     console.log(`✅ Image trimmed to tight bounds: ${trimmedDimensions.width}x${trimmedDimensions.height}`);
 
@@ -95,7 +98,8 @@ export async function processImage(imageData, userId, options = {}) {
     console.log(`   - FINAL category for standardization: "${categoryForStandardization}"`);
 
     // 5. Standardize the TRIMMED image to category-specific canvas
-    standardizedPath = `standardized_${Date.now()}_${originalname || 'clothing.png'}`;
+    // IMPORTANT: Always save as PNG to preserve transparency!
+    standardizedPath = `standardized_${Date.now()}_${baseName}.png`;
     console.log(`\n🎨 STEP 5: Calling standardizeImage() on TRIMMED image...`);
     console.log(`   - Input: ${trimmedImagePath} (trimmed)`);
     console.log(`   - Category: "${categoryForStandardization}"`);

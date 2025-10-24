@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle, useCallback, useMemo } from "react";
 import axios from "axios";
 import Fuse from "fuse.js";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import ClothingCard from "./ClothingCard";
 import ClothingDetailModal from "./ClothingDetailModal";
 import type { ClothingItem } from "../types/clothing";
 import { ConfirmDialog } from "@/components/ui/dialog";
+import { useImageProcessingStatus } from "../hooks/useImageProcessingStatus";
 
 // Type definitions for outfit-related API responses
 interface OutfitUsageInfo {
@@ -128,10 +129,40 @@ const ClothingGallery = forwardRef(
     // Configuration for cross-mode search and filtering
     const searchAcrossModes = false; // Set to true if you want to search across both closet and wishlist
     const filterAcrossModes = false; // Set to true if you want to filter across both closet and wishlist
-    
+
     // Determine the items to search/filter based on searchAcrossModes and filterAcrossModes
     const baseItems =
       searchAcrossModes || filterAcrossModes ? clothingItems : clothingItems.filter((item) => item.mode === viewMode);
+
+    // Find items that are currently processing
+    const processingItemIds = useMemo(() => {
+      return clothingItems
+        .filter(item => item.processingStatus && item.processingStatus !== 'completed' && item.processingStatus !== 'failed')
+        .map(item => item.id);
+    }, [clothingItems]);
+
+    // Set up polling for processing items
+    useImageProcessingStatus({
+      itemIds: processingItemIds,
+      enabled: processingItemIds.length > 0,
+      onStatusUpdate: (updatedItems) => {
+        setClothingItems(prevItems => {
+          const itemsMap = new Map(prevItems.map(item => [item.id, item]));
+
+          // Update items with new status and URLs
+          updatedItems.forEach(updatedItem => {
+            if (itemsMap.has(updatedItem.id)) {
+              itemsMap.set(updatedItem.id, {
+                ...itemsMap.get(updatedItem.id)!,
+                ...updatedItem
+              });
+            }
+          });
+
+          return Array.from(itemsMap.values());
+        });
+      }
+    });
 
     const fetchImages = useCallback(async () => {
       setIsLoading(true);
@@ -248,6 +279,29 @@ const ClothingGallery = forwardRef(
         alert("Failed to move item to closet");
       } finally {
         setIsMoving(false);
+      }
+    };
+
+    const handleRetryProcessing = async (id: string) => {
+      try {
+        await createAuthenticatedAxios().post(
+          `/api/images/retry-processing/${id}`
+        );
+
+        // Update the item status to pending
+        setClothingItems((prev) => prev.map((item) =>
+          item.id === id
+            ? { ...item, processingStatus: "pending" as const, processingError: null }
+            : item
+        ));
+
+        // Update selected item if it's the one being retried
+        if (selectedItem?.id === id) {
+          setSelectedItem((prev) => prev ? { ...prev, processingStatus: "pending" as const, processingError: null } : null);
+        }
+      } catch (err) {
+        console.error("Error retrying processing:", err);
+        alert("Failed to retry processing. Please try uploading the item again.");
       }
     };
 
@@ -595,6 +649,7 @@ const ClothingGallery = forwardRef(
             isMoving={isMoving}
             allItems={filteredItems}
             onToggleFavorite={toggleFavorite}
+            onRetryProcessing={handleRetryProcessing}
           />
         )}
 
