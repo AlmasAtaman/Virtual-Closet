@@ -20,34 +20,34 @@ import fs from 'fs';
 function getCanvasSettings(clothingType) {
   const type = clothingType?.toLowerCase()?.trim() || "";
 
-  // T-shirt category (640x800, top-aligned)
+  // T-shirt category (640x800, center-aligned)
   if (["t-shirt", "tshirt", "shirt", "top", "blouse", "tank top", "tank"].includes(type)) {
-    return { width: 640, height: 800, align: "top", known: true };
+    return { width: 640, height: 800, align: "center", known: true };
   }
 
-  // Jacket category (640x850, top-aligned)
+  // Jacket category (640x850, center-aligned)
   if (["jacket", "coat", "blazer", "windbreaker", "parka", "bomber"].includes(type)) {
-    return { width: 640, height: 850, align: "top", known: true };
+    return { width: 640, height: 850, align: "center", known: true };
   }
 
-  // Sweater category (640x850, top-aligned)
+  // Sweater category (640x850, center-aligned)
   if (["sweater", "hoodie", "sweatshirt", "cardigan", "pullover", "jumper"].includes(type)) {
-    return { width: 640, height: 850, align: "top", known: true };
+    return { width: 640, height: 850, align: "center", known: true };
   }
 
-  // Pants category (750x962, bottom-aligned)
+  // Pants category (750x962, center-aligned)
   if (["pants", "trousers", "jeans", "slacks", "chinos", "leggings"].includes(type)) {
-    return { width: 750, height: 962, align: "bottom", known: true };
+    return { width: 750, height: 962, align: "center", known: true };
   }
 
-  // Shorts category (600x600, bottom-aligned)
+  // Shorts category (600x600, center-aligned)
   if (["shorts", "short", "bermuda"].includes(type)) {
-    return { width: 600, height: 600, align: "bottom", known: true };
+    return { width: 600, height: 600, align: "center", known: true };
   }
 
-  // Shoes category (600x400, bottom-aligned)
+  // Shoes category (600x400, center-aligned)
   if (["shoes", "sneakers", "boots", "sandals", "heels", "loafers", "flats"].includes(type)) {
-    return { width: 600, height: 400, align: "bottom", known: true };
+    return { width: 600, height: 400, align: "center", known: true };
   }
 
   // Hat category (400x400, center-aligned)
@@ -55,9 +55,9 @@ function getCanvasSettings(clothingType) {
     return { width: 400, height: 400, align: "center", known: true };
   }
 
-  // Skirt category (600x750, bottom-aligned)
+  // Skirt category (600x750, center-aligned)
   if (["skirt", "mini skirt", "midi skirt", "maxi skirt"].includes(type)) {
-    return { width: 600, height: 750, align: "bottom", known: true };
+    return { width: 600, height: 750, align: "center", known: true };
   }
 
   // Dress category (640x900, center-aligned)
