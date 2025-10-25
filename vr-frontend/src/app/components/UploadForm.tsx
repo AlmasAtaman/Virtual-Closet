@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
+import { MAIN_CATEGORIES, SUBCATEGORIES, STYLE_TAGS, SIZES, POPULAR_BRANDS, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
 
 
 interface UploadFormProps {
@@ -46,18 +47,17 @@ export default function UploadForm({
   const initialFormData = {
     mode: currentViewMode,
     name: "",
-    type: "",
+    type: "",  // Subcategory (e.g., "t-shirt", "jeans")
+    category: "",  // Main category (tops/bottoms/outerwear/etc)
     brand: "",
     price: undefined,
     sourceUrl: "",
     image: "",
-    occasion: "",
-    style: "",
-    fit: "",
     color: "",
-    material: "",
     season: "",
     notes: "",
+    tags: [] as string[],  // Style tags (max 3)
+    size: "",  // Clothing size
   }
 
   const [formData, setFormData] = useState<Partial<ClothingItem>>(initialFormData)
@@ -97,10 +97,12 @@ export default function UploadForm({
 
   const isFormValid = () => {
     const hasImage = imagePreview
-    const hasCategory = formData.type && formData.type.trim() !== ''
+    const hasCategory = formData.category && formData.category.trim() !== ''
+    const hasType = formData.type && formData.type.trim() !== ''
 
     if (!hasImage) return false
-    if (!hasCategory) return false // Category is now required for consistent sizing
+    if (!hasCategory) return false // Category is required for consistent sizing
+    if (!hasType) return false // Type (subcategory) is also required
 
     return true
   }
@@ -179,93 +181,8 @@ export default function UploadForm({
     [handleFileUpload],
   )
 
-  // Helper function to normalize AI responses to dropdown values
-  const normalizeAIValue = (value: string | undefined, type: 'type' | 'fit' | 'material' | 'season'): string => {
-    if (!value) return ""
-    
-    const lowerValue = value.toLowerCase().trim()
-    
-    switch (type) {
-      case 'type':
-        const typeMap: Record<string, string> = {
-          'tshirt': 'T-Shirt',
-          't-shirt': 'T-Shirt',
-          'tee': 'T-Shirt',
-          'shirt': 'T-Shirt',
-          'hoodie': 'Hoodie',
-          'hoody': 'Hoodie',
-          'sweatshirt': 'Hoodie',
-          'jacket': 'Jacket',
-          'coat': 'Jacket',
-          'blazer': 'Jacket',
-          'pants': 'Pants',
-          'trousers': 'Pants',
-          'jeans': 'Pants',
-          'shoes': 'Shoes',
-          'sneakers': 'Shoes',
-          'boots': 'Shoes',
-          'hat': 'Hat',
-          'cap': 'Hat',
-          'beanie': 'Hat',
-          'sweater': 'Sweater',
-          'jumper': 'Sweater',
-          'pullover': 'Sweater',
-          'shorts': 'Shorts',
-          'dress': 'Dress',
-          'skirt': 'Skirt'
-        }
-        return typeMap[lowerValue] || 'Other'
-      
-      case 'fit':
-        const fitMap: Record<string, string> = {
-          'slim': 'Slim',
-          'slim fit': 'Slim',
-          'skinny': 'Skinny',
-          'regular': 'Regular',
-          'regular fit': 'Regular',
-          'standard': 'Regular',
-          'oversized': 'Oversized',
-          'oversize': 'Oversized',
-          'loose': 'Oversized',
-          'baggy': 'Baggy',
-          'crop': 'Crop',
-          'cropped': 'Crop',
-          'tapered': 'Tapered'
-        }
-        return fitMap[lowerValue] || 'Other'
-      
-      case 'material':
-        const materialMap: Record<string, string> = {
-          'cotton': 'Cotton',
-          '100% cotton': 'Cotton',
-          'cotton blend': 'Cotton',
-          'linen': 'Linen',
-          'denim': 'Denim',
-          'jean': 'Denim',
-          'leather': 'Leather',
-          'faux leather': 'Leather',
-          'knit': 'Knit',
-          'knitted': 'Knit',
-          'polyester': 'Polyester',
-          'poly': 'Polyester',
-          'synthetic': 'Polyester'
-        }
-        return materialMap[lowerValue] || 'Other'
-      
-      case 'season':
-        const seasonMap: Record<string, string> = {
-          'spring': 'Spring',
-          'summer': 'Summer',
-          'fall': 'Fall',
-          'autumn': 'Fall',
-          'winter': 'Winter'
-        }
-        return seasonMap[lowerValue] || ''
-      
-      default:
-        return value
-    }
-  }
+  // Store AI suggestions for analytics tracking
+  const [aiSuggestions, setAiSuggestions] = useState<any>(null)
 
   const handleAutoFill = async () => {
     if (!selectedFile) return
@@ -287,18 +204,20 @@ export default function UploadForm({
         return
       }
 
+      // Store AI suggestions for analytics
+      setAiSuggestions(clothingData)
+
       setFormData((prev: Partial<ClothingItem>) => ({
         ...prev,
         name: clothingData?.name ?? prev.name,
-        type: normalizeAIValue(clothingData?.type, 'type') || prev.type,
+        category: clothingData?.category ?? prev.category,
+        type: clothingData?.type ?? prev.type,
         brand: clothingData?.brand ?? prev.brand,
         price: clothingData?.price ?? prev.price,
-        occasion: clothingData?.occasion ?? prev.occasion,
-        style: clothingData?.style ?? prev.style,
-        fit: normalizeAIValue(clothingData?.fit, 'fit') || prev.fit,
         color: clothingData?.color ?? prev.color,
-        material: normalizeAIValue(clothingData?.material, 'material') || prev.material,
-        season: normalizeAIValue(clothingData?.season, 'season') || prev.season,
+        season: clothingData?.season ?? prev.season,
+        tags: clothingData?.tags ?? prev.tags ?? [],
+        size: clothingData?.size ?? prev.size,
         notes: "",
       }))
     } catch (error) {
@@ -341,13 +260,12 @@ export default function UploadForm({
         name: data.name || prev.name,
         brand: data.brand || prev.brand,
         price: data.price || prev.price,
-        type: normalizeAIValue(data.type, 'type') || prev.type,
-        occasion: data.occasion || prev.occasion,
-        style: data.style || prev.style,
-        fit: normalizeAIValue(data.fit, 'fit') || prev.fit,
+        category: data.category || prev.category,
+        type: data.type || prev.type,
         color: data.color || prev.color,
-        material: normalizeAIValue(data.material, 'material') || prev.material,
-        season: normalizeAIValue(data.season, 'season') || prev.season,
+        season: data.season || prev.season,
+        tags: data.tags || prev.tags || [],
+        size: data.size || prev.size,
         sourceUrl: scrapingUrl,
       }));
 
@@ -479,19 +397,23 @@ export default function UploadForm({
 
       submitFormData.append("name", finalName)
       submitFormData.append("type", finalType)
+      submitFormData.append("category", formData.category || "")
       submitFormData.append("brand", formData.brand || "")
       submitFormData.append("price", (formData.price || 0).toString())
       submitFormData.append("mode", uploadTarget)
       submitFormData.append("sourceUrl", formData.sourceUrl || "")
 
-      // Always append all fields from formData, as auto-fill populates them regardless of mode
-      submitFormData.append("occasion", formData.occasion || "")
-      submitFormData.append("style", formData.style || "")
-      submitFormData.append("fit", formData.fit || "")
+      // New schema fields
       submitFormData.append("color", formData.color || "")
-      submitFormData.append("material", formData.material || "")
       submitFormData.append("season", formData.season || "")
       submitFormData.append("notes", formData.notes || "")
+      submitFormData.append("tags", JSON.stringify(formData.tags || []))
+      submitFormData.append("size", formData.size || "")
+
+      // Include AI suggestions if they exist (for backend analytics)
+      if (aiSuggestions) {
+        submitFormData.append("aiSuggestions", JSON.stringify(aiSuggestions))
+      }
 
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
@@ -522,18 +444,17 @@ export default function UploadForm({
         image: newItem.url,
         name: newItem.name,
         type: newItem.type,
+        category: newItem.category,
         brand: newItem.brand,
         price: newItem.price,
-        occasion: newItem.occasion,
-        style: newItem.style,
-        fit: newItem.fit,
         color: newItem.color,
-        material: newItem.material,
         season: newItem.season,
         notes: newItem.notes,
         mode: newItem.mode,
         sourceUrl: newItem.sourceUrl,
-        tags: newItem.tags,
+        tags: newItem.tags || [],
+        size: newItem.size,
+        purchaseDate: newItem.purchaseDate,
         isFavorite: newItem.isFavorite || false,
         processingStatus: newItem.processingStatus || "pending",
         processingError: newItem.processingError,
@@ -947,37 +868,58 @@ export default function UploadForm({
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="type" className="text-sm font-medium flex items-center gap-2">
+                            <Label htmlFor="category" className="text-sm font-medium flex items-center gap-2">
                               Category
                               <span className="text-red-500">*</span>
                             </Label>
                             <Select
-                              value={formData.type || ""}
-                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                              value={formData.category || ""}
+                              onValueChange={(value: string) => {
+                                setFormData((prev) => ({ ...prev, category: value, type: "" }))
+                              }}
                               required
                             >
-                              <SelectTrigger className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${!formData.type ? 'border-orange-300 bg-orange-50/30 dark:border-orange-500 dark:bg-orange-950/50' : ''}`}>
-                                <SelectValue placeholder="Select category to continue..." />
+                              <SelectTrigger className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${!formData.category ? 'border-orange-300 bg-orange-50/30 dark:border-orange-500 dark:bg-orange-950/50' : ''}`}>
+                                <SelectValue placeholder="Select main category..." />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="T-Shirt">T-Shirt</SelectItem>
-                                <SelectItem value="Jacket">Jacket</SelectItem>
-                                <SelectItem value="Sweater">Sweater</SelectItem>
-                                <SelectItem value="Pants">Pants</SelectItem>
-                                <SelectItem value="Shorts">Shorts</SelectItem>
-                                <SelectItem value="Shoes">Shoes</SelectItem>
-                                <SelectItem value="Hat">Hat</SelectItem>
-                                <SelectItem value="Skirt">Skirt</SelectItem>
-                                <SelectItem value="Dress">Dress</SelectItem>
-                                <SelectItem value="Bag">Bag</SelectItem>
+                                {MAIN_CATEGORIES.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
-                            {!formData.type && (
+                            {!formData.category && (
                               <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
                                 <span className="w-1 h-1 bg-orange-600 dark:bg-orange-400 rounded-full"></span>
                                 Select a category for consistent sizing
                               </p>
                             )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="type" className="text-sm font-medium flex items-center gap-2">
+                              Type
+                              <span className="text-red-500">*</span>
+                            </Label>
+                            <Select
+                              value={formData.type || ""}
+                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                              disabled={!formData.category}
+                              required
+                            >
+                              <SelectTrigger className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${formData.category && !formData.type ? 'border-orange-300 bg-orange-50/30 dark:border-orange-500 dark:bg-orange-950/50' : ''}`}>
+                                <SelectValue placeholder={formData.category ? "Select type..." : "Select category first"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {formData.category && getSubcategoriesForCategory(formData.category).map((subcat) => (
+                                  <SelectItem key={subcat} value={subcat}>
+                                    {subcat.charAt(0).toUpperCase() + subcat.slice(1)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           <div className="space-y-2">
@@ -1061,53 +1003,62 @@ export default function UploadForm({
                           className="grid grid-cols-1 md:grid-cols-2 gap-4"
                         >
                           <div className="space-y-2">
-                            <Label htmlFor="occasion" className="text-sm font-medium">
-                              Occasion
+                            <Label htmlFor="tags" className="text-sm font-medium">
+                              Style Tags (Max 3)
                             </Label>
-                            <Input
-                              id="occasion"
-                              placeholder="e.g., Casual, Formal, Work"
-                              value={formData.occasion || ""}
-                              onChange={(e) => setFormData((prev) => ({ ...prev, occasion: e.target.value }))}
-                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
+                            <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px] bg-background">
+                              {STYLE_TAGS.map((tag) => {
+                                const isSelected = formData.tags?.includes(tag) || false
+                                const canSelect = (formData.tags?.length || 0) < 3
+
+                                return (
+                                  <Badge
+                                    key={tag}
+                                    variant={isSelected ? "default" : "outline"}
+                                    className={`cursor-pointer transition-all ${
+                                      !isSelected && !canSelect ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                                    }`}
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          tags: prev.tags?.filter((t) => t !== tag) || []
+                                        }))
+                                      } else if (canSelect) {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          tags: [...(prev.tags || []), tag]
+                                        }))
+                                      }
+                                    }}
+                                  >
+                                    {tag}
+                                  </Badge>
+                                )
+                              })}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {formData.tags?.length || 0}/3 tags selected
+                            </p>
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="style" className="text-sm font-medium">
-                              Style
+                            <Label htmlFor="size" className="text-sm font-medium">
+                              Size
                             </Label>
                             <Input
-                              id="style"
-                              placeholder="e.g., Vintage, Modern, Bohemian"
-                              value={formData.style || ""}
-                              onChange={(e) => setFormData((prev) => ({ ...prev, style: e.target.value }))}
+                              id="size"
+                              placeholder="e.g., M, L, 32, 10"
+                              value={formData.size || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, size: e.target.value }))}
                               className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                              list="sizes-datalist"
                             />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="fit" className="text-sm font-medium">
-                              Fit
-                            </Label>
-                            <Select
-                              value={formData.fit || ""}
-                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, fit: value }))}
-                            >
-                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Slim">Slim</SelectItem>
-                                <SelectItem value="Regular">Regular</SelectItem>
-                                <SelectItem value="Oversized">Oversized</SelectItem>
-                                <SelectItem value="Baggy">Baggy</SelectItem>
-                                <SelectItem value="Crop">Crop</SelectItem>
-                                <SelectItem value="Skinny">Skinny</SelectItem>
-                                <SelectItem value="Tapered">Tapered</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <datalist id="sizes-datalist">
+                              {SIZES.map((size) => (
+                                <option key={size} value={size} />
+                              ))}
+                            </datalist>
                           </div>
 
                           <div className="space-y-2">
@@ -1124,28 +1075,6 @@ export default function UploadForm({
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="material" className="text-sm font-medium">
-                              Material
-                            </Label>
-                            <Select
-                              value={formData.material || ""}
-                              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, material: value }))}
-                            >
-                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">                                <SelectValue placeholder="Select material" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cotton">Cotton</SelectItem>
-                                <SelectItem value="Linen">Linen</SelectItem>
-                                <SelectItem value="Denim">Denim</SelectItem>
-                                <SelectItem value="Leather">Leather</SelectItem>
-                                <SelectItem value="Knit">Knit</SelectItem>
-                                <SelectItem value="Polyester">Polyester</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
                             <Label htmlFor="season" className="text-sm font-medium">
                               Season
                             </Label>
@@ -1153,13 +1082,15 @@ export default function UploadForm({
                               value={formData.season || ""}
                               onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
                             >
-                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">                                <SelectValue placeholder="Select season" />
+                              <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 data-[placeholder]:text-muted-foreground">
+                                <SelectValue placeholder="Select season" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Spring">Spring</SelectItem>
-                                <SelectItem value="Summer">Summer</SelectItem>
-                                <SelectItem value="Fall">Fall</SelectItem>
-                                <SelectItem value="Winter">Winter</SelectItem>
+                                {SEASONS.map((season) => (
+                                  <SelectItem key={season} value={season}>
+                                    {season}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>

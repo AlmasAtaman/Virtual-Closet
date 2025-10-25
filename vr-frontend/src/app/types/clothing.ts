@@ -4,19 +4,18 @@ export interface ClothingItem {
   url: string // The primary URL for the image
   image?: string // Alias for url, used for consistency with some components
   name: string
-  type: string
+  type: string // Subcategory (e.g., "t-shirt", "jeans", "sneakers")
+  category?: string // Main category (tops/bottoms/outerwear/dresses/shoes/accessories/bags)
   brand?: string
   price?: number
   mode: "closet" | "wishlist"
   sourceUrl?: string // Original URL if scraped from web
-  occasion?: string
-  style?: string
-  fit?: string
   color?: string
-  material?: string
   season?: string
   notes?: string
-  tags?: string[]
+  tags?: string[] // Style tags (e.g., casual, elegant, sporty) - max 3
+  size?: string // Clothing size (e.g., "S", "M", "L", "28", "10")
+  purchaseDate?: string // When item was added to wardrobe
   createdAt?: string
   updatedAt?: string
   isFavorite: boolean
@@ -31,6 +30,8 @@ export interface ClothingItem {
   left?: number
   bottom?: number
   width?: number
+  // Note: Backend analytics fields (viewCount, outfitCount, lastViewedAt, etc.)
+  // are NOT included in frontend types as they're never shown in UI
 }
 
 export interface ScrapedProduct {

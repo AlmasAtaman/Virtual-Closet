@@ -46,18 +46,20 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initialOpenSections: Record<string, boolean> = {
       priceSort: true,
+      category: true,
       type: true,
+      tags: true,
       advancedFilters: false,
     };
     filterAttributes
-      .filter((attr) => attr.key !== "type")
+      .filter((attr) => attr.key !== "type" && attr.key !== "category" && attr.key !== "tags")
       .forEach((attr) => {
         initialOpenSections[attr.key as string] = true;
       });
     return initialOpenSections;
   });
 
-  const advancedFilterAttributes = filterAttributes.filter((attr) => attr.key !== "type");
+  const advancedFilterAttributes = filterAttributes.filter((attr) => attr.key !== "type" && attr.key !== "category" && attr.key !== "tags");
 
   const toggleSection = (sectionKey: string) => {
     setOpenSections((prev) => ({
@@ -246,6 +248,45 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                   </CardContent>
                 </Card>
 
+                {/* Category Filter */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => toggleSection("category")}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-semibold text-sm tracking-wide">CATEGORY</span>
+                      <motion.div animate={{ rotate: openSections.category ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.category && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="border-t"
+                        >
+                          <div className="p-4 space-y-3">
+                            {uniqueAttributeValues.category?.map((value) => (
+                              <label key={value} className="flex items-center gap-3 cursor-pointer select-none py-2 text-base font-medium">
+                                <Checkbox
+                                  checked={selectedTags.includes(value)}
+                                  onCheckedChange={() => toggleTag(value)}
+                                  className="border border-gray-400"
+                                />
+                                <span className="capitalize">{value}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+
                 {/* Type Filter */}
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">
@@ -253,7 +294,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                       onClick={() => toggleSection("type")}
                       className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                     >
-                      <span className="text-lg font-bold mb-2">CLOTHING TYPE</span>
+                      <span className="font-semibold text-sm tracking-wide">TYPE</span>
                       <motion.div animate={{ rotate: openSections.type ? 180 : 0 }} transition={{ duration: 0.2 }}>
                         <ChevronDown className="w-4 h-4" />
                       </motion.div>
@@ -267,7 +308,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           transition={{ duration: 0.2 }}
                           className="border-t"
                         >
-                          <div className="p-6 space-y-4">
+                          <div className="p-4 space-y-3">
                             {uniqueAttributeValues.type?.map((value) => (
                               <label key={value} className="flex items-center gap-3 cursor-pointer select-none py-2 text-base font-medium">
                                 <Checkbox
@@ -275,7 +316,46 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                   onCheckedChange={() => toggleTag(value)}
                                   className="border border-gray-400"
                                 />
-                                <span>{value}</span>
+                                <span className="capitalize">{value}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+
+                {/* Style Tags Filter */}
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => toggleSection("tags")}
+                      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-semibold text-sm tracking-wide">STYLE TAGS</span>
+                      <motion.div animate={{ rotate: openSections.tags ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.tags && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="border-t"
+                        >
+                          <div className="p-4 space-y-3">
+                            {uniqueAttributeValues.tags?.map((value) => (
+                              <label key={value} className="flex items-center gap-3 cursor-pointer select-none py-2 text-base font-medium">
+                                <Checkbox
+                                  checked={selectedTags.includes(value)}
+                                  onCheckedChange={() => toggleTag(value)}
+                                  className="border border-gray-400"
+                                />
+                                <span className="capitalize">{value}</span>
                               </label>
                             ))}
                           </div>

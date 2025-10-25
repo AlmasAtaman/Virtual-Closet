@@ -39,16 +39,16 @@ model Clothing {
   url       String
   sourceUrl  String?
   name      String?
-  type      String?
+  type      String?  // Subcategory (e.g., "t-shirt", "jeans", "sneakers")
+  category  String?  // Main category (tops/bottoms/outerwear/dresses/shoes/accessories/bags)
   brand     String?
   price     Float?
-  occasion  String?
-  style     String?
-  fit       String?
   color     String?
-  material  String?
   season    String?
   notes     String?
+  tags      String[] @default([]) // Style tags (e.g., casual, elegant, sporty) - max 3
+  size      String?  // Clothing size (e.g., "S", "M", "L", "28", "10")
+  purchaseDate DateTime? @default(now()) // When item was added to wardrobe
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -58,6 +58,18 @@ model Clothing {
   processingStatus String @default("completed") // pending | processing | completed | failed
   processingError  String? // Error message if processing failed
   originalImageUrl String? // Original image URL before processing (for preview during processing)
+
+  // Backend analytics fields (never shown in UI)
+  viewCount        Int      @default(0)      // Track how many times item viewed in detail
+  outfitCount      Int      @default(0)      // Track outfit inclusions
+  lastViewedAt     DateTime?                 // Last time user viewed item detail
+  favoriteToggles  Int      @default(0)      // Times favorited/unfavorited
+  uploadMethod     String?                   // "direct" | "url" | "scraper"
+  sourceDomain     String?                   // Extracted domain from sourceUrl
+  aiGenerated      Boolean  @default(false)  // Whether AI was used for this item
+  aiSuggestions    Json?                     // Original AI suggestions
+  userEdits        Json?                     // User's changes from AI suggestions
+
   outfits     OutfitClothing[]
 }
 

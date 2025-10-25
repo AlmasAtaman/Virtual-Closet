@@ -157,6 +157,12 @@ export default function ClothingCard({
                 {item.brand}
               </Badge>
             )}
+            {/* Show up to 2 tags */}
+            {item.tags && item.tags.slice(0, 2).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal">
+                {tag}
+              </Badge>
+            ))}
           </div>
           {viewMode !== "closet" && formatPrice(item.price) && (
             <p className="text-sm font-medium text-primary">{formatPrice(item.price)}</p>

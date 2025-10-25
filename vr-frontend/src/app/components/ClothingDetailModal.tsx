@@ -11,20 +11,20 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ClothingItem } from "../types/clothing"
 import { Label } from "@/components/ui/label"
+import { MAIN_CATEGORIES, SUBCATEGORIES, STYLE_TAGS, SIZES, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
 
 interface EditForm {
   name: string
+  category: string
   type: string
   brand: string
   price: string
-  occasion: string
-  style: string
-  fit: string
   color: string
-  material: string
   season: string
   notes: string
   sourceUrl: string
+  tags: string[]
+  size: string
 }
 
 
@@ -374,49 +374,103 @@ export default function ClothingDetailModal({
                           <h3 className="text-lg font-semibold mb-4">Style & Details</h3>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <Label htmlFor="occasion" className="text-sm font-medium">
-                                Occasion
-                              </Label>
-                              <Input
-                                value={editForm.occasion || ""}
-                                onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
-                                placeholder="e.g., Casual, Formal, Work"
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="style" className="text-sm font-medium">
-                                Style
-                              </Label>
-                              <Input
-                                value={editForm.style || ""}
-                                onChange={(e) => setEditForm({ ...editForm, style: e.target.value })}
-                                placeholder="e.g., Vintage, Modern, Bohemian"
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor="fit" className="text-sm font-medium">
-                                Fit
+                              <Label htmlFor="category" className="text-sm font-medium">
+                                Category
                               </Label>
                               <Select
-                                value={editForm.fit || ""}
-                                onValueChange={(value: string) => setEditForm({ ...editForm, fit: value })}
+                                value={editForm.category || ""}
+                                onValueChange={(value: string) => setEditForm({ ...editForm, category: value, type: "" })}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select fit" />
+                                  <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Slim">Slim</SelectItem>
-                                  <SelectItem value="Regular">Regular</SelectItem>
-                                  <SelectItem value="Oversized">Oversized</SelectItem>
-                                  <SelectItem value="Baggy">Baggy</SelectItem>
-                                  <SelectItem value="Crop">Crop</SelectItem>
-                                  <SelectItem value="Skinny">Skinny</SelectItem>
-                                  <SelectItem value="Tapered">Tapered</SelectItem>
-                                  <SelectItem value="Other">Other</SelectItem>
+                                  {MAIN_CATEGORIES.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="type" className="text-sm font-medium">
+                                Type
+                              </Label>
+                              <Select
+                                value={editForm.type || ""}
+                                onValueChange={(value: string) => setEditForm({ ...editForm, type: value })}
+                                disabled={!editForm.category}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={editForm.category ? "Select type" : "Select category first"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {editForm.category && getSubcategoriesForCategory(editForm.category).map((subcat) => (
+                                    <SelectItem key={subcat} value={subcat}>
+                                      {subcat.charAt(0).toUpperCase() + subcat.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="col-span-2">
+                              <Label className="text-sm font-medium mb-2 block">
+                                Style Tags (Max 3)
+                              </Label>
+                              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px] bg-background">
+                                {STYLE_TAGS.map((tag) => {
+                                  const isSelected = editForm.tags?.includes(tag) || false
+                                  const canSelect = (editForm.tags?.length || 0) < 3
+
+                                  return (
+                                    <Badge
+                                      key={tag}
+                                      variant={isSelected ? "default" : "outline"}
+                                      className={`cursor-pointer transition-all ${
+                                        !isSelected && !canSelect ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                                      }`}
+                                      onClick={() => {
+                                        if (isSelected) {
+                                          setEditForm({
+                                            ...editForm,
+                                            tags: editForm.tags?.filter((t) => t !== tag) || []
+                                          })
+                                        } else if (canSelect) {
+                                          setEditForm({
+                                            ...editForm,
+                                            tags: [...(editForm.tags || []), tag]
+                                          })
+                                        }
+                                      }}
+                                    >
+                                      {tag}
+                                    </Badge>
+                                  )
+                                })}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {editForm.tags?.length || 0}/3 tags selected
+                              </p>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="size" className="text-sm font-medium">
+                                Size
+                              </Label>
+                              <Input
+                                value={editForm.size || ""}
+                                onChange={(e) => setEditForm({ ...editForm, size: e.target.value })}
+                                placeholder="e.g., M, L, 32"
+                                list="sizes-datalist"
+                              />
+                              <datalist id="sizes-datalist">
+                                {SIZES.map((size) => (
+                                  <option key={size} value={size} />
+                                ))}
+                              </datalist>
                             </div>
 
                             <div>
@@ -431,29 +485,6 @@ export default function ClothingDetailModal({
                             </div>
 
                             <div>
-                              <Label htmlFor="material" className="text-sm font-medium">
-                                Material
-                              </Label>
-                              <Select
-                                value={editForm.material || ""}
-                                onValueChange={(value: string) => setEditForm({ ...editForm, material: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select material" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Cotton">Cotton</SelectItem>
-                                  <SelectItem value="Linen">Linen</SelectItem>
-                                  <SelectItem value="Denim">Denim</SelectItem>
-                                  <SelectItem value="Leather">Leather</SelectItem>
-                                  <SelectItem value="Knit">Knit</SelectItem>
-                                  <SelectItem value="Polyester">Polyester</SelectItem>
-                                  <SelectItem value="Other">Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div>
                               <Label htmlFor="season" className="text-sm font-medium">
                                 Season
                               </Label>
@@ -465,10 +496,11 @@ export default function ClothingDetailModal({
                                   <SelectValue placeholder="Select season" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Spring">Spring</SelectItem>
-                                  <SelectItem value="Summer">Summer</SelectItem>
-                                  <SelectItem value="Fall">Fall</SelectItem>
-                                  <SelectItem value="Winter">Winter</SelectItem>
+                                  {SEASONS.map((season) => (
+                                    <SelectItem key={season} value={season}>
+                                      {season}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -479,11 +511,10 @@ export default function ClothingDetailModal({
                       (!isEditing ? (
                         (() => {
                           const hasDetails = !!(
-                            currentItem.occasion ||
-                            currentItem.style ||
-                            currentItem.fit ||
+                            currentItem.category ||
+                            currentItem.tags?.length ||
+                            currentItem.size ||
                             currentItem.color ||
-                            currentItem.material ||
                             currentItem.season
                           );
                           if (!hasDetails) {
@@ -496,22 +527,28 @@ export default function ClothingDetailModal({
                           }
                           return (
                             <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                              {currentItem.occasion && (
+                              {currentItem.category && (
                                 <div className="space-y-1">
-                                  <label className="text-sm font-medium text-gray-500">Occasion</label>
-                                  <p className="text-base">{currentItem.occasion}</p>
+                                  <label className="text-sm font-medium text-gray-500">Category</label>
+                                  <p className="text-base">{capitalize(currentItem.category)}</p>
                                 </div>
                               )}
-                              {currentItem.style && (
-                                <div className="space-y-1">
-                                  <label className="text-sm font-medium text-gray-500">Style</label>
-                                  <p className="text-base">{currentItem.style}</p>
+                              {currentItem.tags && currentItem.tags.length > 0 && (
+                                <div className="col-span-2 space-y-1">
+                                  <label className="text-sm font-medium text-gray-500">Style Tags</label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {currentItem.tags.map((tag) => (
+                                      <Badge key={tag} variant="secondary">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
-                              {currentItem.fit && (
+                              {currentItem.size && (
                                 <div className="space-y-1">
-                                  <label className="text-sm font-medium text-gray-500">Fit</label>
-                                  <p className="text-base">{capitalize(currentItem.fit)}</p>
+                                  <label className="text-sm font-medium text-gray-500">Size</label>
+                                  <p className="text-base">{currentItem.size}</p>
                                 </div>
                               )}
                               {currentItem.color && (
@@ -524,12 +561,6 @@ export default function ClothingDetailModal({
                                     />
                                     <p className="text-base">{currentItem.color}</p>
                                   </div>
-                                </div>
-                              )}
-                              {currentItem.material && (
-                                <div className="space-y-1">
-                                  <label className="text-sm font-medium text-gray-500">Material</label>
-                                  <p className="text-base">{capitalize(currentItem.material)}</p>
                                 </div>
                               )}
                               {currentItem.season && (

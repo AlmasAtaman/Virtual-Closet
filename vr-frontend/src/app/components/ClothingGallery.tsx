@@ -77,17 +77,16 @@ const ClothingGallery = forwardRef(
     const [isLoading, setIsLoading] = useState(true);
     const [editForm, setEditForm] = useState({
       name: "",
+      category: "",
       type: "",
       brand: "",
       price: "",
-      occasion: "",
-      style: "",
-      fit: "",
       color: "",
-      material: "",
       season: "",
       notes: "",
       sourceUrl: "",
+      tags: [] as string[],
+      size: "",
     });
     const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -102,12 +101,10 @@ const ClothingGallery = forwardRef(
 
     // Define the filterable attributes
     const filterAttributes: FilterAttribute[] = [
+      { key: "category", label: "Category" },
       { key: "type", label: "Type" },
-      { key: "occasion", label: "Occasion" },
-      { key: "style", label: "Style" },
-      { key: "fit", label: "Fit" },
+      { key: "tags", label: "Style Tags" },
       { key: "color", label: "Color" },
-      { key: "material", label: "Material" },
       { key: "season", label: "Season" },
     ];
 
@@ -121,9 +118,18 @@ const ClothingGallery = forwardRef(
     // Calculate unique values for each attribute
     const uniqueAttributeValues: Record<string, string[]> = {};
     filterAttributes.forEach((attribute) => {
-      uniqueAttributeValues[attribute.key] = Array.from(
-        new Set(clothingItems.map((item) => item[attribute.key as keyof Clothing]).filter(Boolean)),
-      ) as string[];
+      if (attribute.key === "tags") {
+        // Special handling for tags array field
+        const allTags = clothingItems
+          .map((item) => item.tags || [])
+          .flat()
+          .filter(Boolean);
+        uniqueAttributeValues[attribute.key] = Array.from(new Set(allTags)) as string[];
+      } else {
+        uniqueAttributeValues[attribute.key] = Array.from(
+          new Set(clothingItems.map((item) => item[attribute.key as keyof Clothing]).filter(Boolean)),
+        ) as string[];
+      }
     });
 
     // Configuration for cross-mode search and filtering
@@ -405,7 +411,7 @@ const ClothingGallery = forwardRef(
 
 
     const fuse = new Fuse(baseItems, {
-      keys: ["name", "type", "brand", "occasion", "style", "fit", "color", "material", "season"],
+      keys: ["name", "type", "category", "brand", "tags", "color", "season", "size"],
       threshold: 0.3,
     });
 
@@ -430,8 +436,18 @@ const ClothingGallery = forwardRef(
           const selectedValuesInThisCategory = selectedTagsByCategory[attributeKey];
           if (selectedValuesInThisCategory.length > 0) {
             const itemValueForCategory = item[attributeKey as keyof Clothing];
-            if (!itemValueForCategory || !selectedValuesInThisCategory.some((val) => val === itemValueForCategory)) {
-              return false; // Item does not match any selected tag in this category
+
+            // Special handling for tags array field
+            if (attributeKey === "tags") {
+              const itemTags = item.tags || [];
+              if (!itemTags.some((tag) => selectedValuesInThisCategory.includes(tag))) {
+                return false; // Item doesn't have any of the selected tags
+              }
+            } else {
+              // Regular string field matching
+              if (!itemValueForCategory || !selectedValuesInThisCategory.some((val) => val === itemValueForCategory)) {
+                return false; // Item does not match any selected tag in this category
+              }
             }
           }
         }
@@ -598,17 +614,16 @@ const ClothingGallery = forwardRef(
                       setSelectedItem(item);
                       setEditForm({
                         name: item.name || "",
+                        category: item.category || "",
                         type: item.type || "",
                         brand: item.brand || "",
                         price: item.price?.toString() || "",
-                        occasion: item.occasion || "",
-                        style: item.style || "",
-                        fit: item.fit || "",
                         color: item.color || "",
-                        material: item.material || "",
                         season: item.season || "",
                         notes: item.notes || "",
                         sourceUrl: item.sourceUrl || "",
+                        tags: item.tags || [],
+                        size: item.size || "",
                       });
                       setIsEditing(false);
                     }}

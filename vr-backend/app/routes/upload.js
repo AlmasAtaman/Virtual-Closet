@@ -6,6 +6,7 @@ import { processImage, analyzeImageWithGemini } from '../utils/imageProcessor.js
 import { PrismaClient } from '@prisma/client';
 import { deleteImage } from "../controllers/image.controller.js";
 import { v4 as uuidv4 } from "uuid";
+import { trackFavoriteToggle } from '../utils/analytics.js';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -69,14 +70,14 @@ router.get("/", authMiddleware, async (req, res) => {
         url: fullUrl || item.originalImageUrl || "",
         name: item.name || "Unnamed",
         type: item.type || "Unknown",
+        category: item.category || null,
         brand: item.brand || "No brand",
-        occasion: item.occasion || "",
-        style: item.style || "",
-        fit: item.fit || "",
         color: item.color || "",
-        material: item.material || "",
         season: item.season || "",
         notes: item.notes || "",
+        tags: item.tags || [],
+        size: item.size || null,
+        purchaseDate: item.purchaseDate || null,
         mode: item.mode || "closet",
         sourceUrl: item.sourceUrl || "",
         price: item.price || "",
@@ -124,9 +125,9 @@ router.post("/submit-clothing", authMiddleware, async (req, res) => {
 
 router.post("/final-submit", authMiddleware, upload.single("image"), async (req, res) => {
   const {
-    name, type, brand,
-    occasion, style, fit,
-    color, material, season, notes,
+    name, type, category, brand,
+    color, season, notes,
+    tags, size,
     mode = "closet",
     sourceUrl = null,
     price = null
@@ -184,21 +185,32 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
 
     const key = processedResult.s3Key; // Use the S3 key returned from processImage
 
+    // Parse tags if it's a string
+    let tagsArray = [];
+    if (tags) {
+      try {
+        tagsArray = typeof tags === 'string' ? JSON.parse(tags) : tags;
+      } catch (e) {
+        console.warn('Failed to parse tags:', e);
+        tagsArray = [];
+      }
+    }
+
     const clothing = await prisma.clothing.create({
       data: {
         userId: userId,
-        key,     
-        url: key,  
+        key,
+        url: key,
         name,
         type,
+        category: category || null,
         brand: brand || null,
-        occasion: occasion || null,
-        style: style || null,
-        fit: fit || null,
         color: color || null,
-        material: material || null,
         season: season || null,
         notes: notes || null,
+        tags: tagsArray,
+        size: size || null,
+        purchaseDate: new Date(),
         mode,
         sourceUrl,
         price: price ? parseFloat(price) : null
@@ -233,17 +245,36 @@ router.post("/final-submit", authMiddleware, upload.single("image"), async (req,
 router.delete("/:key", authMiddleware, deleteImage);
 
 router.patch("/update", authMiddleware, async (req, res) => {
-  const { id, name, type, brand, occasion, style, fit, color, material, season, notes, sourceUrl, price  } = req.body;
+  const { id, name, type, category, brand, color, season, notes, sourceUrl, price, tags, size } = req.body;
 
   if (!id) return res.status(400).json({ error: "Missing clothing ID" });
 
   try {
+    // Parse tags if it's a string
+    let tagsArray = tags;
+    if (tags && typeof tags === 'string') {
+      try {
+        tagsArray = JSON.parse(tags);
+      } catch (e) {
+        console.warn('Failed to parse tags:', e);
+        tagsArray = [];
+      }
+    }
+
     const updated = await prisma.clothing.update({
       where: { id },
       data: {
-        name, type, brand, occasion, style, fit,
-        color, material, season, notes, sourceUrl,
-        price: price ? parseFloat(price) : null
+        name,
+        type,
+        category,
+        brand,
+        color,
+        season,
+        notes,
+        sourceUrl,
+        price: price ? parseFloat(price) : null,
+        tags: tagsArray,
+        size: size || null
       },
     });
 
@@ -308,9 +339,13 @@ router.patch("/:id/favorite", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    const updated = await prisma.clothing.update({
-      where: { id },
-      data: { isFavorite }
+    // Track favorite toggle in analytics (async, don't wait)
+    trackFavoriteToggle(id, isFavorite).catch(err => {
+      console.error('Analytics tracking failed:', err);
+    });
+
+    const updated = await prisma.clothing.findUnique({
+      where: { id }
     });
 
     res.json({ message: "Favorite status updated", item: updated });
@@ -325,12 +360,13 @@ router.patch("/:id/favorite", authMiddleware, async (req, res) => {
 // Create optimistic item immediately with original image
 router.post("/create-optimistic", authMiddleware, upload.single("image"), async (req, res) => {
   const {
-    name, type, brand,
-    occasion, style, fit,
-    color, material, season, notes,
+    name, type, category, brand,
+    color, season, notes,
+    tags, size,
     mode = "closet",
     sourceUrl = null,
-    price = null
+    price = null,
+    aiSuggestions = null
   } = req.body;
   const userId = req.user.id;
   const file = req.file;
@@ -383,6 +419,31 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
       originalPresignedUrl = imageUrl;
     }
 
+    // Parse tags if it's a string (from form data)
+    let tagsArray = [];
+    if (tags) {
+      try {
+        tagsArray = typeof tags === 'string' ? JSON.parse(tags) : tags;
+      } catch (e) {
+        console.warn('Failed to parse tags:', e);
+        tagsArray = [];
+      }
+    }
+
+    // Determine upload method
+    const uploadMethod = file ? "direct" : (sourceUrl ? "scraper" : "url");
+
+    // Extract source domain
+    let sourceDomain = null;
+    if (sourceUrl) {
+      try {
+        const url = new URL(sourceUrl);
+        sourceDomain = url.hostname.replace('www.', '');
+      } catch (e) {
+        // Invalid URL, ignore
+      }
+    }
+
     // Create database record with pending status
     const clothing = await prisma.clothing.create({
       data: {
@@ -392,18 +453,22 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
         originalImageUrl: originalPresignedUrl,
         name: name || "Untitled",
         type,
+        category: category || null,
         brand: brand || null,
-        occasion: occasion || null,
-        style: style || null,
-        fit: fit || null,
         color: color || null,
-        material: material || null,
         season: season || null,
         notes: notes || null,
+        tags: tagsArray,
+        size: size || null,
+        purchaseDate: new Date(),
         mode,
         sourceUrl,
         price: price ? parseFloat(price) : null,
-        processingStatus: "pending"
+        processingStatus: "pending",
+        uploadMethod,
+        sourceDomain,
+        aiGenerated: !!aiSuggestions,
+        aiSuggestions: aiSuggestions ? (typeof aiSuggestions === 'string' ? JSON.parse(aiSuggestions) : aiSuggestions) : null
       }
     });
 
