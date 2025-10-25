@@ -4,13 +4,12 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Plus, Check, X, Trash2, Loader2, Folder } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import CreateOutfitModal from "../../components/CreateOutfitModal"
 import CreateOccasionModal from "../../components/CreateOccasionModal"
 import AddToFolderModal from "../../components/AddToFolderModal"
 import OutfitCard from "../../components/OutfitCard"
 import OccasionCard from "../../components/OccasionCard"
-import OccasionOutfits from "../../components/OccasionOutfits"
 import LogOutButton from "../../components/LogoutButton"
 import { ThemeToggle } from "../../components/ThemeToggle"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -64,7 +63,6 @@ export default function OutfitsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showCreateOccasionModal, setShowCreateOccasionModal] = useState(false)
   const [activeTab, setActiveTab] = useState<"outfits" | "occasions">("outfits")
-  const [selectedOccasionId, setSelectedOccasionId] = useState<string | null>(null)
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
   const [isMultiSelectingOccasions, setIsMultiSelectingOccasions] = useState(false)
@@ -74,6 +72,17 @@ export default function OutfitsPage() {
   const [showDeleteOccasionsDialog, setShowDeleteOccasionsDialog] = useState(false)
   const [showAddToFolderModal, setShowAddToFolderModal] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Check for tab parameter in URL and set active tab
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'occasions') {
+      setActiveTab('occasions')
+    } else if (tab === 'outfits') {
+      setActiveTab('outfits')
+    }
+  }, [searchParams])
 
   useEffect(() => {
     fetchOutfits()
@@ -146,11 +155,7 @@ export default function OutfitsPage() {
   }
 
   const handleOccasionClick = (occasionId: string) => {
-    setSelectedOccasionId(occasionId)
-  }
-
-  const handleBackToOccasions = () => {
-    setSelectedOccasionId(null)
+    router.push(`/occasions/${occasionId}`)
   }
 
   const handleBackToDashboard = () => {
@@ -271,54 +276,41 @@ export default function OutfitsPage() {
           </header>
 
       <div className="px-4 lg:px-6 xl:px-8 py-6">
-{/* Animated Back to Closet button */}
-        <AnimatePresence>
-          {!selectedOccasionId && (
-            <motion.div
-              key="back-button"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="mb-6"
-            >
-              <Button
-                variant="outline"
-                onClick={handleBackToDashboard}
-                className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Closet
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Back to Closet button */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="mb-6"
+        >
+          <Button
+            variant="outline"
+            onClick={handleBackToDashboard}
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Closet
+          </Button>
+        </motion.div>
 
-        {/* Only show Outfits/Occasions tabs when NOT inside an occasion folder */}
-{/* Animated Outfits/Occasions tabs */}
-        <AnimatePresence>
-          {!selectedOccasionId && (
-            <motion.div
-              key="tabs"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
-              className="mb-8 w-full max-w-md mx-auto"
-            >
-              <Tabs
-                defaultValue={activeTab}
-                onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
-                className="w-full"
-              >
-                <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
-                  <TabsTrigger value="outfits">Outfits</TabsTrigger>
-                  <TabsTrigger value="occasions">Occasions</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Outfits/Occasions tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
+          className="mb-8 w-full max-w-md mx-auto"
+        >
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
+              <TabsTrigger value="outfits">Outfits</TabsTrigger>
+              <TabsTrigger value="occasions">Occasions</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </motion.div>
 
         {/* Multi-select Controls */}
         {activeTab === "outfits" && (
@@ -348,7 +340,7 @@ export default function OutfitsPage() {
         )}
 
         {/* Multi-select Controls for Occasions */}
-        {activeTab === "occasions" && !selectedOccasionId && occasions.length > 0 && (
+        {activeTab === "occasions" && occasions.length > 0 && (
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               {isMultiSelectingOccasions && selectedOccasionIds.length > 0 && (
@@ -507,63 +499,52 @@ export default function OutfitsPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
             >
-              {selectedOccasionId ? (
-                <OccasionOutfits
-                  occasionId={selectedOccasionId}
-                  onBack={handleBackToOccasions}
-                  onOccasionUpdated={handleOccasionUpdated}
-                />
+              {occasionsLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="aspect-square bg-card rounded-xl animate-pulse shadow-lg" />
+                  ))}
+                </div>
               ) : (
-                <>
-                  {occasionsLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
-                      {Array.from({ length: 6 }).map((_, index) => (
-                        <div key={index} className="aspect-square bg-card rounded-xl animate-pulse shadow-lg" />
-                      ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                  {/* Create Folder Button - First item in grid */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div
+                      onClick={() => setShowCreateOccasionModal(true)}
+                      className="aspect-[3/4] bg-gradient-to-br from-muted via-background to-accent border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
+                    >
+                      <div className="w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+                        <Plus className="w-10 h-10 text-primary" />
+                      </div>
+                      <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors text-center">
+                        Create New Folder
+                      </span>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
-                      {/* Create Folder Button - First item in grid */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div
-                          onClick={() => setShowCreateOccasionModal(true)}
-                          className="aspect-[3/4] bg-gradient-to-br from-muted via-background to-accent border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
-                        >
-                          <div className="w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                            <Plus className="w-10 h-10 text-primary" />
-                          </div>
-                          <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors text-center">
-                            Create New Folder
-                          </span>
-                        </div>
-                      </motion.div>
+                  </motion.div>
 
-                      {occasions.map((occasion, index) => (
-                        <motion.div
-                          key={occasion.id}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.2, delay: (index + 1) * 0.05 }}
-                        >
-                          <OccasionCard
-                            occasion={occasion}
-                            onClick={() => handleOccasionClick(occasion.id)}
-                            onDelete={handleOccasionDeleted}
-                            onUpdate={handleOccasionUpdated}
-                            isSelected={selectedOccasionIds.includes(occasion.id)}
-                            isMultiSelecting={isMultiSelectingOccasions}
-                            onToggleSelect={toggleOccasionSelection}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-
-                </>
+                  {occasions.map((occasion, index) => (
+                    <motion.div
+                      key={occasion.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2, delay: (index + 1) * 0.05 }}
+                    >
+                      <OccasionCard
+                        occasion={occasion}
+                        onClick={() => handleOccasionClick(occasion.id)}
+                        onDelete={handleOccasionDeleted}
+                        onUpdate={handleOccasionUpdated}
+                        isSelected={selectedOccasionIds.includes(occasion.id)}
+                        isMultiSelecting={isMultiSelectingOccasions}
+                        onToggleSelect={toggleOccasionSelection}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
               )}
             </motion.div>
           )}
