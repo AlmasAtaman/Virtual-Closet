@@ -13,6 +13,26 @@ import type { ClothingItem } from "../types/clothing"
 import { Label } from "@/components/ui/label"
 import { MAIN_CATEGORIES, SUBCATEGORIES, STYLE_TAGS, SIZES, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
 
+const CLOTHING_SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
+const SHOE_SIZES = ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13', '14']
+
+const COLOR_OPTIONS = [
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Blue', hex: '#0000FF' },
+  { name: 'Red', hex: '#FF0000' },
+  { name: 'Pink', hex: '#FFC0CB' },
+  { name: 'Purple', hex: '#800080' },
+  { name: 'Green', hex: '#008000' },
+  { name: 'Yellow', hex: '#FFFF00' },
+  { name: 'Orange', hex: '#FFA500' },
+  { name: 'Brown', hex: '#8B4513' },
+  { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Cream', hex: '#FFFDD0' },
+]
+
 interface EditForm {
   name: string
   category: string
@@ -65,6 +85,8 @@ export default function ClothingDetailModal({
 }: ClothingDetailModalProps) {
   const [activeTab, setActiveTab] = useState<string>("general")
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(0)
+  const [isShoeSizes, setIsShoeSizes] = useState(false)
+  const [selectedColors, setSelectedColors] = useState<string[]>([])
 
   // Find the current item index in the allItems array
   useEffect(() => {
@@ -75,6 +97,17 @@ export default function ClothingDetailModal({
       }
     }
   }, [item.id, allItems])
+
+  // Initialize selectedColors from editForm.color when entering edit mode
+  useEffect(() => {
+    if (isEditing && editForm.color) {
+      const colors = editForm.color.split(',').map(c => c.trim()).filter(Boolean)
+      setSelectedColors(colors)
+    } else if (!isEditing) {
+      setSelectedColors([])
+      setIsShoeSizes(false)
+    }
+  }, [isEditing, editForm.color])
 
   const capitalize = (s: string | null | undefined) => {
     if (!s) return "";
@@ -456,32 +489,109 @@ export default function ClothingDetailModal({
                               </p>
                             </div>
 
-                            <div>
-                              <Label htmlFor="size" className="text-sm font-medium">
-                                Size
-                              </Label>
-                              <Input
-                                value={editForm.size || ""}
-                                onChange={(e) => setEditForm({ ...editForm, size: e.target.value })}
-                                placeholder="e.g., M, L, 32"
-                                list="sizes-datalist"
-                              />
-                              <datalist id="sizes-datalist">
-                                {SIZES.map((size) => (
-                                  <option key={size} value={size} />
-                                ))}
-                              </datalist>
+                            <div className="col-span-2 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm font-medium">Size</Label>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id="shoe-sizes-edit"
+                                    checked={isShoeSizes}
+                                    onChange={(e) => {
+                                      setIsShoeSizes(e.target.checked)
+                                      setEditForm({ ...editForm, size: "" })
+                                    }}
+                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary/20"
+                                  />
+                                  <Label htmlFor="shoe-sizes-edit" className="text-xs text-muted-foreground cursor-pointer">
+                                    Shoe sizes
+                                  </Label>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {(isShoeSizes ? SHOE_SIZES : CLOTHING_SIZES).map((size) => {
+                                  const isSelected = editForm.size === size
+                                  return (
+                                    <Badge
+                                      key={size}
+                                      variant={isSelected ? "default" : "outline"}
+                                      className="cursor-pointer transition-all hover:scale-105"
+                                      onClick={() => {
+                                        setEditForm({
+                                          ...editForm,
+                                          size: isSelected ? "" : size
+                                        })
+                                      }}
+                                    >
+                                      {size}
+                                    </Badge>
+                                  )
+                                })}
+                              </div>
                             </div>
 
-                            <div>
-                              <Label htmlFor="color" className="text-sm font-medium">
-                                Color
-                              </Label>
-                              <Input
-                                value={editForm.color || ""}
-                                onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                                placeholder="e.g., Navy Blue, Black, Red"
-                              />
+                            <div className="col-span-2 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm font-medium">Color</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  {selectedColors.length}/3 colors selected
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-3">
+                                {COLOR_OPTIONS.map((color) => {
+                                  const isSelected = selectedColors.includes(color.name)
+                                  return (
+                                    <div
+                                      key={color.name}
+                                      className="relative group cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedColors((prev) => {
+                                          if (isSelected) {
+                                            const newColors = prev.filter((c) => c !== color.name)
+                                            setEditForm({ ...editForm, color: newColors.join(", ") })
+                                            return newColors
+                                          } else {
+                                            if (prev.length >= 3) return prev
+                                            const newColors = [...prev, color.name]
+                                            setEditForm({ ...editForm, color: newColors.join(", ") })
+                                            return newColors
+                                          }
+                                        })
+                                      }}
+                                    >
+                                      <div
+                                        className={`w-10 h-10 rounded-lg transition-all ${
+                                          isSelected
+                                            ? "ring-2 ring-primary ring-offset-2 scale-110"
+                                            : "hover:scale-105 border-2 border-gray-200"
+                                        }`}
+                                        style={{ backgroundColor: color.hex }}
+                                      >
+                                        {isSelected && (
+                                          <div className="flex items-center justify-center h-full">
+                                            <svg
+                                              className="w-5 h-5"
+                                              fill="none"
+                                              stroke={color.name === "White" ? "#000" : "#fff"}
+                                              strokeWidth="3"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M5 13l4 4L19 7"
+                                              />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-center mt-1 text-muted-foreground group-hover:text-foreground transition-colors">
+                                        {color.name}
+                                      </p>
+                                    </div>
+                                  )
+                                })}
+                              </div>
                             </div>
 
                             <div>

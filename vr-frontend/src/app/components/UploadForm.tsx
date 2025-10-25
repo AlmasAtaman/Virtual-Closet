@@ -28,6 +28,28 @@ interface UploadFormProps {
   currentViewMode?: "closet" | "wishlist"
 }
 
+// Size options
+const CLOTHING_SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
+const SHOE_SIZES = ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13', '14']
+
+// Color options with hex values
+const COLOR_OPTIONS = [
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Blue', hex: '#0000FF' },
+  { name: 'Red', hex: '#FF0000' },
+  { name: 'Pink', hex: '#FFC0CB' },
+  { name: 'Purple', hex: '#800080' },
+  { name: 'Green', hex: '#008000' },
+  { name: 'Yellow', hex: '#FFFF00' },
+  { name: 'Orange', hex: '#FFA500' },
+  { name: 'Brown', hex: '#8B4513' },
+  { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Cream', hex: '#FFFDD0' },
+]
+
 export default function UploadForm({
   isOpen,
   onCloseAction,
@@ -35,7 +57,7 @@ export default function UploadForm({
   currentViewMode = "closet",
 }: UploadFormProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-  
+
   const [uploadMethod, setUploadMethod] = useState<"direct" | "url">("direct")
   const [uploadTarget, setUploadTarget] = useState<"closet" | "wishlist">(currentViewMode)
   const [mode, setMode] = useState<"basic" | "advanced">("basic")
@@ -43,6 +65,8 @@ export default function UploadForm({
   const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [isShoeSizes, setIsShoeSizes] = useState(false)
+  const [selectedColors, setSelectedColors] = useState<string[]>([])
 
   const initialFormData = {
     mode: currentViewMode,
@@ -91,6 +115,8 @@ export default function UploadForm({
       setFetchError(null)
       setShowBotDetectionModal(false)
       setBotDetectionUrl("")
+      setIsShoeSizes(false)
+      setSelectedColors([])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, currentViewMode])
@@ -573,9 +599,9 @@ export default function UploadForm({
                                     <Image
                                       src={imagePreview || "/placeholder.svg"}
                                       alt="Preview"
-                                      width={400}
-                                      height={256}
-                                      className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                      width={300}
+                                      height={192}
+                                      className="w-full h-48 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
                                     />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
                                   </div>
@@ -752,9 +778,9 @@ export default function UploadForm({
                                     <Image
                                       src={imagePreview || "/placeholder.svg"}
                                       alt="Preview"
-                                      width={400}
-                                      height={256}
-                                      className="w-full h-64 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
+                                      width={300}
+                                      height={192}
+                                      className="w-full h-48 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
                                     />
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
                                   </div>
@@ -1000,9 +1026,9 @@ export default function UploadForm({
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                          className="space-y-5"
                         >
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <Label htmlFor="tags" className="text-sm font-medium">
                               Style Tags (Max 3)
                             </Label>
@@ -1042,39 +1068,112 @@ export default function UploadForm({
                             </p>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="size" className="text-sm font-medium">
-                              Size
-                            </Label>
-                            <Input
-                              id="size"
-                              placeholder="e.g., M, L, 32, 10"
-                              value={formData.size || ""}
-                              onChange={(e) => setFormData((prev) => ({ ...prev, size: e.target.value }))}
-                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                              list="sizes-datalist"
-                            />
-                            <datalist id="sizes-datalist">
-                              {SIZES.map((size) => (
-                                <option key={size} value={size} />
-                              ))}
-                            </datalist>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm font-medium">Size</Label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  id="shoe-sizes"
+                                  checked={isShoeSizes}
+                                  onChange={(e) => {
+                                    setIsShoeSizes(e.target.checked)
+                                    setFormData((prev) => ({ ...prev, size: "" }))
+                                  }}
+                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary/20"
+                                />
+                                <Label htmlFor="shoe-sizes" className="text-xs text-muted-foreground cursor-pointer">
+                                  Shoe sizes
+                                </Label>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {(isShoeSizes ? SHOE_SIZES : CLOTHING_SIZES).map((size) => {
+                                const isSelected = formData.size === size
+                                return (
+                                  <Badge
+                                    key={size}
+                                    variant={isSelected ? "default" : "outline"}
+                                    className="cursor-pointer transition-all hover:scale-105"
+                                    onClick={() => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        size: isSelected ? "" : size
+                                      }))
+                                    }}
+                                  >
+                                    {size}
+                                  </Badge>
+                                )
+                              })}
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="color" className="text-sm font-medium">
-                              Color
-                            </Label>
-                            <Input
-                              id="color"
-                              placeholder="e.g., Navy Blue, Black, Red"
-                              value={formData.color || ""}
-                              onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
-                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-sm font-medium">Color</Label>
+                              <p className="text-xs text-muted-foreground">
+                                {selectedColors.length}/3 colors selected
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                              {COLOR_OPTIONS.map((color) => {
+                                const isSelected = selectedColors.includes(color.name)
+                                return (
+                                  <div
+                                    key={color.name}
+                                    className="relative group cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedColors((prev) => {
+                                        if (isSelected) {
+                                          const newColors = prev.filter((c) => c !== color.name)
+                                          setFormData((f) => ({ ...f, color: newColors.join(", ") }))
+                                          return newColors
+                                        } else {
+                                          if (prev.length >= 3) return prev
+                                          const newColors = [...prev, color.name]
+                                          setFormData((f) => ({ ...f, color: newColors.join(", ") }))
+                                          return newColors
+                                        }
+                                      })
+                                    }}
+                                  >
+                                    <div
+                                      className={`w-10 h-10 rounded-lg transition-all ${
+                                        isSelected
+                                          ? "ring-2 ring-primary ring-offset-2 scale-110"
+                                          : "hover:scale-105 border-2 border-gray-200"
+                                      }`}
+                                      style={{ backgroundColor: color.hex }}
+                                    >
+                                      {isSelected && (
+                                        <div className="flex items-center justify-center h-full">
+                                          <svg
+                                            className="w-5 h-5"
+                                            fill="none"
+                                            stroke={color.name === "White" ? "#000" : "#fff"}
+                                            strokeWidth="3"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              d="M5 13l4 4L19 7"
+                                            />
+                                          </svg>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-center mt-1 text-muted-foreground group-hover:text-foreground transition-colors">
+                                      {color.name}
+                                    </p>
+                                  </div>
+                                )
+                              })}
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <Label htmlFor="season" className="text-sm font-medium">
                               Season
                             </Label>
