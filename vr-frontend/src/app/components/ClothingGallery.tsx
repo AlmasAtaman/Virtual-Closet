@@ -92,6 +92,7 @@ const ClothingGallery = forwardRef(
     const [isDeleting, setIsDeleting] = useState(false);
     const [isMoving, setIsMoving] = useState(false);
     const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
+    const [showMoveToClosetDialog, setShowMoveToClosetDialog] = useState(false);
     const [outfitsUsingSelectedItems, setOutfitsUsingSelectedItems] = useState<OutfitUsageInfo>({count: 0, outfits: []});
     const [showSingleDeleteDialog, setShowSingleDeleteDialog] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -357,9 +358,7 @@ const ClothingGallery = forwardRef(
     };
 
     const handleMoveSelectedToCloset = async () => {
-      if (!confirm(`Are you sure you want to move ${selectedItemIds.length} item(s)?`)) {
-        return;
-      }
+      setShowMoveToClosetDialog(false);
 
       try {
         setIsMoving(true);
@@ -519,61 +518,78 @@ const ClothingGallery = forwardRef(
 
     return (
       <div className="space-y-6 flex flex-col flex-1">
-
-        {/* Multi-select Controls */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isMultiSelecting && selectedItemIds.length > 0 && (
-              <span className="text-sm font-medium">{selectedItemIds.length} selected</span>
-            )}
-          </div>
-
+        {/* Bottom Selection Modal - Slide up from bottom when items selected */}
+        <AnimatePresence>
           {isMultiSelecting && selectedItemIds.length > 0 && (
-            <div className="flex gap-2">
-              {viewMode === "wishlist" && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+            >
+              <div className="bg-card rounded-full shadow-lg border border-border dark:border-border/60 px-6 py-3 flex items-center gap-4">
+                <span className="text-sm font-medium">
+                  {selectedItemIds.length} item{selectedItemIds.length > 1 ? "s" : ""} selected
+                </span>
+                {viewMode === "wishlist" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMoveToClosetDialog(true)}
+                    disabled={isMoving}
+                    className="gap-2"
+                  >
+                    {isMoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoveRight className="h-4 w-4" />}
+                    Move to Closet
+                  </Button>
+                )}
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
-                  onClick={handleMoveSelectedToCloset}
-                  disabled={isMoving}
+                  onClick={async () => {
+                    // Before showing dialog, fetch outfits using selected items
+                    const result = await fetchOutfitsUsingSelectedItems(selectedItemIds);
+                    setOutfitsUsingSelectedItems(result);
+                    setShowMultiDeleteDialog(true);
+                  }}
+                  disabled={isDeleting}
                   className="gap-2"
                 >
-                  {isMoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoveRight className="h-4 w-4" />}
-                  Move to Closet
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Delete
                 </Button>
-              )}
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={async () => {
-                  // Before showing dialog, fetch outfits using selected items
-                  const result = await fetchOutfitsUsingSelectedItems(selectedItemIds);
-                  setOutfitsUsingSelectedItems(result);
-                  setShowMultiDeleteDialog(true);
-                }}
-                disabled={isDeleting}
-                className="gap-2"
-              >
-                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Delete
-              </Button>
-              <ConfirmDialog
-                open={showMultiDeleteDialog}
-                onOpenChange={setShowMultiDeleteDialog}
-                title="Delete Selected Clothing Items"
-                description={
-                  outfitsUsingSelectedItems.count > 0
-                    ? `${selectedItemIds.length} of the selected items are used in ${outfitsUsingSelectedItems.count} outfit${outfitsUsingSelectedItems.count > 1 ? 's' : ''}. Deleting them will leave empty spaces in those outfits. This action cannot be undone.`
-                    : `Are you sure you want to delete ${selectedItemIds.length} item(s)? This action cannot be undone.`
-                }
-                onConfirm={handleDeleteSelected}
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
-                confirmVariant="destructive"
-              />
-            </div>
+              </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          open={showMultiDeleteDialog}
+          onOpenChange={setShowMultiDeleteDialog}
+          title="Delete Selected Clothing Items"
+          description={
+            outfitsUsingSelectedItems.count > 0
+              ? `${selectedItemIds.length} of the selected items are used in ${outfitsUsingSelectedItems.count} outfit${outfitsUsingSelectedItems.count > 1 ? 's' : ''}. Deleting them will leave empty spaces in those outfits. This action cannot be undone.`
+              : `Are you sure you want to delete ${selectedItemIds.length} item(s)? This action cannot be undone.`
+          }
+          onConfirm={handleDeleteSelected}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          confirmVariant="destructive"
+        />
+
+        {/* Move to Closet Confirmation Dialog */}
+        <ConfirmDialog
+          open={showMoveToClosetDialog}
+          onOpenChange={setShowMoveToClosetDialog}
+          title="Move to My Closet"
+          description={`Are you sure you want to move ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from your wishlist to your closet?`}
+          onConfirm={handleMoveSelectedToCloset}
+          confirmLabel="Move to Closet"
+          cancelLabel="Cancel"
+        />
 
         {/* Clothing Grid */}
         {isLoading ? (
