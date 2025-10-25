@@ -487,7 +487,7 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
         data: imageUrl,
         originalname: 'scraped_image.jpg'
       },
-      category: type
+      category: category
     };
 
     // Start background processing asynchronously (don't wait for it)

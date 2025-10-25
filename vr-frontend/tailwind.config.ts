@@ -115,6 +115,10 @@ const config = {
           from: { transform: "scale(1)" },
           to: { transform: "scale(0.95)" },
         },
+        "shimmer": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -131,6 +135,7 @@ const config = {
         "slide-out-to-right": "slide-out-to-right 0.3s ease-out",
         "zoom-in": "zoom-in 0.3s ease-out",
         "zoom-out": "zoom-out 0.3s ease-out",
+        "shimmer": "shimmer 2s infinite",
       },
     },
   },

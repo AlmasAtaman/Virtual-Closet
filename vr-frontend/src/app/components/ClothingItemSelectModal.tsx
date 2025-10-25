@@ -252,7 +252,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                   <p className="text-sm font-medium text-foreground truncate">
                                     {item.name || "Unnamed"}
                                   </p>
-                                  {item.type && <p className="text-xs text-muted-foreground truncate">{item.type}</p>}
+                                  {item.type && <p className="text-xs text-muted-foreground truncate capitalize">{item.type}</p>}
                                 </>
                               )}
                             </CardContent>
@@ -299,8 +299,8 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                   <h3 className="font-medium text-foreground truncate">
                                     {item.name || (item.id === "none" ? "Select None" : "Unnamed")}
                                   </h3>
-                                  {item.type && <p className="text-sm text-muted-foreground">{item.type}</p>}
-                                  {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
+                                  {item.type && <p className="text-sm text-muted-foreground capitalize">{item.type}</p>}
+                                  {item.brand && <p className="text-xs text-muted-foreground capitalize">{item.brand}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1">
                                   {item.mode === "wishlist" && !item.id?.startsWith("__none") && (

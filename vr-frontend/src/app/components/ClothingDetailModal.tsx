@@ -370,14 +370,14 @@ export default function ClothingDetailModal({
                           {currentItem.type && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Type</h4>
-                              <p className="text-base">{currentItem.type}</p>
+                              <p className="text-base capitalize">{currentItem.type}</p>
                             </div>
                           )}
 
                           {currentItem.brand && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground">Brand</h4>
-                              <p className="text-base">{currentItem.brand}</p>
+                              <p className="text-base capitalize">{currentItem.brand}</p>
                             </div>
                           )}
 

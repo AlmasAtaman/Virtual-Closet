@@ -84,15 +84,18 @@ export default function ClothingCard({
         >
           {item.url ? (
             <>
-              <Image
-                src={item.url || "/placeholder.svg"}
-                alt={item.name || "Clothing item"}
-                fill
-                className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
-                style={{ objectPosition: 'center' }}
-                unoptimized
-              />
-              {/* Show loading overlay if image is still processing */}
+              {/* Only show image if processing is completed */}
+              {item.processingStatus === 'completed' && (
+                <Image
+                  src={item.url || "/placeholder.svg"}
+                  alt={item.name || "Clothing item"}
+                  fill
+                  className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+                  style={{ objectPosition: 'center' }}
+                  unoptimized
+                />
+              )}
+              {/* Show skeleton/shimmer loader while processing */}
               {item.processingStatus && item.processingStatus !== 'completed' && (
                 <CompactLoadingPlaceholder status={item.processingStatus} />
               )}
@@ -148,21 +151,15 @@ export default function ClothingCard({
           <h3 className="font-medium line-clamp-1 mb-1 text-base">{item.name}</h3>
           <div className="mb-2 flex flex-wrap gap-1">
             {item.type && (
-              <Badge variant="secondary" className="text-xs font-normal">
+              <Badge variant="secondary" className="text-xs font-normal capitalize">
                 {item.type}
               </Badge>
             )}
             {item.brand && item.brand !== "No brand" && item.brand.trim() !== "" && (
-              <Badge variant="secondary" className="text-xs font-normal">
+              <Badge variant="secondary" className="text-xs font-normal capitalize">
                 {item.brand}
               </Badge>
             )}
-            {/* Show up to 2 tags */}
-            {item.tags && item.tags.slice(0, 2).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs font-normal">
-                {tag}
-              </Badge>
-            ))}
           </div>
           {viewMode !== "closet" && formatPrice(item.price) && (
             <p className="text-sm font-medium text-primary">{formatPrice(item.price)}</p>

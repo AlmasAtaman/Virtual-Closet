@@ -95,12 +95,12 @@ const ClothingModal: React.FC<ClothingModalProps> = ({ isOpen, onCloseAction, cl
         <div className="space-y-2 text-sm">
           {currentItem.type && (
             <p>
-              <span className="font-semibold">Type:</span> {currentItem.type}
+              <span className="font-semibold">Type:</span> <span className="capitalize">{currentItem.type}</span>
             </p>
           )}
           {currentItem.brand && (
             <p>
-              <span className="font-semibold">Brand:</span> {currentItem.brand}
+              <span className="font-semibold">Brand:</span> <span className="capitalize">{currentItem.brand}</span>
             </p>
           )}
           {currentItem.occasion && (

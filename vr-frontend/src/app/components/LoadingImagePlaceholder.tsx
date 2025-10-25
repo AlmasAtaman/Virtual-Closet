@@ -66,19 +66,31 @@ export const LoadingImagePlaceholder: React.FC<LoadingImagePlaceholderProps> = (
   )
 }
 
-// Alternative compact version for smaller displays
+// Alternative compact version for smaller displays with skeleton/shimmer loader
 export const CompactLoadingPlaceholder: React.FC<{ status: 'pending' | 'processing' | 'failed' }> = ({ status }) => {
   if (status === 'failed') {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-lg">
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
         <AlertCircle className="w-8 h-8 text-red-500" />
       </div>
     )
   }
 
+  // Skeleton/shimmer loader - no blurred image background
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg">
-      <Loader2 className="w-8 h-8 text-white animate-spin" />
+    <div className="absolute inset-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
+      {/* Shimmer effect */}
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent"></div>
+
+      {/* Loading indicator */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-gray-400 dark:text-gray-600 animate-spin mx-auto" />
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {status === 'pending' ? 'Processing...' : 'Processing...'}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

@@ -51,7 +51,7 @@ export async function processImage(imageData, userId, options = {}) {
     await trimTransparentPixels(cleanedImagePath, trimmedImagePath);
 
     // Determine category for standardization
-    const categoryForStandardization = category || clothingData?.type || null;
+    const categoryForStandardization = category || clothingData?.category || null;
 
     // Standardize image
     standardizedPath = `standardized_${Date.now()}_${baseName}.png`;
