@@ -119,6 +119,10 @@ const config = {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
         },
+        "shimmer-sweep": {
+          "0%": { transform: "translateX(-200%)" },
+          "100%": { transform: "translateX(200%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -136,6 +140,7 @@ const config = {
         "zoom-in": "zoom-in 0.3s ease-out",
         "zoom-out": "zoom-out 0.3s ease-out",
         "shimmer": "shimmer 2s infinite",
+        "shimmer-sweep": "shimmer-sweep 2s ease-in-out infinite",
       },
     },
   },

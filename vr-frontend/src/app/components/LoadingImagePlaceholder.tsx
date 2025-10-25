@@ -76,21 +76,26 @@ export const CompactLoadingPlaceholder: React.FC<{ status: 'pending' | 'processi
     )
   }
 
-  // Skeleton/shimmer loader - no blurred image background
+  // Skeleton/shimmer loader - clean modern effect with just shimmer animation
   return (
-    <div className="absolute inset-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
-      {/* Shimmer effect */}
-      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent"></div>
-
-      {/* Loading indicator */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-gray-400 dark:text-gray-600 animate-spin mx-auto" />
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {status === 'pending' ? 'Processing...' : 'Processing...'}
-          </p>
-        </div>
-      </div>
+    <div className="absolute inset-0 rounded-lg overflow-hidden bg-muted/40 dark:bg-muted/30">
+      {/* Shimmer sweep effect - thin beam of light */}
+      <div
+        className="absolute inset-y-0 -left-24 w-24 bg-gradient-to-r from-transparent via-primary/20 to-transparent"
+        style={{
+          animation: 'shimmer-sweep 2s ease-in-out infinite'
+        }}
+      ></div>
+      <style jsx>{`
+        @keyframes shimmer-sweep {
+          0% {
+            left: -96px;
+          }
+          100% {
+            left: 100%;
+          }
+        }
+      `}</style>
     </div>
   )
 }

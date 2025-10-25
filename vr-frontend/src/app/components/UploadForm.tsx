@@ -661,14 +661,13 @@ export default function UploadForm({
                               <Button
                                 onClick={handleAutoFill}
                                 disabled={isAutoFilling || !selectedFile}
-                                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 relative overflow-hidden"
                                 size="lg"
                               >
-                                {isAutoFilling ? (
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                  <Sparkles className="w-4 h-4 mr-2" />
+                                {isAutoFilling && (
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-sweep" />
                                 )}
+                                {!isAutoFilling && <Sparkles className="w-4 h-4 mr-2" />}
                                 {isAutoFilling ? "Analyzing..." : "Auto-fill with AI"}
                               </Button>
                             </motion.div>
@@ -717,10 +716,13 @@ export default function UploadForm({
                               <Button
                                 onClick={handleGeminiMetadata}
                                 disabled={!scrapingUrl.trim() || isLoading}
-                                className="px-6 w-[140px]"
+                                className="px-6 w-[140px] relative overflow-hidden"
                               >
+                                {isLoading && (
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent animate-shimmer-sweep" />
+                                )}
                                 {isLoading ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span className="relative z-10">Loading...</span>
                                 ) : (
                                   <>
                                     <Zap className="w-4 h-4 mr-1" />
@@ -1239,14 +1241,13 @@ export default function UploadForm({
                       <Button
                         onClick={handleSubmit}
                         disabled={!isFormValid() || isSubmitting}
-                        className="px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                        className="px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 relative overflow-hidden"
                       >
-                        {isSubmitting ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Plus className="w-4 h-4 mr-2" />
+                        {isSubmitting && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-sweep" />
                         )}
-                        {isSubmitting ? "Adding..." : "Add Item"}
+                        {!isSubmitting && <Plus className="w-4 h-4 mr-2" />}
+                        <span className="relative z-10">{isSubmitting ? "Adding..." : "Add Item"}</span>
                       </Button>
                     </div>
                   </div>
