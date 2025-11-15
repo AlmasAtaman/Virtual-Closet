@@ -21,7 +21,7 @@ interface ClothingCardProps {
 
 // Images are now standardized on the backend with category-specific canvas sizes
 // No need for frontend scaling - just use consistent object-contain
-const getImageScaleClass = (type?: string) => {
+const getImageScaleClass = () => {
   return "scale-100" // No scaling - backend standardization handles consistent sizing
 }
 
@@ -64,16 +64,16 @@ export default function ClothingCard({
       onMouseLeave={() => setIsHovering(false)}
     >
       <Card
-        className={`group h-full transition-all duration-300 border-0 ring-1 rounded-xl ${
+        className={`group h-full transition-all duration-300 border-0 ring-0 rounded-[10px] bg-[#ECECEC] ${
           isSelected
-            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
+            ? "ring-2 ring-blue-500 shadow-lg scale-[1.02]"
             : isHovering && !isMultiSelecting
-            ? "shadow-lg ring-border"
-            : "shadow-sm ring-border"
+            ? "shadow-md"
+            : "shadow-none"
         }`}
       >
         <div
-          className="relative w-full h-[320px] flex items-center justify-center bg-white dark:bg-slate-800 chrome:bg-card cursor-pointer overflow-hidden clothing-image"
+          className="relative w-full h-[320px] flex items-center justify-center bg-[#ECECEC] cursor-pointer overflow-hidden clothing-image rounded-[10px]"
           onClick={(e) => {
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
@@ -90,7 +90,7 @@ export default function ClothingCard({
                   src={item.url || "/placeholder.svg"}
                   alt={item.name || "Clothing item"}
                   fill
-                  className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+                  className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass()}`}
                   style={{ objectPosition: 'center' }}
                   unoptimized
                 />

@@ -15,7 +15,7 @@ import type { ClothingItem } from "../types/clothing";
 export type Clothing = ClothingItem;
 
 export type FilterAttribute = {
-  key: keyof ClothingItem;
+  key: string;
   label: string;
 };
 
@@ -112,11 +112,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
       <Button
         onClick={() => setIsOpen(true)}
         variant="outline"
-        className="relative overflow-hidden group transition-all duration-300 hover:shadow-md"
+        className="relative overflow-hidden group transition-all duration-300"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <Filter className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
-        <span className="font-medium">Filter</span>
+        <Filter className="w-5 h-5" />
       </Button>
 
       {/* Filter Sidebar */}

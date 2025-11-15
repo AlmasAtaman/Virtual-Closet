@@ -2,9 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Search, X, Check, Heart } from "lucide-react"
-import LogOutButton from "../../components/LogoutButton"
-import { ThemeToggle } from "../../components/ThemeToggle"
+import { Plus, Search, X, Folder } from "lucide-react"
 import UploadForm from "../../components/UploadForm"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../../components/ClothingGallery"
@@ -15,12 +13,11 @@ interface ClothingGalleryRef {
   refresh: () => Promise<void>;
   addClothingItem: (newItem: ClothingItem) => void;
 }
-import { ThemedLogo as Logo } from "../../components/Logo"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import FilterSection, { type FilterAttribute } from "../../components/FilterSection"
 import { Badge } from "@/components/ui/badge"
+import { DashboardSidebar } from "../../components/DashboardSidebar"
+import { GridSelectIcon } from "../../components/icons/GridSelectIcon"
+import { useTheme } from "../../contexts/ThemeContext"
 
 
 export default function Homepage() {
@@ -30,7 +27,15 @@ export default function Homepage() {
   const router = useRouter()
   const galleryRef = useRef<ClothingGalleryRef>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery] = useState("")
+  const { theme, setTheme } = useTheme()
+
+  const toggleTheme = useCallback(() => {
+    const themeOrder: Array<"light" | "dark" | "chrome"> = ["light", "dark", "chrome"]
+    const currentIndex = themeOrder.indexOf(theme as "light" | "dark" | "chrome")
+    const nextIndex = (currentIndex + 1) % themeOrder.length
+    setTheme(themeOrder[nextIndex])
+  }, [theme, setTheme])
 
   const [debouncedQuery, setDebouncedQuery] = useState("")
   useEffect(() => {
@@ -124,144 +129,115 @@ export default function Homepage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header Section */}
-      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
-          <div className="flex items-center">
-            <Logo />
-          </div>
-          <div className="flex items-center gap-4">
-            <Button onClick={() => router.push("/settings")} variant="outline" className="gap-2">
-              Settings
-            </Button>
-            <Button onClick={() => router.push("/outfits")} variant="outline" className="gap-2">
-              Outfits
-            </Button>
-            <ThemeToggle />
-            <LogOutButton />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+      {/* Sidebar */}
+      <DashboardSidebar
+        onThemeToggle={toggleTheme}
+        onSettingsClick={() => router.push("/settings")}
+      />
 
-      {/* Main Content */}
-      <main className="w-full max-w-none px-4 lg:px-6 xl:px-8 py-8 flex flex-col flex-1 min-h-0">
-        {/* Tabs full width on top */}
-        <div className="mb-6">
-          <Tabs
-            value={viewMode}
-            onValueChange={(value) => setViewMode(value as "closet" | "wishlist")}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
-              <TabsTrigger value="closet">My Closet</TabsTrigger>
-              <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {/* Controls row: Search + Buttons */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Search bar */}
-          <motion.div
-            layout
-            layoutId="search-bar-container"
-            transition={{ type: "spring", stiffness: 80, damping: 12 }}
-            className="relative flex-1 min-w-0"
-          >
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by name, type, brand..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full pr-9 min-w-0"
-            />
-            <AnimatePresence mode="wait">
-              {searchQuery && (
-                <motion.button
-                  key="clear-search-button"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+      {/* Main Content with left margin for sidebar on desktop */}
+      <main className="md:ml-[60px] md:w-[calc(100%-60px)] w-full flex flex-col flex-1 min-h-0">
+        {/* Content Area */}
+        <div className="flex-1 px-6 py-6 overflow-auto">
+          {/* Top Section: Segmented Control Toggle + Folder Icon + Action Buttons */}
+          <div className="flex items-center justify-between mb-8">
+            {/* Left: Wishlist/Closet Segmented Control */}
+            <div className="flex items-center gap-4">
+              {/* Segmented Control Toggle */}
+              <div className="inline-flex items-center bg-[#E5E5E5] rounded-full p-1 border border-gray-200">
+                <button
+                  onClick={() => setViewMode('wishlist')}
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                    viewMode === 'wishlist'
+                      ? 'bg-white text-black shadow-sm'
+                      : 'bg-transparent text-gray-600 hover:text-gray-900'
+                  }`}
                 >
-                  <X className="h-4 w-4" />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                  Wishlist
+                </button>
+                <button
+                  onClick={() => setViewMode('closet')}
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                    viewMode === 'closet'
+                      ? 'bg-white text-black shadow-sm'
+                      : 'bg-transparent text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Closet
+                </button>
+              </div>
 
-          {/* Control buttons */}
-          <div className="flex gap-2 items-center">
-            {/* Show Favorites Only Toggle */}
-            <button
-              onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`p-2 rounded-full mr-2 transition-colors border ${
-                showFavoritesOnly
-                  ? "bg-red-100 dark:bg-red-900/30 chrome:bg-red-900/20 border-red-300 dark:border-red-700 chrome:border-red-600"
-                  : "bg-slate-200 dark:bg-slate-700 chrome:bg-slate-600 border-border dark:border-border chrome:border-border"
-              }`}
-              aria-label={showFavoritesOnly ? "Show All" : "Show Favorites Only"}
-            >
-              <Heart
-                className={
-                  showFavoritesOnly
-                    ? "fill-red-500 stroke-red-500"
-                    : "stroke-black dark:stroke-white chrome:stroke-slate-200"
-                }
-              />
-            </button>
-            <FilterSection
-              clothingItems={clothingItems}
-              selectedTags={selectedTags}
-              setSelectedTags={setSelectedTags}
-              filterAttributes={filterAttributes}
-              uniqueAttributeValues={uniqueAttributeValues}
-              priceSort={priceSort}
-              setPriceSort={setPriceSort}
-              priceRange={priceRange}
-              setPriceRange={setPriceRange}
-            />
+              {/* Folder Icon */}
+              <button className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                <Folder size={20} />
+              </button>
+            </div>
 
-            <Button
-              variant={isMultiSelecting ? "destructive" : "outline"}
-              onClick={() => setIsMultiSelecting((prev) => !prev)}
-            >
-              {isMultiSelecting ? (
-                <>
-                  <X className="h-4 w-4 mr-1" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-1" />
-                  Select
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={handleOpenUploadModal}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2 dark:border dark:border-blue-400/50"
-            >
-              <Plus className="h-4 w-4" />
-              Add Clothing
-            </Button>
+            {/* Right: Action Icons */}
+            <div className="flex items-center gap-2">
+              {/* Search Toggle */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              >
+                <Search size={20} />
+              </motion.button>
+
+              {/* Filter - using FilterSection component which has its own button */}
+              <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-600 [&_button]:hover:text-gray-900 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
+                <FilterSection
+                  clothingItems={clothingItems}
+                  selectedTags={selectedTags}
+                  setSelectedTags={setSelectedTags}
+                  filterAttributes={filterAttributes}
+                  uniqueAttributeValues={uniqueAttributeValues}
+                  priceSort={priceSort}
+                  setPriceSort={setPriceSort}
+                  priceRange={priceRange}
+                  setPriceRange={setPriceRange}
+                />
+              </div>
+
+              {/* Grid Select Icon */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                onClick={() => setIsMultiSelecting(!isMultiSelecting)}
+              >
+                <GridSelectIcon size={20} />
+              </motion.button>
+
+              {/* Add Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                onClick={handleOpenUploadModal}
+              >
+                <Plus size={20} />
+              </motion.button>
+            </div>
           </div>
-        </div>
 
-        {/* Gallery Section */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col flex-1 min-h-0"
-          >
+          {/* Category Header */}
+          <h2 className="text-2xl font-semibold mb-6 border-b-2 border-black inline-block pb-1">
+            All
+          </h2>
+
+          {/* Gallery Section */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={viewMode}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col flex-1 min-h-0"
+            >
             {/* Selected Tags */}
             {(selectedTags.length > 0 || priceSort !== "none") && (
               <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
@@ -335,8 +311,9 @@ export default function Homepage() {
               showFavoritesOnly={showFavoritesOnly}
               setShowFavoritesOnly={setShowFavoritesOnly}
             />
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
 
       <UploadForm
