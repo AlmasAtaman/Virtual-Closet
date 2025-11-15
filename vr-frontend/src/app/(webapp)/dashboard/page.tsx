@@ -140,87 +140,93 @@ export default function Homepage() {
       <main className="md:ml-[60px] md:w-[calc(100%-60px)] w-full flex flex-col flex-1 min-h-0">
         {/* Content Area */}
         <div className="flex-1 px-6 py-6 overflow-auto">
-          {/* Top Section: Segmented Control Toggle + Folder Icon + Action Buttons */}
-          <div className="flex items-center justify-between mb-8">
-            {/* Left: Wishlist/Closet Segmented Control */}
-            <div className="flex items-center gap-4">
-              {/* Segmented Control Toggle */}
-              <div className="inline-flex items-center bg-[#E5E5E5] rounded-full p-1 border border-gray-200">
-                <button
-                  onClick={() => setViewMode('wishlist')}
-                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                    viewMode === 'wishlist'
-                      ? 'bg-white text-black shadow-sm'
-                      : 'bg-transparent text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Wishlist
-                </button>
-                <button
-                  onClick={() => setViewMode('closet')}
-                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                    viewMode === 'closet'
-                      ? 'bg-white text-black shadow-sm'
-                      : 'bg-transparent text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Closet
-                </button>
-              </div>
-
-              {/* Folder Icon */}
-              <button className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                <Folder size={20} />
+          {/* 3-Section Segmented Control Toggle Bar with Notched Design */}
+          <div className="relative w-full mb-6 flex items-center justify-center gap-0">
+            {/* Left Half: Wishlist Section */}
+            <div className="flex-1 bg-[#E5E5E5] border-2 border-gray-300 rounded-l-full border-r-0 py-0.5 pl-0.5">
+              <button
+                onClick={() => setViewMode('wishlist')}
+                className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
+                  viewMode === 'wishlist'
+                    ? 'bg-white text-black shadow-sm rounded-l-full'
+                    : 'bg-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Wishlist
               </button>
             </div>
 
-            {/* Right: Action Icons */}
-            <div className="flex items-center gap-2">
-              {/* Search Toggle */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            {/* Center: Circular Folder Button (Sticks Out) */}
+            <div className="relative z-10 -mx-3">
+              <button
+                className="w-14 h-14 flex items-center justify-center bg-white rounded-full border-2 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-200 shadow-md"
+                aria-label="View Folders"
               >
-                <Search size={20} />
-              </motion.button>
-
-              {/* Filter - using FilterSection component which has its own button */}
-              <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-600 [&_button]:hover:text-gray-900 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
-                <FilterSection
-                  clothingItems={clothingItems}
-                  selectedTags={selectedTags}
-                  setSelectedTags={setSelectedTags}
-                  filterAttributes={filterAttributes}
-                  uniqueAttributeValues={uniqueAttributeValues}
-                  priceSort={priceSort}
-                  setPriceSort={setPriceSort}
-                  priceRange={priceRange}
-                  setPriceRange={setPriceRange}
-                />
-              </div>
-
-              {/* Grid Select Icon */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                onClick={() => setIsMultiSelecting(!isMultiSelecting)}
-              >
-                <GridSelectIcon size={20} />
-              </motion.button>
-
-              {/* Add Button */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                onClick={handleOpenUploadModal}
-              >
-                <Plus size={20} />
-              </motion.button>
+                <Folder size={24} />
+              </button>
             </div>
+
+            {/* Right Half: Closet Section */}
+            <div className="flex-1 bg-[#E5E5E5] border-2 border-gray-300 rounded-r-full border-l-0 py-0.5 pr-0.5">
+              <button
+                onClick={() => setViewMode('closet')}
+                className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
+                  viewMode === 'closet'
+                    ? 'bg-white text-black shadow-sm rounded-r-full'
+                    : 'bg-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Closet
+              </button>
+            </div>
+          </div>
+
+          {/* Action Buttons Row - SEPARATE from toggle */}
+          <div className="flex items-center justify-end gap-3 mb-6">
+            {/* Search */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            >
+              <Search size={20} />
+            </motion.button>
+
+            {/* Filter */}
+            <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-700 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
+              <FilterSection
+                clothingItems={clothingItems}
+                selectedTags={selectedTags}
+                setSelectedTags={setSelectedTags}
+                filterAttributes={filterAttributes}
+                uniqueAttributeValues={uniqueAttributeValues}
+                priceSort={priceSort}
+                setPriceSort={setPriceSort}
+                priceRange={priceRange}
+                setPriceRange={setPriceRange}
+              />
+            </div>
+
+            {/* Grid Select */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMultiSelecting(!isMultiSelecting)}
+            >
+              <GridSelectIcon size={20} />
+            </motion.button>
+
+            {/* Add */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={handleOpenUploadModal}
+            >
+              <Plus size={20} />
+            </motion.button>
           </div>
 
           {/* Category Header */}

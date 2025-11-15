@@ -4,7 +4,7 @@ import type React from "react"
 import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
-import { Upload, Link, X, Loader2, Check, Sparkles, ImageIcon, Plus, Zap, Shield } from "lucide-react"
+import { Upload, Link, X, Check, Sparkles, ImageIcon, Plus, Zap, Shield } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
-import { MAIN_CATEGORIES, SUBCATEGORIES, STYLE_TAGS, SIZES, POPULAR_BRANDS, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
+import { MAIN_CATEGORIES, STYLE_TAGS, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
 
 
 interface UploadFormProps {
@@ -208,7 +208,7 @@ export default function UploadForm({
   )
 
   // Store AI suggestions for analytics tracking
-  const [aiSuggestions, setAiSuggestions] = useState<any>(null)
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, unknown> | null>(null)
 
   const handleAutoFill = async () => {
     if (!selectedFile) return

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ClothingItem } from "../types/clothing"
 import { Label } from "@/components/ui/label"
-import { MAIN_CATEGORIES, SUBCATEGORIES, STYLE_TAGS, SIZES, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
+import { MAIN_CATEGORIES, STYLE_TAGS, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
 
 const CLOTHING_SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
 const SHOE_SIZES = ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13', '14']
