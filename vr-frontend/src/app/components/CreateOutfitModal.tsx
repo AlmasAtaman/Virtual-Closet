@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Plus, Shuffle } from "lucide-react"
+import { X, Plus, Shuffle, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
+import ScrollableClothingRow from "./ScrollableClothingRow"
 import Image from "next/image"
 import axios from "axios"
 
@@ -71,6 +72,19 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [outerwearOnTop, setOuterwearOnTop] = useState(false) // Layer order toggle
+
+  // Mode state
+  const [activeMode, setActiveMode] = useState<"canvas" | "dressme" | "moodboards">("dressme")
+  const [showOuterwearRow, setShowOuterwearRow] = useState(false)
+
+  // Dress Me mode state
+  const [dressMeSelectedTop, setDressMeSelectedTop] = useState<ClothingItem | null>(null)
+  const [dressMeSelectedBottom, setDressMeSelectedBottom] = useState<ClothingItem | null>(null)
+  const [dressMeSelectedOuterwear, setDressMeSelectedOuterwear] = useState<ClothingItem | null>(null)
+
+  // Randomize animation state
+  const [isRandomizing, setIsRandomizing] = useState(false)
+  const [randomizingCategory, setRandomizingCategory] = useState<string | null>(null)
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false)
@@ -501,9 +515,68 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }
 
+  // Randomize function for Dress Me mode with slot machine animation
+  const randomizeDressMeOutfit = async () => {
+    setIsRandomizing(true)
+
+    // Helper function to simulate slot machine effect
+    const animateSlotMachine = (
+      items: ClothingItem[],
+      setItem: (item: ClothingItem | null) => void,
+      duration: number
+    ) => {
+      return new Promise<void>((resolve) => {
+        if (items.length === 0) {
+          resolve()
+          return
+        }
+
+        const finalItem = items[Math.floor(Math.random() * items.length)]
+        const iterations = 15 // Number of rapid changes
+        const interval = duration / iterations
+
+        let currentIteration = 0
+        const timer = setInterval(() => {
+          const randomItem = items[Math.floor(Math.random() * items.length)]
+          setItem(randomItem)
+          currentIteration++
+
+          if (currentIteration >= iterations) {
+            clearInterval(timer)
+            setItem(finalItem)
+            resolve()
+          }
+        }, interval)
+      })
+    }
+
+    // Animate tops (1.5 seconds)
+    if (clothingItems.tops.length > 0) {
+      setRandomizingCategory("tops")
+      await animateSlotMachine(clothingItems.tops, setDressMeSelectedTop, 1500)
+      await new Promise((resolve) => setTimeout(resolve, 100)) // Small pause
+    }
+
+    // Animate bottoms (1.8 seconds, slightly slower)
+    if (clothingItems.bottoms.length > 0) {
+      setRandomizingCategory("bottoms")
+      await animateSlotMachine(clothingItems.bottoms, setDressMeSelectedBottom, 1800)
+      await new Promise((resolve) => setTimeout(resolve, 100)) // Small pause
+    }
+
+    // Animate outerwear (2 seconds, slowest) - only if shown
+    if (showOuterwearRow && clothingItems.outerwear.length > 0) {
+      setRandomizingCategory("outerwear")
+      await animateSlotMachine(clothingItems.outerwear, setDressMeSelectedOuterwear, 2000)
+    }
+
+    setRandomizingCategory(null)
+    setIsRandomizing(false)
+  }
+
   const createOutfit = async () => {
     const selectedItems = [selectedTop, selectedBottom, selectedOuterwear].filter(Boolean) as ClothingItem[]
-    
+
     if (selectedItems.length === 0) {
       alert("Please select at least one clothing item.")
       return
@@ -546,6 +619,68 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }
 
+  // Save outfit from Dress Me mode
+  const saveDressMeOutfit = async () => {
+    const selectedItems = [
+      dressMeSelectedTop,
+      dressMeSelectedBottom,
+      dressMeSelectedOuterwear,
+    ].filter(Boolean) as ClothingItem[]
+
+    if (selectedItems.length === 0) {
+      alert("Please select at least one clothing item.")
+      return
+    }
+
+    setIsCreating(true)
+    try {
+      // Apply default positions based on item type
+      const DEFAULT_POSITIONS = {
+        top: { left: 8, bottom: 8.9, width: 10, scale: 1 },
+        bottom: { left: 7.9, bottom: 0.2, width: 10, scale: 1 },
+        outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 0.8 },
+      }
+
+      const clothingData = selectedItems.map((item) => {
+        const type = item.type?.toLowerCase() || ""
+        let position = { left: 50, bottom: 0, width: 10, scale: 1 }
+
+        if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
+          position = DEFAULT_POSITIONS.top
+        } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
+          position = DEFAULT_POSITIONS.bottom
+        } else if (["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(type)) {
+          position = DEFAULT_POSITIONS.outerwear
+        }
+
+        return {
+          clothingId: item.id,
+          left: position.left,
+          bottom: position.bottom,
+          width: position.width,
+          scale: position.scale,
+          x: 0,
+          y: 0,
+        }
+      })
+
+      const axios = createAuthenticatedAxios()
+      await axios.post("/api/outfits", {
+        clothingItems: clothingData,
+        name: outfitName || null,
+        outerwearOnTop: outerwearOnTop,
+      })
+
+      onOutfitCreated()
+      handleCloseModal()
+    } catch (error) {
+      console.error("Error creating outfit:", error)
+      alert("Failed to create outfit")
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   const handleCloseModal = () => {
     setSelectedTop(null)
     setSelectedBottom(null)
@@ -554,7 +689,94 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     setEditedCategorizedItems(null)
     setSelectedItemForResize(null)
     setOuterwearOnTop(false) // Reset layer order toggle
+
+    // Reset Dress Me mode state
+    setDressMeSelectedTop(null)
+    setDressMeSelectedBottom(null)
+    setDressMeSelectedOuterwear(null)
+    setShowOuterwearRow(false)
+    setIsRandomizing(false)
+    setRandomizingCategory(null)
+
     onCloseAction()
+  }
+
+  // Render preview for Dress Me mode
+  const renderDressMePreview = () => {
+    const items = [
+      dressMeSelectedOuterwear,
+      dressMeSelectedTop,
+      dressMeSelectedBottom,
+    ].filter(Boolean) as ClothingItem[]
+
+    if (items.length === 0) return null
+
+    // Apply default positions
+    const DEFAULT_POSITIONS = {
+      top: { left: 8, bottom: 8.9, width: 10, scale: 1 },
+      bottom: { left: 7.9, bottom: 0.2, width: 10, scale: 1 },
+      outerwear: { left: 35.6, bottom: 10.2, width: 10, scale: 0.8 },
+    }
+
+    const positionedItems = items.map((item) => {
+      const type = item.type?.toLowerCase() || ""
+      let position = { left: 50, bottom: 0, width: 10, scale: 1 }
+
+      if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
+        position = DEFAULT_POSITIONS.top
+      } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
+        position = DEFAULT_POSITIONS.bottom
+      } else if (["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(type)) {
+        position = DEFAULT_POSITIONS.outerwear
+      }
+
+      return { ...item, ...position }
+    })
+
+    return (
+      <div className="relative w-44 h-80 mx-auto">
+        {positionedItems.map((item, index) => {
+          // Z-index calculation for layer ordering
+          let zIndex = index
+          const itemType = item.type?.toLowerCase() || ""
+          const isOuterwear = ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)
+          const isTop = ["t-shirt", "dress", "shirt", "blouse"].includes(itemType)
+
+          if (outerwearOnTop && isOuterwear) {
+            zIndex = 30
+          } else if (!outerwearOnTop && isTop) {
+            zIndex = 30
+          }
+
+          return (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="absolute"
+              style={{
+                left: `${item.left}%`,
+                bottom: `${item.bottom}rem`,
+                transform: `translateX(-50%) scale(${item.scale})`,
+                zIndex: zIndex,
+                width: `${item.width}rem`,
+              }}
+            >
+              <Image
+                src={item.url || "/placeholder.svg"}
+                alt={item.name || ""}
+                width={100}
+                height={120}
+                className="w-full h-auto object-contain rounded-lg"
+                draggable={false}
+                unoptimized
+              />
+            </motion.div>
+          )
+        })}
+      </div>
+    )
   }
 
   // Custom outfit display - matches OutfitCard exactly
@@ -675,10 +897,180 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             className="bg-card rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border-2 border-border"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Tab Navigation */}
+            <div className="flex items-center justify-center border-b border-border bg-muted/30 px-4 py-3">
+              <div className="flex gap-1 bg-background rounded-lg p-1 border border-border">
+                <button
+                  onClick={() => setActiveMode("dressme")}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                    activeMode === "dressme"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  Dress Me
+                </button>
+                <button
+                  onClick={() => setActiveMode("canvas")}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                    activeMode === "canvas"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  Canvas
+                </button>
+                <button
+                  onClick={() => setActiveMode("moodboards")}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                    activeMode === "moodboards"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  Moodboards
+                </button>
+              </div>
+            </div>
+
             {/* Main Content */}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-              {/* Left Panel - Outfit Details */}
-              <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-border p-4 overflow-y-auto bg-card" onClick={() => setSelectedItemForResize(null)}>
+              {/* Moodboards Mode - Coming Soon */}
+              {activeMode === "moodboards" && (
+                <div className="flex-1 flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <p className="text-2xl font-semibold text-foreground mb-2">Coming Soon</p>
+                    <p className="text-muted-foreground">Moodboards feature is under development</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Dress Me Mode */}
+              {activeMode === "dressme" && (
+                <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                  {/* Left Side - Scrollable Rows */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {/* Outfit Name Input */}
+                    <div className="mb-6 px-4">
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Outfit Name (Optional)
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Enter outfit name"
+                        value={outfitName}
+                        onChange={(e) => setOutfitName(e.target.value)}
+                        className="w-full max-w-md"
+                      />
+                    </div>
+
+                    {/* Tops Row */}
+                    <ScrollableClothingRow
+                      items={clothingItems.tops}
+                      selectedItemId={dressMeSelectedTop?.id}
+                      onSelectItem={(item) => setDressMeSelectedTop(item)}
+                      label="Tops"
+                      isAnimating={isRandomizing && randomizingCategory === "tops"}
+                      animatingItemId={dressMeSelectedTop?.id}
+                    />
+
+                    {/* Bottoms Row */}
+                    <ScrollableClothingRow
+                      items={clothingItems.bottoms}
+                      selectedItemId={dressMeSelectedBottom?.id}
+                      onSelectItem={(item) => setDressMeSelectedBottom(item)}
+                      label="Bottoms"
+                      isAnimating={isRandomizing && randomizingCategory === "bottoms"}
+                      animatingItemId={dressMeSelectedBottom?.id}
+                    />
+
+                    {/* Add/Remove Outerwear Button */}
+                    {!showOuterwearRow && (
+                      <div className="px-4 mb-6">
+                        <Button
+                          onClick={() => setShowOuterwearRow(true)}
+                          className="w-full max-w-md bg-cyan-500 hover:bg-cyan-600 text-white"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Outerwear
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Outerwear Row (conditional) */}
+                    {showOuterwearRow && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <ScrollableClothingRow
+                          items={clothingItems.outerwear}
+                          selectedItemId={dressMeSelectedOuterwear?.id}
+                          onSelectItem={(item) => setDressMeSelectedOuterwear(item)}
+                          label="Outerwear"
+                          isAnimating={isRandomizing && randomizingCategory === "outerwear"}
+                          animatingItemId={dressMeSelectedOuterwear?.id}
+                        />
+                        <div className="px-4 mb-6">
+                          <Button
+                            onClick={() => {
+                              setShowOuterwearRow(false)
+                              setDressMeSelectedOuterwear(null)
+                            }}
+                            variant="outline"
+                            className="w-full max-w-md"
+                          >
+                            <Minus className="w-4 h-4 mr-2" />
+                            Remove Outerwear
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Bottom Actions */}
+                    <div className="px-4 mt-8 flex flex-col sm:flex-row gap-3">
+                      <Button
+                        onClick={randomizeDressMeOutfit}
+                        variant="outline"
+                        className="flex-1 max-w-xs"
+                        disabled={isRandomizing}
+                      >
+                        <Shuffle className="w-4 h-4 mr-2" />
+                        {isRandomizing ? "Randomizing..." : "Randomize"}
+                      </Button>
+                      <Button
+                        onClick={saveDressMeOutfit}
+                        className="flex-1 max-w-xs bg-lime-400 hover:bg-lime-500 text-black font-semibold"
+                        disabled={(!dressMeSelectedTop && !dressMeSelectedBottom) || isCreating}
+                      >
+                        {isCreating ? "Saving..." : "Save Outfit"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Right Side - Outfit Preview */}
+                  <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-border bg-gradient-to-br from-muted/30 via-background to-muted/50 p-6 flex flex-col items-center justify-center">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Preview</h3>
+                    <div className="w-full max-w-sm h-[400px] bg-gradient-to-br from-muted via-background to-card rounded-xl flex items-center justify-center border ring-1 ring-border shadow-lg overflow-hidden p-4">
+                      {!dressMeSelectedTop && !dressMeSelectedBottom && !dressMeSelectedOuterwear ? (
+                        <div className="text-center text-muted-foreground">
+                          <p className="text-sm">Select items to preview outfit</p>
+                        </div>
+                      ) : (
+                        renderDressMePreview()
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Canvas Mode - Original Content */}
+              {activeMode === "canvas" && (
+                <>
+                  {/* Left Panel - Outfit Details */}
+                  <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-border p-4 overflow-y-auto bg-card" onClick={() => setSelectedItemForResize(null)}>
                 {/* Outfit Name */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -1057,6 +1449,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </div>
                 </div>
               </div>
+                </>
+              )}
             </div>
           </motion.div>
         </motion.div>
