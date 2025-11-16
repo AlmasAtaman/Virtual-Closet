@@ -517,24 +517,28 @@ export default function UploadForm({
     <AnimatePresence>
       {isOpen && (
         <Dialog key="upload-modal" open={isOpen} onOpenChange={onCloseAction}>
-          <DialogContent className="max-w-md w-[420px] p-6 flex flex-col gap-4">
+          <DialogContent
+            className={`p-6 overflow-visible transition-all duration-500 ${
+              mode === "advanced" ? "max-w-md w-[420px]" : "max-w-md w-[420px]"
+            }`}
+          >
             <VisuallyHidden>
               <DialogTitle>Add New Clothing Item</DialogTitle>
             </VisuallyHidden>
 
-            {/* Left Sidebar - Advanced Mode Only (Positioned Absolutely) */}
+            {/* Left Sidebar - Advanced Mode Only */}
             <AnimatePresence>
               {mode === "advanced" && (
                 <motion.div
                   key="left-sidebar"
-                  initial={{ x: -260, opacity: 0 }}
-                  animate={{ x: -260, opacity: 1 }}
-                  exit={{ x: -260, opacity: 0 }}
+                  initial={{ width: 0, opacity: 0, x: 0 }}
+                  animate={{ width: 260, opacity: 1, x: -260 }}
+                  exit={{ width: 0, opacity: 0, x: 0 }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-60 h-[calc(100%-60px)] bg-background border border-border rounded-lg shadow-lg overflow-hidden"
-                  style={{ transform: 'translateX(-260px) translateY(-50%)' }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 bg-background border-y border-l border-border overflow-hidden h-[480px] rounded-l-lg"
+                  style={{ originX: 1 }}
                 >
-                  <div className="p-6 space-y-4 h-full overflow-y-auto">
+                  <div className="p-6 space-y-4 h-full overflow-hidden">
                     {/* Name */}
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-sm font-medium">Name</Label>
@@ -626,17 +630,7 @@ export default function UploadForm({
               )}
             </AnimatePresence>
 
-            {/* Center Content */}
-            <motion.div
-              key="upload-modal-content"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="flex flex-col gap-4"
-            >
-
-                  {/* URL Input (conditional) */}
+            {/* URL Input (conditional) */}
                   {uploadMethod === "url" && (
                       <motion.div
                         key="url-input-section"
@@ -887,21 +881,19 @@ export default function UploadForm({
                 )}
               </AnimatePresence>
 
-            </motion.div>
-
-            {/* Right Sidebar - Advanced Mode Only (Positioned Absolutely) */}
+            {/* Right Sidebar - Advanced Mode Only */}
             <AnimatePresence>
               {mode === "advanced" && (
                 <motion.div
                   key="right-sidebar"
-                  initial={{ x: 260, opacity: 0 }}
-                  animate={{ x: 260, opacity: 1 }}
-                  exit={{ x: 260, opacity: 0 }}
+                  initial={{ width: 0, opacity: 0, x: 0 }}
+                  animate={{ width: 260, opacity: 1, x: 260 }}
+                  exit={{ width: 0, opacity: 0, x: 0 }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-60 h-[calc(100%-60px)] bg-background border border-border rounded-lg shadow-lg overflow-hidden"
-                  style={{ transform: 'translateX(260px) translateY(-50%)' }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 bg-background border-y border-r border-border overflow-hidden h-[480px] rounded-r-lg"
+                  style={{ originX: 0 }}
                 >
-                  <div className="p-6 space-y-3 h-full flex flex-col">
+                    <div className="p-6 space-y-3 h-full flex flex-col overflow-hidden">
                     {/* Source URL */}
                     <div className="space-y-1.5">
                       <Label htmlFor="sourceUrl" className="text-sm font-medium">Source URL</Label>
