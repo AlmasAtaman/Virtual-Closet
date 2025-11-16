@@ -4,7 +4,7 @@ import type React from "react"
 import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
-import { Upload, Link, X, Check, Zap, Shield, UploadCloud, HelpCircle, ShoppingCart } from "lucide-react"
+import { Upload, Link, X, Check, Zap, Shield, UploadCloud, ShoppingCart } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ClosetIcon } from "./icons/ClosetIcon"
 import { Button } from "@/components/ui/button"
@@ -595,34 +595,6 @@ export default function UploadForm({
                       </motion.div>
                     )}
 
-              {/* Closet/Wishlist Toggle */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setUploadTarget("closet")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
-                    uploadTarget === "closet"
-                      ? "bg-black text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  style={{ backgroundColor: uploadTarget === "closet" ? '#000' : undefined }}
-                >
-                  <ClosetIcon className={uploadTarget === "closet" ? "text-white" : "text-gray-700"} size={20} />
-                  <span className="text-sm font-medium">Closet</span>
-                </button>
-                <button
-                  onClick={() => setUploadTarget("wishlist")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
-                    uploadTarget === "wishlist"
-                      ? "bg-black text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  style={{ backgroundColor: uploadTarget === "wishlist" ? '#000' : undefined }}
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  <span className="text-sm font-medium">Wishlist</span>
-                </button>
-              </div>
-
               {/* Upload Area */}
               <Card
                 className={`border-2 border-dashed transition-all duration-300 cursor-pointer ${
@@ -646,7 +618,7 @@ export default function UploadForm({
                   }
                 }}
               >
-                <CardContent className="p-16 flex items-center justify-center min-h-[280px]">
+                <CardContent className="p-16 flex items-center justify-center min-h-[380px]">
                   <AnimatePresence mode="wait">
                     {imagePreview ? (
                       <motion.div
@@ -773,10 +745,15 @@ export default function UploadForm({
                     {isAutoFilling ? "..." : "Auto Fill"}
                   </Button>
                   <button
-                    className="h-8 w-8 flex items-center justify-center rounded-md border border-input hover:bg-accent"
-                    onClick={() => {/* Info button */}}
+                    className="h-8 w-8 flex items-center justify-center rounded-md border border-input hover:bg-accent transition-all"
+                    onClick={() => setUploadTarget(uploadTarget === "closet" ? "wishlist" : "closet")}
+                    title={uploadTarget === "closet" ? "Switch to Wishlist" : "Switch to Closet"}
                   >
-                    <HelpCircle className="w-3.5 h-3.5" />
+                    {uploadTarget === "closet" ? (
+                      <ClosetIcon className="text-foreground" size={16} />
+                    ) : (
+                      <ShoppingCart className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
