@@ -4,7 +4,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
 import { Heart, Check } from "lucide-react"
 import { CompactLoadingPlaceholder } from "./LoadingImagePlaceholder"
@@ -35,14 +35,6 @@ export default function ClothingCard({
   viewMode,
 }: ClothingCardProps) {
   const [isHovering, setIsHovering] = useState(false)
-
-  // Helper function to safely format price
-  const formatPrice = (price: number | string | null | undefined): string => {
-    if (price === null || price === undefined) return ""
-    const numPrice = typeof price === "string" ? Number.parseFloat(price) : price
-    if (isNaN(numPrice) || numPrice === 0) return ""
-    return `$${numPrice.toFixed(2)}`
-  }
 
   return (
     <motion.div
@@ -128,43 +120,29 @@ export default function ClothingCard({
             </motion.div>
           )}
 
-          {/* Favorite Heart Icon - top right, always visible, styled */}
-          <motion.button
-            className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 dark:bg-slate-700/80 chrome:bg-card/80 backdrop-blur-sm"
-            whileHover={{ scale: 1.15 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            onClick={(e) => {
-              e.stopPropagation()
-              toggleFavorite(item.id, !item.isFavorite)
-            }}
-            aria-label={item.isFavorite ? "Unfavorite" : "Favorite"}
-          >
-            {item.isFavorite ? (
-              <Heart className="fill-red-500 text-red-500 w-6 h-6" />
-            ) : (
-              <Heart className="text-gray-500 dark:text-gray-300 chrome:text-muted-foreground w-6 h-6" />
-            )}
-          </motion.button>
-        </div>
-
-        <CardContent className="p-4">
-          <h3 className="font-medium line-clamp-1 mb-1 text-base">{item.name}</h3>
-          <div className="mb-2 flex flex-wrap gap-1">
-            {item.type && (
-              <Badge variant="secondary" className="text-xs font-normal capitalize">
-                {item.type}
-              </Badge>
-            )}
-            {item.brand && item.brand !== "No brand" && item.brand.trim() !== "" && (
-              <Badge variant="secondary" className="text-xs font-normal capitalize">
-                {item.brand}
-              </Badge>
-            )}
-          </div>
-          {viewMode !== "closet" && formatPrice(item.price) && (
-            <p className="text-sm font-medium text-primary">{formatPrice(item.price)}</p>
+          {/* Favorite Heart Icon - top right, visible on hover */}
+          {isHovering && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute top-2 right-2 z-20 p-1 rounded-full bg-white/80 dark:bg-slate-700/80 chrome:bg-card/80 backdrop-blur-sm"
+              whileHover={{ scale: 1.15 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleFavorite(item.id, !item.isFavorite)
+              }}
+              aria-label={item.isFavorite ? "Unfavorite" : "Favorite"}
+            >
+              {item.isFavorite ? (
+                <Heart className="fill-red-500 text-red-500 w-6 h-6" />
+              ) : (
+                <Heart className="text-gray-500 dark:text-gray-300 chrome:text-muted-foreground w-6 h-6" />
+              )}
+            </motion.button>
           )}
-        </CardContent>
+        </div>
       </Card>
     </motion.div>
   )

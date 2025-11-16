@@ -4,8 +4,9 @@ import type React from "react"
 import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
-import { Upload, Link, X, Check, Sparkles, ImageIcon, Plus, Zap, Shield } from "lucide-react"
+import { Upload, Link, X, Check, Zap, Shield, UploadCloud, HelpCircle, ShoppingCart } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { ClosetIcon } from "./icons/ClosetIcon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,10 +14,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import type { ClothingItem } from "../types/clothing"
 import { MAIN_CATEGORIES, STYLE_TAGS, SEASONS, getSubcategoriesForCategory } from "../constants/clothing"
 
@@ -516,364 +516,300 @@ export default function UploadForm({
     <AnimatePresence>
       {isOpen && (
         <Dialog key="upload-modal" open={isOpen} onOpenChange={onCloseAction}>
-          <DialogContent className="max-w-6xl w-[95vw] h-[85vh] max-h-[85vh] p-0 flex flex-col overflow-hidden">
+          <DialogContent className="max-w-md w-[420px] p-6 flex flex-col gap-4">
+            <VisuallyHidden>
+              <DialogTitle>Add New Clothing Item</DialogTitle>
+            </VisuallyHidden>
               <motion.div
               key="upload-modal-content"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="flex flex-col h-full"
+              className="flex flex-col gap-4"
             >
-              {/* Header */}
-              <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-background to-muted/20">
-                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  Add New Clothing Item
-                </DialogTitle>
-              </DialogHeader>
 
-              <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
-                {/* Left Column - Image Upload */}
-                <div className="lg:w-2/5 p-6 border-r bg-gradient-to-br from-muted/30 to-muted/10 flex flex-col min-h-0 overflow-y-auto">
-                  <div className="space-y-6 flex flex-col flex-1">
-                    {/* Upload Method Toggle */}
-                    <Card className="p-1 bg-background/50 backdrop-blur-sm">
-                      <div className="flex gap-1">
-                        <Button
-                          variant={uploadMethod === "direct" ? "default" : "ghost"}
-                          size="sm"
-                          onClick={() => setUploadMethod("direct")}
-                          className="flex-1 transition-all duration-200"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Direct Upload
-                        </Button>
-                        <Button
-                          variant={uploadMethod === "url" ? "default" : "ghost"}
-                          size="sm"
-                          onClick={() => setUploadMethod("url")}
-                          className="flex-1 transition-all duration-200"
-                        >
-                          <Link className="w-4 h-4 mr-2" />
-                          From URL
-                        </Button>
-                      </div>
-                    </Card>
-                    {/* Direct Upload Flow */}
-                    {uploadMethod === "direct" && (
+                  {/* URL Input (conditional) */}
+                  {uploadMethod === "url" && (
                       <motion.div
-                        key="direct-upload"
-                        initial={{ opacity: 0, y: 20 }}
+                        key="url-input-section"
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-4 flex flex-col flex-1"
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-3"
                       >
-                        <Card
-                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex flex-col flex-1 ${
-                            isDragOver
-                              ? "border-primary bg-primary/5 scale-[1.02]"
-                              : imagePreview
-                                ? "border-primary/50 bg-primary/5"
-                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
-                          }`}
-                          onDrop={handleDrop}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            setIsDragOver(true)
-                          }}
-                          onDragLeave={() => setIsDragOver(false)}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <CardContent className="p-8 flex flex-col justify-center items-center flex-1">
-                            <AnimatePresence mode="wait">
-                              {imagePreview ? (
-                                <motion.div
-                                  key="image-preview"
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.8 }}
-                                  className="space-y-4"
-                                >
-                                  <div className="relative group">
-                                    <Image
-                                      src={imagePreview || "/placeholder.svg"}
-                                      alt="Preview"
-                                      width={300}
-                                      height={192}
-                                      className="w-full h-48 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
-                                    />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setImagePreview("")
-                                      setSelectedFile(null)
-                                    }}
-                                    className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                    Remove Image
-                                  </Button>
-                                </motion.div>
-                              ) : (
-                                <motion.div
-                                  key="upload-placeholder"
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="text-center space-y-4 flex flex-col justify-center items-center h-full"
-                                >
-                                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <ImageIcon className="w-8 h-8 text-primary" />
-                                  </div>
-                                  <div>
-                                    <p className="text-lg font-medium text-foreground">Upload or Copy, Paste a Image</p>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      Up to 10MB • Paste from clipboard (Ctrl+C, Ctrl+V)
-                                    </p>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </CardContent>
-                        </Card>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleFileUpload(file)
-                          }}
-                        />
-                        <AnimatePresence>
-                          {imagePreview && (
-                            <motion.div
-                              key="auto-fill-button"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Product URL</Label>
+                          <div className="flex gap-2 w-full">
+                            <Input
+                              placeholder="Enter product URL and press Enter..."
+                              value={scrapingUrl}
+                              onChange={e => {
+                                setScrapingUrl(e.target.value);
+                                setFetchError(null);
+                                setQuickMetadataFetched(false);
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && scrapingUrl.trim() && !isLoading) {
+                                  e.preventDefault();
+                                  handleGeminiMetadata();
+                                }
+                              }}
+                              className="flex-1"
+                              disabled={isLoading}
+                            />
+                            <Button
+                              onClick={handleGeminiMetadata}
+                              disabled={!scrapingUrl.trim() || isLoading}
+                              className="px-6 w-[140px] relative overflow-hidden"
                             >
-                              <Button
-                                onClick={handleAutoFill}
-                                disabled={isAutoFilling || !selectedFile}
-                                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 relative overflow-hidden"
-                                size="lg"
-                              >
-                                {isAutoFilling && (
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-sweep" />
-                                )}
-                                {!isAutoFilling && <Sparkles className="w-4 h-4 mr-2" />}
-                                {isAutoFilling ? "Analyzing..." : "Auto-fill with AI"}
-                              </Button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    )}
-                    {/* From URL 3-step Flow */}
-                    {uploadMethod === "url" && (
-                      <motion.div
-                        key="url-upload"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-4 flex flex-col flex-1"
-                      >
-                        {/* URL Input Section */}
-                        <motion.div
-                          key="url-input-step"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="space-y-4"
-                        >
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium">Product URL</Label>
-                            <div className="flex gap-2 w-full">
-                              <Input
-                                placeholder="Enter product URL and press Enter..."
-                                value={scrapingUrl}
-                                onChange={e => {
-                                  setScrapingUrl(e.target.value);
-                                  setFetchError(null);
-                                  setQuickMetadataFetched(false);
-                                }}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter' && scrapingUrl.trim() && !isLoading) {
-                                    e.preventDefault();
-                                    handleGeminiMetadata();
-                                  }
-                                }}
-                                className="flex-1"
-                                disabled={isLoading}
-                              />
-                              <Button
-                                onClick={handleGeminiMetadata}
-                                disabled={!scrapingUrl.trim() || isLoading}
-                                className="px-6 w-[140px] relative overflow-hidden"
-                              >
-                                {isLoading && (
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent animate-shimmer-sweep" />
-                                )}
-                                {isLoading ? (
-                                  <span className="relative z-10">Loading...</span>
-                                ) : (
-                                  <>
-                                    <Zap className="w-4 h-4 mr-1" />
-                                    Fetch Info
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                          {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
-
-                          {quickMetadataFetched && (
-                            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                              <div className="flex items-center gap-2">
-                                <Check className="w-4 h-4 text-primary" />
-                                <span className="text-sm font-medium text-foreground">
-                                  Metadata extracted successfully!
-                                </span>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1 ml-6">
-                                Now upload your product image below ↓
-                              </p>
-                            </div>
-                          )}
-                        </motion.div>
-                        
-                        {/* Always show image upload area after URL input */}
-                        <Card
-                          className={`border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden flex flex-col flex-1 ${
-                            isDragOver
-                              ? "border-primary bg-primary/5 scale-[1.02]"
-                              : imagePreview
-                                ? "border-primary/50 bg-primary/5"
-                                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
-                          }`}
-                          onDrop={handleDrop}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            setIsDragOver(true)
-                          }}
-                          onDragLeave={() => setIsDragOver(false)}
-                          onClick={() => quickImageInputRef.current?.click()}
-                        >
-                          <CardContent className="p-8 flex flex-col justify-center items-center flex-1">
-                            <AnimatePresence mode="wait">
-                              {imagePreview ? (
-                                <motion.div
-                                  key="url-image-preview"
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.8 }}
-                                  className="space-y-4"
-                                >
-                                  <div className="relative group">
-                                    <Image
-                                      src={imagePreview || "/placeholder.svg"}
-                                      alt="Preview"
-                                      width={300}
-                                      height={192}
-                                      className="w-full h-48 object-contain mx-auto rounded-lg shadow-lg transition-transform group-hover:scale-[1.02]"
-                                    />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setImagePreview("")
-                                      setSelectedFile(null)
-                                    }}
-                                    className="mx-auto flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                    Remove Image
-                                  </Button>
-                                </motion.div>
-                              ) : (
-                                <motion.div
-                                  key="url-upload-placeholder"
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="text-center space-y-4 flex flex-col justify-center items-center h-full"
-                                >
-                                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <ImageIcon className="w-8 h-8 text-primary" />
-                                  </div>
-                                  <div>
-                                    <p className="text-lg font-medium text-foreground">Upload Product Image</p>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      Upload while metadata is being fetched • Paste from clipboard (Ctrl+C, Ctrl+V)
-                                    </p>
-                                  </div>
-                                </motion.div>
+                              {isLoading && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent animate-shimmer-sweep" />
                               )}
-                            </AnimatePresence>
-                          </CardContent>
-                        </Card>
-                        <input
-                          ref={quickImageInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) handleFileUpload(file)
-                          }}
-                        />
+                              {isLoading ? (
+                                <span className="relative z-10">Loading...</span>
+                              ) : (
+                                <>
+                                  <Zap className="w-4 h-4 mr-1" />
+                                  Fetch Info
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        {fetchError && <div className="text-xs text-destructive mt-1">{fetchError}</div>}
+
+                        {quickMetadataFetched && (
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Check className="w-4 h-4 text-primary" />
+                              <span className="text-sm font-medium text-foreground">
+                                Metadata extracted successfully!
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 ml-6">
+                              Now upload your product image below ↓
+                            </p>
+                          </div>
+                        )}
                       </motion.div>
                     )}
-                  </div>
+
+              {/* Closet/Wishlist Toggle */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setUploadTarget("closet")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+                    uploadTarget === "closet"
+                      ? "bg-black text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  style={{ backgroundColor: uploadTarget === "closet" ? '#000' : undefined }}
+                >
+                  <ClosetIcon className={uploadTarget === "closet" ? "text-white" : "text-gray-700"} size={20} />
+                  <span className="text-sm font-medium">Closet</span>
+                </button>
+                <button
+                  onClick={() => setUploadTarget("wishlist")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
+                    uploadTarget === "wishlist"
+                      ? "bg-black text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  style={{ backgroundColor: uploadTarget === "wishlist" ? '#000' : undefined }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="text-sm font-medium">Wishlist</span>
+                </button>
+              </div>
+
+              {/* Upload Area */}
+              <Card
+                className={`border-2 border-dashed transition-all duration-300 cursor-pointer ${
+                  isDragOver
+                    ? "border-primary bg-primary/5"
+                    : imagePreview
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragOver(true)
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onClick={() => {
+                  if (uploadMethod === "direct") {
+                    fileInputRef.current?.click()
+                  } else {
+                    quickImageInputRef.current?.click()
+                  }
+                }}
+              >
+                <CardContent className="p-16 flex items-center justify-center min-h-[280px]">
+                  <AnimatePresence mode="wait">
+                    {imagePreview ? (
+                      <motion.div
+                        key="image-preview"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="flex flex-col items-center gap-3 w-full"
+                      >
+                        <div className="relative group w-full">
+                          <Image
+                            src={imagePreview || "/placeholder.svg"}
+                            alt="Preview"
+                            width={300}
+                            height={200}
+                            className="w-full h-auto max-h-48 object-contain mx-auto rounded-lg"
+                          />
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setImagePreview("")
+                            setSelectedFile(null)
+                          }}
+                          className="text-xs"
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Remove
+                        </Button>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="upload-placeholder"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center space-y-3"
+                      >
+                        <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                          <UploadCloud className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-base font-normal text-foreground">Copy/Paste a Image</p>
+                          <p className="text-base font-normal text-foreground">Upload a Image</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </CardContent>
+              </Card>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileUpload(file)
+                }}
+              />
+              <input
+                ref={quickImageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileUpload(file)
+                }}
+              />
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleSubmit}
+                disabled={!isFormValid() || isSubmitting}
+                className="w-full h-10 bg-black hover:bg-black/90 text-white relative overflow-hidden rounded-sm"
+                style={{ backgroundColor: '#000' }}
+              >
+                {isSubmitting && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-sweep" />
+                )}
+                <span className="relative z-10 text-sm">{isSubmitting ? "Submitting..." : "Submit"}</span>
+              </Button>
+
+              {/* Bottom Controls */}
+              <div className="flex items-center justify-between">
+                {/* Left: Basic/Advanced Toggle */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{mode === "basic" ? "Basic" : "Advanced"}</span>
+                  <button
+                    onClick={() => setMode(mode === "basic" ? "advanced" : "basic")}
+                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
+                      mode === "advanced" ? "bg-black" : "bg-gray-300"
+                    }`}
+                    style={{ backgroundColor: mode === "advanced" ? '#000' : '#d1d5db' }}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        mode === "advanced" ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
                 </div>
 
-                {/* Right Column - Form */}
-                  <div className="lg:w-3/5 flex flex-col overflow-hidden min-h-0">
-                    <div className="p-6 space-y-6 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground/20" style={{minHeight: 0}}>
-                    {/* Target Toggle */}
-                    <Card className="p-4 bg-gradient-to-r from-background to-muted/20">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-base font-semibold">Add to:</Label>
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={uploadTarget === "wishlist"}
-                            onCheckedChange={(checked: boolean) => {
-                              setUploadTarget(checked ? "wishlist" : "closet")
-                              setFormData((prev) => ({ ...prev, mode: checked ? "wishlist" : "closet" }))
-                            }}
-                            className="data-[state=checked]:bg-primary"
-                          />
-                          <Badge
-                            variant={uploadTarget === "wishlist" ? "default" : "secondary"}
-                            className="px-3 py-1 font-medium transition-all duration-200"
-                          >
-                            {uploadTarget === "wishlist" ? "✨ Wishlist" : "My Closet"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </Card>
+                {/* Right: Type, Auto Fill and Info Buttons */}
+                <div className="flex gap-2 items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUploadMethod(uploadMethod === "direct" ? "url" : "direct")}
+                    className="h-8 text-xs px-3"
+                  >
+                    Type
+                  </Button>
+                  <Button
+                    onClick={handleAutoFill}
+                    disabled={isAutoFilling || !selectedFile || !imagePreview}
+                    size="sm"
+                    className="h-8 text-xs px-3 bg-black hover:bg-black/90 text-white"
+                    style={{ backgroundColor: '#000' }}
+                  >
+                    {isAutoFilling ? "..." : "Auto Fill"}
+                  </Button>
+                  <button
+                    className="h-8 w-8 flex items-center justify-center rounded-md border border-input hover:bg-accent"
+                    onClick={() => {/* Info button */}}
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-                    <Separator />
+              {/* Progress Bar */}
+              <AnimatePresence>
+                {(isSubmitting || isLoading) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="w-full"
+                  >
+                    <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                      <motion.div
+                        className="bg-black h-1"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${uploadProgress}%` }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        style={{ backgroundColor: '#000' }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                    {/* Form Tabs */}
-                    <Tabs value={mode} onValueChange={(value) => setMode(value as "basic" | "advanced")}>
-                      <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50">
-                        <TabsTrigger value="basic" className="transition-all duration-200">
-                          Basic Details
-                        </TabsTrigger>
-                        <TabsTrigger value="advanced" className="transition-all duration-200">
-                          Advanced Details
-                        </TabsTrigger>
-                      </TabsList>
+              {/* Hidden Form Fields (will show in a later step) */}
+              <div className="hidden">
+                <Tabs value={mode} onValueChange={(value) => setMode(value as "basic" | "advanced")}>
+                  <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50">
+                    <TabsTrigger value="basic">Basic</TabsTrigger>
+                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                  </TabsList>
 
                       <TabsContent value="basic" className="space-y-6 mt-6">
                         <motion.div
@@ -1005,22 +941,6 @@ export default function UploadForm({
                             </motion.div>
                           )}
                         </AnimatePresence>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="notes" className="text-sm font-medium">
-                            Notes
-                          </Label>
-                          <Textarea
-                            id="notes"
-                            placeholder="Additional notes about this item..."
-                            maxLength={100}
-                            value={formData.notes || ""}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 resize-none"
-                            rows={3}
-                          />
-                          <p className="text-xs text-muted-foreground text-right">{formData.notes?.length || 0}/100</p>
-                        </div>
                       </TabsContent>
 
                       <TabsContent value="advanced" className="space-y-6 mt-6">
@@ -1030,6 +950,126 @@ export default function UploadForm({
                           transition={{ duration: 0.3 }}
                           className="space-y-5"
                         >
+                          {/* All Basic Fields */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="adv-name" className="text-sm font-medium">
+                                Name
+                              </Label>
+                              <Input
+                                id="adv-name"
+                                placeholder="e.g., Classic Denim Jacket (optional - auto-names if empty)"
+                                value={formData.name || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="adv-price" className="text-sm font-medium">
+                                Price
+                              </Label>
+                              <Input
+                                id="adv-price"
+                                type="number"
+                                placeholder="0.00"
+                                value={formData.price ?? ""}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    price: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                                  }))
+                                }
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="adv-brand" className="text-sm font-medium">
+                                Brand
+                              </Label>
+                              <Input
+                                id="adv-brand"
+                                placeholder="e.g., Levi's, Nike, Zara"
+                                value={formData.brand || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="adv-category" className="text-sm font-medium flex items-center gap-2">
+                                Category
+                                <span className="text-red-500">*</span>
+                              </Label>
+                              <Select
+                                value={formData.category || ""}
+                                onValueChange={(value: string) => {
+                                  setFormData((prev) => ({ ...prev, category: value, type: "" }))
+                                }}
+                                required
+                              >
+                                <SelectTrigger className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${!formData.category ? 'border-orange-300 bg-orange-50/30 dark:border-orange-500 dark:bg-orange-950/50' : ''}`}>
+                                  <SelectValue placeholder="Select main category..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {MAIN_CATEGORIES.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                              <Label htmlFor="adv-type" className="text-sm font-medium flex items-center gap-2">
+                                Type
+                                <span className="text-red-500">*</span>
+                              </Label>
+                              <Select
+                                value={formData.type || ""}
+                                onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                                disabled={!formData.category}
+                                required
+                              >
+                                <SelectTrigger className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${formData.category && !formData.type ? 'border-orange-300 bg-orange-50/30 dark:border-orange-500 dark:bg-orange-950/50' : ''}`}>
+                                  <SelectValue placeholder={formData.category ? "Select type..." : "Select category first"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {formData.category && getSubcategoriesForCategory(formData.category).map((subcat) => (
+                                    <SelectItem key={subcat} value={subcat}>
+                                      {subcat.charAt(0).toUpperCase() + subcat.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          {/* Source URL for Wishlist in Advanced */}
+                          <AnimatePresence>
+                            {uploadTarget === "wishlist" && (
+                              <motion.div
+                                key="wishlist-url-field-adv"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="space-y-2"
+                              >
+                                <Label htmlFor="sourceUrlAdv" className="text-sm font-medium">
+                                  Source URL
+                                </Label>
+                                <Input
+                                  id="sourceUrlAdv"
+                                  placeholder="https://..."
+                                  value={formData.sourceUrl || ""}
+                                  onChange={(e) => setFormData((prev) => ({ ...prev, sourceUrl: e.target.value }))}
+                                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                                />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                           <div className="space-y-3">
                             <Label htmlFor="tags" className="text-sm font-medium">
                               Style Tags (Max 3)
@@ -1195,64 +1235,27 @@ export default function UploadForm({
                               </SelectContent>
                             </Select>
                           </div>
-                        </motion.div>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
 
-                  {/* Footer Actions */}
-                  <div className="border-t bg-gradient-to-r from-background to-muted/20 p-6">
-                    <AnimatePresence>
-                      {(isSubmitting || isLoading) && (
-                        <motion.div
-                          key="upload-progress"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="mb-4"
-                        >
-                          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                            <span className="font-medium">
-                              {isSubmitting ? "Uploading..." : "Fetching metadata..."}
-                            </span>
-                            <span className="font-mono">{uploadProgress}%</span>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                            <motion.div
-                              className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${uploadProgress}%` }}
-                              transition={{ duration: 0.3, ease: "easeOut" }}
+                          <div className="space-y-2">
+                            <Label htmlFor="notes" className="text-sm font-medium">
+                              Notes
+                            </Label>
+                            <Textarea
+                              id="notes"
+                              placeholder="Additional notes about this item..."
+                              maxLength={100}
+                              value={formData.notes || ""}
+                              onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 resize-none"
+                              rows={3}
                             />
+                            <p className="text-xs text-muted-foreground text-right">{formData.notes?.length || 0}/100</p>
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <div className="flex gap-3 justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={onCloseAction}
-                        disabled={isSubmitting}
-                        className="px-6 transition-all duration-200"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSubmit}
-                        disabled={!isFormValid() || isSubmitting}
-                        className="px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 relative overflow-hidden"
-                      >
-                        {isSubmitting && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-sweep" />
-                        )}
-                        {!isSubmitting && <Plus className="w-4 h-4 mr-2" />}
-                        <span className="relative z-10">{isSubmitting ? "Adding..." : "Add Item"}</span>
-                      </Button>
-                    </div>
-                  </div>
+                      </motion.div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-              </div>
+
             </motion.div>
           </DialogContent>
         </Dialog>
