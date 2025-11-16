@@ -7,6 +7,7 @@ import axios from "axios"
 import { Upload, Link, X, Check, Zap, Shield, UploadCloud, ShoppingCart } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ClosetIcon } from "./icons/ClosetIcon"
+import { ColorSwatches } from "./icons/ColorSwatches"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,22 +33,22 @@ interface UploadFormProps {
 const CLOTHING_SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
 const SHOE_SIZES = ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13', '14']
 
-// Color options with hex values
+// Color options with ColorSwatches components (matching FilterSection)
 const COLOR_OPTIONS = [
-  { name: 'Black', hex: '#000000' },
-  { name: 'White', hex: '#FFFFFF' },
-  { name: 'Gray', hex: '#808080' },
-  { name: 'Navy', hex: '#000080' },
-  { name: 'Blue', hex: '#0000FF' },
-  { name: 'Red', hex: '#FF0000' },
-  { name: 'Pink', hex: '#FFC0CB' },
-  { name: 'Purple', hex: '#800080' },
-  { name: 'Green', hex: '#008000' },
-  { name: 'Yellow', hex: '#FFFF00' },
-  { name: 'Orange', hex: '#FFA500' },
-  { name: 'Brown', hex: '#8B4513' },
-  { name: 'Beige', hex: '#F5F5DC' },
-  { name: 'Cream', hex: '#FFFDD0' },
+  { name: "Beige", component: ColorSwatches.Beige },
+  { name: "Black", component: ColorSwatches.Black },
+  { name: "Blue", component: ColorSwatches.Blue },
+  { name: "Brown", component: ColorSwatches.Brown },
+  { name: "Green", component: ColorSwatches.Green },
+  { name: "Grey", component: ColorSwatches.Grey },
+  { name: "Orange", component: ColorSwatches.Orange },
+  { name: "Pink", component: ColorSwatches.Pink },
+  { name: "Purple", component: ColorSwatches.Purple },
+  { name: "Red", component: ColorSwatches.Red },
+  { name: "Silver", component: ColorSwatches.Silver },
+  { name: "Tan", component: ColorSwatches.Tan },
+  { name: "White", component: ColorSwatches.White },
+  { name: "Yellow", component: ColorSwatches.Yellow },
 ]
 
 export default function UploadForm({
@@ -520,7 +521,113 @@ export default function UploadForm({
             <VisuallyHidden>
               <DialogTitle>Add New Clothing Item</DialogTitle>
             </VisuallyHidden>
-              <motion.div
+
+            {/* Left Sidebar - Advanced Mode Only (Positioned Absolutely) */}
+            <AnimatePresence>
+              {mode === "advanced" && (
+                <motion.div
+                  key="left-sidebar"
+                  initial={{ x: -260, opacity: 0 }}
+                  animate={{ x: -260, opacity: 1 }}
+                  exit={{ x: -260, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-60 h-[calc(100%-60px)] bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+                  style={{ transform: 'translateX(-260px) translateY(-50%)' }}
+                >
+                  <div className="p-6 space-y-4 h-full overflow-y-auto">
+                    {/* Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-sm font-medium">Name</Label>
+                      <Input
+                        id="name"
+                        placeholder=""
+                        value={formData.name || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+
+                    {/* Price */}
+                    <div className="space-y-2">
+                      <Label htmlFor="price" className="text-sm font-medium">Price</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        placeholder=""
+                        value={formData.price ?? ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            price: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                          }))
+                        }
+                        className="h-9 text-sm"
+                      />
+                    </div>
+
+                    {/* Brand */}
+                    <div className="space-y-2">
+                      <Label htmlFor="brand" className="text-sm font-medium">Brand</Label>
+                      <Input
+                        id="brand"
+                        placeholder=""
+                        value={formData.brand || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, brand: e.target.value }))}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+
+                    {/* Type */}
+                    <div className="space-y-2">
+                      <Label htmlFor="type" className="text-sm font-medium">Type</Label>
+                      <Select
+                        value={formData.type || ""}
+                        onValueChange={(value: string) => setFormData((prev) => ({ ...prev, type: value }))}
+                        disabled={!formData.category}
+                      >
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.category && getSubcategoriesForCategory(formData.category).map((subcat) => (
+                            <SelectItem key={subcat} value={subcat}>
+                              {subcat.charAt(0).toUpperCase() + subcat.slice(1)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Closet/Wishlist Toggle */}
+                    <div className="pt-2">
+                      <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                        <button
+                          onClick={() => setUploadTarget("closet")}
+                          className={`flex-1 py-1.5 px-3 rounded text-xs font-medium transition-all ${
+                            uploadTarget === "closet" ? "bg-black text-white" : "bg-transparent text-foreground"
+                          }`}
+                          style={{ backgroundColor: uploadTarget === "closet" ? '#000' : undefined }}
+                        >
+                          Closet
+                        </button>
+                        <button
+                          onClick={() => setUploadTarget("wishlist")}
+                          className={`flex-1 py-1.5 px-3 rounded text-xs font-medium transition-all ${
+                            uploadTarget === "wishlist" ? "bg-black text-white" : "bg-transparent text-foreground"
+                          }`}
+                          style={{ backgroundColor: uploadTarget === "wishlist" ? '#000' : undefined }}
+                        >
+                          Wishlist
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Center Content */}
+            <motion.div
               key="upload-modal-content"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -779,6 +886,100 @@ export default function UploadForm({
                   </motion.div>
                 )}
               </AnimatePresence>
+
+            </motion.div>
+
+            {/* Right Sidebar - Advanced Mode Only (Positioned Absolutely) */}
+            <AnimatePresence>
+              {mode === "advanced" && (
+                <motion.div
+                  key="right-sidebar"
+                  initial={{ x: 260, opacity: 0 }}
+                  animate={{ x: 260, opacity: 1 }}
+                  exit={{ x: 260, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-60 h-[calc(100%-60px)] bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+                  style={{ transform: 'translateX(260px) translateY(-50%)' }}
+                >
+                  <div className="p-6 space-y-3 h-full flex flex-col">
+                    {/* Source URL */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="sourceUrl" className="text-sm font-medium">Source URL</Label>
+                      <Input
+                        id="sourceUrl"
+                        placeholder=""
+                        value={formData.sourceUrl || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, sourceUrl: e.target.value }))}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+
+                    {/* Season */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="season" className="text-sm font-medium">Season</Label>
+                      <Select
+                        value={formData.season || ""}
+                        onValueChange={(value: string) => setFormData((prev) => ({ ...prev, season: value }))}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SEASONS.map((season) => (
+                            <SelectItem key={season} value={season}>
+                              {season}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Color */}
+                    <div className="space-y-1.5 flex-1 flex flex-col min-h-0">
+                      <Label className="text-sm font-medium">Color</Label>
+                      <div className="grid grid-cols-2 gap-1.5 overflow-hidden">
+                        {COLOR_OPTIONS.map((color) => {
+                          const SwatchComponent = color.component;
+                          const selectedColors = formData.color ? formData.color.split(", ") : [];
+                          const isSelected = selectedColors.includes(color.name);
+                          return (
+                            <button
+                              key={color.name}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => {
+                                  const currentColors = prev.color ? prev.color.split(", ") : [];
+                                  let newColors;
+                                  if (isSelected) {
+                                    // Remove color
+                                    newColors = currentColors.filter((c) => c !== color.name);
+                                  } else {
+                                    // Add color
+                                    newColors = [...currentColors, color.name];
+                                  }
+                                  return {
+                                    ...prev,
+                                    color: newColors.length > 0 ? newColors.join(", ") : undefined,
+                                  };
+                                });
+                              }}
+                              className={`flex items-center gap-1.5 p-1.5 rounded-md border transition-all text-left ${
+                                isSelected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                            >
+                              <SwatchComponent size={18} />
+                              <span className="text-[10px] font-medium truncate">{color.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
               {/* Hidden Form Fields (will show in a later step) */}
               <div className="hidden">
@@ -1157,16 +1358,10 @@ export default function UploadForm({
                                       })
                                     }}
                                   >
-                                    <div
-                                      className={`w-10 h-10 rounded-lg transition-all ${
-                                        isSelected
-                                          ? "ring-2 ring-primary ring-offset-2 scale-110"
-                                          : "hover:scale-105 border-2 border-gray-200"
-                                      }`}
-                                      style={{ backgroundColor: color.hex }}
-                                    >
+                                    <div className={`relative ${isSelected ? "ring-2 ring-primary ring-offset-2" : ""}`}>
+                                      <color.component size={40} />
                                       {isSelected && (
-                                        <div className="flex items-center justify-center h-full">
+                                        <div className="absolute inset-0 flex items-center justify-center">
                                           <svg
                                             className="w-5 h-5"
                                             fill="none"
@@ -1232,8 +1427,6 @@ export default function UploadForm({
                     </TabsContent>
                   </Tabs>
                 </div>
-
-            </motion.div>
           </DialogContent>
         </Dialog>
       )}
