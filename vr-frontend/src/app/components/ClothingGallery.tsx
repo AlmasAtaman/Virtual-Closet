@@ -681,6 +681,26 @@ const ClothingGallery = forwardRef(
             allItems={filteredItems}
             onToggleFavorite={toggleFavorite}
             onRetryProcessing={handleRetryProcessing}
+            onNavigateNext={() => {
+              const currentIndex = filteredItems.findIndex(item => item.id === selectedItem.id);
+              if (currentIndex < filteredItems.length - 1) {
+                setSelectedItem(filteredItems[currentIndex + 1]);
+              }
+            }}
+            onNavigatePrev={() => {
+              const currentIndex = filteredItems.findIndex(item => item.id === selectedItem.id);
+              if (currentIndex > 0) {
+                setSelectedItem(filteredItems[currentIndex - 1]);
+              }
+            }}
+            hasNext={(() => {
+              const currentIndex = filteredItems.findIndex(item => item.id === selectedItem.id);
+              return currentIndex < filteredItems.length - 1;
+            })()}
+            hasPrev={(() => {
+              const currentIndex = filteredItems.findIndex(item => item.id === selectedItem.id);
+              return currentIndex > 0;
+            })()}
           />
         )}
 
