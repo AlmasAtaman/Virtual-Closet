@@ -88,7 +88,7 @@ export default function ClothingDetailModal({
               animate={{ width: 220, opacity: 1, x: -220 }}
               exit={{ width: 0, opacity: 0, x: 0 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-background border-y border-l border-border overflow-hidden h-[380px] rounded-l-lg"
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-background border-y border-l border-border overflow-hidden h-[480px] rounded-l-lg"
               style={{ originX: 1 }}
             >
               <div className="p-6 h-full flex flex-col justify-between">
@@ -190,104 +190,105 @@ export default function ClothingDetailModal({
               animate={{ width: 220, opacity: 1, x: 220 }}
               exit={{ width: 0, opacity: 0, x: 0 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-background border-y border-r border-border overflow-hidden h-[380px] rounded-r-lg"
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-background border-y border-r border-border overflow-hidden h-[480px] rounded-r-lg"
               style={{ originX: 0 }}
             >
-              <div className="p-6 h-full flex flex-col justify-between">
-                <div className="space-y-6">
-                  {/* Source URL */}
-                  {(isEditing || currentItem.sourceUrl) && (
-                    <div className="space-y-2">
-                      <Label htmlFor="sourceUrl" className="text-sm font-medium">Source URL</Label>
-                      {isEditing ? (
-                        <Input
-                          id="sourceUrl"
-                          placeholder=""
-                          value={editForm.sourceUrl || ""}
-                          onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
-                          className="h-9 text-xs"
-                        />
+              <div className="p-6 space-y-3 h-full flex flex-col overflow-hidden">
+                {/* Source URL */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="sourceUrl" className="text-sm font-medium">Source URL</Label>
+                  {isEditing ? (
+                    <Input
+                      id="sourceUrl"
+                      placeholder=""
+                      value={editForm.sourceUrl || ""}
+                      onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
+                      className="h-8 text-xs"
+                    />
+                  ) : (
+                    <p className="h-8 flex items-center text-xs truncate">{currentItem.sourceUrl || "-"}</p>
+                  )}
+                </div>
+
+                {/* Season */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="season" className="text-sm font-medium">Season</Label>
+                  {isEditing ? (
+                    <Select
+                      value={editForm.season || ""}
+                      onValueChange={(value: string) => setEditForm({ ...editForm, season: value })}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="spring">Spring</SelectItem>
+                        <SelectItem value="summer">Summer</SelectItem>
+                        <SelectItem value="fall">Fall</SelectItem>
+                        <SelectItem value="winter">Winter</SelectItem>
+                        <SelectItem value="all">All Seasons</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="h-8 flex items-center text-xs capitalize">{currentItem.season || "-"}</p>
+                  )}
+                </div>
+
+                {/* Color */}
+                <div className="space-y-1.5 flex-1 flex flex-col min-h-0">
+                  <Label className="text-sm font-medium">Color</Label>
+                  {isEditing ? (
+                    <div className="grid grid-cols-2 gap-1.5 overflow-hidden">
+                      {[
+                        { name: "Beige", component: ColorSwatches.Beige },
+                        { name: "Black", component: ColorSwatches.Black },
+                        { name: "Blue", component: ColorSwatches.Blue },
+                        { name: "Brown", component: ColorSwatches.Brown },
+                        { name: "Green", component: ColorSwatches.Green },
+                        { name: "Grey", component: ColorSwatches.Grey },
+                        { name: "Orange", component: ColorSwatches.Orange },
+                        { name: "Pink", component: ColorSwatches.Pink },
+                        { name: "Purple", component: ColorSwatches.Purple },
+                        { name: "Red", component: ColorSwatches.Red },
+                        { name: "Silver", component: ColorSwatches.Silver },
+                        { name: "Tan", component: ColorSwatches.Tan },
+                        { name: "White", component: ColorSwatches.White },
+                        { name: "Yellow", component: ColorSwatches.Yellow },
+                      ].map((color) => {
+                        const SwatchComponent = color.component;
+                        const isSelected = editForm.color === color.name;
+                        return (
+                          <button
+                            key={color.name}
+                            type="button"
+                            onClick={() => setEditForm({ ...editForm, color: color.name })}
+                            className={`flex items-center gap-1.5 p-1.5 rounded-md border transition-all text-left ${
+                              isSelected
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <SwatchComponent size={18} />
+                            <span className="text-[10px] font-medium truncate">{color.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="h-8 flex items-center gap-2">
+                      {currentItem.color ? (
+                        <>
+                          {(() => {
+                            const ColorComponent = ColorSwatches[currentItem.color as keyof typeof ColorSwatches];
+                            return ColorComponent ? <ColorComponent size={18} /> : null;
+                          })()}
+                          <span className="text-[10px] font-medium">{currentItem.color}</span>
+                        </>
                       ) : (
-                        <p className="h-9 flex items-center text-sm truncate">{currentItem.sourceUrl}</p>
+                        <p className="text-xs">-</p>
                       )}
                     </div>
                   )}
-
-                  {/* Season */}
-                  <div className="space-y-2">
-                    <Label htmlFor="season" className="text-sm font-medium">Season</Label>
-                    {isEditing ? (
-                      <Select
-                        value={editForm.season || ""}
-                        onValueChange={(value: string) => setEditForm({ ...editForm, season: value })}
-                      >
-                        <SelectTrigger className="h-9 text-xs">
-                          <SelectValue placeholder="" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="spring">Spring</SelectItem>
-                          <SelectItem value="summer">Summer</SelectItem>
-                          <SelectItem value="fall">Fall</SelectItem>
-                          <SelectItem value="winter">Winter</SelectItem>
-                          <SelectItem value="all">All Seasons</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <p className="h-9 flex items-center text-sm capitalize">{currentItem.season || "-"}</p>
-                    )}
-                  </div>
-
-                  {/* Color */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Color</Label>
-                    {isEditing ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        {['Beige', 'Black', 'Blue', 'Brown', 'Green', 'Grey', 'Orange', 'Pink', 'Purple', 'Red', 'Silver', 'Tan', 'White', 'Yellow'].map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => setEditForm({ ...editForm, color: color })}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded border text-xs transition-colors ${
-                              editForm.color === color
-                                ? 'border-foreground bg-accent'
-                                : 'border-border hover:bg-accent/50'
-                            }`}
-                          >
-                            <div className={`w-3 h-3 rounded-full ${
-                              color === 'Beige' ? 'bg-[#F5F5DC]' :
-                              color === 'Black' ? 'bg-black' :
-                              color === 'Blue' ? 'bg-blue-500' :
-                              color === 'Brown' ? 'bg-[#8B4513]' :
-                              color === 'Green' ? 'bg-green-600' :
-                              color === 'Grey' ? 'bg-gray-400' :
-                              color === 'Orange' ? 'bg-orange-500' :
-                              color === 'Pink' ? 'bg-pink-400' :
-                              color === 'Purple' ? 'bg-purple-500' :
-                              color === 'Red' ? 'bg-red-600' :
-                              color === 'Silver' ? 'bg-gray-300' :
-                              color === 'Tan' ? 'bg-[#D2B48C]' :
-                              color === 'White' ? 'bg-white border border-gray-300' :
-                              'bg-yellow-400'
-                            }`} />
-                            <span>{color}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="h-9 flex items-center gap-2">
-                        {currentItem.color ? (
-                          <>
-                            {(() => {
-                              const ColorComponent = ColorSwatches[currentItem.color as keyof typeof ColorSwatches];
-                              return ColorComponent ? <ColorComponent size={44} /> : null;
-                            })()}
-                            <span className="text-sm">{currentItem.color}</span>
-                          </>
-                        ) : (
-                          <p className="text-sm">-</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </motion.div>
@@ -295,13 +296,17 @@ export default function ClothingDetailModal({
         </AnimatePresence>
 
         {/* Navigation Arrows - Pushed outward when wings expand - Hidden in edit mode */}
-        {!isEditing && (hasPrev || hasNext) && (
+        {(hasPrev || hasNext) && (
           <>
             {/* Left Arrow */}
             {hasPrev && (
               <motion.button
                 onClick={onNavigatePrev}
-                animate={{ x: isExpanded ? -220 : 0 }}
+                animate={{
+                  x: isExpanded ? -220 : 0,
+                  opacity: isEditing ? 0 : 1,
+                  pointerEvents: isEditing ? 'none' : 'auto'
+                }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 className="absolute top-1/2 -translate-y-1/2 -left-16 z-30 w-12 h-12 rounded-full bg-background border border-border flex items-center justify-center hover:bg-accent transition-colors shadow-lg"
                 aria-label="Previous item"
@@ -314,7 +319,11 @@ export default function ClothingDetailModal({
             {hasNext && (
               <motion.button
                 onClick={onNavigateNext}
-                animate={{ x: isExpanded ? 220 : 0 }}
+                animate={{
+                  x: isExpanded ? 220 : 0,
+                  opacity: isEditing ? 0 : 1,
+                  pointerEvents: isEditing ? 'none' : 'auto'
+                }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 className="absolute top-1/2 -translate-y-1/2 -right-16 z-30 w-12 h-12 rounded-full bg-background border border-border flex items-center justify-center hover:bg-accent transition-colors shadow-lg"
                 aria-label="Next item"
@@ -327,7 +336,7 @@ export default function ClothingDetailModal({
 
         <div className="relative -m-6">
           {/* Main Image Area */}
-          <div className="group relative w-full h-[380px] flex items-center justify-center p-8 bg-background rounded-t-lg">
+          <div className="group relative w-full h-[480px] flex items-center justify-center p-8 bg-background rounded-t-lg">
             {/* Plus Icon - Top Left - Only visible on hover */}
             <button
               className="absolute top-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-70"
@@ -388,7 +397,7 @@ export default function ClothingDetailModal({
           </div>
 
           {/* Bottom Section - NAME and Icons OR Cancel/Save Buttons */}
-          <div className="flex items-center justify-between px-6 py-5 border-t border-border bg-background rounded-b-lg">
+          <div className="flex items-center justify-between px-6 border-t border-border bg-background rounded-b-lg h-[76px]">
             {isEditing ? (
               /* Edit Mode - Cancel/Save Buttons */
               <div className="flex gap-2 w-full">
