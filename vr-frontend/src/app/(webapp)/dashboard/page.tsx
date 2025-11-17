@@ -6,6 +6,7 @@ import { Plus, Search, X, Folder } from "lucide-react"
 import UploadForm from "../../components/UploadForm"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../../components/ClothingGallery"
+import FoldersView from "../../components/dashboard/FoldersView"
 import type { ClothingItem } from "../../types/clothing"
 
 // Interface for ClothingGallery ref
@@ -27,6 +28,7 @@ export default function Homepage() {
   const router = useRouter()
   const galleryRef = useRef<ClothingGalleryRef>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
+  const [displayMode, setDisplayMode] = useState<"grid" | "folders">("grid")
   const [searchQuery] = useState("")
   const { theme, setTheme } = useTheme()
 
@@ -159,8 +161,13 @@ export default function Homepage() {
             {/* Center: Circular Folder Button (Sticks Out) */}
             <div className="relative z-10 -mx-3">
               <button
-                className="w-14 h-14 flex items-center justify-center bg-white rounded-full border-[3px] border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-200 shadow-md"
-                aria-label="View Folders"
+                onClick={() => setDisplayMode(displayMode === "grid" ? "folders" : "grid")}
+                className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-gray-300 transition-all duration-200 shadow-md ${
+                  displayMode === "folders"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+                aria-label="Toggle Folders View"
               >
                 <Folder size={24} />
               </button>
@@ -239,15 +246,14 @@ export default function Homepage() {
           {/* Gallery Section */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={viewMode}
+              key={`${viewMode}-${displayMode}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="flex flex-col flex-1 min-h-0"
             >
-            {/* Selected Tags */}
-            {(selectedTags.length > 0 || priceSort !== "none") && (
+            {displayMode === "grid" && (selectedTags.length > 0 || priceSort !== "none") && (
               <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
                 {/* Always show priceSort badge first if active */}
                 {priceSort !== "none" && (
@@ -301,24 +307,28 @@ export default function Homepage() {
               </div>
             )}
 
-            <ClothingGallery
-              ref={galleryRef}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              openUploadModal={handleOpenUploadModal}
-              searchQuery={debouncedQuery}
-              selectedTags={selectedTags}
-              setSelectedTags={setSelectedTags}
-              priceSort={priceSort}
-              setPriceSort={setPriceSort}
-              priceRange={priceRange}
-              clothingItems={clothingItems}
-              setClothingItems={setClothingItems}
-              isMultiSelecting={isMultiSelecting}
-              setIsMultiSelecting={setIsMultiSelecting}
-              showFavoritesOnly={showFavoritesOnly}
-              setShowFavoritesOnly={setShowFavoritesOnly}
-            />
+            {displayMode === "grid" ? (
+              <ClothingGallery
+                ref={galleryRef}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                openUploadModal={handleOpenUploadModal}
+                searchQuery={debouncedQuery}
+                selectedTags={selectedTags}
+                setSelectedTags={setSelectedTags}
+                priceSort={priceSort}
+                setPriceSort={setPriceSort}
+                priceRange={priceRange}
+                clothingItems={clothingItems}
+                setClothingItems={setClothingItems}
+                isMultiSelecting={isMultiSelecting}
+                setIsMultiSelecting={setIsMultiSelecting}
+                showFavoritesOnly={showFavoritesOnly}
+                setShowFavoritesOnly={setShowFavoritesOnly}
+              />
+            ) : (
+              <FoldersView viewMode={viewMode} />
+            )}
             </motion.div>
           </AnimatePresence>
         </div>

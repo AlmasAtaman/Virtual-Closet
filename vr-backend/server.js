@@ -9,6 +9,7 @@ import uploadRoutes from './app/routes/upload.js';
 import outfitRoutes from './app/routes/outfit.routes.js';
 import { scrapeProduct } from './app/scrape/quick.scrape.js';
 import occasionRoutes from './app/routes/occasion.routes.js';
+import folderRoutes from './app/routes/folder.routes.js';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ authRoutes(app);
 userRoutes(app);
 app.use('/api/outfits', outfitRoutes);
 app.use('/api/occasions', occasionRoutes);
+app.use('/api/folders', folderRoutes);
 
 // Initial role seeding
 async function initial() {

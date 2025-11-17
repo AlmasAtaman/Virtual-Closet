@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, Plus, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { ExpandIcon } from "./icons/ExpandIcon"
@@ -26,6 +26,7 @@ interface EditForm {
   sourceUrl: string
   tags: string[]
   size: string
+  mode?: "closet" | "wishlist"
 }
 
 interface ClothingDetailModalProps {
@@ -71,6 +72,15 @@ export default function ClothingDetailModal({
 }: ClothingDetailModalProps) {
   const currentItem = item
   const [isExpanded, setIsExpanded] = useState(false)
+
+  // Helper function to ensure URL has proper protocol
+  const ensureProtocol = (url: string) => {
+    if (!url) return url
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    return `https://${url}`
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -173,9 +183,9 @@ export default function ClothingDetailModal({
                   <div className="pt-4">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setEditForm({ ...editForm, mode: 'closet' as any })}
+                        onClick={() => setEditForm({ ...editForm, mode: 'closet' })}
                         className={`flex-1 h-9 rounded-md text-sm font-medium transition-colors ${
-                          (editForm as any).mode === 'closet' || currentItem.mode === 'closet'
+                          editForm.mode === 'closet' || currentItem.mode === 'closet'
                             ? 'bg-foreground text-background'
                             : 'bg-muted text-foreground hover:bg-muted/80'
                         }`}
@@ -394,7 +404,7 @@ export default function ClothingDetailModal({
             {/* Visit Site Button - Bottom Left of Image (only when not editing) */}
             {!isEditing && currentItem.sourceUrl && (
               <a
-                href={currentItem.sourceUrl}
+                href={ensureProtocol(currentItem.sourceUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="absolute bottom-4 left-4 flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-full font-medium text-sm hover:bg-accent transition-colors"

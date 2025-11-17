@@ -54,3 +54,20 @@ export interface OutfitClothingItem extends ClothingItem {
   bottom: number
   width: number
 }
+
+export interface FolderPreviewItem {
+  id: string
+  url: string
+  name: string
+}
+
+export interface Folder {
+  id: string
+  name: string
+  description?: string | null
+  isPublic: boolean
+  createdAt: string
+  updatedAt: string
+  itemCount: number
+  previewItems: FolderPreviewItem[]
+}

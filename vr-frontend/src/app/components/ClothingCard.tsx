@@ -6,8 +6,9 @@ import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import type { ClothingItem } from "../types/clothing"
-import { Heart, Check } from "lucide-react"
+import { Heart, Check, ExternalLink } from "lucide-react"
 import { CompactLoadingPlaceholder } from "./LoadingImagePlaceholder"
+import AddToFolderDropdown from "./AddToFolderDropdown"
 
 interface ClothingCardProps {
   item: ClothingItem
@@ -35,6 +36,15 @@ export default function ClothingCard({
   viewMode,
 }: ClothingCardProps) {
   const [isHovering, setIsHovering] = useState(false)
+
+  // Helper function to ensure URL has proper protocol
+  const ensureProtocol = (url: string) => {
+    if (!url) return url
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    return `https://${url}`
+  }
 
   return (
     <motion.div
@@ -67,6 +77,12 @@ export default function ClothingCard({
         <div
           className="relative w-full h-[320px] flex items-center justify-center bg-[#ECECEC] cursor-pointer overflow-hidden clothing-image rounded-[10px]"
           onClick={(e) => {
+            // Don't trigger if clicking on a button or link inside the card
+            const target = e.target as HTMLElement;
+            if (target.closest('button') || target.closest('a')) {
+              return;
+            }
+
             if (isMultiSelecting && onToggleSelect) {
               onToggleSelect(item.id)
             } else {
@@ -105,6 +121,13 @@ export default function ClothingCard({
             </Badge>
           )}
 
+          {/* Top Left - Add to Folder (on hover, unless multi-selecting) */}
+          {isHovering && !isMultiSelecting && (
+            <div className="absolute top-2 left-2 z-50 pointer-events-auto">
+              <AddToFolderDropdown clothingItemId={item.id} icon="plus" />
+            </div>
+          )}
+
           {/* Multi-select checkmark - top left corner */}
           {isMultiSelecting && isSelected && (
             <motion.div
@@ -120,8 +143,8 @@ export default function ClothingCard({
             </motion.div>
           )}
 
-          {/* Favorite Heart Icon - top right, visible on hover */}
-          {isHovering && (
+          {/* Top Right - Favorite Heart Icon (on hover, unless multi-selecting) */}
+          {isHovering && !isMultiSelecting && (
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -141,6 +164,23 @@ export default function ClothingCard({
                 <Heart className="text-gray-500 dark:text-gray-300 chrome:text-muted-foreground w-6 h-6" />
               )}
             </motion.button>
+          )}
+
+          {/* Bottom Left - Visit Site Link (on hover) */}
+          {isHovering && !isMultiSelecting && item.sourceUrl && (
+            <motion.a
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              href={ensureProtocol(item.sourceUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-2 left-2 z-20 flex items-center gap-1 px-3 py-1.5 bg-white/80 dark:bg-slate-700/80 chrome:bg-card/80 backdrop-blur-sm rounded-full text-xs font-medium hover:bg-white dark:hover:bg-slate-700 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="w-3 h-3" />
+              Visit
+            </motion.a>
           )}
         </div>
       </Card>
