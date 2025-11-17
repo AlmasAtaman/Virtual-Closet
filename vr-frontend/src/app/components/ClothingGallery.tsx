@@ -684,13 +684,41 @@ const ClothingGallery = forwardRef(
             onNavigateNext={() => {
               const currentIndex = filteredItems.findIndex(item => item.id === selectedItem.id);
               if (currentIndex < filteredItems.length - 1) {
-                setSelectedItem(filteredItems[currentIndex + 1]);
+                const nextItem = filteredItems[currentIndex + 1];
+                setSelectedItem(nextItem);
+                setEditForm({
+                  name: nextItem.name || "",
+                  category: nextItem.category || "",
+                  type: nextItem.type || "",
+                  brand: nextItem.brand || "",
+                  price: nextItem.price?.toString() || "",
+                  color: nextItem.color || "",
+                  season: nextItem.season || "",
+                  notes: nextItem.notes || "",
+                  sourceUrl: nextItem.sourceUrl || "",
+                  tags: nextItem.tags || [],
+                  size: nextItem.size || "",
+                });
               }
             }}
             onNavigatePrev={() => {
               const currentIndex = filteredItems.findIndex(item => item.id === selectedItem.id);
               if (currentIndex > 0) {
-                setSelectedItem(filteredItems[currentIndex - 1]);
+                const prevItem = filteredItems[currentIndex - 1];
+                setSelectedItem(prevItem);
+                setEditForm({
+                  name: prevItem.name || "",
+                  category: prevItem.category || "",
+                  type: prevItem.type || "",
+                  brand: prevItem.brand || "",
+                  price: prevItem.price?.toString() || "",
+                  color: prevItem.color || "",
+                  season: prevItem.season || "",
+                  notes: prevItem.notes || "",
+                  sourceUrl: prevItem.sourceUrl || "",
+                  tags: prevItem.tags || [],
+                  size: prevItem.size || "",
+                });
               }
             }}
             hasNext={(() => {

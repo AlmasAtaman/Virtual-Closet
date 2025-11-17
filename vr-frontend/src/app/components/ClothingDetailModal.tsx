@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, Plus, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { ExpandIcon } from "./icons/ExpandIcon"
 import { ClosetIcon } from "./icons/ClosetIcon"
 import { ColorSwatches } from "./icons/ColorSwatches"
@@ -74,10 +74,19 @@ export default function ClothingDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-[420px] p-6 overflow-visible border border-border rounded-lg">
+      <DialogContent className="max-w-md w-[420px] p-6 border border-border rounded-lg [&>button.absolute.right-4.top-4]:hidden overflow-visible">
         <VisuallyHidden>
           <DialogTitle>Clothing Details</DialogTitle>
         </VisuallyHidden>
+
+        {/* Custom Close Button - Outside modal, top-right */}
+        <button
+          onClick={() => onClose()}
+          className="absolute -top-12 -right-12 z-50 w-8 h-8 rounded-full bg-white dark:bg-background border border-gray-200 dark:border-border/50 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-accent/50 transition-all shadow-sm hover:shadow-md pointer-events-auto opacity-90 hover:opacity-100"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4 text-gray-500 dark:text-foreground/70" />
+        </button>
 
         {/* Left Sidebar - Expanded Mode Only */}
         <AnimatePresence>
