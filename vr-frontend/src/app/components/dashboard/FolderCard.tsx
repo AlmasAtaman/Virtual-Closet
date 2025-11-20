@@ -11,14 +11,8 @@ interface FolderCardProps {
 }
 
 export default function FolderCard({ folder, onClick }: FolderCardProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  // Get first 3 preview items
+  const displayItems = folder.previewItems.slice(0, 3);
 
   return (
     <motion.div
@@ -27,72 +21,59 @@ export default function FolderCard({ folder, onClick }: FolderCardProps) {
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
-        {/* Preview Grid */}
-        <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-700 p-2">
-          {folder.previewItems.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2 h-full">
-              {folder.previewItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="relative bg-white dark:bg-gray-600 rounded-lg overflow-hidden"
-                >
+      <div className="overflow-hidden">
+        {/* Preview Grid - Pinterest style: Only outer container has rounded corners */}
+        <div className="aspect-[3/2] rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+          <div className="flex gap-[2px] h-full p-[2px]">
+            {/* Left side - First item (takes 2/3 width, full height, NO rounded corners) */}
+            <div className="relative w-2/3 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+              {displayItems[0] ? (
+                <Image
+                  src={displayItems[0].url}
+                  alt={displayItems[0].name || "Clothing item"}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+              ) : null}
+            </div>
+
+            {/* Right side - Two items stacked (each takes 1/3 width, NO rounded corners) */}
+            <div className="flex flex-col gap-[2px] w-1/3">
+              {/* Top right - Second item */}
+              <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                {displayItems[1] ? (
                   <Image
-                    src={item.url}
-                    alt={item.name || "Clothing item"}
+                    src={displayItems[1].url}
+                    alt={displayItems[1].name || "Clothing item"}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 50vw, 25vw"
+                    sizes="(max-width: 768px) 25vw, 15vw"
                   />
-                </div>
-              ))}
-              {/* Fill empty slots with placeholders */}
-              {Array.from({ length: Math.max(0, 4 - folder.previewItems.length) }).map(
-                (_, index) => (
-                  <div
-                    key={`empty-${index}`}
-                    className="bg-gray-200 dark:bg-gray-600 rounded-lg"
+                ) : null}
+              </div>
+
+              {/* Bottom right - Third item */}
+              <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                {displayItems[2] ? (
+                  <Image
+                    src={displayItems[2].url}
+                    alt={displayItems[2].name || "Clothing item"}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 25vw, 15vw"
                   />
-                )
-              )}
-            </div>
-          ) : (
-            // Empty folder placeholder
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center text-gray-400 dark:text-gray-500">
-                <svg
-                  className="mx-auto h-16 w-16 mb-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                  />
-                </svg>
-                <p className="text-sm">Empty folder</p>
+                ) : null}
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Folder Info */}
-        <div className="p-4">
-          <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-1 truncate">
+        <div className="pt-2">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
             {folder.name}
           </h3>
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>{folder.itemCount} {folder.itemCount === 1 ? "item" : "items"}</span>
-            <span>{formatDate(folder.updatedAt)}</span>
-          </div>
-          {folder.description && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-              {folder.description}
-            </p>
-          )}
         </div>
       </div>
     </motion.div>

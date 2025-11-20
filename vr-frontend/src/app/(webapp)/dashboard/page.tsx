@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Search, X, Folder } from "lucide-react"
+import { Plus, Search, X, Folder, FolderOpen } from "lucide-react"
 import UploadForm from "../../components/UploadForm"
 import { useRouter } from "next/navigation"
 import ClothingGallery from "../../components/ClothingGallery"
@@ -147,9 +147,12 @@ export default function Homepage() {
             {/* Left Half: Wishlist Section */}
             <div className="flex-1 bg-[#E5E5E5] border-2 border-gray-300 rounded-l-full border-r-0 py-0.5 pl-0.5">
               <button
-                onClick={() => setViewMode('wishlist')}
+                onClick={() => {
+                  setViewMode('wishlist');
+                  setDisplayMode('grid');
+                }}
                 className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
-                  viewMode === 'wishlist'
+                  viewMode === 'wishlist' && displayMode === 'grid'
                     ? 'bg-white text-black shadow-sm rounded-l-full'
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
@@ -164,21 +167,28 @@ export default function Homepage() {
                 onClick={() => setDisplayMode(displayMode === "grid" ? "folders" : "grid")}
                 className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-gray-300 transition-all duration-200 shadow-md ${
                   displayMode === "folders"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-white text-gray-900"
                     : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
                 aria-label="Toggle Folders View"
               >
-                <Folder size={24} />
+                {displayMode === "folders" ? (
+                  <FolderOpen size={24} />
+                ) : (
+                  <Folder size={24} />
+                )}
               </button>
             </div>
 
             {/* Right Half: Closet Section */}
             <div className="flex-1 bg-[#E5E5E5] border-2 border-gray-300 rounded-r-full border-l-0 py-0.5 pr-0.5">
               <button
-                onClick={() => setViewMode('closet')}
+                onClick={() => {
+                  setViewMode('closet');
+                  setDisplayMode('grid');
+                }}
                 className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
-                  viewMode === 'closet'
+                  viewMode === 'closet' && displayMode === 'grid'
                     ? 'bg-white text-black shadow-sm rounded-r-full'
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
