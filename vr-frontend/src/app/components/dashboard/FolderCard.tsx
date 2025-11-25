@@ -23,7 +23,7 @@ export default function FolderCard({ folder, onClick }: FolderCardProps) {
     >
       <div className="overflow-hidden">
         {/* Preview Grid - Pinterest style: Only outer container has rounded corners */}
-        <div className="aspect-[3/2] rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+        <div className="w-full h-48 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
           <div className="flex gap-[2px] h-full p-[2px]">
             {/* Left side - First item (takes 2/3 width, full height, NO rounded corners) */}
             <div className="relative w-2/3 bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -32,7 +32,7 @@ export default function FolderCard({ folder, onClick }: FolderCardProps) {
                   src={displayItems[0].url}
                   alt={displayItems[0].name || "Clothing item"}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
               ) : null}
@@ -47,7 +47,7 @@ export default function FolderCard({ folder, onClick }: FolderCardProps) {
                     src={displayItems[1].url}
                     alt={displayItems[1].name || "Clothing item"}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     sizes="(max-width: 768px) 25vw, 15vw"
                   />
                 ) : null}
@@ -60,7 +60,7 @@ export default function FolderCard({ folder, onClick }: FolderCardProps) {
                     src={displayItems[2].url}
                     alt={displayItems[2].name || "Clothing item"}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     sizes="(max-width: 768px) 25vw, 15vw"
                   />
                 ) : null}

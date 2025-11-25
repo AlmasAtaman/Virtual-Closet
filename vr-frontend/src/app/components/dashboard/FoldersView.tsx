@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Loader2 } from "lucide-react";
 import FolderCard from "./FolderCard";
 import CreateFolderModal from "./CreateFolderModal";
+import AddItemsToFolderModal from "./AddItemsToFolderModal";
 import { Folder } from "@/app/types/clothing";
 import axios from "axios";
 
@@ -16,6 +17,8 @@ export default function FoldersView({ viewMode }: FoldersViewProps) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAddItemsModalOpen, setIsAddItemsModalOpen] = useState(false);
+  const [newlyCreatedFolder, setNewlyCreatedFolder] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch folders on mount
@@ -52,7 +55,13 @@ export default function FoldersView({ viewMode }: FoldersViewProps) {
       );
 
       // Add new folder to the list
-      setFolders((prev) => [response.data.folder, ...prev]);
+      const newFolder = response.data.folder;
+      setFolders((prev) => [newFolder, ...prev]);
+
+      // Close create modal and open add items modal
+      setIsCreateModalOpen(false);
+      setNewlyCreatedFolder(newFolder);
+      setIsAddItemsModalOpen(true);
     } catch (err) {
       console.error("Error creating folder:", err);
       throw new Error("Failed to create folder");
@@ -102,7 +111,7 @@ export default function FoldersView({ viewMode }: FoldersViewProps) {
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
-          <div className="aspect-[3/2] bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <div className="aspect-[5/3] bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             <div className="text-center">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Create
@@ -155,6 +164,19 @@ export default function FoldersView({ viewMode }: FoldersViewProps) {
         onClose={() => setIsCreateModalOpen(false)}
         onCreateFolder={handleCreateFolder}
       />
+
+      {/* Add Items to Folder Modal */}
+      {newlyCreatedFolder && (
+        <AddItemsToFolderModal
+          isOpen={isAddItemsModalOpen}
+          onClose={() => {
+            setIsAddItemsModalOpen(false);
+            setNewlyCreatedFolder(null);
+          }}
+          folderName={newlyCreatedFolder.name}
+          folderId={newlyCreatedFolder.id}
+        />
+      )}
     </div>
   );
 }
