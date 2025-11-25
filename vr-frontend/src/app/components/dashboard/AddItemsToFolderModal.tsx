@@ -89,7 +89,7 @@ export default function AddItemsToFolderModal({
           <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Save some items to your new board
+                Save some items to your new folder
               </h2>
               <button
                 onClick={onClose}
@@ -132,7 +132,7 @@ export default function AddItemsToFolderModal({
                       />
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="bg-red-600 text-white px-4 py-2 rounded-full font-semibold">
+                        <div className="bg-black text-white px-4 py-2 rounded-full font-semibold">
                           {addingItems.has(item.id) ? "Adding..." : "Save"}
                         </div>
                       </div>
@@ -147,7 +147,7 @@ export default function AddItemsToFolderModal({
           <div className="px-8 py-6 border-t border-gray-200 dark:border-gray-800 flex justify-end">
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors font-semibold"
+              className="px-6 py-3 bg-black text-white rounded-full hover:bg-black/90 transition-colors font-semibold"
             >
               Done
             </button>

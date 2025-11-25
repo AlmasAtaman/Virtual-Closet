@@ -106,14 +106,14 @@ export default function FoldersView({ viewMode }: FoldersViewProps) {
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
         {/* Create Button Card */}
         <motion.div
-          className="cursor-pointer"
+          className="cursor-pointer group"
           onClick={() => setIsCreateModalOpen(true)}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
-          <div className="aspect-[5/3] bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center transition-colors">
+            <div className="px-6 py-3 bg-white dark:bg-gray-800 rounded-full">
+              <p className="text-base font-semibold text-gray-900 dark:text-white">
                 Create
               </p>
             </div>

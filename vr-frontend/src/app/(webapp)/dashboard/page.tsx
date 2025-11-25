@@ -27,10 +27,18 @@ export default function Homepage() {
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
   const galleryRef = useRef<ClothingGalleryRef>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
   const [displayMode, setDisplayMode] = useState<"grid" | "folders">("grid")
-  const [searchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [showSearchBar, setShowSearchBar] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    if (showSearchBar && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [showSearchBar])
 
   const toggleTheme = useCallback(() => {
     const themeOrder: Array<"light" | "dark" | "chrome"> = ["light", "dark", "chrome"]
@@ -106,7 +114,7 @@ export default function Homepage() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/me`, {
           credentials: "include",
         });
-        
+
         if (res.ok) {
           // User is authenticated, just set loading to false
           setLoading(false);
@@ -115,11 +123,11 @@ export default function Homepage() {
       } catch {
         // Error occurred, redirect to login
       }
-      
+
       // No authentication found.
       router.push("/login");
     };
-    
+
     checkAuth();
   }, [router]);
 
@@ -151,11 +159,10 @@ export default function Homepage() {
                   setViewMode('wishlist');
                   setDisplayMode('grid');
                 }}
-                className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
-                  viewMode === 'wishlist' && displayMode === 'grid'
+                className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${viewMode === 'wishlist' && displayMode === 'grid'
                     ? 'bg-white text-black shadow-sm rounded-l-full'
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 Wishlist
               </button>
@@ -165,11 +172,10 @@ export default function Homepage() {
             <div className="relative z-10 -mx-3">
               <button
                 onClick={() => setDisplayMode(displayMode === "grid" ? "folders" : "grid")}
-                className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-gray-300 transition-all duration-200 shadow-md ${
-                  displayMode === "folders"
+                className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-gray-300 transition-all duration-200 shadow-md ${displayMode === "folders"
                     ? "bg-white text-gray-900"
                     : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+                  }`}
                 aria-label="Toggle Folders View"
               >
                 {displayMode === "folders" ? (
@@ -187,11 +193,10 @@ export default function Homepage() {
                   setViewMode('closet');
                   setDisplayMode('grid');
                 }}
-                className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
-                  viewMode === 'closet' && displayMode === 'grid'
+                className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${viewMode === 'closet' && displayMode === 'grid'
                     ? 'bg-white text-black shadow-sm rounded-r-full'
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 Closet
               </button>
@@ -205,16 +210,70 @@ export default function Homepage() {
             </h2>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            <div className="flex items-center gap-3 relative">
+              {/* Search Bar with integrated icon */}
+              <motion.div
+                initial={false}
+                animate={{
+                  width: showSearchBar ? 350 : 40,
+                  backgroundColor: showSearchBar ? "#ffffff" : "transparent",
+                  borderColor: showSearchBar ? "#d1d5db" : "transparent",
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-gray-100 cursor-pointer border-transparent" : "border-gray-300"
+                  }`}
+                onClick={() => {
+                  if (!showSearchBar) setShowSearchBar(true);
+                }}
               >
-                <Search size={20} />
-              </motion.button>
+                <motion.div
+                  animate={{
+                    left: showSearchBar ? 12 : "50%",
+                    x: showSearchBar ? 0 : "-50%",
+                  }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="absolute top-1/2 -translate-y-1/2 z-10 text-gray-400 pointer-events-none"
+                >
+                  <Search className="w-5 h-5" />
+                </motion.div>
+
+                <motion.input
+                  ref={searchInputRef}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: showSearchBar ? 1 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onBlur={() => {
+                    if (!searchQuery) {
+                      setShowSearchBar(false);
+                    }
+                  }}
+                  className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400 ${!showSearchBar ? "pointer-events-none" : ""
+                    }`}
+                />
+
+                <AnimatePresence>
+                  {showSearchBar && searchQuery && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchQuery("");
+                        searchInputRef.current?.focus();
+                      }}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+                    >
+                      <X size={14} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </motion.div>
 
               {/* Filter */}
               <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-700 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
@@ -263,82 +322,82 @@ export default function Homepage() {
               transition={{ duration: 0.3 }}
               className="flex flex-col flex-1 min-h-0"
             >
-            {displayMode === "grid" && (selectedTags.length > 0 || priceSort !== "none") && (
-              <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
-                {/* Always show priceSort badge first if active */}
-                {priceSort !== "none" && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    transition={{ delay: 0.05 }}
-                  >
-                    <Badge
-                      variant="secondary"
-                      className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                      onClick={() => setPriceSort("none")}
+              {displayMode === "grid" && (selectedTags.length > 0 || priceSort !== "none") && (
+                <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
+                  {/* Always show priceSort badge first if active */}
+                  {priceSort !== "none" && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      transition={{ delay: 0.05 }}
                     >
-                      <span className="mr-1">{priceSort === "asc" ? "Price: Low → High" : "Price: High → Low"}</span>
-                      <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </Badge>
-                  </motion.div>
-                )}
+                      <Badge
+                        variant="secondary"
+                        className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
+                        onClick={() => setPriceSort("none")}
+                      >
+                        <span className="mr-1">{priceSort === "asc" ? "Price: Low → High" : "Price: High → Low"}</span>
+                        <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      </Badge>
+                    </motion.div>
+                  )}
 
-                {/* Then show selected tags */}
-                {selectedTags.map((tag, index) => (
-                  <motion.div
-                    key={tag}
-                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    transition={{ delay: (index + 1) * 0.05 }}
-                  >
-                    <Badge
-                      variant="secondary"
-                      className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                      onClick={() => toggleTag(tag)}
+                  {/* Then show selected tags */}
+                  {selectedTags.map((tag, index) => (
+                    <motion.div
+                      key={tag}
+                      initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      transition={{ delay: (index + 1) * 0.05 }}
                     >
-                      <span className="mr-1">{tag}</span>
-                      <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </Badge>
-                  </motion.div>
-                ))}
+                      <Badge
+                        variant="secondary"
+                        className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
+                        onClick={() => toggleTag(tag)}
+                      >
+                        <span className="mr-1">{tag}</span>
+                        <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      </Badge>
+                    </motion.div>
+                  ))}
 
-                {/* Clear all */}
-                {(selectedTags.length > 0 || priceSort !== "none") && (
-                  <button
-                    onClick={() => {
-                      setSelectedTags([])
-                      setPriceSort("none")
-                    }}
-                    className="text-xs text-muted-foreground hover:text-primary underline ml-2"
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
-            )}
+                  {/* Clear all */}
+                  {(selectedTags.length > 0 || priceSort !== "none") && (
+                    <button
+                      onClick={() => {
+                        setSelectedTags([])
+                        setPriceSort("none")
+                      }}
+                      className="text-xs text-muted-foreground hover:text-primary underline ml-2"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+              )}
 
-            {displayMode === "grid" ? (
-              <ClothingGallery
-                ref={galleryRef}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                openUploadModal={handleOpenUploadModal}
-                searchQuery={debouncedQuery}
-                selectedTags={selectedTags}
-                setSelectedTags={setSelectedTags}
-                priceSort={priceSort}
-                setPriceSort={setPriceSort}
-                priceRange={priceRange}
-                clothingItems={clothingItems}
-                setClothingItems={setClothingItems}
-                isMultiSelecting={isMultiSelecting}
-                setIsMultiSelecting={setIsMultiSelecting}
-                showFavoritesOnly={showFavoritesOnly}
-                setShowFavoritesOnly={setShowFavoritesOnly}
-              />
-            ) : (
-              <FoldersView viewMode={viewMode} />
-            )}
+              {displayMode === "grid" ? (
+                <ClothingGallery
+                  ref={galleryRef}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  openUploadModal={handleOpenUploadModal}
+                  searchQuery={debouncedQuery}
+                  selectedTags={selectedTags}
+                  setSelectedTags={setSelectedTags}
+                  priceSort={priceSort}
+                  setPriceSort={setPriceSort}
+                  priceRange={priceRange}
+                  clothingItems={clothingItems}
+                  setClothingItems={setClothingItems}
+                  isMultiSelecting={isMultiSelecting}
+                  setIsMultiSelecting={setIsMultiSelecting}
+                  showFavoritesOnly={showFavoritesOnly}
+                  setShowFavoritesOnly={setShowFavoritesOnly}
+                />
+              ) : (
+                <FoldersView viewMode={viewMode} />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
