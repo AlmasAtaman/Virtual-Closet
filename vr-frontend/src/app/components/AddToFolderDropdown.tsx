@@ -7,6 +7,7 @@ import axios from "axios";
 import { Folder } from "../types/clothing";
 import Image from "next/image";
 import { createPortal } from "react-dom";
+import CreateFolderModal from "./dashboard/CreateFolderModal";
 
 interface AddToFolderDropdownProps {
   clothingItemId: string;
@@ -24,6 +25,7 @@ export default function AddToFolderDropdown({
   const [isLoading, setIsLoading] = useState(false);
   const [addingToFolder, setAddingToFolder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [buttonPosition, setButtonPosition] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -41,24 +43,42 @@ export default function AddToFolderDropdown({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Update position on scroll to keep modal with the button
+  const updatePosition = () => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const dropdownWidth = 360;
+    const viewportWidth = window.innerWidth;
+
+    let left = rect.left;
+
+    // If dropdown would overflow right edge, align to right of button
+    if (left + dropdownWidth > viewportWidth - 20) {
+      left = rect.right - dropdownWidth;
+    }
+
+    // Ensure it doesn't go off screen
+    left = Math.max(10, Math.min(left, viewportWidth - dropdownWidth - 10));
+
+    setButtonPosition({
+      top: rect.bottom + 8,
+      left: left
+    });
+  };
+
+  // Update position on scroll/resize to keep modal with the button
   useEffect(() => {
-    if (!isOpen || !buttonRef.current) return;
+    if (!isOpen) return;
 
-    const handleScroll = () => {
-      // Re-get the button position on scroll
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setButtonPosition({
-          top: rect.bottom + 8,
-          left: rect.left
-        });
-      }
-    };
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
 
-    window.addEventListener('scroll', handleScroll, true);
+    // Initial position update
+    updatePosition();
+
     return () => {
-      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen]);
 
@@ -105,6 +125,30 @@ export default function AddToFolderDropdown({
     }
   };
 
+  const handleCreateFolder = async (data: { name: string; description?: string }) => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/folders`,
+        { ...data, isPublic: false },
+        { withCredentials: true }
+      );
+
+      const newFolder = response.data.folder;
+      setFolders((prev) => [newFolder, ...prev]);
+
+      // Close create modal
+      setIsCreateModalOpen(false);
+
+      // Automatically add the item to the new folder
+      // We pass a synthetic event since we're calling it programmatically
+      const syntheticEvent = { stopPropagation: () => { } } as React.MouseEvent;
+      handleAddToFolder(newFolder.id, syntheticEvent);
+    } catch (err) {
+      console.error("Error creating folder:", err);
+      // You might want to add error handling state here
+    }
+  };
+
   const isItemInFolder = (folder: Folder) => {
     return folder.previewItems.some(item => item.id === clothingItemId);
   };
@@ -124,17 +168,53 @@ export default function AddToFolderDropdown({
     <>
       <button
         ref={buttonRef}
-        className="p-1 rounded-full bg-white/80 dark:bg-slate-700/80 backdrop-blur-sm hover:scale-110 transition-transform cursor-pointer z-50"
+        className="p-1 rounded-full hover:scale-110 transition-transform cursor-pointer z-50"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
 
-          // Get button position for dropdown placement
-          const rect = e.currentTarget.getBoundingClientRect();
-          setButtonPosition({
-            top: rect.bottom + 8, // 8px below the button
-            left: rect.left
-          });
+          if (!isOpen) {
+            // We are opening it, so calculate position immediately
+            // We can't rely on the effect because it runs after render
+            // But we can call the same logic logic here or just set isOpen and let the effect handle it?
+            // The effect runs after render, so there might be a flash.
+            // Better to calculate here.
+
+            // Wait, we can't call updatePosition() here easily because it relies on buttonRef.current which is set,
+            // but updatePosition is defined in the component scope.
+            // Yes we can call it.
+
+            // Actually, let's just set isOpen(!isOpen).
+            // If we are opening (isOpen is false -> true), the effect will run and set position.
+            // BUT, if we want to avoid FOUC (flash of unpositioned content), we should set position state here too.
+            // Since updatePosition uses state setters, we can just call it?
+            // No, updatePosition relies on buttonRef.current.
+
+            // Let's manually calculate here to be safe and fast, or just call updatePosition if we hoist it?
+            // We defined updatePosition inside the component, so we can call it.
+            // But updatePosition checks !buttonRef.current.
+
+            // Let's just duplicate the logic slightly or trust the effect?
+            // The effect runs after paint usually.
+            // So we should set state here.
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const dropdownWidth = 360;
+            const viewportWidth = window.innerWidth;
+
+            let left = rect.left;
+
+            if (left + dropdownWidth > viewportWidth - 20) {
+              left = rect.right - dropdownWidth;
+            }
+
+            left = Math.max(10, Math.min(left, viewportWidth - dropdownWidth - 10));
+
+            setButtonPosition({
+              top: rect.bottom + 8,
+              left: left
+            });
+          }
 
           setIsOpen(!isOpen);
         }}
@@ -232,19 +312,13 @@ export default function AddToFolderDropdown({
                                 {/* Folder Preview */}
                                 <div className="flex-shrink-0 w-11 h-11 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
                                   {folder.previewItems.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-0.5 h-full p-0.5">
-                                      {folder.previewItems.slice(0, 4).map((item, idx) => (
-                                        <div key={idx} className="relative bg-gray-300 dark:bg-gray-600 rounded-sm overflow-hidden">
-                                          <Image
-                                            src={item.url}
-                                            alt=""
-                                            fill
-                                            className="object-cover"
-                                            sizes="22px"
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
+                                    <Image
+                                      src={folder.previewItems[0].url}
+                                      alt=""
+                                      fill
+                                      className="object-cover"
+                                      sizes="44px"
+                                    />
                                   ) : null}
                                 </div>
 
@@ -294,19 +368,13 @@ export default function AddToFolderDropdown({
                               {/* Folder Preview */}
                               <div className="flex-shrink-0 w-11 h-11 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
                                 {folder.previewItems.length > 0 ? (
-                                  <div className="grid grid-cols-2 gap-0.5 h-full p-0.5">
-                                    {folder.previewItems.slice(0, 4).map((item, idx) => (
-                                      <div key={idx} className="relative bg-gray-300 dark:bg-gray-600 rounded-sm overflow-hidden">
-                                        <Image
-                                          src={item.url}
-                                          alt=""
-                                          fill
-                                          className="object-cover"
-                                          sizes="22px"
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
+                                  <Image
+                                    src={folder.previewItems[0].url}
+                                    alt=""
+                                    fill
+                                    className="object-cover"
+                                    sizes="44px"
+                                  />
                                 ) : null}
                               </div>
 
@@ -340,7 +408,8 @@ export default function AddToFolderDropdown({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // TODO: Open create folder modal
+                          setIsOpen(false);
+                          setIsCreateModalOpen(true);
                         }}
                         className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       >
@@ -348,7 +417,7 @@ export default function AddToFolderDropdown({
                           <Plus className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         </div>
                         <div className="flex-1 text-left font-semibold text-gray-900 dark:text-white text-sm">
-                          Create board
+                          Create folder
                         </div>
                       </button>
                     </div>
@@ -358,6 +427,15 @@ export default function AddToFolderDropdown({
             </motion.div>
           </div>
         </AnimatePresence>,
+        document.body
+      )}
+
+      {mounted && createPortal(
+        <CreateFolderModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreateFolder={handleCreateFolder}
+        />,
         document.body
       )}
     </>

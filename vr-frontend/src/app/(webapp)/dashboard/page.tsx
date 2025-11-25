@@ -204,11 +204,7 @@ export default function Homepage() {
           </div>
 
           {/* Category Header with Action Buttons */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-semibold border-b-2 border-black inline-block pb-1">
-              All
-            </h2>
-
+          <div className="flex items-center justify-end mb-6">
             {/* Action Buttons */}
             <div className="flex items-center gap-3 relative">
               {/* Search Bar with integrated icon */}
