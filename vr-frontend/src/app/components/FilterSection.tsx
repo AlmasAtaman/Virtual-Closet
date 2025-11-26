@@ -242,7 +242,10 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                       >
                         <div className="space-y-4 px-8 pb-5">
                           {/* Favorites Option */}
-                          <label className="flex items-center gap-3 cursor-pointer group">
+                          <label
+                            className="flex items-center gap-3 cursor-pointer group w-full"
+                            onClick={() => setShowFavorites(!showFavorites)}
+                          >
                             <CustomCheckbox
                               checked={showFavorites}
                               onCheckedChange={(checked) => setShowFavorites(checked)}
@@ -254,11 +257,14 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                 borderColor: showFavorites ? '#000' : '#9ca3af',
                               }}
                             />
-                            <span className="text-xs text-gray-600 dark:text-gray-300">Favorites</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">Favorites</span>
                           </label>
 
                           {/* Price: Low to High */}
-                          <label className="flex items-center gap-3 cursor-pointer group">
+                          <label
+                            className="flex items-center gap-3 cursor-pointer group w-full"
+                            onClick={() => setPriceSort(priceSort === "asc" ? "none" : "asc")}
+                          >
                             <CustomCheckbox
                               checked={priceSort === "asc"}
                               onCheckedChange={(checked) => setPriceSort(checked ? "asc" : "none")}
@@ -270,11 +276,14 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                 borderColor: priceSort === "asc" ? '#000' : '#9ca3af',
                               }}
                             />
-                            <span className="text-xs text-gray-600 dark:text-gray-300">Price: Low To High</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">Price: Low To High</span>
                           </label>
 
                           {/* Price: High to Low */}
-                          <label className="flex items-center gap-3 cursor-pointer group">
+                          <label
+                            className="flex items-center gap-3 cursor-pointer group w-full"
+                            onClick={() => setPriceSort(priceSort === "desc" ? "none" : "desc")}
+                          >
                             <CustomCheckbox
                               checked={priceSort === "desc"}
                               onCheckedChange={(checked) => setPriceSort(checked ? "desc" : "none")}
@@ -286,7 +295,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                 borderColor: priceSort === "desc" ? '#000' : '#9ca3af',
                               }}
                             />
-                            <span className="text-xs text-gray-600 dark:text-gray-300">Price: High To Low</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">Price: High To Low</span>
                           </label>
                         </div>
                       </motion.div>
@@ -353,7 +362,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           {filteredClothingTypes.map((type) => {
                             const isChecked = selectedTags.includes(type.toLowerCase());
                             return (
-                              <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                              <label
+                                key={type}
+                                className="flex items-center gap-3 cursor-pointer group w-full"
+                                onClick={() => toggleTag(type.toLowerCase())}
+                              >
                                 <CustomCheckbox
                                   checked={isChecked}
                                   onCheckedChange={() => toggleTag(type.toLowerCase())}
@@ -365,7 +378,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                     borderColor: isChecked ? '#000' : '#9ca3af',
                                   }}
                                 />
-                                <span className="text-xs text-gray-600 dark:text-gray-300">{type}</span>
+                                <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">{type}</span>
                               </label>
                             );
                           })}
@@ -420,7 +433,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                             const SwatchComponent = color.component;
                             const isChecked = selectedTags.includes(color.name.toLowerCase());
                             return (
-                              <label key={color.name} className="flex items-center gap-3 cursor-pointer group">
+                              <label
+                                key={color.name}
+                                className="flex items-center gap-3 cursor-pointer group w-full"
+                                onClick={() => toggleTag(color.name.toLowerCase())}
+                              >
                                 <CustomCheckbox
                                   checked={isChecked}
                                   onCheckedChange={() => toggleTag(color.name.toLowerCase())}
@@ -433,7 +450,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                   }}
                                 />
                                 <SwatchComponent size={32} />
-                                <span className="text-xs text-gray-600 dark:text-gray-300">{color.name}</span>
+                                <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">{color.name}</span>
                               </label>
                             );
                           })}
@@ -484,7 +501,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           {SEASONS.map((season) => {
                             const isChecked = selectedTags.includes(season.toLowerCase());
                             return (
-                              <label key={season} className="flex items-center gap-3 cursor-pointer group">
+                              <label
+                                key={season}
+                                className="flex items-center gap-3 cursor-pointer group w-full"
+                                onClick={() => toggleTag(season.toLowerCase())}
+                              >
                                 <CustomCheckbox
                                   checked={isChecked}
                                   onCheckedChange={() => toggleTag(season.toLowerCase())}
@@ -496,7 +517,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                     borderColor: isChecked ? '#000' : '#9ca3af',
                                   }}
                                 />
-                                <span className="text-xs text-gray-600 dark:text-gray-300">{season}</span>
+                                <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">{season}</span>
                               </label>
                             );
                           })}

@@ -15,7 +15,6 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
 }) => {
   return (
     <div
-      onClick={() => onCheckedChange(!checked)}
       className={className}
       style={{
         ...style,
@@ -24,6 +23,7 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
+        pointerEvents: 'none',
       }}
     >
       {checked && (
