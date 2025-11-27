@@ -13,14 +13,30 @@ interface AddToFolderDropdownProps {
   clothingItemId: string;
   onAddToFolder?: (folderId: string) => void;
   icon?: "plus" | "folderPlus";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function AddToFolderDropdown({
   clothingItemId,
   onAddToFolder,
   icon = "folderPlus",
+  open: controlledOpen,
+  onOpenChange,
 }: AddToFolderDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use controlled state if provided, otherwise use internal state
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+
+  // Wrapper to update both local and parent state
+  const updateOpenState = (newState: boolean) => {
+    console.log(`[${Date.now()}] updateOpenState called with`, newState);
+    if (controlledOpen === undefined) {
+      setInternalOpen(newState);
+    }
+    onOpenChange?.(newState);
+  };
   const [folders, setFolders] = useState<Folder[]>([]);
   const [recentlyAddedTo, setRecentlyAddedTo] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +58,11 @@ export default function AddToFolderDropdown({
       fetchFolders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // Sync with parent state changes (when parent closes dropdown)
+  useEffect(() => {
+    console.log(`[${Date.now()}] AddToFolderDropdown: isOpen =`, isOpen);
   }, [isOpen]);
 
   const updatePosition = () => {
@@ -126,7 +147,7 @@ export default function AddToFolderDropdown({
 
       // Close dropdown after successful add
       setTimeout(() => {
-        setIsOpen(false);
+        updateOpenState(false);
       }, 500);
     } catch (error) {
       console.error("Error adding item to folder:", error);
@@ -236,7 +257,9 @@ export default function AddToFolderDropdown({
             });
           }
 
-          setIsOpen(!isOpen);
+          const newState = !isOpen;
+          console.log(`[${Date.now()}] BUTTON CLICK: Setting dropdown to`, newState);
+          updateOpenState(newState);
         }}
         onMouseDown={(e) => {
           e.stopPropagation();
@@ -253,7 +276,7 @@ export default function AddToFolderDropdown({
 
       {mounted && isOpen && createPortal(
         <AnimatePresence>
-          <div key="folder-modal">
+          <div key="folder-modal" data-folder-dropdown>
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -261,12 +284,9 @@ export default function AddToFolderDropdown({
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[9998] bg-black/20"
               onClick={(e) => {
+                console.log(`[${Date.now()}] BACKDROP CLICK: Closing dropdown`);
                 e.stopPropagation();
-                setIsOpen(false);
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
+                updateOpenState(false);
               }}
             />
 
@@ -280,9 +300,16 @@ export default function AddToFolderDropdown({
               style={{
                 top: buttonPosition?.top ? `${buttonPosition.top}px` : '50%',
                 left: buttonPosition?.left ? `${buttonPosition.left}px` : '50%',
-                transform: !buttonPosition ? 'translate(-50%, -50%)' : 'none'
+                transform: !buttonPosition ? 'translate(-50%, -50%)' : 'none',
+                pointerEvents: 'auto'
               }}
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+              }}
+              onWheel={(e) => {
+                e.stopPropagation();
+              }}
             >
               {/* Header */}
               <div className="px-4 pt-4 pb-3">

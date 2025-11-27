@@ -271,10 +271,13 @@ const ClothingGallery = forwardRef(
     const handleMoveToCloset = async (item: Clothing) => {
       try {
         setIsMoving(true);
-        await createAuthenticatedAxios().patch(
-          `/api/images/move-to-closet/${item.id}`,
-          {}
-        );
+
+        // Determine the correct endpoint based on current mode
+        const endpoint = item.mode === "closet"
+          ? `/api/images/move-to-wishlist/${item.id}`
+          : `/api/images/move-to-closet/${item.id}`;
+
+        await createAuthenticatedAxios().patch(endpoint, {});
 
         // Remove the item from the current view
         setClothingItems((prev) => prev.filter((i) => i.id !== item.id));
@@ -282,8 +285,9 @@ const ClothingGallery = forwardRef(
         // Close the modal
         setSelectedItem(null);
       } catch (err) {
-        console.error("Error moving item to closet:", err);
-        alert("Failed to move item to closet");
+        console.error("Error moving item:", err);
+        const destination = item.mode === "closet" ? "wishlist" : "closet";
+        alert(`Failed to move item to ${destination}`);
       } finally {
         setIsMoving(false);
       }
@@ -736,11 +740,7 @@ const ClothingGallery = forwardRef(
           open={showSingleDeleteDialog}
           onOpenChange={setShowSingleDeleteDialog}
           title="Delete Clothing Item"
-          description={
-            outfitsUsingSingleItem.count > 0
-              ? `This item is used in ${outfitsUsingSingleItem.count} outfit${outfitsUsingSingleItem.count > 1 ? 's' : ''}. Deleting it will leave an empty space in those outfits. This action cannot be undone.`
-              : "Are you sure you want to delete this item? This action cannot be undone."
-          }
+          description=""
           onConfirm={() => singleDeleteKey && handleDelete(singleDeleteKey)}
           confirmLabel="Delete"
           cancelLabel="Cancel"

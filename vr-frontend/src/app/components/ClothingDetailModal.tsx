@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, Plus, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { ExpandIcon } from "./icons/ExpandIcon"
 import { ClosetIcon } from "./icons/ClosetIcon"
 import { ColorSwatches } from "./icons/ColorSwatches"
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ClothingItem } from "../types/clothing"
+import AddToFolderDropdown from "./AddToFolderDropdown"
 
 interface EditForm {
   name: string
@@ -72,6 +73,12 @@ export default function ClothingDetailModal({
 }: ClothingDetailModalProps) {
   const currentItem = item
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isFolderDropdownOpen, setIsFolderDropdownOpen] = useState(false)
+
+  // Log state changes
+  useEffect(() => {
+    console.log(`[${Date.now()}] ClothingDetailModal useEffect: isFolderDropdownOpen changed to`, isFolderDropdownOpen);
+  }, [isFolderDropdownOpen]);
 
   // Helper function to ensure URL has proper protocol
   const ensureProtocol = (url: string) => {
@@ -82,9 +89,57 @@ export default function ClothingDetailModal({
     return `https://${url}`
   }
 
+  const handleOpenChange = (open: boolean) => {
+    console.log(`[${Date.now()}] === Dialog handleOpenChange START ===`);
+    console.log('Attempting to set open to:', open);
+    console.log('isFolderDropdownOpen:', isFolderDropdownOpen);
+
+    // If trying to close the dialog
+    if (!open) {
+      // Don't close if folder dropdown is open
+      if (isFolderDropdownOpen) {
+        console.log(`[${Date.now()}] ✗ BLOCKING CLOSE - folder dropdown is open`);
+        return;
+      }
+      console.log(`[${Date.now()}] ✓ ALLOWING CLOSE - folder dropdown is closed, calling onClose()`);
+    }
+
+    // Allow the change
+    onClose();
+    console.log(`[${Date.now()}] === Dialog handleOpenChange END ===`);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-[420px] p-6 border border-border rounded-lg [&>button.absolute.right-4.top-4]:hidden overflow-visible">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-md w-[420px] p-6 border border-border rounded-lg [&>button.absolute.right-4.top-4]:hidden overflow-visible"
+        onPointerDownOutside={(e) => {
+          console.log(`[${Date.now()}] === onPointerDownOutside fired ===`);
+          console.log('isFolderDropdownOpen:', isFolderDropdownOpen);
+
+          const target = e.target as HTMLElement;
+          const dropdownElement = document.querySelector('[data-folder-dropdown]');
+
+          console.log('Click target:', target);
+          console.log('Dropdown element exists:', !!dropdownElement);
+
+          // Check if the click is inside the dropdown content
+          if (dropdownElement && dropdownElement.contains(target)) {
+            console.log(`[${Date.now()}] ✓ Click inside dropdown content - allowing it`);
+            return;
+          }
+
+          if (isFolderDropdownOpen) {
+            console.log(`[${Date.now()}] ✗ Dropdown is open, click is outside - closing dropdown`);
+            // Close the dropdown
+            setIsFolderDropdownOpen(false);
+            // Prevent the dialog from closing
+            e.preventDefault();
+          } else {
+            console.log(`[${Date.now()}] ✓ Allowing default - dropdown is closed`);
+          }
+        }}
+      >
         <VisuallyHidden>
           <DialogTitle>Clothing Details</DialogTitle>
         </VisuallyHidden>
@@ -357,22 +412,23 @@ export default function ClothingDetailModal({
           {/* Main Image Area */}
           <div className="group relative w-full h-[480px] flex items-center justify-center p-8 bg-background rounded-t-lg">
             {/* Plus Icon - Top Left - Only visible on hover */}
-            <button
-              className="absolute top-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-70"
-              onClick={() => {/* Could be used for adding to outfit or similar action */}}
-              aria-label="Add"
-            >
-              <Plus className="w-6 h-6 stroke-[2]" />
-            </button>
+            <div className="absolute top-4 left-4 z-50 pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 scale-90 group-hover:scale-100">
+              <AddToFolderDropdown
+                clothingItemId={currentItem.id}
+                icon="plus"
+                open={isFolderDropdownOpen}
+                onOpenChange={setIsFolderDropdownOpen}
+              />
+            </div>
 
             {/* Heart Icon - Top Right - Only visible on hover */}
             <button
-              className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-70"
+              className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
               onClick={() => onToggleFavorite?.(currentItem.id, !currentItem.isFavorite)}
               aria-label={currentItem.isFavorite ? 'Unfavorite' : 'Favorite'}
             >
               {currentItem.isFavorite ? (
-                <Heart className="fill-current w-6 h-6 stroke-[1.5]" />
+                <Heart className="fill-red-500 text-red-500 w-6 h-6 stroke-[1.5]" />
               ) : (
                 <Heart className="w-6 h-6 stroke-[1.5]" />
               )}
@@ -450,69 +506,89 @@ export default function ClothingDetailModal({
                 {/* 4 Action Icons */}
                 <div className="flex items-center gap-1">
                   {/* First Icon - Expand/Panel Toggle */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className={`h-9 w-9 ${
-                      isExpanded ? "bg-accent" : "hover:bg-accent"
-                    }`}
-                    aria-label="Expand"
-                  >
-                    <ExpandIcon size={20} />
-                  </Button>
+                  <div className="relative group">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className={`h-9 w-9 ${
+                        isExpanded ? "bg-accent" : "hover:bg-accent"
+                      }`}
+                      aria-label="Details"
+                    >
+                      <ExpandIcon size={20} />
+                    </Button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Details
+                    </div>
+                  </div>
 
                   {/* Second Icon - Mode Toggle (Closet/Wishlist) */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onMoveToCloset(currentItem)}
-                    disabled={isMoving}
-                    className="h-9 w-9 hover:bg-accent"
-                    aria-label={currentItem.mode === "closet" ? "Move to wishlist" : "Move to closet"}
-                  >
-                    {isMoving ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : currentItem.mode === "closet" ? (
-                      <ShoppingCart className="h-5 w-5" />
-                    ) : (
-                      <ClosetIcon size={20} />
-                    )}
-                  </Button>
+                  <div className="relative group">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onMoveToCloset(currentItem)}
+                      disabled={isMoving}
+                      className="h-9 w-9 hover:bg-accent"
+                      aria-label={currentItem.mode === "closet" ? "Move to Wishlist" : "Move to Closet"}
+                    >
+                      {isMoving ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : currentItem.mode === "closet" ? (
+                        <ShoppingCart className="h-5 w-5" />
+                      ) : (
+                        <ClosetIcon size={20} />
+                      )}
+                    </Button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Move to Wishlist
+                    </div>
+                  </div>
 
                   {/* Third Icon - Edit/Pencil */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsEditing(!isEditing);
-                      if (!isEditing) {
-                        setIsExpanded(true);
-                      }
-                    }}
-                    className={`h-9 w-9 ${
-                      isEditing ? "bg-accent" : "hover:bg-accent"
-                    }`}
-                    aria-label="Edit"
-                  >
-                    <Pencil className="h-5 w-5" />
-                  </Button>
+                  <div className="relative group">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIsEditing(!isEditing);
+                        if (!isEditing) {
+                          setIsExpanded(true);
+                        }
+                      }}
+                      className={`h-9 w-9 ${
+                        isEditing ? "bg-accent" : "hover:bg-accent"
+                      }`}
+                      aria-label="Edit"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </Button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Edit
+                    </div>
+                  </div>
 
                   {/* Fourth Icon - Delete/Trash */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(currentItem.key)}
-                    disabled={isDeleting}
-                    className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive"
-                    aria-label="Delete"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-5 w-5" />
-                    )}
-                  </Button>
+                  <div className="relative group">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(currentItem.key)}
+                      disabled={isDeleting}
+                      className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive"
+                      aria-label="Delete"
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-5 w-5" />
+                      )}
+                    </Button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Delete
+                    </div>
+                  </div>
                 </div>
               </>
             )}

@@ -54,8 +54,11 @@ router.get("/", authMiddleware, async (req, res) => {
     const clothingFromDb = await prisma.clothing.findMany({
       where: {
         userId,
-        mode, 
+        mode,
       },
+      orderBy: {
+        createdAt: 'desc' // Sort by newest first (latest upload at top)
+      }
     });
 
     const { error, presignedUrls } = await getUserPresignedUrls(userId);
@@ -315,6 +318,42 @@ router.patch("/move-to-closet/:id", authMiddleware, async (req, res) => {
     });
 
     res.json({ message: "Item moved to closet", item: updated });
+  } catch (error) {
+    console.error("Failed to move item:", error);
+    res.status(500).json({ error: "Failed to move item" });
+  }
+});
+
+// Add new endpoint to move item from closet to wishlist
+router.patch("/move-to-wishlist/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  if (!id) return res.status(400).json({ error: "Missing clothing ID" });
+
+  try {
+    // First verify the item exists and belongs to the user
+    const item = await prisma.clothing.findFirst({
+      where: {
+        id,
+        userId,
+        mode: "closet"
+      }
+    });
+
+    if (!item) {
+      return res.status(404).json({ error: "Item not found in closet" });
+    }
+
+    // Update the item's mode to wishlist
+    const updated = await prisma.clothing.update({
+      where: { id },
+      data: {
+        mode: "wishlist"
+      },
+    });
+
+    res.json({ message: "Item moved to wishlist", item: updated });
   } catch (error) {
     console.error("Failed to move item:", error);
     res.status(500).json({ error: "Failed to move item" });
