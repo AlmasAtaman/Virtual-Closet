@@ -22,6 +22,7 @@ export default function AddToFolderDropdown({
 }: AddToFolderDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [recentlyAddedTo, setRecentlyAddedTo] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [addingToFolder, setAddingToFolder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,6 +91,7 @@ export default function AddToFolderDropdown({
         { withCredentials: true }
       );
       setFolders(response.data.folders || []);
+      setRecentlyAddedTo(response.data.recentlyAddedTo || []);
     } catch (error) {
       console.error("Error fetching folders:", error);
     } finally {
@@ -107,6 +109,15 @@ export default function AddToFolderDropdown({
         { clothingId: clothingItemId },
         { withCredentials: true }
       );
+
+      // Update recently added-to folders
+      const addedFolder = folders.find(f => f.id === folderId);
+      if (addedFolder) {
+        setRecentlyAddedTo((prev) => {
+          const filtered = prev.filter(f => f.id !== folderId);
+          return [addedFolder, ...filtered].slice(0, 3);
+        });
+      }
 
       // Call callback if provided
       if (onAddToFolder) {
@@ -135,6 +146,11 @@ export default function AddToFolderDropdown({
 
       const newFolder = response.data.folder;
       setFolders((prev) => [newFolder, ...prev]);
+      // Add to recently added-to since we're about to add an item to it
+      setRecentlyAddedTo((prev) => {
+        const filtered = prev.filter(f => f.id !== newFolder.id);
+        return [newFolder, ...filtered].slice(0, 3);
+      });
 
       // Close create modal
       setIsCreateModalOpen(false);
@@ -158,10 +174,14 @@ export default function AddToFolderDropdown({
     folder.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Separate folders into top choices and all boards
-  // Only show top choices if there are 3 or more boards
-  const showTopChoices = filteredFolders.length >= 3;
-  const topChoices = showTopChoices ? filteredFolders.slice(0, 2) : [];
+  // Filter recently added-to folders based on search query
+  const filteredRecentlyAddedTo = recentlyAddedTo.filter(folder =>
+    folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Only show top choices if we have recently added-to folders and no search query
+  const showTopChoices = filteredRecentlyAddedTo.length > 0 && searchQuery === "";
+  const topChoices = showTopChoices ? filteredRecentlyAddedTo : [];
   const allBoards = filteredFolders;
 
   return (

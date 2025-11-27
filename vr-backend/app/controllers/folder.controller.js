@@ -52,7 +52,50 @@ export const getFolders = async (req, res) => {
       folders.map(folder => transformFolderData(folder))
     );
 
-    res.json({ folders: transformedFolders });
+    // Get recently added-to folders (last 3 unique folders that had items added)
+    const recentFolderItems = await prisma.folderItem.findMany({
+      where: {
+        folder: {
+          userId: userId
+        }
+      },
+      include: {
+        folder: {
+          include: {
+            items: {
+              include: {
+                clothing: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        addedAt: 'desc'
+      },
+      take: 50 // Take more than we need to ensure we get 3 unique folders
+    });
+
+    // Get unique folders (max 3)
+    const seenFolderIds = new Set();
+    const recentFolders = [];
+
+    for (const item of recentFolderItems) {
+      if (!seenFolderIds.has(item.folder.id) && recentFolders.length < 3) {
+        seenFolderIds.add(item.folder.id);
+        recentFolders.push(item.folder);
+      }
+      if (recentFolders.length === 3) break;
+    }
+
+    const transformedRecentFolders = await Promise.all(
+      recentFolders.map(folder => transformFolderData(folder))
+    );
+
+    res.json({
+      folders: transformedFolders,
+      recentlyAddedTo: transformedRecentFolders
+    });
   } catch (error) {
     console.error('Error fetching folders:', error);
     res.status(500).json({ message: 'Failed to fetch folders' });
