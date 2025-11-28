@@ -2,6 +2,7 @@ import express from 'express';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import {
   getFolders,
+  getFolder,
   createFolder,
   updateFolder,
   deleteFolder,
@@ -14,6 +15,9 @@ const router = express.Router();
 
 // Get all folders for the user
 router.get('/', authMiddleware, getFolders);
+
+// Get a single folder by ID
+router.get('/:id', authMiddleware, getFolder);
 
 // Create a new folder
 router.post('/', authMiddleware, createFolder);

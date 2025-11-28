@@ -102,6 +102,82 @@ export const getFolders = async (req, res) => {
   }
 };
 
+// Get a single folder by ID with all its items
+export const getFolder = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    // Get folder with all items
+    const folder = await prisma.folder.findFirst({
+      where: { id, userId },
+      include: {
+        items: {
+          include: {
+            clothing: true
+          },
+          orderBy: {
+            addedAt: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    // Transform items with presigned URLs
+    const items = await Promise.all(
+      folder.items.map(async (item) => {
+        const { url: presignedUrl, error: presignError } = await getPresignedUrl(item.clothing.key);
+        if (presignError) {
+          console.error(`Error generating presigned URL for key ${item.clothing.key}:`, presignError);
+        }
+
+        return {
+          id: item.clothing.id,
+          key: item.clothing.key,
+          url: presignedUrl || item.clothing.originalImageUrl || "",
+          name: item.clothing.name,
+          type: item.clothing.type,
+          category: item.clothing.category,
+          brand: item.clothing.brand,
+          price: item.clothing.price,
+          color: item.clothing.color,
+          season: item.clothing.season,
+          notes: item.clothing.notes,
+          tags: item.clothing.tags,
+          size: item.clothing.size,
+          mode: item.clothing.mode,
+          isFavorite: item.clothing.isFavorite,
+          sourceUrl: item.clothing.sourceUrl,
+          processingStatus: item.clothing.processingStatus || "completed",
+          processingError: item.clothing.processingError || null,
+          originalImageUrl: item.clothing.originalImageUrl || null,
+          addedAt: item.addedAt,
+        };
+      })
+    );
+
+    res.json({
+      folder: {
+        id: folder.id,
+        name: folder.name,
+        description: folder.description,
+        isPublic: folder.isPublic,
+        createdAt: folder.createdAt,
+        updatedAt: folder.updatedAt,
+        itemCount: items.length,
+        items,
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching folder:', error);
+    res.status(500).json({ message: 'Failed to fetch folder' });
+  }
+};
+
 // Create a new folder
 export const createFolder = async (req, res) => {
   try {

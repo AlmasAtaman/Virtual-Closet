@@ -100,6 +100,13 @@ const ClothingGallery = forwardRef(
     const [outfitsUsingSingleItem, setOutfitsUsingSingleItem] = useState<OutfitUsageInfo>({count: 0, outfits: []});
     const [singleDeleteKey, setSingleDeleteKey] = useState<string | null>(null);
 
+    // Reset selections when multi-select mode is turned off
+    useEffect(() => {
+      if (!isMultiSelecting) {
+        setSelectedItemIds([]);
+      }
+    }, [isMultiSelecting]);
+
     // Define the filterable attributes
     const filterAttributes: FilterAttribute[] = [
       { key: "category", label: "Category" },
@@ -502,6 +509,12 @@ const ClothingGallery = forwardRef(
           item.id === id ? { ...item, isFavorite } : item
         )
       );
+
+      // Also update selectedItem if it's the same item
+      setSelectedItem(prev =>
+        prev && prev.id === id ? { ...prev, isFavorite } : prev
+      );
+
       try {
         await createAuthenticatedAxios().patch(
           `/api/images/${id}/favorite`,
@@ -515,6 +528,9 @@ const ClothingGallery = forwardRef(
             item.id === id ? { ...item, isFavorite: !isFavorite } : item
           )
         );
+        setSelectedItem(prev =>
+          prev && prev.id === id ? { ...prev, isFavorite: !isFavorite } : prev
+        );
         console.error("Failed to toggle favorite:", err);
       }
     };
@@ -524,7 +540,7 @@ const ClothingGallery = forwardRef(
       <div className="space-y-6 flex flex-col flex-1">
         {/* Bottom Selection Modal - Slide up from bottom when items selected */}
         <AnimatePresence>
-          {isMultiSelecting && selectedItemIds.length > 0 && (
+          {isMultiSelecting && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -541,11 +557,23 @@ const ClothingGallery = forwardRef(
                     variant="outline"
                     size="sm"
                     onClick={() => setShowMoveToClosetDialog(true)}
-                    disabled={isMoving}
+                    disabled={isMoving || selectedItemIds.length === 0}
                     className="gap-2"
                   >
-                    {isMoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoveRight className="h-4 w-4" />}
+                    {isMoving && <Loader2 className="h-4 w-4 animate-spin" />}
                     Move to Closet
+                  </Button>
+                )}
+                {viewMode === "closet" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMoveToClosetDialog(true)}
+                    disabled={isMoving || selectedItemIds.length === 0}
+                    className="gap-2"
+                  >
+                    {isMoving && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Move to Wishlist
                   </Button>
                 )}
                 <Button
@@ -557,10 +585,10 @@ const ClothingGallery = forwardRef(
                     setOutfitsUsingSelectedItems(result);
                     setShowMultiDeleteDialog(true);
                   }}
-                  disabled={isDeleting}
+                  disabled={isDeleting || selectedItemIds.length === 0}
                   className="gap-2"
                 >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
                   Delete
                 </Button>
               </div>
@@ -584,14 +612,18 @@ const ClothingGallery = forwardRef(
           confirmVariant="destructive"
         />
 
-        {/* Move to Closet Confirmation Dialog */}
+        {/* Move to Closet/Wishlist Confirmation Dialog */}
         <ConfirmDialog
           open={showMoveToClosetDialog}
           onOpenChange={setShowMoveToClosetDialog}
-          title="Move to My Closet"
-          description={`Are you sure you want to move ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from your wishlist to your closet?`}
+          title={viewMode === "wishlist" ? "Move to My Closet" : "Move to My Wishlist"}
+          description={
+            viewMode === "wishlist"
+              ? `Are you sure you want to move ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from your wishlist to your closet?`
+              : `Are you sure you want to move ${selectedItemIds.length} item${selectedItemIds.length > 1 ? 's' : ''} from your closet to your wishlist?`
+          }
           onConfirm={handleMoveSelectedToCloset}
-          confirmLabel="Move to Closet"
+          confirmLabel={viewMode === "wishlist" ? "Move to Closet" : "Move to Wishlist"}
           cancelLabel="Cancel"
         />
 

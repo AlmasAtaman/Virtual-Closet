@@ -290,10 +290,17 @@ export default function Homepage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                className={`p-2 rounded-lg transition-colors ${
+                  isMultiSelecting
+                    ? "bg-black dark:bg-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
                 onClick={() => setIsMultiSelecting(!isMultiSelecting)}
               >
-                <GridSelectIcon size={20} />
+                <GridSelectIcon
+                  size={20}
+                  className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                />
               </motion.button>
 
               {/* Add */}

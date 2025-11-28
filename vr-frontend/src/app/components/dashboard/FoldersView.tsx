@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Loader2 } from "lucide-react";
 import FolderCard from "./FolderCard";
@@ -14,6 +15,7 @@ interface FoldersViewProps {
 }
 
 export default function FoldersView({ viewMode }: FoldersViewProps) {
+  const router = useRouter();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -69,8 +71,8 @@ export default function FoldersView({ viewMode }: FoldersViewProps) {
   };
 
   const handleFolderClick = (folder: Folder) => {
-    // TODO: Navigate to folder details view or open folder items modal
-    console.log("Clicked folder:", folder);
+    // Navigate to folder detail page
+    router.push(`/folders/${folder.id}`);
   };
 
   if (isLoading) {
