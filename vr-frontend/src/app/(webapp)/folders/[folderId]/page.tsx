@@ -34,6 +34,8 @@ export default function FolderDetailPage() {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [isAddItemsModalOpen, setIsAddItemsModalOpen] = useState(false);
+  const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
+  const pendingRemovalsRef = useRef<Set<string>>(new Set());
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,21 +55,21 @@ export default function FolderDetailPage() {
   };
 
   // Fetch folder details
-  useEffect(() => {
-    const fetchFolder = async () => {
-      try {
-        setIsLoading(true);
-        const response = await createAuthenticatedAxios().get(
-          `/api/folders/${folderId}`
-        );
-        setFolder(response.data.folder);
-      } catch (error) {
-        console.error("Error fetching folder:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchFolder = async () => {
+    try {
+      setIsLoading(true);
+      const response = await createAuthenticatedAxios().get(
+        `/api/folders/${folderId}`
+      );
+      setFolder(response.data.folder);
+    } catch (error) {
+      console.error("Error fetching folder:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (folderId) {
       fetchFolder();
     }
@@ -88,18 +90,19 @@ export default function FolderDetailPage() {
   }, [showSearchBar]);
 
   // Compute unique attribute values for filters
-  const uniqueAttributeValues = folder?.items.reduce((acc, item) => {
+  const uniqueAttributeValues: Record<string, string[]> = (() => {
+    const values: Record<string, string[]> = {};
     filterAttributes.forEach((attr) => {
-      const value = item[attr.key as keyof ClothingItem];
-      if (value) {
-        if (!acc[attr.key]) {
-          acc[attr.key] = new Set();
-        }
-        acc[attr.key].add(String(value));
-      }
+      values[attr.key] = Array.from(
+        new Set(
+          (folder?.items || [])
+            .map((item) => item[attr.key as keyof ClothingItem])
+            .filter(Boolean)
+        )
+      ) as string[];
     });
-    return acc;
-  }, {} as Record<string, Set<string>>) || {};
+    return values;
+  })();
 
   // Filter and search items
   const filteredItems = (folder?.items || []).filter((item) => {
@@ -195,6 +198,55 @@ export default function FolderDetailPage() {
       setSelectedItem(folder!.items[prevIndex]);
     }
   };
+
+  // Toggle pending removal (optimistic, doesn't actually remove from folder)
+  const handleTogglePendingRemoval = (itemId: string) => {
+    setPendingRemovals((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId); // Un-mark for removal
+        pendingRemovalsRef.current.delete(itemId);
+      } else {
+        next.add(itemId); // Mark for removal
+        pendingRemovalsRef.current.add(itemId);
+      }
+      return next;
+    });
+  };
+
+  // Handle unmarking items from pending removals (called from modal)
+  const handleUnmarkRemovals = (itemIds: string[]) => {
+    setPendingRemovals((prev) => {
+      const next = new Set(prev);
+      itemIds.forEach((id) => {
+        next.delete(id);
+        pendingRemovalsRef.current.delete(id);
+      });
+      return next;
+    });
+  };
+
+  // Clean up pending removals when component unmounts or user navigates away
+  useEffect(() => {
+    return () => {
+      // Remove all pending items from database when leaving the page
+      if (pendingRemovalsRef.current.size > 0) {
+        const itemsToRemove = Array.from(pendingRemovalsRef.current);
+        itemsToRemove.forEach(async (itemId) => {
+          try {
+            await createAuthenticatedAxios().delete(
+              `/api/folders/${folderId}/items/${itemId}`
+            );
+          } catch (error) {
+            // Silently ignore 404 errors (item already removed)
+            if (error.response?.status !== 404) {
+              console.error(`Error removing item ${itemId}:`, error);
+            }
+          }
+        });
+      }
+    };
+  }, [folderId]);
 
   // Toggle favorite
   const toggleFavorite = async (id: string, isFavorite: boolean) => {
@@ -447,6 +499,9 @@ export default function FolderDetailPage() {
                 isSelected={selectedItemIds.includes(item.id)}
                 onToggleSelect={handleToggleSelect}
                 viewMode="wishlist"
+                showAsSaved={true}
+                isPendingRemoval={pendingRemovals.has(item.id)}
+                onTogglePendingRemoval={handleTogglePendingRemoval}
               />
             ))}
           </div>
@@ -470,9 +525,22 @@ export default function FolderDetailPage() {
         {/* Add Items to Folder Modal */}
         <AddItemsToFolderModal
           isOpen={isAddItemsModalOpen}
-          onClose={() => setIsAddItemsModalOpen(false)}
+          onClose={() => {
+            setIsAddItemsModalOpen(false);
+            // Clear pending removals and refresh folder when modal closes
+            setPendingRemovals(new Set());
+            pendingRemovalsRef.current.clear();
+            fetchFolder();
+          }}
           folderName={folder?.name || ""}
           folderId={folderId}
+          existingItemIds={
+            folder?.items
+              .filter((item) => !pendingRemovals.has(item.id))
+              .map((item) => item.id) || []
+          }
+          pendingRemovals={Array.from(pendingRemovals)}
+          onUnmarkRemovals={handleUnmarkRemovals}
         />
       </main>
     </div>

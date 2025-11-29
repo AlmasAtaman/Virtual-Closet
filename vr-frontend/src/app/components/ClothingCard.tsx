@@ -17,6 +17,9 @@ interface ClothingCardProps {
   onToggleSelect?: (id: string) => void
   toggleFavorite: (id: string, newState: boolean) => void
   viewMode?: "closet" | "wishlist"
+  showAsSaved?: boolean
+  isPendingRemoval?: boolean
+  onTogglePendingRemoval?: (id: string) => void
 }
 
 // Images are now standardized on the backend with category-specific canvas sizes
@@ -33,6 +36,9 @@ export default function ClothingCard({
   onToggleSelect,
   toggleFavorite,
   viewMode,
+  showAsSaved = false,
+  isPendingRemoval = false,
+  onTogglePendingRemoval,
 }: ClothingCardProps) {
   // Helper function to ensure URL has proper protocol
   const ensureProtocol = (url: string) => {
@@ -55,10 +61,10 @@ export default function ClothingCard({
         damping: 17,
       }}
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: isPendingRemoval ? 0.5 : 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       layout
-      className={`relative overflow-hidden`}
+      className={`relative overflow-hidden ${isPendingRemoval ? 'opacity-50' : ''}`}
     >
       <Card
         className={`group h-full transition-all duration-300 border-0 ring-0 rounded-[10px] bg-[#ECECEC] ${isSelected
@@ -115,11 +121,24 @@ export default function ClothingCard({
             </Badge>
           )}
 
-          {/* Top Left - Add to Folder (on hover, unless multi-selecting) */}
-          {!isMultiSelecting && (
+          {/* Top Left - Add to Folder / Saved button */}
+          {!isMultiSelecting && !showAsSaved && (
             <div className="absolute top-2 left-2 z-50 pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 scale-90 group-hover:scale-100">
               <AddToFolderDropdown clothingItemId={item.id} icon="plus" />
             </div>
+          )}
+
+          {/* Saved/Save button for folder view */}
+          {!isMultiSelecting && showAsSaved && onTogglePendingRemoval && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePendingRemoval(item.id);
+              }}
+              className="absolute top-2 left-2 z-50 pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1 rounded-full text-xs font-medium bg-white text-black hover:bg-gray-100"
+            >
+              {isPendingRemoval ? "Save" : "Saved"}
+            </button>
           )}
 
           {/* Multi-select checkmark - top left corner */}
