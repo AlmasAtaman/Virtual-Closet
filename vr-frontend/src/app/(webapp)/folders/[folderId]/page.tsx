@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { ArrowLeft, Plus, Search, X } from "lucide-react";
@@ -42,9 +42,19 @@ export default function FolderDetailPage() {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  const [filterAttributes, setFilterAttributes] = useState<FilterAttribute[]>([]);
+  const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize filter attributes (exactly like dashboard)
+  const filterAttributes: FilterAttribute[] = useMemo(() => [
+    { key: "type", label: "Type" },
+    { key: "occasion", label: "Occasion" },
+    { key: "style", label: "Style" },
+    { key: "fit", label: "Fit" },
+    { key: "color", label: "Color" },
+    { key: "material", label: "Material" },
+    { key: "season", label: "Season" },
+  ], []);
 
   // Create axios instance with credentials
   const createAuthenticatedAxios = () => {
@@ -90,7 +100,7 @@ export default function FolderDetailPage() {
   }, [showSearchBar]);
 
   // Compute unique attribute values for filters
-  const uniqueAttributeValues: Record<string, string[]> = (() => {
+  const uniqueAttributeValues: Record<string, string[]> = useMemo(() => {
     const values: Record<string, string[]> = {};
     filterAttributes.forEach((attr) => {
       values[attr.key] = Array.from(
@@ -102,7 +112,7 @@ export default function FolderDetailPage() {
       ) as string[];
     });
     return values;
-  })();
+  }, [folder?.items, filterAttributes]);
 
   // Filter and search items
   const filteredItems = (folder?.items || []).filter((item) => {
@@ -124,32 +134,32 @@ export default function FolderDetailPage() {
       if (!matches) return false;
     }
 
-    // Tag filter
+    // Attribute filter (type, color, season, and style tags)
     if (selectedTags.length > 0) {
-      const itemTags = item.tags || [];
-      const hasTag = selectedTags.some((tag) => itemTags.includes(tag));
-      if (!hasTag) return false;
+      const itemAttributes = [
+        item.type?.toLowerCase(),
+        item.color?.toLowerCase(),
+        item.season?.toLowerCase(),
+        ...(item.tags || []).map(tag => tag.toLowerCase())
+      ].filter(Boolean);
+
+      const hasMatch = selectedTags.some((tag) =>
+        itemAttributes.includes(tag.toLowerCase())
+      );
+      if (!hasMatch) return false;
     }
 
-    // Attribute filters
-    for (const attr of filterAttributes) {
-      if (attr.selectedValues.length > 0) {
-        const itemValue = String(item[attr.key as keyof ClothingItem] || "");
-        if (!attr.selectedValues.includes(itemValue)) {
+    // Price range filter
+    if (priceRange[0] !== null && priceRange[1] !== null) {
+      if (item.price !== null && item.price !== undefined) {
+        if (item.price < priceRange[0] || item.price > priceRange[1]) {
           return false;
         }
       }
     }
 
-    // Price range filter
-    if (item.price !== null && item.price !== undefined) {
-      if (item.price < priceRange[0] || item.price > priceRange[1]) {
-        return false;
-      }
-    }
-
     return true;
-  }) || [];
+  });
 
   // Sort items
   const sortedItems = [...filteredItems].sort((a, b) => {
@@ -237,9 +247,9 @@ export default function FolderDetailPage() {
             await createAuthenticatedAxios().delete(
               `/api/folders/${folderId}/items/${itemId}`
             );
-          } catch (error) {
+          } catch (error: any) {
             // Silently ignore 404 errors (item already removed)
-            if (error.response?.status !== 404) {
+            if (error?.response?.status !== 404) {
               console.error(`Error removing item ${itemId}:`, error);
             }
           }
@@ -330,35 +340,35 @@ export default function FolderDetailPage() {
 
       {/* Main Content with left margin for sidebar on desktop */}
       <main className="md:ml-[60px] md:w-[calc(100%-60px)] w-full flex flex-col flex-1 min-h-0">
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              {/* Back Arrow & Title - Left */}
-              <div className="flex items-center gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => router.push("/dashboard")}
-                  className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </motion.button>
+        {/* Content Area */}
+        <div className="flex-1 px-6 py-6 overflow-auto">
+          {/* Header with Action Buttons */}
+          <div className="flex items-center justify-between mb-6">
+            {/* Back Arrow & Title - Left */}
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push("/dashboard")}
+                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </motion.button>
 
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {folder.name}
-                  </h1>
-                  {folder.description && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {folder.description}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {folder.name}
+                </h1>
+                {folder.description && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {folder.description}
+                  </p>
+                )}
               </div>
+            </div>
 
-              {/* Action Buttons - Right */}
-              <div className="flex items-center gap-3 relative">
+            {/* Action Buttons - Right */}
+            <div className="flex items-center gap-3 relative">
                 {/* Search Bar with integrated icon */}
                 <motion.div
                   initial={false}
@@ -424,19 +434,17 @@ export default function FolderDetailPage() {
                 </motion.div>
 
                 {/* Filter */}
-                <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-700 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
-                  <FilterSection
-                    clothingItems={folder?.items || []}
-                    selectedTags={selectedTags}
-                    setSelectedTags={setSelectedTags}
-                    filterAttributes={filterAttributes}
-                    uniqueAttributeValues={uniqueAttributeValues}
-                    priceSort={priceSort}
-                    setPriceSort={setPriceSort}
-                    priceRange={priceRange}
-                    setPriceRange={setPriceRange}
-                  />
-                </div>
+                <FilterSection
+                  clothingItems={folder?.items || []}
+                  selectedTags={selectedTags}
+                  setSelectedTags={setSelectedTags}
+                  filterAttributes={filterAttributes}
+                  uniqueAttributeValues={uniqueAttributeValues}
+                  priceSort={priceSort}
+                  setPriceSort={setPriceSort}
+                  priceRange={priceRange}
+                  setPriceRange={setPriceRange}
+                />
 
                 {/* Grid Select */}
                 <motion.button
@@ -466,12 +474,9 @@ export default function FolderDetailPage() {
                 </motion.button>
               </div>
             </div>
-          </div>
-        </div>
 
-      {/* Content */}
-      <div className="flex-1 px-6 py-6 overflow-auto">
-        {isLoading ? (
+          {/* Content Grid */}
+          {isLoading ? (
           <div className="text-center py-16">
             <p className="text-gray-500 dark:text-gray-400">Loading folder...</p>
           </div>
@@ -506,7 +511,7 @@ export default function FolderDetailPage() {
             ))}
           </div>
         )}
-      </div>
+        </div>
 
         {/* Clothing Detail Modal */}
         {selectedItem && (
