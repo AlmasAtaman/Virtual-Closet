@@ -1,30 +1,25 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id       String   @id
-  username String   @unique
-  email    String   @unique
-  password String?
-  googleId String?  @unique
-  roles    Role[]   @relation("UserRoles")
-  resetPasswordToken    String?
-  resetPasswordExpires  DateTime?
-  clothing Clothing[]
-  outfits  Outfit[]
-  occasions Occasion[]
-  folders  Folder[]
+  id                   String     @id
+  username             String     @unique
+  email                String     @unique
+  password             String?
+  googleId             String?    @unique
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  clothing             Clothing[]
+  folders              Folder[]
+  occasions            Occasion[]
+  outfits              Outfit[]
+  roles                Role[]     @relation("UserRoles")
 }
 
 model Role {
@@ -34,59 +29,56 @@ model Role {
 }
 
 model Clothing {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  url       String
-  sourceUrl  String?
-  name      String?
-  type      String?  // Subcategory (e.g., "t-shirt", "jeans", "sneakers")
-  category  String?  // Main category (tops/bottoms/outerwear/dresses/shoes/accessories/bags)
-  brand     String?
-  price     Float?
-  color     String?
-  season    String?
-  notes     String?
-  tags      String[] @default([]) // Style tags (e.g., casual, elegant, sporty) - max 3
-  size      String?  // Clothing size (e.g., "S", "M", "L", "28", "10")
-  purchaseDate DateTime? @default(now()) // When item was added to wardrobe
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  mode       String   @default("closet")
-  isFavorite Boolean @default(false)
-  processingStatus String @default("completed") // pending | processing | completed | failed
-  processingError  String? // Error message if processing failed
-  originalImageUrl String? // Original image URL before processing (for preview during processing)
-
-  // Backend analytics fields (never shown in UI)
-  viewCount        Int      @default(0)      // Track how many times item viewed in detail
-  outfitCount      Int      @default(0)      // Track outfit inclusions
-  lastViewedAt     DateTime?                 // Last time user viewed item detail
-  favoriteToggles  Int      @default(0)      // Times favorited/unfavorited
-  uploadMethod     String?                   // "direct" | "url" | "scraper"
-  sourceDomain     String?                   // Extracted domain from sourceUrl
-  aiGenerated      Boolean  @default(false)  // Whether AI was used for this item
-  aiSuggestions    Json?                     // Original AI suggestions
-  userEdits        Json?                     // User's changes from AI suggestions
-
-  outfits     OutfitClothing[]
-  folderItems FolderItem[]
+  id               String           @id @default(cuid())
+  key              String           @unique
+  url              String
+  sourceUrl        String?
+  name             String?
+  type             String?
+  brand            String?
+  price            Float?
+  color            String?
+  season           String?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  userId           String
+  mode             String           @default("closet")
+  isFavorite       Boolean          @default(false)
+  originalImageUrl String?
+  processingError  String?
+  processingStatus String           @default("completed")
+  aiGenerated      Boolean          @default(false)
+  aiSuggestions    Json?
+  category         String?
+  favoriteToggles  Int              @default(0)
+  lastViewedAt     DateTime?
+  outfitCount      Int              @default(0)
+  purchaseDate     DateTime?        @default(now())
+  size             String?
+  sourceDomain     String?
+  tags             String[]         @default([])
+  uploadMethod     String?
+  userEdits        Json?
+  viewCount        Int              @default(0)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderItems      FolderItem[]
+  outfits          OutfitClothing[]
 }
 
 model Outfit {
-  id          String    @id @default(uuid())
-  name        String?   // optional
-  occasion    String?   // optional - added this field
-  season      String?   // optional - added this field
-  notes       String?   // optional - added this field
-  totalPrice  Float?    // optional
-  outerwearOnTop Boolean @default(false) // Layer order: false = tops on top (default), true = outerwear on top
-  createdAt   DateTime  @default(now())
-  occasions Occasion[] @relation("OutfitOccasions")
-  userId       String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String           @id @default(uuid())
+  name           String?
+  occasion       String?
+  season         String?
+  notes          String?
+  totalPrice     Float?
+  createdAt      DateTime         @default(now())
+  userId         String
+  outerwearOnTop Boolean          @default(false)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   outfitClothing OutfitClothing[]
+  occasions      Occasion[]       @relation("OutfitOccasions")
 }
 
 model OutfitClothing {
@@ -95,22 +87,23 @@ model OutfitClothing {
   x          Float    @default(0)
   y          Float    @default(0)
   scale      Float    @default(1)
-  left       Float    @default(50)   // Added this field
-  bottom     Float    @default(0)    // Added this field
-  width      Float    @default(10)   // Added this field
-  outfit     Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  left       Float    @default(50)
+  bottom     Float    @default(0)
+  width      Float    @default(10)
   clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+  outfit     Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+
   @@id([outfitId, clothingId])
 }
 
 model Occasion {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
-  customThumbnail String?   // Base64 encoded image data
-  createdAt       DateTime  @default(now())
+  customThumbnail String?
+  createdAt       DateTime @default(now())
   userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  outfits         Outfit[]  @relation("OutfitOccasions")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfits         Outfit[] @relation("OutfitOccasions")
 }
 
 model Folder {
@@ -126,12 +119,12 @@ model Folder {
 }
 
 model FolderItem {
-  id          String   @id @default(uuid())
-  folderId    String
-  clothingId  String
-  addedAt     DateTime @default(now())
-  folder      Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  clothing    Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  folderId   String
+  clothingId String
+  addedAt    DateTime @default(now())
+  clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+  folder     Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
 
   @@unique([folderId, clothingId])
 }
