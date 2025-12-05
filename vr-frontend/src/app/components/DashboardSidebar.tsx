@@ -6,6 +6,7 @@ import { HangerIcon } from './icons/HangerIcon';
 import { TagIcon } from './icons/TagIcon';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 interface DashboardSidebarProps {
   onThemeToggle?: () => void;
@@ -16,6 +17,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onThemeToggle,
   onSettingsClick,
 }) => {
+  const router = useRouter();
+
   return (
     <motion.aside
       initial={{ x: -60, opacity: 0 }}
@@ -50,6 +53,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          onClick={() => router.push('/outfits')}
           className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 transition-colors"
           aria-label="Clothing"
         >

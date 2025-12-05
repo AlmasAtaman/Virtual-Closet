@@ -24,6 +24,7 @@ router.post('/', authMiddleware, createFolder);
 
 // Update a folder
 router.put('/:id', authMiddleware, updateFolder);
+router.patch('/:id', authMiddleware, updateFolder);
 
 // Delete a folder
 router.delete('/:id', authMiddleware, deleteFolder);

@@ -26,6 +26,10 @@ out/
 *~
 .DS_Store
 
+# Local configuration (test credentials, local settings)
+.local/
+test-credentials.md
+
 # Claude Code files
 .claude/
 .clauderc
@@ -46,6 +50,11 @@ lerna-debug.log*
 # Testing
 coverage/
 .nyc_output/
+
+# Playwright
+.playwright-mcp/
+playwright-report/
+test-results/
 
 # Temporary files
 *.tmp
