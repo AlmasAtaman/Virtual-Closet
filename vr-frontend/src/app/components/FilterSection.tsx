@@ -29,6 +29,8 @@ type FilterSectionProps = {
   setPriceSort: (mode: "none" | "asc" | "desc") => void;
   priceRange: [number | null, number | null];
   setPriceRange: React.Dispatch<React.SetStateAction<[number | null, number | null]>>;
+  selectedModes?: ("closet" | "wishlist")[];
+  setSelectedModes?: React.Dispatch<React.SetStateAction<("closet" | "wishlist")[]>>;
 };
 
 // Clothing type options as per design
@@ -75,6 +77,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   setPriceSort,
   priceRange,
   setPriceRange,
+  selectedModes,
+  setSelectedModes,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -84,6 +88,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   // Track which sections are expanded - all open by default
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     sort: true,
+    category: true,
     clothingType: true,
     color: true,
     season: true,
@@ -118,7 +123,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({
     selectedTags.length +
     (priceSort !== "none" ? 1 : 0) +
     (priceRange[0] !== null || priceRange[1] !== null ? 1 : 0) +
-    (showFavorites ? 1 : 0)
+    (showFavorites ? 1 : 0) +
+    (selectedModes && selectedModes.length > 0 && selectedModes.length < 2 ? 1 : 0)
   );
 
   // Filter clothing types based on search
@@ -145,6 +151,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 
   const getSelectedSeasons = () => {
     return SEASONS.filter(season => selectedTags.includes(season.toLowerCase()));
+  };
+
+  const getSelectedCategory = () => {
+    if (!selectedModes || selectedModes.length === 2) return [];
+    return selectedModes.map(mode => mode.charAt(0).toUpperCase() + mode.slice(1));
   };
 
   // Helper to format selection summary
@@ -304,6 +315,113 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* Category Section (Closet/Wishlist) */}
+                {selectedModes && setSelectedModes && (
+                  <div className="border-b-2 border-gray-300 dark:border-slate-600">
+                    <button
+                      onClick={() => toggleSection("category")}
+                      className="w-full flex items-center justify-between px-8"
+                      style={{
+                        paddingTop: '1.5rem',
+                        paddingBottom: '1.5rem',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <span className="text-sm font-normal text-gray-900 dark:text-white">Category</span>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        {getSelectedCategory().length > 0 && (
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {formatSelectionSummary(getSelectedCategory())}
+                          </span>
+                        )}
+                        <ChevronDownIcon
+                          size={18}
+                          className={`transition-transform duration-200 ${openSections.category ? '' : '-rotate-90'}`}
+                        />
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {openSections.category && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-visible"
+                        >
+                          <div className="space-y-4 px-8 pb-5">
+                            {/* Closet Option */}
+                            <label
+                              className="flex items-center gap-3 cursor-pointer group w-full"
+                              onClick={() => {
+                                setSelectedModes((prev) =>
+                                  prev.includes("closet")
+                                    ? prev.filter(m => m !== "closet")
+                                    : [...prev, "closet"]
+                                );
+                              }}
+                            >
+                              <CustomCheckbox
+                                checked={selectedModes.includes("closet")}
+                                onCheckedChange={(checked) => {
+                                  setSelectedModes((prev) =>
+                                    checked
+                                      ? [...prev, "closet"]
+                                      : prev.filter(m => m !== "closet")
+                                  );
+                                }}
+                                className="w-[18px] h-[18px] rounded-[4px] border-2 border-gray-400 flex-shrink-0"
+                                style={{
+                                  minWidth: '18px',
+                                  minHeight: '18px',
+                                  backgroundColor: selectedModes.includes("closet") ? '#000' : '#fff',
+                                  borderColor: selectedModes.includes("closet") ? '#000' : '#9ca3af',
+                                }}
+                              />
+                              <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">Closet</span>
+                            </label>
+
+                            {/* Wishlist Option */}
+                            <label
+                              className="flex items-center gap-3 cursor-pointer group w-full"
+                              onClick={() => {
+                                setSelectedModes((prev) =>
+                                  prev.includes("wishlist")
+                                    ? prev.filter(m => m !== "wishlist")
+                                    : [...prev, "wishlist"]
+                                );
+                              }}
+                            >
+                              <CustomCheckbox
+                                checked={selectedModes.includes("wishlist")}
+                                onCheckedChange={(checked) => {
+                                  setSelectedModes((prev) =>
+                                    checked
+                                      ? [...prev, "wishlist"]
+                                      : prev.filter(m => m !== "wishlist")
+                                  );
+                                }}
+                                className="w-[18px] h-[18px] rounded-[4px] border-2 border-gray-400 flex-shrink-0"
+                                style={{
+                                  minWidth: '18px',
+                                  minHeight: '18px',
+                                  backgroundColor: selectedModes.includes("wishlist") ? '#000' : '#fff',
+                                  borderColor: selectedModes.includes("wishlist") ? '#000' : '#9ca3af',
+                                }}
+                              />
+                              <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">Wishlist</span>
+                            </label>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {/* Clothing Type Section */}
                 <div className="border-b-2 border-gray-300 dark:border-slate-600">

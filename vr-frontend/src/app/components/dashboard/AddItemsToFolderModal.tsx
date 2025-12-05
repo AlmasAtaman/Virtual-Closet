@@ -31,6 +31,8 @@ export default function AddItemsToFolderModal({
   const [processingItems, setProcessingItems] = useState<Set<string>>(new Set());
   // Track changes made during THIS modal session
   const [sessionChanges, setSessionChanges] = useState<Map<string, 'add' | 'remove'>>(new Map());
+  // Filter mode state
+  const [filterMode, setFilterMode] = useState<"all" | "closet" | "wishlist">("all");
 
   // Fetch all clothing items when modal opens
   useEffect(() => {
@@ -44,11 +46,23 @@ export default function AddItemsToFolderModal({
   const fetchAllItems = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/images`,
-        { withCredentials: true }
-      );
-      setAllItems(response.data.clothingItems || []);
+      // Fetch both closet and wishlist items
+      const [closetResponse, wishlistResponse] = await Promise.all([
+        axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/images?mode=closet`,
+          { withCredentials: true }
+        ),
+        axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/images?mode=wishlist`,
+          { withCredentials: true }
+        )
+      ]);
+
+      const closetItems = closetResponse.data.clothingItems || [];
+      const wishlistItems = wishlistResponse.data.clothingItems || [];
+
+      // Combine both arrays
+      setAllItems([...closetItems, ...wishlistItems]);
     } catch (error) {
       console.error("Error fetching clothing items:", error);
     } finally {
@@ -117,7 +131,16 @@ export default function AddItemsToFolderModal({
 
     // Show if user added it this session (keep visible with "Added" button)
     if (sessionChange === 'add') {
+      // Still need to pass mode filter
+      if (filterMode !== "all" && item.mode !== filterMode) {
+        return false;
+      }
       return true;
+    }
+
+    // Filter by mode (closet/wishlist/all)
+    if (filterMode !== "all" && item.mode !== filterMode) {
+      return false;
     }
 
     // Show if: NOT in folder at open OR was marked for removal
@@ -151,12 +174,49 @@ export default function AddItemsToFolderModal({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Save some items to your folder
               </h2>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+
+              <div className="flex items-center gap-4">
+                {/* Toggle: All / Closet / Wishlist */}
+                <div className="inline-flex bg-gray-200 dark:bg-gray-800 rounded-full p-1">
+                  <button
+                    onClick={() => setFilterMode("all")}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                      filterMode === "all"
+                        ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setFilterMode("closet")}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                      filterMode === "closet"
+                        ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    Closet
+                  </button>
+                  <button
+                    onClick={() => setFilterMode("wishlist")}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                      filterMode === "wishlist"
+                        ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    Wishlist
+                  </button>
+                </div>
+
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               {folderName}

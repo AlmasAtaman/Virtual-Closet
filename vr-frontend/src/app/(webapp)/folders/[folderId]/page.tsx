@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { ArrowLeft, Plus, Search, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +24,7 @@ interface Folder {
 export default function FolderDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const folderId = params.folderId as string;
   const { toggleTheme } = useTheme();
 
@@ -43,6 +44,7 @@ export default function FolderDetailPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none");
   const [priceRange, setPriceRange] = useState<[number | null, number | null]>([null, null]);
+  const [selectedModes, setSelectedModes] = useState<("closet" | "wishlist")[]>(["closet", "wishlist"]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize filter attributes (exactly like dashboard)
@@ -85,6 +87,16 @@ export default function FolderDetailPage() {
     }
   }, [folderId]);
 
+  // Check for openAddModal query parameter
+  useEffect(() => {
+    const openModal = searchParams.get("openAddModal");
+    if (openModal === "true" && folder) {
+      setIsAddItemsModalOpen(true);
+      // Clean up the URL by removing the query parameter
+      router.replace(`/folders/${folderId}`);
+    }
+  }, [searchParams, folder, folderId, router]);
+
   // Reset selections when multi-select is toggled off
   useEffect(() => {
     if (!isMultiSelecting) {
@@ -116,6 +128,11 @@ export default function FolderDetailPage() {
 
   // Filter and search items
   const filteredItems = (folder?.items || []).filter((item) => {
+    // Mode filter (closet/wishlist)
+    if (selectedModes.length > 0 && !selectedModes.includes(item.mode)) {
+      return false;
+    }
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -349,7 +366,7 @@ export default function FolderDetailPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/dashboard?view=folders")}
                 className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <ArrowLeft className="w-6 h-6" />
@@ -444,6 +461,8 @@ export default function FolderDetailPage() {
                   setPriceSort={setPriceSort}
                   priceRange={priceRange}
                   setPriceRange={setPriceRange}
+                  selectedModes={selectedModes}
+                  setSelectedModes={setSelectedModes}
                 />
 
                 {/* Grid Select */}
@@ -474,6 +493,7 @@ export default function FolderDetailPage() {
                 </motion.button>
               </div>
             </div>
+
 
           {/* Content Grid */}
           {isLoading ? (
@@ -511,6 +531,53 @@ export default function FolderDetailPage() {
             ))}
           </div>
         )}
+
+        {/* Floating Multi-Select Action Bar */}
+        <AnimatePresence>
+          {isMultiSelecting && selectedItemIds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center gap-4">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {selectedItemIds.length} item{selectedItemIds.length > 1 ? "s" : ""} selected
+                </span>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={async () => {
+                    try {
+                      // Remove selected items from folder
+                      await Promise.all(
+                        selectedItemIds.map((itemId) =>
+                          createAuthenticatedAxios().delete(
+                            `/api/folders/${folderId}/items/${itemId}`
+                          )
+                        )
+                      );
+
+                      // Clear selections
+                      setSelectedItemIds([]);
+                      setIsMultiSelecting(false);
+
+                      // Refresh folder
+                      await fetchFolder();
+                    } catch (error) {
+                      console.error("Error removing items from folder:", error);
+                    }
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors border border-red-200 dark:border-red-800"
+                >
+                  Unsave from Folder
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         </div>
 
         {/* Clothing Detail Modal */}

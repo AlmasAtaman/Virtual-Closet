@@ -4,9 +4,9 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Search, X, Folder, FolderOpen } from "lucide-react"
 import UploadForm from "../../components/UploadForm"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import ClothingGallery from "../../components/ClothingGallery"
-import FoldersView from "../../components/dashboard/FoldersView"
+import FoldersView, { type FoldersViewRef } from "../../components/dashboard/FoldersView"
 import type { ClothingItem } from "../../types/clothing"
 
 // Interface for ClothingGallery ref
@@ -26,7 +26,9 @@ export default function Homepage() {
   const [hasMounted, setHasMounted] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const galleryRef = useRef<ClothingGalleryRef>(null)
+  const foldersViewRef = useRef<FoldersViewRef>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [viewMode, setViewMode] = useState<"closet" | "wishlist">("closet")
   const [displayMode, setDisplayMode] = useState<"grid" | "folders">("grid")
@@ -39,6 +41,14 @@ export default function Homepage() {
       searchInputRef.current.focus()
     }
   }, [showSearchBar])
+
+  // Check for view parameter in URL
+  useEffect(() => {
+    const view = searchParams.get("view")
+    if (view === "folders") {
+      setDisplayMode("folders")
+    }
+  }, [searchParams])
 
   const toggleTheme = useCallback(() => {
     const themeOrder: Array<"light" | "dark" | "chrome"> = ["light", "dark", "chrome"]
@@ -204,114 +214,134 @@ export default function Homepage() {
           </div>
 
           {/* Category Header with Action Buttons */}
-          <div className="flex items-center justify-end mb-6">
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 relative">
-              {/* Search Bar with integrated icon */}
-              <motion.div
-                initial={false}
-                animate={{
-                  width: showSearchBar ? 350 : 40,
-                  backgroundColor: showSearchBar ? "#ffffff" : "transparent",
-                  borderColor: showSearchBar ? "#d1d5db" : "transparent",
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-gray-100 cursor-pointer border-transparent" : "border-gray-300"
-                  }`}
-                onClick={() => {
-                  if (!showSearchBar) setShowSearchBar(true);
-                }}
-              >
-                <motion.div
-                  animate={{
-                    left: showSearchBar ? 12 : "50%",
-                    x: showSearchBar ? 0 : "-50%",
+          <div className="flex items-center justify-between mb-6">
+            {/* Left side - empty for folders, title for grid */}
+            <div className="flex-1"></div>
+
+            {/* Right side - Action Buttons */}
+            <div className={`flex items-center gap-3 relative ${displayMode === "folders" ? "mr-8" : ""}`}>
+              {displayMode === "folders" ? (
+                /* Folders View - Only Create Button */
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-6 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-base font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-sm"
+                  onClick={() => {
+                    foldersViewRef.current?.createFolder();
                   }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="absolute top-1/2 -translate-y-1/2 z-10 text-gray-400 pointer-events-none"
                 >
-                  <Search className="w-5 h-5" />
-                </motion.div>
-
-                <motion.input
-                  ref={searchInputRef}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: showSearchBar ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onBlur={() => {
-                    if (!searchQuery) {
-                      setShowSearchBar(false);
-                    }
-                  }}
-                  className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400 ${!showSearchBar ? "pointer-events-none" : ""
-                    }`}
-                />
-
-                <AnimatePresence>
-                  {showSearchBar && searchQuery && (
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSearchQuery("");
-                        searchInputRef.current?.focus();
+                  Create
+                </motion.button>
+              ) : (
+                /* Grid View - All Action Buttons */
+                <>
+                  {/* Search Bar with integrated icon */}
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      width: showSearchBar ? 350 : 40,
+                      backgroundColor: showSearchBar ? "#ffffff" : "transparent",
+                      borderColor: showSearchBar ? "#d1d5db" : "transparent",
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-gray-100 cursor-pointer border-transparent" : "border-gray-300"
+                      }`}
+                    onClick={() => {
+                      if (!showSearchBar) setShowSearchBar(true);
+                    }}
+                  >
+                    <motion.div
+                      animate={{
+                        left: showSearchBar ? 12 : "50%",
+                        x: showSearchBar ? 0 : "-50%",
                       }}
-                      onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="absolute top-1/2 -translate-y-1/2 z-10 text-gray-400 pointer-events-none"
                     >
-                      <X size={14} />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                      <Search className="w-5 h-5" />
+                    </motion.div>
 
-              {/* Filter */}
-              <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-700 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
-                <FilterSection
-                  clothingItems={clothingItems}
-                  selectedTags={selectedTags}
-                  setSelectedTags={setSelectedTags}
-                  filterAttributes={filterAttributes}
-                  uniqueAttributeValues={uniqueAttributeValues}
-                  priceSort={priceSort}
-                  setPriceSort={setPriceSort}
-                  priceRange={priceRange}
-                  setPriceRange={setPriceRange}
-                />
-              </div>
+                    <motion.input
+                      ref={searchInputRef}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: showSearchBar ? 1 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onBlur={() => {
+                        if (!searchQuery) {
+                          setShowSearchBar(false);
+                        }
+                      }}
+                      className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400 ${!showSearchBar ? "pointer-events-none" : ""
+                        }`}
+                    />
 
-              {/* Grid Select */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`p-2 rounded-lg transition-colors ${
-                  isMultiSelecting
-                    ? "bg-black dark:bg-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-                onClick={() => setIsMultiSelecting(!isMultiSelecting)}
-              >
-                <GridSelectIcon
-                  size={20}
-                  className={isMultiSelecting ? "text-white dark:text-black" : ""}
-                />
-              </motion.button>
+                    <AnimatePresence>
+                      {showSearchBar && searchQuery && (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSearchQuery("");
+                            searchInputRef.current?.focus();
+                          }}
+                          onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+                        >
+                          <X size={14} />
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
 
-              {/* Add */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={handleOpenUploadModal}
-              >
-                <Plus size={20} />
-              </motion.button>
+                  {/* Filter */}
+                  <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-700 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
+                    <FilterSection
+                      clothingItems={clothingItems}
+                      selectedTags={selectedTags}
+                      setSelectedTags={setSelectedTags}
+                      filterAttributes={filterAttributes}
+                      uniqueAttributeValues={uniqueAttributeValues}
+                      priceSort={priceSort}
+                      setPriceSort={setPriceSort}
+                      priceRange={priceRange}
+                      setPriceRange={setPriceRange}
+                    />
+                  </div>
+
+                  {/* Grid Select */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isMultiSelecting
+                        ? "bg-black dark:bg-white"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                    onClick={() => setIsMultiSelecting(!isMultiSelecting)}
+                  >
+                    <GridSelectIcon
+                      size={20}
+                      className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                    />
+                  </motion.button>
+
+                  {/* Add */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                    onClick={handleOpenUploadModal}
+                  >
+                    <Plus size={20} />
+                  </motion.button>
+                </>
+              )}
             </div>
           </div>
 
@@ -399,7 +429,7 @@ export default function Homepage() {
                   setShowFavoritesOnly={setShowFavoritesOnly}
                 />
               ) : (
-                <FoldersView viewMode={viewMode} />
+                <FoldersView ref={foldersViewRef} viewMode={viewMode} />
               )}
             </motion.div>
           </AnimatePresence>
