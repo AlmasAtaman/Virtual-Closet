@@ -438,13 +438,13 @@ export default function OutfitsPage() {
               transition={{ duration: 0.2 }}
             >
               {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
                   {Array.from({ length: 10 }).map((_, index) => (
                     <div key={index} className="aspect-[3/4] bg-card rounded-xl animate-pulse shadow-lg" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
                   {/* Create Outfit Button - Same size as outfit cards */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -500,13 +500,13 @@ export default function OutfitsPage() {
               transition={{ duration: 0.2 }}
             >
               {occasionsLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
                   {Array.from({ length: 6 }).map((_, index) => (
                     <div key={index} className="aspect-square bg-card rounded-xl animate-pulse shadow-lg" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
                   {/* Create Folder Button - First item in grid */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}

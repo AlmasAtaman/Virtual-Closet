@@ -107,15 +107,17 @@ model Occasion {
 }
 
 model Folder {
-  id          String       @id @default(uuid())
-  name        String
-  description String?
-  isPublic    Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items       FolderItem[]
+  id            String       @id @default(uuid())
+  name          String
+  description   String?
+  isPublic      Boolean      @default(false)
+  imageLayout   String?      @default("three-pictures")
+  previewImages Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         FolderItem[]
 }
 
 model FolderItem {

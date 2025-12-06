@@ -100,12 +100,8 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
         { withCredentials: true }
       );
 
-      // Update folder in local state
-      setFolders((prev) =>
-        prev.map((f) =>
-          f.id === selectedFolder.id ? { ...f, name: newName } : f
-        )
-      );
+      // Re-fetch folders to maintain consistent sort order
+      await fetchFolders();
     } catch (err) {
       console.error("Error renaming folder:", err);
       alert("Failed to rename folder");
@@ -117,22 +113,21 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
     setIsChangeImageModalOpen(true);
   };
 
-  const handleChangeImageAPI = async (imageType: string) => {
+  const handleChangeImageAPI = async (imageType: string, previewImages: any[]) => {
     if (!selectedFolder) return;
 
     try {
       await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/folders/${selectedFolder.id}`,
-        { imageLayout: imageType },
+        {
+          imageLayout: imageType,
+          previewImages: previewImages
+        },
         { withCredentials: true }
       );
 
-      // Update folder in local state
-      setFolders((prev) =>
-        prev.map((f) =>
-          f.id === selectedFolder.id ? { ...f, imageLayout: imageType } : f
-        )
-      );
+      // Re-fetch folders to maintain consistent sort order
+      await fetchFolders();
     } catch (err) {
       console.error("Error changing folder image:", err);
       alert("Failed to change folder image");
@@ -209,7 +204,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
           </div>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
           {/* Folder Cards */}
           <AnimatePresence mode="popLayout">
             {folders.map((folder) => (

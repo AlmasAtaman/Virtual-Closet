@@ -513,7 +513,7 @@ export default function FolderDetailPage() {
           </div>
         ) : (
           /* Grid layout */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))' }}>
             {sortedItems.map((item) => (
               <ClothingCard
                 key={item.id}

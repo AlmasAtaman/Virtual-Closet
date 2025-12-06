@@ -66,6 +66,8 @@ export interface Folder {
   name: string
   description?: string | null
   isPublic: boolean
+  imageLayout?: string | null
+  previewImages?: any
   createdAt: string
   updatedAt: string
   itemCount: number

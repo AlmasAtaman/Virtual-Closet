@@ -173,7 +173,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
         <div className="px-4 lg:px-6 xl:px-8 py-6">
           <div className="space-y-6">
             <div className="h-6 bg-muted rounded animate-pulse w-48" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+            <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
               {Array.from({ length: 10 }).map((_, index) => (
                 <div key={index} className="aspect-[3/4] bg-muted rounded-xl animate-pulse" />
               ))}
@@ -349,7 +349,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
+            <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
               {outfits.map((outfit, index) => (
                 <motion.div
                   key={outfit.id}

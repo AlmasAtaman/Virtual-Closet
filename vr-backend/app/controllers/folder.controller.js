@@ -23,6 +23,8 @@ async function transformFolderData(folder) {
     name: folder.name,
     description: folder.description,
     isPublic: folder.isPublic,
+    imageLayout: folder.imageLayout,
+    previewImages: folder.previewImages,
     createdAt: folder.createdAt,
     updatedAt: folder.updatedAt,
     itemCount: folder.items.length,
@@ -44,7 +46,7 @@ export const getFolders = async (req, res) => {
         }
       },
       orderBy: {
-        updatedAt: 'desc'
+        createdAt: 'desc'
       }
     });
 
@@ -166,6 +168,8 @@ export const getFolder = async (req, res) => {
         name: folder.name,
         description: folder.description,
         isPublic: folder.isPublic,
+        imageLayout: folder.imageLayout,
+        previewImages: folder.previewImages,
         createdAt: folder.createdAt,
         updatedAt: folder.updatedAt,
         itemCount: items.length,
@@ -217,7 +221,7 @@ export const updateFolder = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    const { name, description, isPublic } = req.body;
+    const { name, description, isPublic, imageLayout, previewImages } = req.body;
 
     // Check if folder exists and belongs to user
     const existingFolder = await prisma.folder.findFirst({
@@ -238,6 +242,8 @@ export const updateFolder = async (req, res) => {
         ...(name !== undefined && { name: name.trim() }),
         ...(description !== undefined && { description: description?.trim() || null }),
         ...(isPublic !== undefined && { isPublic }),
+        ...(imageLayout !== undefined && { imageLayout }),
+        ...(previewImages !== undefined && { previewImages }),
       },
       include: {
         items: {

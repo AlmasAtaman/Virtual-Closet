@@ -18,8 +18,47 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Get first 3 preview items
-  const displayItems = folder.previewItems.slice(0, 3);
+  // Get display items - use previewImages if available, otherwise use previewItems
+  const getDisplayItems = () => {
+    if (folder.previewImages && Array.isArray(folder.previewImages) && folder.previewImages.length > 0) {
+      // Use custom preview images
+      const previewImages = folder.previewImages as Array<{
+        position: string;
+        imageUrl?: string;
+        clothingItemId?: string;
+      }>;
+
+      // Map positions to indices: main = 0, top-right = 1, bottom-right = 2
+      const positionMap: { [key: string]: number } = {
+        'main': 0,
+        'top-right': 1,
+        'bottom-right': 2
+      };
+
+      const displayArray: Array<{ url: string; name: string } | null> = [null, null, null];
+
+      previewImages.forEach(img => {
+        const index = positionMap[img.position];
+        if (index !== undefined && img.imageUrl) {
+          displayArray[index] = { url: img.imageUrl, name: '' };
+        } else if (index !== undefined && img.clothingItemId) {
+          // Find the clothing item in previewItems
+          const item = folder.previewItems.find(p => p.id === img.clothingItemId);
+          if (item) {
+            displayArray[index] = { url: item.url, name: item.name };
+          }
+        }
+      });
+
+      return displayArray;
+    }
+
+    // Fallback to default preview items
+    const items = folder.previewItems.slice(0, 3);
+    return [items[0] || null, items[1] || null, items[2] || null];
+  };
+
+  const displayItems = getDisplayItems();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -44,54 +83,74 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
       onClick={onClick}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
-      style={{ zIndex: showMenu ? 50 : 1 }}
+      style={{ zIndex: showMenu ? 50 : 1, maxWidth: '400px', margin: '0 auto' }}
     >
       <div className="overflow-visible">
         {/* Preview Grid - Pinterest style: Only outer container has rounded corners */}
         <div className="w-full h-48 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
-          <div className="flex gap-[2px] h-full p-[2px]">
-            {/* Left side - First item (takes 2/3 width, full height, NO rounded corners) */}
-            <div className="relative w-2/3 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          {folder.imageLayout === "one-picture" ? (
+            /* Single image layout */
+            <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
               {displayItems[0] ? (
                 <Image
                   src={displayItems[0].url}
                   alt={displayItems[0].name || "Clothing item"}
                   fill
                   className="object-contain"
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  unoptimized
                 />
               ) : null}
             </div>
-
-            {/* Right side - Two items stacked (each takes 1/3 width, NO rounded corners) */}
-            <div className="flex flex-col gap-[2px] w-1/3">
-              {/* Top right - Second item */}
-              <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                {displayItems[1] ? (
+          ) : (
+            /* Three images layout */
+            <div className="flex gap-[2px] h-full p-[2px]">
+              {/* Left side - First item (takes 2/3 width, full height, NO rounded corners) */}
+              <div className="relative w-2/3 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                {displayItems[0] ? (
                   <Image
-                    src={displayItems[1].url}
-                    alt={displayItems[1].name || "Clothing item"}
+                    src={displayItems[0].url}
+                    alt={displayItems[0].name || "Clothing item"}
                     fill
                     className="object-contain"
-                    sizes="(max-width: 768px) 25vw, 15vw"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    unoptimized
                   />
                 ) : null}
               </div>
 
-              {/* Bottom right - Third item */}
-              <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                {displayItems[2] ? (
-                  <Image
-                    src={displayItems[2].url}
-                    alt={displayItems[2].name || "Clothing item"}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 768px) 25vw, 15vw"
-                  />
-                ) : null}
+              {/* Right side - Two items stacked (each takes 1/3 width, NO rounded corners) */}
+              <div className="flex flex-col gap-[2px] w-1/3">
+                {/* Top right - Second item */}
+                <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  {displayItems[1] ? (
+                    <Image
+                      src={displayItems[1].url}
+                      alt={displayItems[1].name || "Clothing item"}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 25vw, 15vw"
+                      unoptimized
+                    />
+                  ) : null}
+                </div>
+
+                {/* Bottom right - Third item */}
+                <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  {displayItems[2] ? (
+                    <Image
+                      src={displayItems[2].url}
+                      alt={displayItems[2].name || "Clothing item"}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 25vw, 15vw"
+                      unoptimized
+                    />
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Folder Info */}
