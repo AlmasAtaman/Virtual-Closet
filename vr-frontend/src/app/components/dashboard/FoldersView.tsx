@@ -257,6 +257,8 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
         onChangeImage={handleChangeImageAPI}
         folderName={selectedFolder?.name || ""}
         folderId={selectedFolder?.id || ""}
+        currentImageLayout={selectedFolder?.imageLayout}
+        currentPreviewImages={selectedFolder?.previewImages}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { X, CloudUpload, FolderOpen, ZoomIn, ZoomOut } from "lucide-react";
@@ -21,6 +21,8 @@ interface ChangeFolderImageModalProps {
   onChangeImage: (imageType: string, previewImages: RectangleImage[]) => Promise<void>;
   folderName: string;
   folderId: string;
+  currentImageLayout?: string | null;
+  currentPreviewImages?: any;
 }
 
 export default function ChangeFolderImageModal({
@@ -29,12 +31,27 @@ export default function ChangeFolderImageModal({
   onChangeImage,
   folderName,
   folderId,
+  currentImageLayout,
+  currentPreviewImages,
 }: ChangeFolderImageModalProps) {
-  const [selectedLayout, setSelectedLayout] = useState<"one" | "multiple">("multiple");
+  // Initialize with current data
+  const initialLayout = currentImageLayout === "one-picture" ? "one" : "multiple";
+  const initialImages: RectangleImage[] = currentPreviewImages
+    ? (Array.isArray(currentPreviewImages) ? currentPreviewImages : [])
+    : [];
+
+  const [selectedLayout, setSelectedLayout] = useState<"one" | "multiple">(initialLayout);
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredRect, setHoveredRect] = useState<RectanglePosition | null>(null);
   const [editingRect, setEditingRect] = useState<RectanglePosition | null>(null);
-  const [rectangleImages, setRectangleImages] = useState<RectangleImage[]>([]);
+  const [rectangleImages, setRectangleImages] = useState<RectangleImage[]>(initialImages);
+  // Separate image states for each layout to preserve them when toggling
+  const [singlePictureImages, setSinglePictureImages] = useState<RectangleImage[]>(
+    initialLayout === "one" ? initialImages : []
+  );
+  const [multiplePictureImages, setMultiplePictureImages] = useState<RectangleImage[]>(
+    initialLayout === "multiple" ? initialImages : []
+  );
   const [showSelectFromFolderModal, setShowSelectFromFolderModal] = useState(false);
   const [uploadingRect, setUploadingRect] = useState<RectanglePosition | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
@@ -56,6 +73,37 @@ export default function ChangeFolderImageModal({
     'bottom-right': null,
   });
 
+  // Reset state when modal opens with new data
+  useEffect(() => {
+    if (isOpen) {
+      const layout = currentImageLayout === "one-picture" ? "one" : "multiple";
+      const images: RectangleImage[] = currentPreviewImages
+        ? (Array.isArray(currentPreviewImages) ? currentPreviewImages : [])
+        : [];
+
+      setSelectedLayout(layout);
+      setRectangleImages(images);
+
+      // Initialize separate layout states
+      if (layout === "one") {
+        setSinglePictureImages(images);
+        setMultiplePictureImages([]);
+      } else {
+        setMultiplePictureImages(images);
+        setSinglePictureImages([]);
+      }
+    }
+  }, [isOpen, currentImageLayout, currentPreviewImages]);
+
+  // Sync rectangleImages with the appropriate layout state when images change
+  useEffect(() => {
+    if (selectedLayout === "one") {
+      setSinglePictureImages(rectangleImages);
+    } else {
+      setMultiplePictureImages(rectangleImages);
+    }
+  }, [rectangleImages, selectedLayout]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -75,7 +123,16 @@ export default function ChangeFolderImageModal({
   };
 
   const toggleLayout = () => {
-    setSelectedLayout((prev) => (prev === "one" ? "multiple" : "one"));
+    setSelectedLayout((prev) => {
+      const newLayout = prev === "one" ? "multiple" : "one";
+      // Load the appropriate images for the new layout
+      if (newLayout === "one") {
+        setRectangleImages(singlePictureImages);
+      } else {
+        setRectangleImages(multiplePictureImages);
+      }
+      return newLayout;
+    });
   };
 
   const handleFolderSelect = (position: RectanglePosition) => {

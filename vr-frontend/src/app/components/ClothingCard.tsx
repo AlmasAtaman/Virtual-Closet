@@ -65,7 +65,7 @@ export default function ClothingCard({
       exit={{ opacity: 0, scale: 0.95 }}
       layout
       className={`relative overflow-hidden ${isPendingRemoval ? 'opacity-50' : ''}`}
-      style={{ maxWidth: '400px', margin: '0 auto' }}
+      style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
     >
       <Card
         className={`group h-full transition-all duration-300 border-0 ring-0 rounded-[10px] bg-[#ECECEC] ${isSelected
