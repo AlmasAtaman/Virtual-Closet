@@ -299,3 +299,27 @@ html {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
 }
+
+/* Black slider thumb for vertical range inputs */
+input[type="range"].slider-vertical {
+  accent-color: var(--foreground);
+}
+
+input[type="range"].slider-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--foreground) !important;
+  cursor: pointer;
+}
+
+input[type="range"].slider-vertical::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--foreground) !important;
+  cursor: pointer;
+  border: none;
+}
