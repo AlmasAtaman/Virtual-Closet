@@ -21,7 +21,7 @@ interface ClothingCardProps {
 
 // Images are now standardized on the backend with category-specific canvas sizes
 // No need for frontend scaling - just use consistent object-contain
-const getImageScaleClass = (type?: string) => {
+const getImageScaleClass = () => {
   return "scale-100" // No scaling - backend standardization handles consistent sizing
 }
 
@@ -90,7 +90,7 @@ export default function ClothingCard({
                   src={item.url || "/placeholder.svg"}
                   alt={item.name || "Clothing item"}
                   fill
-                  className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass(item.type)}`}
+                  className={`object-contain p-4 transition-transform duration-300 ${getImageScaleClass()}`}
                   style={{ objectPosition: 'center' }}
                   unoptimized
                 />

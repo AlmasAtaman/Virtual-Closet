@@ -25,6 +25,14 @@ export const useImageProcessingStatus = ({
   const [isPolling, setIsPolling] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    setIsPolling(false)
+  }, [])
+
   const fetchStatus = useCallback(async () => {
     if (itemIds.length === 0) return
 
@@ -56,7 +64,7 @@ export const useImageProcessingStatus = ({
     } catch (error) {
       console.error('Error fetching processing status:', error)
     }
-  }, [itemIds, onStatusUpdate])
+  }, [itemIds, onStatusUpdate, stopPolling])
 
   const startPolling = useCallback(() => {
     if (intervalRef.current) return // Already polling
@@ -71,14 +79,6 @@ export const useImageProcessingStatus = ({
       fetchStatus()
     }, pollingInterval)
   }, [fetchStatus, pollingInterval])
-
-  const stopPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    setIsPolling(false)
-  }, [])
 
   // Start/stop polling based on enabled flag and itemIds
   useEffect(() => {
