@@ -49,12 +49,11 @@ export default function Homepage() {
 
   const filterAttributes: FilterAttribute[] = useMemo(() => [
     { key: "type", label: "Type" },
-    { key: "occasion", label: "Occasion" },
-    { key: "style", label: "Style" },
-    { key: "fit", label: "Fit" },
+    { key: "category", label: "Category" },
+    { key: "brand", label: "Brand" },
     { key: "color", label: "Color" },
-    { key: "material", label: "Material" },
     { key: "season", label: "Season" },
+    { key: "size", label: "Size" },
   ], [])
   const [clothingItems, setClothingItems] = useState<ClothingItem[]>([])
 

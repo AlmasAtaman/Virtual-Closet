@@ -298,13 +298,13 @@ const ClothingGallery = forwardRef(
         // Update the item status to pending
         setClothingItems((prev) => prev.map((item) =>
           item.id === id
-            ? { ...item, processingStatus: "pending" as const, processingError: null }
+            ? { ...item, processingStatus: "pending" as const, processingError: undefined }
             : item
         ));
 
         // Update selected item if it's the one being retried
         if (selectedItem?.id === id) {
-          setSelectedItem((prev) => prev ? { ...prev, processingStatus: "pending" as const, processingError: null } : null);
+          setSelectedItem((prev) => prev ? { ...prev, processingStatus: "pending" as const, processingError: undefined } : null);
         }
       } catch (err) {
         console.error("Error retrying processing:", err);

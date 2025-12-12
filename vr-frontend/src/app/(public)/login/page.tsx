@@ -26,7 +26,7 @@ export default function LoginPage(){
                         Testing Currently Closed
                     </h1>
                     <p className="text-lg text-gray-600 leading-relaxed">
-                        We're not accepting new signups at this moment. Please check back soon!
+                        We&apos;re not accepting new signups at this moment. Please check back soon!
                     </p>
                 </div>
 
