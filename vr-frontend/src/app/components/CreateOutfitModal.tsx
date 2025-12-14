@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
 import Image from "next/image"
 import axios from "axios"
@@ -29,6 +28,7 @@ interface ClothingItem {
   scale?: number
   x?: number
   y?: number
+  aspectRatio?: number
 }
 
 interface CategorizedClothing {
@@ -60,7 +60,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null)
   const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null)
   const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], allItems: [] })
-  const [loadingClothing, setLoadingClothing] = useState(true)
+  const [, setLoadingClothing] = useState(true)
   const [showTopSelectModal, setShowTopSelectModal] = useState(false)
   const [showBottomSelectModal, setShowBottomSelectModal] = useState(false)
   const [showOuterwearSelectModal, setShowOuterwearSelectModal] = useState(false)
@@ -83,15 +83,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     itemX: 50,
     itemY: 50,
   })
+  const dragOffsetRef = useRef({ x: 0, y: 0 })
 
-  const DEFAULTS = {
+  const DEFAULTS = useRef({
     x: 50,
     y: 50,
     scale: 1,
     left: 50,
     bottom: 0,
     width: 10,
-  }
+  }).current
 
   const fetchClothingItems = useCallback(async () => {
     try {
@@ -141,7 +142,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   // Removed the useEffect that was overwriting positioned items
   // The updateCategorizedItems function already handles positioning correctly
 
-  // DRAG AND DROP SYSTEM - Center-based positioning
+  // DRAG AND DROP SYSTEM - Center-based positioning with calc()
   const handleMouseDown = (e: React.MouseEvent, itemId: string) => {
     if (!editedCategorizedItems || !setEditedCategorizedItems) return
 
@@ -159,6 +160,24 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
     const currentItem = allCurrentItems.find((item) => item.id === itemId)
     if (currentItem) {
+      // Calculate where on the item the user clicked
+      const canvas = document.querySelector('[data-canvas]') as HTMLElement
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect()
+
+        // Item center is at x%, y% of canvas (box-sizing: border-box includes border)
+        const itemCenterX = ((currentItem.x ?? DEFAULTS.x) / 100) * rect.width
+        const itemCenterY = ((currentItem.y ?? DEFAULTS.y) / 100) * rect.height
+        const mouseX = e.clientX - rect.left
+        const mouseY = e.clientY - rect.top
+
+        // Store offset from center
+        dragOffsetRef.current = {
+          x: mouseX - itemCenterX,
+          y: mouseY - itemCenterY,
+        }
+      }
+
       dragStartPos.current = {
         x: e.clientX,
         y: e.clientY,
@@ -172,18 +191,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     (e: MouseEvent) => {
       if (!isDragging || !draggedItemId || !editedCategorizedItems || !setEditedCategorizedItems) return
 
-      const deltaX = e.clientX - dragStartPos.current.x
-      const deltaY = e.clientY - dragStartPos.current.y
+      const canvas = document.querySelector('[data-canvas]') as HTMLElement
+      if (!canvas) return
 
-      // Container size: w-44 = 176px, h-80 = 320px
-      const containerWidth = 176
-      const containerHeight = 320
+      const rect = canvas.getBoundingClientRect()
 
-      // Convert pixel deltas to percentage deltas
-      const xDelta = (deltaX / containerWidth) * 100
-      const yDelta = (deltaY / containerHeight) * 100
-
-      // Get the current item to check its width for boundary calculations
+      // Get the current item
       const currentItem = [
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
@@ -192,30 +205,36 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         ...editedCategorizedItems.others
       ].find(item => item?.id === draggedItemId)
 
-      const itemWidth = currentItem?.width ?? DEFAULTS.width
+      if (!currentItem) return
 
-      // Calculate item dimensions as percentage
-      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      // Subtract offset so item doesn't "jump"
+      const relativeX = e.clientX - rect.left - dragOffsetRef.current.x
+      const relativeY = e.clientY - rect.top - dragOffsetRef.current.y
+
+      // Convert to percentage (box-sizing: border-box means rect includes border correctly)
+      let newX = (relativeX / rect.width) * 100
+      let newY = (relativeY / rect.height) * 100
+
+      // Calculate boundaries using actual dimensions
+      // Item width is in rem (1rem = 16px)
+      const itemWidthPx = (currentItem.width ?? DEFAULTS.width) * 16
+      const aspectRatio = currentItem.aspectRatio || 1.5
+      const itemHeightPx = itemWidthPx * aspectRatio
+
+      // Convert pixel dimensions to percentages of canvas
+      const itemWidthPercent = (itemWidthPx / rect.width) * 100
+      const itemHeightPercent = (itemHeightPx / rect.height) * 100
+
+      // Center-based boundaries: center must stay within canvas such that edges don't go outside
       const halfItemWidth = itemWidthPercent / 2
-
-      // Assume height is proportional to width (approximately 1.5x for clothing items)
-      const itemHeightPercent = itemWidthPercent * 1.5
       const halfItemHeight = itemHeightPercent / 2
 
-      // Get current center position
-      const currentX = dragStartPos.current.itemX
-      const currentY = dragStartPos.current.itemY
-
-      // Calculate new center position
-      let newX = currentX + xDelta
-      let newY = currentY + yDelta
-
-      // Simple boundary constraints - center must stay within canvas minus half item size
       const minX = halfItemWidth
       const maxX = 100 - halfItemWidth
       const minY = halfItemHeight
       const maxY = 100 - halfItemHeight
 
+      // Clamp the center position to keep item fully inside canvas
       newX = Math.max(minX, Math.min(maxX, newX))
       newY = Math.max(minY, Math.min(maxY, newY))
 
@@ -243,7 +262,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width, DEFAULTS.x, DEFAULTS.y],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -269,6 +288,24 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
     const currentItem = allCurrentItems.find((item) => item.id === itemId)
     if (currentItem) {
+      // Calculate where on the item the user touched
+      const canvas = document.querySelector('[data-canvas]') as HTMLElement
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect()
+
+        // Item center is at x%, y% of canvas (box-sizing: border-box includes border)
+        const itemCenterX = ((currentItem.x ?? DEFAULTS.x) / 100) * rect.width
+        const itemCenterY = ((currentItem.y ?? DEFAULTS.y) / 100) * rect.height
+        const touchX = touch.clientX - rect.left
+        const touchY = touch.clientY - rect.top
+
+        // Store offset from center
+        dragOffsetRef.current = {
+          x: touchX - itemCenterX,
+          y: touchY - itemCenterY,
+        }
+      }
+
       dragStartPos.current = {
         x: touch.clientX,
         y: touch.clientY,
@@ -285,17 +322,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       e.preventDefault() // Prevent scrolling while dragging
       const touch = e.touches[0]
 
-      const deltaX = touch.clientX - dragStartPos.current.x
-      const deltaY = touch.clientY - dragStartPos.current.y
+      const canvas = document.querySelector('[data-canvas]') as HTMLElement
+      if (!canvas) return
 
-      // Container size: w-44 = 176px, h-80 = 320px
-      const containerWidth = 176
-      const containerHeight = 320
+      const rect = canvas.getBoundingClientRect()
 
-      // Convert pixel deltas to percentage deltas
-      const xDelta = (deltaX / containerWidth) * 100
-      const yDelta = (deltaY / containerHeight) * 100
-
+      // Get the current item
       const currentItem = [
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
@@ -304,30 +336,36 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         ...editedCategorizedItems.others
       ].find(item => item?.id === draggedItemId)
 
-      const itemWidth = currentItem?.width ?? DEFAULTS.width
+      if (!currentItem) return
 
-      // Calculate item dimensions as percentage
-      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
+      // Subtract offset so item doesn't "jump"
+      const relativeX = touch.clientX - rect.left - dragOffsetRef.current.x
+      const relativeY = touch.clientY - rect.top - dragOffsetRef.current.y
+
+      // Convert to percentage (box-sizing: border-box means rect includes border correctly)
+      let newX = (relativeX / rect.width) * 100
+      let newY = (relativeY / rect.height) * 100
+
+      // Calculate boundaries using actual dimensions
+      // Item width is in rem (1rem = 16px)
+      const itemWidthPx = (currentItem.width ?? DEFAULTS.width) * 16
+      const aspectRatio = currentItem.aspectRatio || 1.5
+      const itemHeightPx = itemWidthPx * aspectRatio
+
+      // Convert pixel dimensions to percentages of canvas
+      const itemWidthPercent = (itemWidthPx / rect.width) * 100
+      const itemHeightPercent = (itemHeightPx / rect.height) * 100
+
+      // Center-based boundaries: center must stay within canvas such that edges don't go outside
       const halfItemWidth = itemWidthPercent / 2
-
-      // Assume height is proportional to width (approximately 1.5x for clothing items)
-      const itemHeightPercent = itemWidthPercent * 1.5
       const halfItemHeight = itemHeightPercent / 2
 
-      // Get current center position
-      const currentX = dragStartPos.current.itemX
-      const currentY = dragStartPos.current.itemY
-
-      // Calculate new center position
-      let newX = currentX + xDelta
-      let newY = currentY + yDelta
-
-      // Simple boundary constraints - center must stay within canvas minus half item size
       const minX = halfItemWidth
       const maxX = 100 - halfItemWidth
       const minY = halfItemHeight
       const maxY = 100 - halfItemHeight
 
+      // Clamp the center position to keep item fully inside canvas
       newX = Math.max(minX, Math.min(maxX, newX))
       newY = Math.max(minY, Math.min(maxY, newY))
 
@@ -355,7 +393,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width, DEFAULTS.x, DEFAULTS.y],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
   )
 
   const handleTouchEnd = useCallback(() => {
@@ -378,6 +416,29 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
+
+  // Update item's aspect ratio when image loads
+  const updateItemAspectRatio = (itemId: string, aspectRatio: number) => {
+    setEditedCategorizedItems(prev => {
+      if (!prev) return prev
+      const updated = { ...prev }
+
+      const updateAspect = (item: ClothingItem | undefined) => {
+        if (item && item.id === itemId) {
+          return { ...item, aspectRatio }
+        }
+        return item
+      }
+
+      updated.outerwear = updateAspect(updated.outerwear)
+      updated.top = updateAspect(updated.top)
+      updated.bottom = updateAspect(updated.bottom)
+      updated.shoe = updateAspect(updated.shoe)
+      updated.others = updated.others.map(updateAspect).filter(Boolean) as ClothingItem[]
+
+      return updated
+    })
+  }
 
   const handleItemSelect = (category: "top" | "bottom" | "outerwear", item: ClothingItem) => {
     if (category === "top") {
@@ -587,8 +648,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       ...editedCategorizedItems.others,
     ].filter(Boolean) as ClothingItem[]
 
+    // Container is already w-44 h-80 (176x320), don't create another one
     return (
-      <div className="relative w-44 h-80 mx-auto">
+      <>
         {allCurrentItems.map((item, index) => {
           // Calculate z-index based on layer order preference
           let zIndex = index
@@ -618,32 +680,20 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
               animate={{
                 opacity: 1,
                 y: 0,
-                width: `${item.width ?? DEFAULTS.width}rem`
               }}
               transition={{
                 opacity: { delay: index * 0.1 },
                 y: { delay: index * 0.1 },
-                width: { duration: 0.2, ease: "easeOut" }
               }}
               className={`absolute cursor-move hover:shadow-lg transition-shadow ${
                 draggedItemId === item.id ? "z-50 shadow-2xl" : ""
               } ${selectedItemForResize === item.id ? "ring-2 ring-foreground" : ""}`}
               style={{
-                left: `${item.x ?? DEFAULTS.x}%`,
-                top: `${item.y ?? DEFAULTS.y}%`,
-                transform: `translate(-50%, -50%) scale(${item.scale ?? DEFAULTS.scale})`,
+                left: `calc(${item.x ?? DEFAULTS.x}% - ${(item.width ?? DEFAULTS.width) / 2}rem)`,
+                top: `calc(${item.y ?? DEFAULTS.y}% - ${(item.width ?? DEFAULTS.width) * (item.aspectRatio || 1.5) / 2}rem)`,
+                width: `${item.width ?? DEFAULTS.width}rem`,
+                transform: item.scale && item.scale !== 1 ? `scale(${item.scale})` : undefined,
                 zIndex: zIndex,
-              }}
-              ref={(el) => {
-                if (el) {
-                  console.log("🎯 ITEM RENDER:", {
-                    id: item.id,
-                    x: item.x,
-                    y: item.y,
-                    width: item.width,
-                    actualPosition: el.getBoundingClientRect()
-                  })
-                }
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id)}
               onTouchStart={(e) => handleTouchStart(e, item.id)}
@@ -660,11 +710,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                 className="w-full h-auto object-contain rounded-lg"
                 draggable={false}
                 unoptimized
+                onLoad={(e) => {
+                  const img = e.currentTarget
+                  const aspectRatio = img.naturalHeight / img.naturalWidth
+                  updateItemAspectRatio(item.id, aspectRatio)
+                }}
               />
             </motion.div>
           )
         })}
-      </div>
+      </>
     )
   }
 
@@ -787,20 +842,20 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       {/* White background behind canvas and save button only */}
                       <div className="absolute inset-0 -inset-x-4 -inset-y-4 bg-white rounded-2xl" style={{ zIndex: -1 }}></div>
 
+                      {/* Canvas - Direct container with border as the visual boundary */}
                       <div
-                        className="relative w-80 h-[500px] bg-background rounded-xl border-2 border-border shadow-lg flex flex-col"
-                        onClick={() => setSelectedItemForResize(null)}
+                        data-canvas
+                        className="relative h-[32rem] w-[280px] bg-gradient-to-br from-muted via-background to-card rounded-xl ring-1 ring-border overflow-hidden shadow-lg"
+                        style={{ boxSizing: 'border-box' }}
+                        onClick={() => {
+                          setSelectedItemForResize(null)
+                        }}
                       >
-                        {/* Inner Canvas - Fixed size for item rendering */}
-                        <div className="flex-1 flex items-center justify-center p-4">
-                          <div className="relative w-44 h-80 bg-muted/10 rounded-lg">
-                            {renderOutfitDisplay()}
-                          </div>
-                        </div>
+                        {renderOutfitDisplay()}
 
                         {/* Resize Slider (bottom left) */}
                         {selectedItemForResize && (
-                          <div className="absolute bottom-4 left-4 flex flex-col items-center gap-2">
+                          <div className="absolute bottom-4 left-4 flex flex-col items-center gap-2 z-50">
                             <Search className="w-4 h-4 text-muted-foreground" />
                             <input
                               type="range"
@@ -810,45 +865,56 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               value={getSelectedResizeItem()?.width ?? 8}
                               onChange={(e) => {
                                 const newWidth = parseFloat(e.target.value)
+                                const canvas = document.querySelector('[data-canvas]') as HTMLElement
+                                if (!canvas) return
+
+                                const rect = canvas.getBoundingClientRect()
+
+                                const allCurrentItems = [
+                                  editedCategorizedItems?.outerwear,
+                                  editedCategorizedItems?.top,
+                                  editedCategorizedItems?.bottom,
+                                  editedCategorizedItems?.shoe,
+                                  ...(editedCategorizedItems?.others || [])
+                                ].filter(Boolean) as ClothingItem[]
+
+                                const item = allCurrentItems.find(i => i?.id === selectedItemForResize)
+                                if (!item) return
+
+                                // Calculate boundaries with NEW width
+                                const itemWidthPx = newWidth * 16
+                                const aspectRatio = item.aspectRatio || 1.5
+                                const itemHeightPx = itemWidthPx * aspectRatio
+
+                                const itemWidthPercent = (itemWidthPx / rect.width) * 100
+                                const itemHeightPercent = (itemHeightPx / rect.height) * 100
+
+                                const minX = itemWidthPercent / 2
+                                const maxX = 100 - (itemWidthPercent / 2)
+                                const minY = itemHeightPercent / 2
+                                const maxY = 100 - (itemHeightPercent / 2)
+
+                                // Get current position
+                                const currentX = item.x ?? DEFAULTS.x
+                                const currentY = item.y ?? DEFAULTS.y
+
+                                // Check if current position would be INVALID with new size
+                                if (currentX < minX || currentX > maxX || currentY < minY || currentY > maxY) {
+                                  // Don't allow resize - would push item out of bounds
+                                  return
+                                }
+
+                                // Resize is allowed - update width only (position stays the same)
                                 setEditedCategorizedItems(prev => {
                                   if (!prev) return prev
                                   const updated = { ...prev }
 
-                                  // Container size: w-44 = 176px (same as drag boundaries)
-                                  const containerWidth = 176
-                                  const containerHeight = 320
-
                                   const updateItemWidth = (item: ClothingItem | undefined) => {
                                     if (item && item.id === selectedItemForResize) {
-                                      // Calculate item dimensions as percentage
-                                      const itemWidthPercent = (newWidth * 16 / containerWidth) * 100
-                                      const halfItemWidth = itemWidthPercent / 2
-
-                                      // Assume height is proportional to width (approximately 1.5x for clothing items)
-                                      const itemHeightPercent = itemWidthPercent * 1.5
-                                      const halfItemHeight = itemHeightPercent / 2
-
-                                      // Get current center position
-                                      const currentX = item.x ?? DEFAULTS.x
-                                      const currentY = item.y ?? DEFAULTS.y
-
-                                      // Constrain center to stay within boundaries with new size
-                                      const minX = halfItemWidth
-                                      const maxX = 100 - halfItemWidth
-                                      const minY = halfItemHeight
-                                      const maxY = 100 - halfItemHeight
-
-                                      const constrainedX = Math.max(minX, Math.min(maxX, currentX))
-                                      const constrainedY = Math.max(minY, Math.min(maxY, currentY))
-
                                       return {
                                         ...item,
                                         width: newWidth,
-                                        x: constrainedX,
-                                        y: constrainedY,
-                                        // Keep left/bottom for backward compatibility
-                                        left: constrainedX,
-                                        bottom: item.bottom ?? 0
+                                        // Don't update x/y - keep position the same
                                       }
                                     }
                                     return item
@@ -864,7 +930,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               }}
                               className="h-24 w-2 rounded-full appearance-none cursor-pointer slider-vertical"
                               style={{
-                                writingMode: 'bt-lr' as any,
                                 WebkitAppearance: 'slider-vertical',
                                 background: 'hsl(var(--foreground))',
                               } as React.CSSProperties}
@@ -877,7 +942,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       <Button
                         onClick={createOutfit}
                         disabled={!editedCategorizedItems || (!editedCategorizedItems.top && !editedCategorizedItems.bottom && !editedCategorizedItems.outerwear && !editedCategorizedItems.shoe && editedCategorizedItems.others.length === 0) || isCreating}
-                        className="w-80 bg-foreground text-background hover:bg-foreground/90 font-semibold mt-3"
+                        className="w-[280px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-3"
                       >
                         {isCreating ? "Saving..." : "Save"}
                       </Button>
