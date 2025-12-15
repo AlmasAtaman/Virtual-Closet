@@ -757,14 +757,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Main Content - Canvas Mode Only */}
             <div className="flex-1 flex flex-row overflow-hidden justify-center items-start gap-6 p-6 relative" style={{ paddingTop: '66px' }}>
                   {/* Left Sidebar - Category Buttons */}
-                  <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }}>
-                    {/* White background behind buttons */}
-                    <div className="absolute inset-0 -inset-x-3 -inset-y-3 bg-white rounded-2xl" style={{ zIndex: -1 }}></div>
+                  <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => {
                         setSelectedItemForResize(null)
@@ -825,9 +822,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   <div className="flex flex-col relative" style={{ zIndex: 2 }}>
                     {/* Mode Toggle - Above Canvas, Aligned Right */}
                     <div className="flex justify-end mb-2">
-                      <div className="flex gap-1 bg-muted rounded-lg p-1 relative">
-                        {/* White background behind toggle only */}
-                        <div className="absolute inset-0 -inset-x-3 -inset-y-2 bg-white rounded-2xl" style={{ zIndex: -1 }}></div>
+                      <div className="flex gap-1 bg-muted rounded-lg p-1 relative" onClick={(e) => e.stopPropagation()}>
                         <button className="px-4 py-1.5 rounded-md text-xs font-medium bg-foreground text-background">
                           Canvas
                         </button>
@@ -837,10 +832,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       </div>
                     </div>
 
-                    {/* Canvas Container with Save Button - White Background */}
-                    <div className="relative">
-                      {/* White background behind canvas and save button only */}
-                      <div className="absolute inset-0 -inset-x-4 -inset-y-4 bg-white rounded-2xl" style={{ zIndex: -1 }}></div>
+                    {/* Canvas Container with Save Button */}
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
 
                       {/* Canvas - Direct container with border as the visual boundary */}
                       <div
@@ -950,10 +943,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                   </div>
 
                   {/* Right Sidebar - Added Items */}
-                  <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }}>
-                    {/* White background behind thumbnails */}
-                    <div className="absolute inset-0 -inset-x-3 -inset-y-3 bg-white rounded-2xl" style={{ zIndex: -1 }}></div>
-                    <h3 className="text-xs font-semibold text-foreground text-center">Add</h3>
+                  <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
                     {/* Added items thumbnails */}
                     <div className="flex flex-col gap-2 min-w-[56px]">
                       <AnimatePresence mode="popLayout">
