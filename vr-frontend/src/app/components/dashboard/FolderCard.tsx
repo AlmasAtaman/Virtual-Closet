@@ -39,12 +39,12 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
 
       previewImages.forEach(img => {
         const index = positionMap[img.position];
-        if (index !== undefined && img.imageUrl) {
+        if (index !== undefined && img.imageUrl && img.imageUrl.trim() !== '') {
           displayArray[index] = { url: img.imageUrl, name: '' };
         } else if (index !== undefined && img.clothingItemId) {
           // Find the clothing item in previewItems
           const item = folder.previewItems.find(p => p.id === img.clothingItemId);
-          if (item) {
+          if (item && item.url && item.url.trim() !== '') {
             displayArray[index] = { url: item.url, name: item.name };
           }
         }
@@ -53,12 +53,23 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
       return displayArray;
     }
 
-    // Fallback to default preview items
-    const items = folder.previewItems.slice(0, 3);
+    // Fallback to default preview items - filter out items with empty URLs
+    const items = folder.previewItems
+      .filter(item => item && item.url && item.url.trim() !== '')
+      .slice(0, 3);
     return [items[0] || null, items[1] || null, items[2] || null];
   };
 
   const displayItems = getDisplayItems();
+
+  // Debug logging to see what URLs we're getting
+  if (displayItems.some(item => item === null || item?.url === '')) {
+    console.log(`Folder "${folder.name}" has empty/null items:`, {
+      displayItems,
+      previewImages: folder.previewImages,
+      previewItems: folder.previewItems
+    });
+  }
 
   // Close menu when clicking outside
   useEffect(() => {
