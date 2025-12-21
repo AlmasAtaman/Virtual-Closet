@@ -463,51 +463,74 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const updateCategorizedItems = (category: "top" | "bottom" | "outerwear" | "shoe" | "accessory", item: ClothingItem) => {
     // Default positions for each category (Canvas mode) - using center coordinates (x, y as percentages)
     const DEFAULT_POSITIONS = {
-      top: { x: 50, y: 55, width: 8 },
-      bottom: { x: 50, y: 30, width: 8 },
-      outerwear: { x: 50, y: 60, width: 8 },
-      shoe: { x: 50, y: 15, width: 6 },
-      accessory: { x: 50, y: 70, width: 5 },
+      top: { x: 50, y: 40, width: 9 },
+      bottom: { x: 50, y: 68, width: 10 },
+      outerwear: { x: 70, y: 35, width: 10 },
+      shoe: { x: 50, y: 80, width: 8 },
+      accessory: { x: 50, y: 25, width: 6 },
     }
 
     setEditedCategorizedItems(prev => {
       const newItems = prev || { others: [] }
 
       if (category === "top") {
+        // If replacing an existing top, preserve its position and width
+        const existingTop = newItems.top
         newItems.top = {
           ...item,
-          x: DEFAULT_POSITIONS.top.x,
-          y: DEFAULT_POSITIONS.top.y,
-          width: DEFAULT_POSITIONS.top.width,
-          left: DEFAULT_POSITIONS.top.x,
-          bottom: 4,
+          x: existingTop?.x ?? DEFAULT_POSITIONS.top.x,
+          y: existingTop?.y ?? DEFAULT_POSITIONS.top.y,
+          width: existingTop?.width ?? DEFAULT_POSITIONS.top.width,
+          left: existingTop?.left ?? DEFAULT_POSITIONS.top.x,
+          bottom: existingTop?.bottom ?? 4,
+        }
+
+        // If there's outerwear and we just added a top, move outerwear to its default position (only if it doesn't have custom position)
+        if (newItems.outerwear && !existingTop) {
+          newItems.outerwear = {
+            ...newItems.outerwear,
+            x: DEFAULT_POSITIONS.outerwear.x,
+            y: DEFAULT_POSITIONS.outerwear.y,
+            width: DEFAULT_POSITIONS.outerwear.width,
+            left: DEFAULT_POSITIONS.outerwear.x,
+            bottom: 5,
+          }
         }
       } else if (category === "bottom") {
+        // If replacing an existing bottom, preserve its position and width
+        const existingBottom = newItems.bottom
         newItems.bottom = {
           ...item,
-          x: DEFAULT_POSITIONS.bottom.x,
-          y: DEFAULT_POSITIONS.bottom.y,
-          width: DEFAULT_POSITIONS.bottom.width,
-          left: DEFAULT_POSITIONS.bottom.x,
-          bottom: 0,
+          x: existingBottom?.x ?? DEFAULT_POSITIONS.bottom.x,
+          y: existingBottom?.y ?? DEFAULT_POSITIONS.bottom.y,
+          width: existingBottom?.width ?? DEFAULT_POSITIONS.bottom.width,
+          left: existingBottom?.left ?? DEFAULT_POSITIONS.bottom.x,
+          bottom: existingBottom?.bottom ?? 0,
         }
       } else if (category === "outerwear") {
+        // If replacing an existing outerwear, preserve its position and width
+        const existingOuterwear = newItems.outerwear
+        // If there's no top, put outerwear in top position (but keep outerwear width)
+        const shouldUseTopPosition = !newItems.top && !existingOuterwear
+
         newItems.outerwear = {
           ...item,
-          x: DEFAULT_POSITIONS.outerwear.x,
-          y: DEFAULT_POSITIONS.outerwear.y,
-          width: DEFAULT_POSITIONS.outerwear.width,
-          left: DEFAULT_POSITIONS.outerwear.x,
-          bottom: 5,
+          x: existingOuterwear?.x ?? (shouldUseTopPosition ? DEFAULT_POSITIONS.top.x : DEFAULT_POSITIONS.outerwear.x),
+          y: existingOuterwear?.y ?? (shouldUseTopPosition ? DEFAULT_POSITIONS.top.y : DEFAULT_POSITIONS.outerwear.y),
+          width: existingOuterwear?.width ?? DEFAULT_POSITIONS.outerwear.width,
+          left: existingOuterwear?.left ?? (shouldUseTopPosition ? DEFAULT_POSITIONS.top.x : DEFAULT_POSITIONS.outerwear.x),
+          bottom: existingOuterwear?.bottom ?? (shouldUseTopPosition ? 4 : 5),
         }
       } else if (category === "shoe") {
+        // If replacing an existing shoe, preserve its position and width
+        const existingShoe = newItems.shoe
         newItems.shoe = {
           ...item,
-          x: DEFAULT_POSITIONS.shoe.x,
-          y: DEFAULT_POSITIONS.shoe.y,
-          width: DEFAULT_POSITIONS.shoe.width,
-          left: DEFAULT_POSITIONS.shoe.x,
-          bottom: -2,
+          x: existingShoe?.x ?? DEFAULT_POSITIONS.shoe.x,
+          y: existingShoe?.y ?? DEFAULT_POSITIONS.shoe.y,
+          width: existingShoe?.width ?? DEFAULT_POSITIONS.shoe.width,
+          left: existingShoe?.left ?? DEFAULT_POSITIONS.shoe.x,
+          bottom: existingShoe?.bottom ?? -2,
         }
       } else if (category === "accessory") {
         // Accessories can have multiple items
@@ -542,6 +565,22 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       if (category === "top") {
         newItems.top = undefined
+
+        // If there's outerwear and we just removed the top, move outerwear to top position (keep outerwear width)
+        if (newItems.outerwear) {
+          const DEFAULT_POSITIONS = {
+            top: { x: 50, y: 40 },
+          }
+
+          newItems.outerwear = {
+            ...newItems.outerwear,
+            x: DEFAULT_POSITIONS.top.x,
+            y: DEFAULT_POSITIONS.top.y,
+            // Keep the outerwear's current width, don't change it
+            left: DEFAULT_POSITIONS.top.x,
+            bottom: 4,
+          }
+        }
       } else if (category === "bottom") {
         newItems.bottom = undefined
       } else if (category === "outerwear") {
@@ -579,9 +618,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
 
   const createOutfit = async () => {
+    // Check if there are any items in editedCategorizedItems OR the old selected items
+    const hasItemsInCanvas = editedCategorizedItems && (
+      editedCategorizedItems.top ||
+      editedCategorizedItems.bottom ||
+      editedCategorizedItems.outerwear ||
+      editedCategorizedItems.shoe ||
+      editedCategorizedItems.others.length > 0
+    )
+
     const selectedItems = [selectedTop, selectedBottom, selectedOuterwear].filter(Boolean) as ClothingItem[]
 
-    if (selectedItems.length === 0) {
+    if (!hasItemsInCanvas && selectedItems.length === 0) {
       alert("Please select at least one clothing item.")
       return
     }
@@ -596,6 +644,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         ...editedCategorizedItems.others
       ].filter(Boolean) as ClothingItem[] : selectedItems
 
+      console.log("[CREATE OUTFIT] Items to use:", itemsToUse)
+
       const clothingData = itemsToUse.map((item) => ({
         clothingId: item.id,
         left: item.left ?? 50,
@@ -606,17 +656,25 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         y: item.y ?? 0,
       }))
 
+      console.log("[CREATE OUTFIT] Clothing data to send:", clothingData)
+
       const axios = createAuthenticatedAxios()
-      await axios.post("/api/outfits", {
+      const response = await axios.post("/api/outfits", {
         clothingItems: clothingData,
         name: outfitName || null,
         outerwearOnTop: outerwearOnTop, // Include layer order preference
       })
 
+      console.log("[CREATE OUTFIT] Success! Response:", response.data)
+
       onOutfitCreated()
       handleCloseModal()
     } catch (error) {
-      console.error("Error creating outfit:", error)
+      console.error("[CREATE OUTFIT] Error creating outfit:", error)
+      if (axios.isAxiosError(error)) {
+        console.error("[CREATE OUTFIT] Response data:", error.response?.data)
+        console.error("[CREATE OUTFIT] Response status:", error.response?.status)
+      }
       alert("Failed to create outfit")
     } finally {
       setIsCreating(false)
@@ -676,21 +734,22 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           return (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0 }}
               animate={{
                 opacity: 1,
-                y: 0,
+                left: `calc(${item.x ?? DEFAULTS.x}% - ${(item.width ?? DEFAULTS.width) / 2}rem)`,
+                top: `calc(${item.y ?? DEFAULTS.y}% - ${(item.width ?? DEFAULTS.width) * (item.aspectRatio || 1.5) / 2}rem)`,
               }}
+              exit={{ opacity: 0 }}
               transition={{
-                opacity: { delay: index * 0.1 },
-                y: { delay: index * 0.1 },
+                opacity: { duration: 0.3 },
+                left: { duration: 0 },
+                top: { duration: 0 },
               }}
               className={`absolute cursor-move hover:shadow-lg transition-shadow ${
                 draggedItemId === item.id ? "z-50 shadow-2xl" : ""
               } ${selectedItemForResize === item.id ? "ring-2 ring-foreground" : ""}`}
               style={{
-                left: `calc(${item.x ?? DEFAULTS.x}% - ${(item.width ?? DEFAULTS.width) / 2}rem)`,
-                top: `calc(${item.y ?? DEFAULTS.y}% - ${(item.width ?? DEFAULTS.width) * (item.aspectRatio || 1.5) / 2}rem)`,
                 width: `${item.width ?? DEFAULTS.width}rem`,
                 transform: item.scale && item.scale !== 1 ? `scale(${item.scale})` : undefined,
                 zIndex: zIndex,
@@ -768,8 +827,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         setSelectingCategory("outerwear")
                         setShowSelectModal(true)
                       }}
-                      disabled={!!editedCategorizedItems?.outerwear}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
                     >
                       Outer
                     </button>
@@ -779,8 +837,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         setSelectingCategory("top")
                         setShowSelectModal(true)
                       }}
-                      disabled={!!editedCategorizedItems?.top}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
                     >
                       Top
                     </button>
@@ -790,8 +847,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         setSelectingCategory("bottom")
                         setShowSelectModal(true)
                       }}
-                      disabled={!!editedCategorizedItems?.bottom}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
                     >
                       Bottom
                     </button>
@@ -801,8 +857,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         setSelectingCategory("shoe")
                         setShowSelectModal(true)
                       }}
-                      disabled={!!editedCategorizedItems?.shoe}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
                     >
                       Shoes
                     </button>
@@ -1129,6 +1184,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         onSelectItem={handleCanvasItemSelect}
         viewMode="closet"
         selectedCategory={selectingCategory === "outerwear" ? "outerwear" : selectingCategory === "top" ? "top" : selectingCategory === "bottom" ? "bottom" : selectingCategory === "shoe" ? "shoe" : null}
+        currentlySelectedItemId={
+          selectingCategory === "outerwear" ? editedCategorizedItems?.outerwear?.id :
+          selectingCategory === "top" ? editedCategorizedItems?.top?.id :
+          selectingCategory === "bottom" ? editedCategorizedItems?.bottom?.id :
+          selectingCategory === "shoe" ? editedCategorizedItems?.shoe?.id :
+          null
+        }
       />
     </>
   )

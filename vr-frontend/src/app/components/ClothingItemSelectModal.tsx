@@ -43,6 +43,7 @@ interface ClothingItemSelectModalProps {
   onSelectItem: (selectedItem: ClothingItem) => void
   viewMode: "closet" | "wishlist"
   selectedCategory: "outerwear" | "top" | "bottom" | "shoe" | null
+  currentlySelectedItemId?: string | null
 }
 
 const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
@@ -52,6 +53,7 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
   onSelectItem,
   viewMode,
   selectedCategory,
+  currentlySelectedItemId,
 }) => {
   const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([])
   const [currentModalViewMode, setCurrentModalViewMode] = useState<"closet" | "wishlist">(viewMode)
@@ -153,10 +155,13 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {filteredItems.map((item) => {
                     const isNoneOption = item.id?.startsWith("__none")
+                    const isSelected = currentlySelectedItemId === item.id
                     return (
                       <Card
                         key={item.id}
-                        className="cursor-pointer transition-all hover:shadow-lg"
+                        className={`cursor-pointer transition-all hover:shadow-lg ${
+                          isSelected ? "ring-2 ring-black dark:ring-white" : ""
+                        }`}
                         onClick={() => handleItemClick(item)}
                       >
                         <CardContent className="p-2">
@@ -174,6 +179,11 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                                 sizes="(max-width: 768px) 50vw, 25vw"
                                 unoptimized
                               />
+                            )}
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <Check className="w-8 h-8 text-white" />
+                              </div>
                             )}
                           </div>
                         </CardContent>
