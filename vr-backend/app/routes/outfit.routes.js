@@ -36,10 +36,8 @@ async function transformOutfitData(outfit) {
           // Include layout data
           x: oc.x,
           y: oc.y,
-          scale: oc.scale,
-          left: oc.left,
-          bottom: oc.bottom,
           width: oc.width,
+          aspectRatio: oc.aspectRatio,
         }
       }),
     ),
@@ -80,7 +78,6 @@ router.post("/", authMiddleware, async (req, res) => {
   const userId = req.user.id
   const { clothingItems, name, outerwearOnTop } = req.body
 
-
   if (!clothingItems || !Array.isArray(clothingItems)) {
     console.error("Invalid request: clothingItems is not an array or is missing")
     return res.status(400).json({ message: "Invalid request: clothingItems must be an array" })
@@ -98,12 +95,10 @@ router.post("/", authMiddleware, async (req, res) => {
             clothing: {
               connect: { id: item.clothingId },
             },
-            x: item.x || 0,
-            y: item.y || 0,
-            scale: item.scale || 1,
-            left: item.left || 50,
-            bottom: item.bottom || 0,
-            width: item.width || 10,
+            x: item.x ?? 50,
+            y: item.y ?? 50,
+            width: item.width ?? 10,
+            aspectRatio: item.aspectRatio ?? 1.25,
           })),
         },
       },
@@ -206,12 +201,10 @@ router.put("/:outfitId", authMiddleware, async (req, res) => {
             data: clothingItems.map((item) => ({
               outfitId,
               clothingId: typeof item === "string" ? item : item.clothingId || item.id,
-              x: item.x || 0,
-              y: item.y || 0,
-              scale: item.scale || 1,
-              left: item.left || 50,
-              bottom: item.bottom || 0,
-              width: item.width || 10,
+              x: item.x ?? 50,
+              y: item.y ?? 50,
+              width: item.width ?? 10,
+              aspectRatio: item.aspectRatio ?? 1.25,
             })),
           })
         }

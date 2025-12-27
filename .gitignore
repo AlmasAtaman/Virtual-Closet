@@ -29,6 +29,7 @@ out/
 # Local configuration (test credentials, local settings)
 .local/
 test-credentials.md
+.test-credentials.json
 
 # Claude Code files
 .claude/

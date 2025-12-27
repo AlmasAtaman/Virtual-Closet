@@ -82,16 +82,17 @@ model Outfit {
 }
 
 model OutfitClothing {
-  outfitId   String
-  clothingId String
-  x          Float    @default(0)
-  y          Float    @default(0)
-  scale      Float    @default(1)
-  left       Float    @default(50)
-  bottom     Float    @default(0)
-  width      Float    @default(10)
-  clothing   Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
-  outfit     Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  outfitId    String
+  clothingId  String
+  x           Float    @default(0)
+  y           Float    @default(0)
+  scale       Float    @default(1)
+  left        Float    @default(50)
+  bottom      Float    @default(0)
+  width       Float    @default(10)
+  aspectRatio Float    @default(1.5)
+  clothing    Clothing @relation(fields: [clothingId], references: [id], onDelete: Cascade)
+  outfit      Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
 
   @@id([outfitId, clothingId])
 }

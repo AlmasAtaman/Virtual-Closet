@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Shirt, Check, Settings, X } from "lucide-react"
+import OutfitCanvas from "./OutfitCanvas"
 
 interface ClothingItem {
   id: string
@@ -25,6 +26,7 @@ interface ClothingItem {
   left?: number
   bottom?: number
   width?: number
+  aspectRatio?: number
 }
 
 interface Outfit {
@@ -117,12 +119,13 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   // Use external state if provided, otherwise use internal state
   const selectedItemForResize = externalSelectedItemForResize !== undefined ? externalSelectedItemForResize : internalSelectedItemForResize
   const setSelectedItemForResize = externalSetSelectedItemForResize || setInternalSelectedItemForResize
-  const dragStartPos = useRef<{ x: number; y: number; itemLeft: number; itemBottom: number }>({
+  const dragStartPos = useRef<{ x: number; y: number; itemX: number; itemY: number }>({
     x: 0,
     y: 0,
-    itemLeft: 0,
-    itemBottom: 0,
+    itemX: 50,
+    itemY: 50,
   })
+  const dragOffsetRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     if (!isEditing) {
@@ -132,11 +135,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   }, [isEditing, setSelectedItemForResize])
 
   const DEFAULTS = {
-    x: 0,
-    y: 0,
-    scale: 1,
-    left: 50,
-    bottom: 0,
+    x: 50,
+    y: 50,
     width: 10,
   }
 
@@ -181,20 +181,6 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
   const topItems = categorizedItems.tops
 
-  // Check if outfit has custom positioning (any non-default values)
-  const hasCustomLayout = (outfit.clothingItems || []).some((item) => {
-    const hasCustomLeft = item.left !== undefined && item.left !== 50
-    const hasCustomBottom = item.bottom !== undefined && item.bottom !== 0
-    const hasCustomWidth = item.width !== undefined && item.width !== 10
-    const hasCustomScale = item.scale !== undefined && item.scale !== 1
-    const hasCustomX = item.x !== undefined && item.x !== 0
-    const hasCustomY = item.y !== undefined && item.y !== 0
-
-    return hasCustomLeft || hasCustomBottom || hasCustomWidth || hasCustomScale || hasCustomX || hasCustomY
-  })
-
-  console.log(`[DEBUG] OutfitCard ${outfit.id} - hasCustomLayout:`, hasCustomLayout)
-
   // Get current items for display (detail view logic)
   const getCurrentCategorizedItems = (): CategorizedOutfitItems => {
     if (isDetailView && isEditing && editedCategorizedItems) {
@@ -232,8 +218,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       dragStartPos.current = {
         x: e.clientX,
         y: e.clientY,
-        itemLeft: currentItem.left ?? DEFAULTS.left,
-        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+        itemX: currentItem.x ?? DEFAULTS.x,
+        itemY: currentItem.y ?? DEFAULTS.y,
       }
     }
   }
@@ -245,14 +231,15 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       const deltaX = e.clientX - dragStartPos.current.x
       const deltaY = e.clientY - dragStartPos.current.y
 
-      // Container size: w-44 = 176px, h-80 = 320px
-      const containerWidth = 176
-      const containerHeight = 320
+      // Container size: w-[280px] = 280px, h-[32rem] = 512px
+      const containerWidth = 280
+      const containerHeight = 512
 
-      const leftDelta = (deltaX / containerWidth) * 100
-      const bottomDelta = -(deltaY / containerHeight) * 20
+      // Calculate percentage delta
+      const xDelta = (deltaX / containerWidth) * 100
+      const yDelta = (deltaY / containerHeight) * 100
 
-      // Get the current item to check its width for boundary calculations
+      // Get the current item to check its dimensions for boundary calculations
       const currentItem = [
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
@@ -261,25 +248,33 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         ...editedCategorizedItems.others
       ].find(item => item?.id === draggedItemId)
 
-      const itemWidth = currentItem?.width ?? DEFAULTS.width
+      if (!currentItem) return
 
-      // Calculate boundaries accounting for transform: translateX(-50%)
-      // Since items are centered on their left position, we need to account for half the item width
-      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100 // Convert rem to percentage
-      const halfItemWidthPercent = itemWidthPercent / 2
+      // Calculate item dimensions in pixels
+      const itemWidthPx = (currentItem.width ?? DEFAULTS.width) * 16
+      const aspectRatio = currentItem.aspectRatio || 1.25
+      const itemHeightPx = itemWidthPx * aspectRatio
 
-      // Boundary calculations:
-      // - Left edge: item center can't go below half item width (so left edge touches container left)
-      // - Right edge: item center can't go above 100% minus half item width (so right edge touches container right)
-      // - Bottom edge: item can touch the bottom (0rem)
-      // - Top edge: item can reach the top, accounting for container height in rem (20rem)
-      const minLeft = halfItemWidthPercent
-      const maxLeft = 100 - halfItemWidthPercent
-      const minBottom = 0
-      const maxBottom = 20
+      // Convert to percentages of canvas
+      const itemWidthPercent = (itemWidthPx / containerWidth) * 100
+      const itemHeightPercent = (itemHeightPx / containerHeight) * 100
 
-      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
-      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+      // Calculate boundaries (center must stay within canvas)
+      const halfItemWidth = itemWidthPercent / 2
+      const halfItemHeight = itemHeightPercent / 2
+
+      const minX = halfItemWidth
+      const maxX = 100 - halfItemWidth
+      const minY = halfItemHeight
+      const maxY = 100 - halfItemHeight
+
+      // Calculate new position
+      let newX = dragStartPos.current.itemX + xDelta
+      let newY = dragStartPos.current.itemY + yDelta
+
+      // Clamp to boundaries
+      newX = Math.max(minX, Math.min(maxX, newX))
+      newY = Math.max(minY, Math.min(maxY, newY))
 
       // Update item position
       const updatedItems = { ...editedCategorizedItems }
@@ -287,8 +282,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         if (item && item.id === draggedItemId) {
           return {
             ...item,
-            left: newLeft,
-            bottom: newBottom,
+            x: newX,
+            y: newY,
           }
         }
         return item
@@ -302,7 +297,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -323,8 +318,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       dragStartPos.current = {
         x: touch.clientX,
         y: touch.clientY,
-        itemLeft: currentItem.left ?? DEFAULTS.left,
-        itemBottom: currentItem.bottom ?? DEFAULTS.bottom,
+        itemX: currentItem.x ?? DEFAULTS.x,
+        itemY: currentItem.y ?? DEFAULTS.y,
       }
     }
   }
@@ -339,12 +334,15 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       const deltaX = touch.clientX - dragStartPos.current.x
       const deltaY = touch.clientY - dragStartPos.current.y
 
-      const containerWidth = 176
-      const containerHeight = 320
+      // Container size: w-[280px] = 280px, h-[32rem] = 512px
+      const containerWidth = 280
+      const containerHeight = 512
 
-      const leftDelta = (deltaX / containerWidth) * 100
-      const bottomDelta = -(deltaY / containerHeight) * 20
+      // Calculate percentage delta
+      const xDelta = (deltaX / containerWidth) * 100
+      const yDelta = (deltaY / containerHeight) * 100
 
+      // Get the current item to check its dimensions for boundary calculations
       const currentItem = [
         editedCategorizedItems.outerwear,
         editedCategorizedItems.top,
@@ -353,26 +351,42 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         ...editedCategorizedItems.others
       ].find(item => item?.id === draggedItemId)
 
-      const itemWidth = currentItem?.width ?? DEFAULTS.width
+      if (!currentItem) return
 
-      const itemWidthPercent = (itemWidth * 16 / containerWidth) * 100
-      const halfItemWidthPercent = itemWidthPercent / 2
+      // Calculate item dimensions in pixels
+      const itemWidthPx = (currentItem.width ?? DEFAULTS.width) * 16
+      const aspectRatio = currentItem.aspectRatio || 1.25
+      const itemHeightPx = itemWidthPx * aspectRatio
 
-      const minLeft = halfItemWidthPercent
-      const maxLeft = 100 - halfItemWidthPercent
-      const minBottom = 0
-      const maxBottom = 20
+      // Convert to percentages of canvas
+      const itemWidthPercent = (itemWidthPx / containerWidth) * 100
+      const itemHeightPercent = (itemHeightPx / containerHeight) * 100
 
-      const newLeft = Math.max(minLeft, Math.min(maxLeft, dragStartPos.current.itemLeft + leftDelta))
-      const newBottom = Math.max(minBottom, Math.min(maxBottom, dragStartPos.current.itemBottom + bottomDelta))
+      // Calculate boundaries (center must stay within canvas)
+      const halfItemWidth = itemWidthPercent / 2
+      const halfItemHeight = itemHeightPercent / 2
 
+      const minX = halfItemWidth
+      const maxX = 100 - halfItemWidth
+      const minY = halfItemHeight
+      const maxY = 100 - halfItemHeight
+
+      // Calculate new position
+      let newX = dragStartPos.current.itemX + xDelta
+      let newY = dragStartPos.current.itemY + yDelta
+
+      // Clamp to boundaries
+      newX = Math.max(minX, Math.min(maxX, newX))
+      newY = Math.max(minY, Math.min(maxY, newY))
+
+      // Update item position
       const updatedItems = { ...editedCategorizedItems }
       const updateItemPosition = (item: ClothingItem | undefined) => {
         if (item && item.id === draggedItemId) {
           return {
             ...item,
-            left: newLeft,
-            bottom: newBottom,
+            x: newX,
+            y: newY,
           }
         }
         return item
@@ -386,7 +400,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
   )
 
   const handleTouchEnd = useCallback(() => {
@@ -464,148 +478,29 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     }
   }
 
-  // RENDER OUTFIT DISPLAY - FIXED COORDINATE SYSTEM
+  // RENDER OUTFIT DISPLAY - Always use OutfitCanvas for consistency
   const renderOutfitDisplay = () => {
-    const useCustomLayout = hasCustomLayout || (isDetailView && isEditing)
-
-    console.log(`[DEBUG] OutfitCard ${outfit.id} - useCustomLayout:`, useCustomLayout)
-
     return (
-      <div className="relative w-44 h-80 mx-auto">
-        {useCustomLayout ? (
-          // FIXED: Custom layout with corrected coordinate system that maintains item relationships
-          allCurrentItems.map((item, index) => {
-            // COORDINATE SYSTEM FIX: Apply different adjustments based on item type and position
-            // This maintains the relative positioning between items while centering the overall outfit
-            let adjustedLeft = item.left ?? DEFAULTS.left
-
-            // Check if this is a pants/bottom item
-            const isPants = ["pants", "skirt", "shorts", "jeans", "leggings"].includes(item.type?.toLowerCase() || "")
-
-            if (isPants) {
-              // Special adjustment just for pants
-              adjustedLeft = adjustedLeft - 3 // <-- Change this number to move pants left/right
-            } else {
-              // Regular adjustment for all other items (shirts, jackets, etc.)
-              const distanceFromCenter = Math.abs(adjustedLeft - 50)
-              const adjustmentFactor = Math.max(0.7, 1 - distanceFromCenter / 100)
-              const baseAdjustment = 5
-              const finalAdjustment = baseAdjustment * adjustmentFactor
-              adjustedLeft = adjustedLeft - finalAdjustment
-            }
-
-            return (
-              <motion.div
-                key={`${item.id}-${item.width ?? 10}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`absolute ${
-                  isDetailView && isEditing ? "cursor-move hover:shadow-lg transition-shadow" : ""
-                } ${draggedItemId === item.id ? "z-50 shadow-2xl" : ""} ${
-                  selectedItemForResize === item.id ? "ring-2 ring-blue-500" : ""
-                }`}
-                style={{
-                  left: `${adjustedLeft}%`, // FIXED: Use adjusted left position
-                  bottom: `${item.bottom ?? DEFAULTS.bottom}rem`,
-                  width: `${item.width ?? DEFAULTS.width}rem`,
-                  transform: `translateX(-50%) scale(${item.scale ?? DEFAULTS.scale})`,
-                  zIndex: (() => {
-                    if (draggedItemId === item.id) return 50
-                    if (selectedItemForResize === item.id) return 40
-
-                    // Apply custom layer ordering based on outfit preference
-                    const itemType = item.type?.toLowerCase() || ""
-                    const isOuterwear = ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)
-                    const isTop = ["t-shirt", "dress", "shirt", "blouse"].includes(itemType)
-                    const outerwearOnTop = outfit.outerwearOnTop ?? false
-
-                    if (outerwearOnTop && isOuterwear) {
-                      return 30 // Outerwear on top
-                    } else if (!outerwearOnTop && isTop) {
-                      return 30 // Top on top (default)
-                    } else {
-                      return index
-                    }
-                  })(),
-                }}
-                onMouseDown={(e) => enableDragDrop && handleMouseDown(e, item.id)}
-                onTouchStart={(e) => enableDragDrop && handleTouchStart(e, item.id)}
-                onClick={() => enableResize && setSelectedItemForResize(item.id)}
-              >
-              <Image
-                src={item.url || "/placeholder.svg"}
-                alt={item.name || ""}
-                width={100}
-                height={120}
-                className="w-full h-auto object-contain rounded-lg"
-                draggable={false}
-                unoptimized
-              />
-                {isDetailView && isEditing && enableResize && (
-                  <div className="absolute -top-2 -right-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="h-6 w-6 p-0 rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedItemForResize(selectedItemForResize === item.id ? null : item.id)
-                      }}
-                    >
-                      <Settings className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
-              </motion.div>
-            )
-          })
+      <div className="relative w-[280px] h-[32rem] mx-auto">
+        {allCurrentItems.length > 0 ? (
+          // Always use OutfitCanvas component - same as CreateOutfitModal
+          <OutfitCanvas
+            items={allCurrentItems}
+            outerwearOnTop={outfit.outerwearOnTop ?? false}
+            draggedItemId={draggedItemId}
+            selectedItemForResize={selectedItemForResize}
+            enableDragDrop={isDetailView && isEditing && enableDragDrop}
+            enableResize={isDetailView && isEditing && enableResize}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            onClick={(e, itemId) => {
+              if (enableResize) {
+                setSelectedItemForResize(itemId)
+              }
+            }}
+          />
         ) : (
-          // Default layout for outfits without custom positioning
-          <>
-            {console.log(`[DEBUG] OutfitCard ${outfit.id} - Using default layout`)}
-
-            {/* Bottom (pants) - Default centered position */}
-            {categorizedItems.bottoms[0] && (
-              <Image
-                src={categorizedItems.bottoms[0].url || "/placeholder.svg"}
-                alt="Bottom"
-                width={144}
-                height={144}
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-36 z-10"
-                style={{ objectFit: "contain" }}
-                unoptimized
-              />
-            )}
-            {/* Top (shirt) - Default centered position */}
-            {topItems[0] && (
-              <Image
-                src={topItems[0].url || "/placeholder.svg"}
-                alt="Top"
-                width={128}
-                height={128}
-                className="absolute bottom-[8.4rem] left-1/2 transform -translate-x-1/2 w-32 z-20"
-                style={{ objectFit: "contain" }}
-                unoptimized
-              />
-            )}
-            {/* Outerwear - Default centered position */}
-            {categorizedItems.outerwear[0] && (
-              <Image
-                src={categorizedItems.outerwear[0].url || "/placeholder.svg"}
-                alt="Outerwear"
-                width={128}
-                height={128}
-                className="absolute bottom-[8.8rem] left-1/2 transform -translate-x-1/2 w-32 z-30"
-                style={{ objectFit: "contain" }}
-                unoptimized
-              />
-            )}
-          </>
-        )}
-
-        {/* Fallback if no images */}
-        {allCurrentItems.length === 0 && (
+          // Fallback if no images
           <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
             <div className="text-center">
               <Shirt className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -687,8 +582,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
               </CardTitle>
             </CardHeader>
           )}
-          <CardContent className="p-0 flex-1 flex items-center justify-center">
-            <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg p-4 w-full h-full max-w-sm mx-auto flex items-center justify-center">
+          <CardContent className="p-0 flex-1">
+            <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg w-full h-full max-w-sm mx-auto">
               {renderOutfitDisplay()}
             </div>
           </CardContent>
@@ -854,16 +749,16 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       )}
 
       <Card
-        className={`h-[32rem] cursor-pointer overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
+        className={`cursor-pointer overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
           isSelected
             ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
             : "ring-border hover:ring-accent"
         }`}
         onClick={handleCardClick}
       >
-        <CardContent className="p-0 h-full flex flex-col">
-          {/* Outfit Visual Area */}
-          <div className="flex-1 relative bg-gradient-to-br from-muted via-background to-card p-6 flex items-center justify-center">
+        <CardContent className="p-0 flex flex-col">
+          {/* Outfit Visual Area - Fixed height to match CreateOutfitModal canvas */}
+          <div className="h-[32rem] relative bg-gradient-to-br from-muted via-background to-card">
             {renderOutfitDisplay()}
           </div>
 

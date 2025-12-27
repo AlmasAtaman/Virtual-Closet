@@ -483,6 +483,7 @@ export default function OutfitsPage() {
                         isSelected={selectedOutfitIds.includes(outfit.id)}
                         isMultiSelecting={isMultiSelecting}
                         onToggleSelect={toggleOutfitSelection}
+                        hideFooter={true}
                       />
                     </motion.div>
                   ))}

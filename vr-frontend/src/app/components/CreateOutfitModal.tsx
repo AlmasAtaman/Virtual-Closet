@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
 import Image from "next/image"
 import axios from "axios"
+import OutfitCanvas from "./OutfitCanvas"
 
 interface CreateOutfitModalProps {
   show: boolean
@@ -88,9 +89,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const DEFAULTS = useRef({
     x: 50,
     y: 50,
-    scale: 1,
-    left: 50,
-    bottom: 0,
     width: 10,
   }).current
 
@@ -218,7 +216,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       // Calculate boundaries using actual dimensions
       // Item width is in rem (1rem = 16px)
       const itemWidthPx = (currentItem.width ?? DEFAULTS.width) * 16
-      const aspectRatio = currentItem.aspectRatio || 1.5
+      const aspectRatio = currentItem.aspectRatio || 1.25
       const itemHeightPx = itemWidthPx * aspectRatio
 
       // Convert pixel dimensions to percentages of canvas
@@ -246,9 +244,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             ...item,
             x: newX,
             y: newY,
-            // Keep left/bottom for backward compatibility
-            left: newX,
-            bottom: item.bottom ?? 0,
           }
         }
         return item
@@ -349,7 +344,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       // Calculate boundaries using actual dimensions
       // Item width is in rem (1rem = 16px)
       const itemWidthPx = (currentItem.width ?? DEFAULTS.width) * 16
-      const aspectRatio = currentItem.aspectRatio || 1.5
+      const aspectRatio = currentItem.aspectRatio || 1.25
       const itemHeightPx = itemWidthPx * aspectRatio
 
       // Convert pixel dimensions to percentages of canvas
@@ -377,9 +372,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             ...item,
             x: newX,
             y: newY,
-            // Keep left/bottom for backward compatibility
-            left: newX,
-            bottom: item.bottom ?? 0,
           }
         }
         return item
@@ -481,8 +473,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           x: existingTop?.x ?? DEFAULT_POSITIONS.top.x,
           y: existingTop?.y ?? DEFAULT_POSITIONS.top.y,
           width: existingTop?.width ?? DEFAULT_POSITIONS.top.width,
-          left: existingTop?.left ?? DEFAULT_POSITIONS.top.x,
-          bottom: existingTop?.bottom ?? 4,
         }
 
         // If there's outerwear and we just added a top, move outerwear to its default position (only if it doesn't have custom position)
@@ -492,8 +482,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             x: DEFAULT_POSITIONS.outerwear.x,
             y: DEFAULT_POSITIONS.outerwear.y,
             width: DEFAULT_POSITIONS.outerwear.width,
-            left: DEFAULT_POSITIONS.outerwear.x,
-            bottom: 5,
           }
         }
       } else if (category === "bottom") {
@@ -504,8 +492,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           x: existingBottom?.x ?? DEFAULT_POSITIONS.bottom.x,
           y: existingBottom?.y ?? DEFAULT_POSITIONS.bottom.y,
           width: existingBottom?.width ?? DEFAULT_POSITIONS.bottom.width,
-          left: existingBottom?.left ?? DEFAULT_POSITIONS.bottom.x,
-          bottom: existingBottom?.bottom ?? 0,
         }
       } else if (category === "outerwear") {
         // If replacing an existing outerwear, preserve its position and width
@@ -518,8 +504,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           x: existingOuterwear?.x ?? (shouldUseTopPosition ? DEFAULT_POSITIONS.top.x : DEFAULT_POSITIONS.outerwear.x),
           y: existingOuterwear?.y ?? (shouldUseTopPosition ? DEFAULT_POSITIONS.top.y : DEFAULT_POSITIONS.outerwear.y),
           width: existingOuterwear?.width ?? DEFAULT_POSITIONS.outerwear.width,
-          left: existingOuterwear?.left ?? (shouldUseTopPosition ? DEFAULT_POSITIONS.top.x : DEFAULT_POSITIONS.outerwear.x),
-          bottom: existingOuterwear?.bottom ?? (shouldUseTopPosition ? 4 : 5),
         }
       } else if (category === "shoe") {
         // If replacing an existing shoe, preserve its position and width
@@ -529,8 +513,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           x: existingShoe?.x ?? DEFAULT_POSITIONS.shoe.x,
           y: existingShoe?.y ?? DEFAULT_POSITIONS.shoe.y,
           width: existingShoe?.width ?? DEFAULT_POSITIONS.shoe.width,
-          left: existingShoe?.left ?? DEFAULT_POSITIONS.shoe.x,
-          bottom: existingShoe?.bottom ?? -2,
         }
       } else if (category === "accessory") {
         // Accessories can have multiple items
@@ -541,8 +523,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             x: DEFAULT_POSITIONS.accessory.x,
             y: DEFAULT_POSITIONS.accessory.y,
             width: DEFAULT_POSITIONS.accessory.width,
-            left: DEFAULT_POSITIONS.accessory.x,
-            bottom: 8,
           }
         ]
       }
@@ -648,12 +628,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       const clothingData = itemsToUse.map((item) => ({
         clothingId: item.id,
-        left: item.left ?? 50,
-        bottom: item.bottom ?? 0,
-        width: item.width ?? 16,
-        scale: item.scale ?? 1.2,
-        x: item.x ?? 0,
-        y: item.y ?? 0,
+        x: item.x ?? 50,
+        y: item.y ?? 50,
+        width: item.width ?? 10,
+        aspectRatio: item.aspectRatio ?? 1.25,
       }))
 
       console.log("[CREATE OUTFIT] Clothing data to send:", clothingData)
@@ -694,7 +672,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   }
 
 
-  // Custom outfit display - matches OutfitCard exactly
+  // Custom outfit display - using OutfitCanvas component
   const renderOutfitDisplay = () => {
     if (!editedCategorizedItems) return null
 
@@ -706,79 +684,22 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       ...editedCategorizedItems.others,
     ].filter(Boolean) as ClothingItem[]
 
-    // Container is already w-44 h-80 (176x320), don't create another one
     return (
-      <>
-        {allCurrentItems.map((item, index) => {
-          // Calculate z-index based on layer order preference
-          let zIndex = index
-          if (draggedItemId === item.id) {
-            zIndex = 50
-          } else if (selectedItemForResize === item.id) {
-            zIndex = 40
-          } else {
-            // Apply custom layer ordering
-            const itemType = item.type?.toLowerCase() || ""
-            const isOuterwear = ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(itemType)
-            const isTop = ["t-shirt", "dress", "shirt", "blouse"].includes(itemType)
-
-            if (outerwearOnTop && isOuterwear) {
-              zIndex = 30 // Outerwear on top
-            } else if (!outerwearOnTop && isTop) {
-              zIndex = 30 // Top on top
-            } else {
-              zIndex = index
-            }
-          }
-
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0 }}
-              animate={{
-                opacity: 1,
-                left: `calc(${item.x ?? DEFAULTS.x}% - ${(item.width ?? DEFAULTS.width) / 2}rem)`,
-                top: `calc(${item.y ?? DEFAULTS.y}% - ${(item.width ?? DEFAULTS.width) * (item.aspectRatio || 1.5) / 2}rem)`,
-              }}
-              exit={{ opacity: 0 }}
-              transition={{
-                opacity: { duration: 0.3 },
-                left: { duration: 0 },
-                top: { duration: 0 },
-              }}
-              className={`absolute cursor-move hover:shadow-lg transition-shadow ${
-                draggedItemId === item.id ? "z-50 shadow-2xl" : ""
-              } ${selectedItemForResize === item.id ? "ring-2 ring-foreground" : ""}`}
-              style={{
-                width: `${item.width ?? DEFAULTS.width}rem`,
-                transform: item.scale && item.scale !== 1 ? `scale(${item.scale})` : undefined,
-                zIndex: zIndex,
-              }}
-              onMouseDown={(e) => handleMouseDown(e, item.id)}
-              onTouchStart={(e) => handleTouchStart(e, item.id)}
-              onClick={(e) => {
-                e.stopPropagation()
-                setSelectedItemForResize(item.id)
-              }}
-            >
-              <Image
-                src={item.url || "/placeholder.svg"}
-                alt={item.name || ""}
-                width={100}
-                height={120}
-                className="w-full h-auto object-contain rounded-lg"
-                draggable={false}
-                unoptimized
-                onLoad={(e) => {
-                  const img = e.currentTarget
-                  const aspectRatio = img.naturalHeight / img.naturalWidth
-                  updateItemAspectRatio(item.id, aspectRatio)
-                }}
-              />
-            </motion.div>
-          )
-        })}
-      </>
+      <OutfitCanvas
+        items={allCurrentItems}
+        outerwearOnTop={outerwearOnTop}
+        draggedItemId={draggedItemId}
+        selectedItemForResize={selectedItemForResize}
+        enableDragDrop={true}
+        enableResize={true}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onClick={(e, itemId) => {
+          e.stopPropagation()
+          setSelectedItemForResize(itemId)
+        }}
+        onImageLoad={updateItemAspectRatio}
+      />
     )
   }
 
@@ -931,7 +852,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
                                 // Calculate boundaries with NEW width
                                 const itemWidthPx = newWidth * 16
-                                const aspectRatio = item.aspectRatio || 1.5
+                                const aspectRatio = item.aspectRatio || 1.25
                                 const itemHeightPx = itemWidthPx * aspectRatio
 
                                 const itemWidthPercent = (itemWidthPx / rect.width) * 100
