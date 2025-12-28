@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Search } from "lucide-react"
+import { X, Search, ChevronLeft, ChevronRight, Dice5 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
 import Image from "next/image"
@@ -36,6 +36,7 @@ interface CategorizedClothing {
   tops: ClothingItem[]
   bottoms: ClothingItem[]
   outerwear: ClothingItem[]
+  shoes: ClothingItem[]
   allItems: ClothingItem[]
 }
 
@@ -60,7 +61,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null)
   const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null)
   const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null)
-  const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], allItems: [] })
+  const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], shoes: [], allItems: [] })
   const [, setLoadingClothing] = useState(true)
   const [showTopSelectModal, setShowTopSelectModal] = useState(false)
   const [showBottomSelectModal, setShowBottomSelectModal] = useState(false)
@@ -74,6 +75,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [selectedItemForResize, setSelectedItemForResize] = useState<string | null>(null)
   const [editedCategorizedItems, setEditedCategorizedItems] = useState<CategorizedOutfitItems | null>(null)
   const [outerwearOnTop, setOuterwearOnTop] = useState(false) // Layer order toggle
+
+  // Display mode state
+  const [mode, setMode] = useState<"canvas" | "display">("canvas")
+  const [displayIndices, setDisplayIndices] = useState({ top: 0, bottom: 0, outerwear: 0, shoe: 0 })
+  const [displayToggles, setDisplayToggles] = useState({ shoes: true, outerwear: true })
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false)
@@ -119,13 +125,17 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           const type = item.type?.toLowerCase() || ""
           return ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(type)
         }),
+        shoes: allItems.filter((item: ClothingItem) => {
+          const type = item.type?.toLowerCase() || ""
+          return ["shoes", "sneakers", "boots", "sandals", "heels", "loafers"].includes(type)
+        }),
         allItems: allItems,
       }
 
       setClothingItems(categorizedItems)
     } catch (error) {
       console.error("Error fetching clothing items:", error)
-      setClothingItems({ tops: [], bottoms: [], outerwear: [], allItems: [] })
+      setClothingItems({ tops: [], bottoms: [], outerwear: [], shoes: [], allItems: [] })
     } finally {
       setLoadingClothing(false)
     }
@@ -578,22 +588,99 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     })
   }
 
-  const shuffleOutfit = () => {
-    if (clothingItems.tops.length > 0) {
-      const randomTop = clothingItems.tops[Math.floor(Math.random() * clothingItems.tops.length)]
-      setSelectedTop(randomTop)
-      updateCategorizedItems("top", randomTop)
+
+  // Display mode navigation functions
+  const navigateCategory = (category: "top" | "bottom" | "outerwear" | "shoe", direction: "prev" | "next") => {
+    const items = category === "top" ? clothingItems.tops :
+                  category === "bottom" ? clothingItems.bottoms :
+                  category === "outerwear" ? clothingItems.outerwear :
+                  clothingItems.shoes
+
+    if (items.length === 0) return
+
+    setDisplayIndices(prev => {
+      const currentIndex = prev[category]
+      const newIndex = direction === "next"
+        ? (currentIndex + 1) % items.length
+        : (currentIndex - 1 + items.length) % items.length
+
+      return { ...prev, [category]: newIndex }
+    })
+  }
+
+  // Randomize all categories
+  const randomizeOutfit = () => {
+    setDisplayIndices({
+      top: clothingItems.tops.length > 0 ? Math.floor(Math.random() * clothingItems.tops.length) : 0,
+      bottom: clothingItems.bottoms.length > 0 ? Math.floor(Math.random() * clothingItems.bottoms.length) : 0,
+      outerwear: clothingItems.outerwear.length > 0 ? Math.floor(Math.random() * clothingItems.outerwear.length) : 0,
+      shoe: clothingItems.shoes.length > 0 ? Math.floor(Math.random() * clothingItems.shoes.length) : 0,
+    })
+  }
+
+  // Get current display layout configuration
+  const getDisplayLayout = () => {
+    const hasOuterwear = displayToggles.outerwear && clothingItems.outerwear.length > 0
+    const hasTop = clothingItems.tops.length > 0
+    const hasBottom = clothingItems.bottoms.length > 0
+
+    if (hasOuterwear && hasTop && hasBottom) {
+      // All 3 items: outerwear, top, bottom
+      return {
+        outerwear: { y: 18, width: 9 },
+        top: { y: 48, width: 9 },
+        bottom: { y: 76, width: 9 },
+      }
+    } else if (!hasOuterwear && hasTop && hasBottom) {
+      // Just top and bottom (no outerwear)
+      return {
+        top: { y: 32, width: 11 },
+        bottom: { y: 68, width: 11 },
+      }
+    } else if (hasOuterwear && !hasTop && hasBottom) {
+      // Outerwear and bottom (no top)
+      return {
+        outerwear: { y: 32, width: 11 },
+        bottom: { y: 68, width: 11 },
+      }
+    } else if (hasOuterwear && hasTop && !hasBottom) {
+      // Outerwear and top (no bottom)
+      return {
+        outerwear: { y: 32, width: 11 },
+        top: { y: 68, width: 11 },
+      }
+    } else if (hasTop) {
+      // Only top
+      return { top: { y: 50, width: 13 } }
+    } else if (hasBottom) {
+      // Only bottom
+      return { bottom: { y: 50, width: 13 } }
+    } else if (hasOuterwear) {
+      // Only outerwear
+      return { outerwear: { y: 50, width: 13 } }
     }
-    if (clothingItems.bottoms.length > 0) {
-      const randomBottom = clothingItems.bottoms[Math.floor(Math.random() * clothingItems.bottoms.length)]
-      setSelectedBottom(randomBottom)
-      updateCategorizedItems("bottom", randomBottom)
+    return {}
+  }
+
+  // Get current display items
+  const getCurrentDisplayItems = () => {
+    const items: CategorizedOutfitItems = { others: [] }
+    const layout = getDisplayLayout()
+
+    if (layout.outerwear && clothingItems.outerwear.length > 0) {
+      const item = clothingItems.outerwear[displayIndices.outerwear]
+      items.outerwear = { ...item, x: 50, y: layout.outerwear.y, width: layout.outerwear.width }
     }
-    if (clothingItems.outerwear.length > 0 && Math.random() > 0.5) {
-      const randomOuterwear = clothingItems.outerwear[Math.floor(Math.random() * clothingItems.outerwear.length)]
-      setSelectedOuterwear(randomOuterwear)
-      updateCategorizedItems("outerwear", randomOuterwear)
+    if (layout.top && clothingItems.tops.length > 0) {
+      const item = clothingItems.tops[displayIndices.top]
+      items.top = { ...item, x: 50, y: layout.top.y, width: layout.top.width }
     }
+    if (layout.bottom && clothingItems.bottoms.length > 0) {
+      const item = clothingItems.bottoms[displayIndices.bottom]
+      items.bottom = { ...item, x: 50, y: layout.bottom.y, width: layout.bottom.width }
+    }
+
+    return items
   }
 
 
@@ -703,8 +790,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     )
   }
 
-  const hasMinimumItems = selectedTop || selectedBottom || selectedOuterwear
-
   // Get the selected item for resize controls
   const getSelectedResizeItem = () => {
     if (!editedCategorizedItems || !selectedItemForResize) return null
@@ -729,7 +814,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={handleCloseModal}
         >
           <motion.div
@@ -740,69 +825,85 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
           >
             {/* Main Content - Canvas Mode Only */}
             <div className="flex-1 flex flex-row overflow-hidden justify-center items-start gap-6 p-6 relative" style={{ paddingTop: '66px' }}>
-                  {/* Left Sidebar - Category Buttons */}
-                  <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => {
-                        setSelectedItemForResize(null)
-                        setSelectingCategory("outerwear")
-                        setShowSelectModal(true)
-                      }}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
-                    >
-                      Outer
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedItemForResize(null)
-                        setSelectingCategory("top")
-                        setShowSelectModal(true)
-                      }}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
-                    >
-                      Top
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedItemForResize(null)
-                        setSelectingCategory("bottom")
-                        setShowSelectModal(true)
-                      }}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
-                    >
-                      Bottom
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedItemForResize(null)
-                        setSelectingCategory("shoe")
-                        setShowSelectModal(true)
-                      }}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
-                    >
-                      Shoes
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedItemForResize(null)
-                        setSelectingCategory("accessory")
-                        setShowSelectModal(true)
-                      }}
-                      className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
-                    >
-                      Access
-                    </button>
-                  </div>
+                  {/* Left Sidebar - Category Buttons (Canvas Mode Only) */}
+                  {mode === "canvas" && (
+                    <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => {
+                          setSelectedItemForResize(null)
+                          setSelectingCategory("outerwear")
+                          setShowSelectModal(true)
+                        }}
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                      >
+                        Outer
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedItemForResize(null)
+                          setSelectingCategory("top")
+                          setShowSelectModal(true)
+                        }}
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                      >
+                        Top
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedItemForResize(null)
+                          setSelectingCategory("bottom")
+                          setShowSelectModal(true)
+                        }}
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                      >
+                        Bottom
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedItemForResize(null)
+                          setSelectingCategory("shoe")
+                          setShowSelectModal(true)
+                        }}
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                      >
+                        Shoes
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedItemForResize(null)
+                          setSelectingCategory("accessory")
+                          setShowSelectModal(true)
+                        }}
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                      >
+                        Access
+                      </button>
+                    </div>
+                  )}
 
                   {/* Center - Canvas Area */}
                   <div className="flex flex-col relative" style={{ zIndex: 2 }}>
                     {/* Mode Toggle - Above Canvas, Aligned Right */}
                     <div className="flex justify-end mb-2">
                       <div className="flex gap-1 bg-muted rounded-lg p-1 relative" onClick={(e) => e.stopPropagation()}>
-                        <button className="px-4 py-1.5 rounded-md text-xs font-medium bg-foreground text-background">
+                        <button
+                          onClick={() => setMode("canvas")}
+                          className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            mode === "canvas"
+                              ? "bg-foreground text-background"
+                              : "text-muted-foreground"
+                          }`}
+                        >
                           Canvas
                         </button>
-                        <button className="px-4 py-1.5 rounded-md text-xs font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                        <button
+                          onClick={() => setMode("display")}
+                          className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            mode === "display"
+                              ? "bg-foreground text-background"
+                              : "text-muted-foreground"
+                          }`}
+                        >
                           Display
                         </button>
                       </div>
@@ -811,16 +912,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                     {/* Canvas Container with Save Button */}
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
 
-                      {/* Canvas - Direct container with border as the visual boundary */}
-                      <div
-                        data-canvas
-                        className="relative h-[32rem] w-[280px] bg-gradient-to-br from-muted via-background to-card rounded-xl ring-1 ring-border overflow-hidden shadow-lg"
-                        style={{ boxSizing: 'border-box' }}
-                        onClick={() => {
-                          setSelectedItemForResize(null)
-                        }}
-                      >
-                        {renderOutfitDisplay()}
+                      {mode === "canvas" ? (
+                        <>
+                          {/* Canvas - Direct container with border as the visual boundary */}
+                          <div
+                            data-canvas
+                            className="relative h-[32rem] w-[280px] bg-gradient-to-br from-muted via-background to-card rounded-xl ring-1 ring-border overflow-hidden shadow-lg"
+                            style={{ boxSizing: 'border-box' }}
+                            onClick={() => {
+                              setSelectedItemForResize(null)
+                            }}
+                          >
+                            {renderOutfitDisplay()}
 
                         {/* Resize Slider (bottom left) */}
                         {selectedItemForResize && (
@@ -907,7 +1010,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                         )}
                       </div>
 
-                      {/* Save Button */}
+                      {/* Save Button for Canvas Mode */}
                       <Button
                         onClick={createOutfit}
                         disabled={!editedCategorizedItems || (!editedCategorizedItems.top && !editedCategorizedItems.bottom && !editedCategorizedItems.outerwear && !editedCategorizedItems.shoe && editedCategorizedItems.others.length === 0) || isCreating}
@@ -915,15 +1018,176 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       >
                         {isCreating ? "Saving..." : "Save"}
                       </Button>
+                        </>
+                      ) : (
+                        <>
+                          {/* Display Mode */}
+                          <div className="relative h-[32rem] w-full flex items-center justify-center">
+                            {(() => {
+                              const layout = getDisplayLayout()
+                              return (
+                                <>
+                                  {/* Left Arrow Column */}
+                                  <div className="absolute left-0 top-0 w-[40px] h-full flex flex-col justify-center">
+                                    {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (
+                                      <button
+                                        onClick={() => navigateCategory("outerwear", "prev")}
+                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                        style={{ top: `${layout.outerwear.y}%`, transform: 'translateY(-50%)' }}
+                                      >
+                                        <ChevronLeft className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                    {layout.top && clothingItems.tops.length > 0 && (
+                                      <button
+                                        onClick={() => navigateCategory("top", "prev")}
+                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                        style={{ top: `${layout.top.y}%`, transform: 'translateY(-50%)' }}
+                                      >
+                                        <ChevronLeft className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                    {layout.bottom && clothingItems.bottoms.length > 0 && (
+                                      <button
+                                        onClick={() => navigateCategory("bottom", "prev")}
+                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                        style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
+                                      >
+                                        <ChevronLeft className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Center Canvas */}
+                                  <div className="relative w-[280px] h-[32rem]">
+                                    <OutfitCanvas
+                                      items={Object.values(getCurrentDisplayItems()).filter(Boolean).flat() as ClothingItem[]}
+                                      outerwearOnTop={true}
+                                      draggedItemId={null}
+                                      selectedItemForResize={null}
+                                      enableDragDrop={false}
+                                      enableResize={false}
+                                      onMouseDown={() => {}}
+                                      onTouchStart={() => {}}
+                                      onClick={() => {}}
+                                      onImageLoad={() => {}}
+                                    />
+                                  </div>
+
+                                  {/* Right Arrow Column */}
+                                  <div className="absolute right-0 top-0 w-[40px] h-full flex flex-col justify-center">
+                                    {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (
+                                      <button
+                                        onClick={() => navigateCategory("outerwear", "next")}
+                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                        style={{ top: `${layout.outerwear.y}%`, transform: 'translateY(-50%)' }}
+                                      >
+                                        <ChevronRight className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                    {layout.top && clothingItems.tops.length > 0 && (
+                                      <button
+                                        onClick={() => navigateCategory("top", "next")}
+                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                        style={{ top: `${layout.top.y}%`, transform: 'translateY(-50%)' }}
+                                      >
+                                        <ChevronRight className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                    {layout.bottom && clothingItems.bottoms.length > 0 && (
+                                      <button
+                                        onClick={() => navigateCategory("bottom", "next")}
+                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                        style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
+                                      >
+                                        <ChevronRight className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </>
+                              )
+                            })()}
+                          </div>
+
+                          {/* Display Mode Controls */}
+                          <div className="w-[280px] mt-3 flex items-center gap-2">
+                            <button
+                              onClick={() => setDisplayToggles(prev => ({ ...prev, shoes: !prev.shoes }))}
+                              className={`text-xs font-medium rounded-md whitespace-nowrap flex items-center justify-center shrink-0 ${
+                                displayToggles.shoes
+                                  ? "bg-foreground text-background"
+                                  : "bg-muted text-foreground hover:bg-muted/80"
+                              }`}
+                              style={{
+                                width: '108px',
+                                height: '36px',
+                                minWidth: '108px',
+                                maxWidth: '108px',
+                                boxSizing: 'border-box',
+                                padding: '0'
+                              }}
+                            >
+                              Add Shoe
+                            </button>
+                            <button
+                              onClick={() => setDisplayToggles(prev => ({ ...prev, outerwear: !prev.outerwear }))}
+                              className={`text-xs font-medium rounded-md whitespace-nowrap flex items-center justify-center shrink-0 ${
+                                displayToggles.outerwear
+                                  ? "bg-foreground text-background"
+                                  : "bg-muted text-foreground hover:bg-muted/80"
+                              }`}
+                              style={{
+                                width: '108px',
+                                height: '36px',
+                                minWidth: '108px',
+                                maxWidth: '108px',
+                                boxSizing: 'border-box',
+                                padding: '0'
+                              }}
+                            >
+                              Add Outerwear
+                            </button>
+                            <button
+                              onClick={randomizeOutfit}
+                              className="rounded-md bg-muted hover:bg-muted/80 text-foreground flex items-center justify-center shrink-0"
+                              style={{
+                                width: '40px',
+                                height: '36px',
+                                minWidth: '40px',
+                                maxWidth: '40px',
+                                boxSizing: 'border-box',
+                                padding: '0'
+                              }}
+                              title="Randomize outfit"
+                            >
+                              <Dice5 className="w-5 h-5" />
+                            </button>
+                          </div>
+
+                          {/* Save Button for Display Mode */}
+                          <Button
+                            onClick={() => {
+                              const currentItems = getCurrentDisplayItems()
+                              setEditedCategorizedItems(currentItems)
+                              createOutfit()
+                            }}
+                            disabled={isCreating || (clothingItems.tops.length === 0 && clothingItems.bottoms.length === 0)}
+                            className="w-[280px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-2"
+                          >
+                            {isCreating ? "Saving..." : "Save"}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Right Sidebar - Added Items */}
-                  <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
-                    {/* Added items thumbnails */}
-                    <div className="flex flex-col gap-2 min-w-[56px]">
-                      <AnimatePresence mode="popLayout">
-                        {editedCategorizedItems?.top && (
+                  {/* Right Sidebar - Added Items (Canvas Mode Only) */}
+                  {mode === "canvas" && (
+                    <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
+                      {/* Added items thumbnails */}
+                      <div className="flex flex-col gap-2 min-w-[56px]">
+                        <AnimatePresence mode="popLayout">
+                          {editedCategorizedItems?.top && (
                           <motion.div
                             key="top"
                             initial={{ opacity: 0, x: -20 }}
@@ -1058,9 +1322,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                             </button>
                           </motion.div>
                         ))}
-                      </AnimatePresence>
+                        </AnimatePresence>
+                      </div>
                     </div>
-                  </div>
+                  )}
             </div>
           </motion.div>
         </motion.div>
