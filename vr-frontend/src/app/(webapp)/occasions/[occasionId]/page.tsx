@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, use } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Check, X, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import { ArrowLeft, Plus } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 import OutfitCard from "../../../components/OutfitCard"
-import LogOutButton from "../../../components/LogoutButton"
-import { ThemeToggle } from "../../../components/ThemeToggle"
-import { ThemedLogo as Logo } from "../../../components/Logo"
+import { DashboardSidebar } from "../../../components/DashboardSidebar"
+import { useTheme } from "../../../contexts/ThemeContext"
+import { GridSelectIcon } from "../../../components/icons/GridSelectIcon"
+import AddOutfitsToOccasionModal from "../../../components/occasions/AddOutfitsToOccasionModal"
 
 interface ClothingItem {
   id: string
@@ -52,6 +52,8 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
   const resolvedParams = use(params)
   const occasionId = resolvedParams.occasionId
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { toggleTheme } = useTheme()
 
   const [occasion, setOccasion] = useState<Occasion | null>(null)
   const [outfits, setOutfits] = useState<Outfit[]>([])
@@ -59,6 +61,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
   const [isRemoving, setIsRemoving] = useState(false)
+  const [isAddOutfitsModalOpen, setIsAddOutfitsModalOpen] = useState(false)
 
   const fetchOccasionOutfits = useCallback(async () => {
     setLoading(true)
@@ -86,6 +89,16 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
       fetchOccasionOutfits()
     }
   }, [occasionId, fetchOccasionOutfits])
+
+  // Check for openAddModal query parameter
+  useEffect(() => {
+    const openModal = searchParams.get("openAddModal")
+    if (openModal === "true" && occasion) {
+      setIsAddOutfitsModalOpen(true)
+      // Clean up the URL by removing the query parameter
+      router.replace(`/occasions/${occasionId}`)
+    }
+  }, [searchParams, occasion, occasionId, router])
 
   const handleOutfitDeleted = (outfitId: string) => {
     setOutfits((prev) => prev.filter((outfit) => outfit.id !== outfitId))
@@ -150,35 +163,10 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Navbar */}
-        <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
-            <div className="flex items-center">
-              <Logo />
-            </div>
-            <div className="flex items-center gap-4">
-              <Button onClick={() => router.push("/settings")} variant="outline" className="gap-2">
-                Settings
-              </Button>
-              <Button onClick={() => router.push("/dashboard")} variant="outline" className="gap-2">
-                Closet
-              </Button>
-              <ThemeToggle />
-              <LogOutButton />
-            </div>
-          </div>
-        </header>
-
-        <div className="px-4 lg:px-6 xl:px-8 py-6">
-          <div className="space-y-6">
-            <div className="h-6 bg-muted rounded animate-pulse w-48" />
-            <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
-              {Array.from({ length: 10 }).map((_, index) => (
-                <div key={index} className="aspect-[3/4] bg-muted rounded-xl animate-pulse" />
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading occasion...</p>
         </div>
       </div>
     )
@@ -186,151 +174,106 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
 
   if (!occasion) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Navbar */}
-        <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
-            <div className="flex items-center">
-              <Logo />
-            </div>
-            <div className="flex items-center gap-4">
-              <Button onClick={() => router.push("/settings")} variant="outline" className="gap-2">
-                Settings
-              </Button>
-              <Button onClick={() => router.push("/dashboard")} variant="outline" className="gap-2">
-                Closet
-              </Button>
-              <ThemeToggle />
-              <LogOutButton />
-            </div>
-          </div>
-        </header>
-
-        <div className="px-4 lg:px-6 xl:px-8 py-6">
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">❌</div>
-            <h3 className="text-xl font-semibold mb-2">Occasion Not Found</h3>
-            <p className="text-muted-foreground mb-4">
-              The occasion you&apos;re looking for doesn&apos;t exist or has been deleted.
-            </p>
-            <Button onClick={handleBackToOccasions} variant="outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Occasions
-            </Button>
-          </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Occasion not found</p>
+          <button
+            onClick={handleBackToOccasions}
+            className="mt-4 text-blue-600 hover:underline"
+          >
+            Back to Occasions
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navbar */}
-      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
-          <div className="flex items-center">
-            <Logo />
-          </div>
-          <div className="flex items-center gap-4">
-            <Button onClick={() => router.push("/settings")} variant="outline" className="gap-2">
-              Settings
-            </Button>
-            <Button onClick={() => router.push("/dashboard")} variant="outline" className="gap-2">
-              Closet
-            </Button>
-            <ThemeToggle />
-            <LogOutButton />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+      {/* Sidebar */}
+      <DashboardSidebar
+        onThemeToggle={toggleTheme}
+        onSettingsClick={() => router.push("/settings")}
+      />
 
-      <div className="px-4 lg:px-6 xl:px-8 py-6">
-        {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-6"
-        >
-          <Button
-            variant="outline"
-            onClick={handleBackToOccasions}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Occasions
-          </Button>
-        </motion.div>
+      {/* Main Content with left margin for sidebar on desktop */}
+      <main className="md:ml-[60px] md:w-[calc(100%-60px)] w-full flex flex-col flex-1 min-h-0">
+        {/* Content Area */}
+        <div className="flex-1 px-6 py-6 overflow-auto">
+          {/* Header with Action Buttons */}
+          <div className="flex items-center justify-between mb-6">
+            {/* Back Arrow & Title - Left */}
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBackToOccasions}
+                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </motion.button>
 
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {occasion.name}
-            </h1>
-            <div className="text-sm text-muted-foreground">
-              {outfits.length} outfit{outfits.length !== 1 ? "s" : ""}
-            </div>
-          </div>
-
-          {/* Multi-select Controls */}
-          {outfits.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {isMultiSelecting && selectedOutfitIds.length > 0 && (
-                  <span className="text-sm font-medium">{selectedOutfitIds.length} selected</span>
-                )}
-              </div>
-
-              <div className="flex gap-2 items-center">
-                <Button
-                  variant={isMultiSelecting ? "destructive" : "outline"}
-                  onClick={toggleMultiSelect}
-                >
-                  {isMultiSelecting ? (
-                    <>
-                      <X className="h-4 w-4 mr-1" />
-                      Cancel
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4 mr-1" />
-                      Select
-                    </>
-                  )}
-                </Button>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {occasion.name}
+                </h1>
               </div>
             </div>
-          )}
+
+            {/* Action Buttons - Right */}
+            <div className="flex items-center gap-3">
+              {/* Grid Select */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`p-2 rounded-lg transition-colors ${
+                  isMultiSelecting
+                    ? "bg-black dark:bg-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={toggleMultiSelect}
+              >
+                <GridSelectIcon
+                  size={20}
+                  className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                />
+              </motion.button>
+
+              {/* Add */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                onClick={() => setIsAddOutfitsModalOpen(true)}
+              >
+                <Plus size={20} />
+              </motion.button>
+            </div>
+          </div>
 
           {/* Remove from Occasion Toolbar */}
           <AnimatePresence>
             {isMultiSelecting && selectedOutfitIds.length > 0 && (
               <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
               >
-                <div className="bg-card rounded-full shadow-lg border border-border dark:border-border/60 px-6 py-3 flex items-center gap-4">
-                  <span className="text-sm font-medium">
+                <div className="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center gap-4">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? 's' : ''} selected
                   </span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleRemoveFromOccasion}
                     disabled={isRemoving}
-                    className="gap-2"
+                    className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors border border-red-200 dark:border-red-800 disabled:opacity-50"
                   >
-                    {isRemoving ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <X className="h-4 w-4" />
-                    )}
-                    Remove from Folder
-                  </Button>
+                    {isRemoving ? "..." : "Unsave from Folder"}
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -339,24 +282,14 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
           {/* Outfits Grid */}
           {outfits.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">📂</div>
-              <h3 className="text-xl font-semibold mb-2">Empty Folder</h3>
-              <p className="text-muted-foreground mb-4">
-                This occasion folder doesn&apos;t contain any outfits yet.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Go to the Outfits tab to add outfits to this folder.
+              <p className="text-gray-500 dark:text-gray-400">
+                No outfits in this occasion yet. Click the + button to add outfits!
               </p>
             </div>
           ) : (
-            <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
-              {outfits.map((outfit, index) => (
-                <motion.div
-                  key={outfit.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                >
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, 280px)', justifyContent: 'start' }}>
+              {outfits.map((outfit) => (
+                <div key={outfit.id} className="w-[280px]">
                   <OutfitCard
                     outfit={outfit}
                     onDelete={handleOutfitDeleted}
@@ -364,13 +297,26 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
                     isSelected={selectedOutfitIds.includes(outfit.id)}
                     isMultiSelecting={isMultiSelecting}
                     onToggleSelect={toggleOutfitSelection}
+                    hideFooter={true}
                   />
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
         </div>
-      </div>
+      </main>
+
+      {/* Add Outfits Modal */}
+      <AddOutfitsToOccasionModal
+        isOpen={isAddOutfitsModalOpen}
+        onClose={() => {
+          setIsAddOutfitsModalOpen(false)
+          fetchOccasionOutfits()
+        }}
+        occasionName={occasion.name}
+        occasionId={occasionId}
+        existingOutfitIds={outfits.map(o => o.id)}
+      />
     </div>
   )
 }

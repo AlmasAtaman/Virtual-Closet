@@ -149,6 +149,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }, [show, fetchClothingItems])
 
+  // Randomize initial display indices when clothing items are loaded
+  useEffect(() => {
+    if (clothingItems.allItems.length > 0) {
+      setDisplayIndices({
+        top: clothingItems.tops.length > 0 ? Math.floor(Math.random() * clothingItems.tops.length) : 0,
+        bottom: clothingItems.bottoms.length > 0 ? Math.floor(Math.random() * clothingItems.bottoms.length) : 0,
+        outerwear: clothingItems.outerwear.length > 0 ? Math.floor(Math.random() * clothingItems.outerwear.length) : 0,
+        shoe: clothingItems.shoes.length > 0 ? Math.floor(Math.random() * clothingItems.shoes.length) : 0,
+      })
+    }
+  }, [clothingItems.allItems.length, clothingItems.tops.length, clothingItems.bottoms.length, clothingItems.outerwear.length, clothingItems.shoes.length])
+
   // Removed the useEffect that was overwriting positioned items
   // The updateCategorizedItems function already handles positioning correctly
 
@@ -1069,13 +1081,13 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               const layoutKey = `${layout.outerwear ? 'o' : ''}${layout.top ? 't' : ''}${layout.bottom ? 'b' : ''}`
 
                               return (
-                                <AnimatePresence>
+                                <AnimatePresence mode="wait">
                                   <motion.div
                                     key={layoutKey}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.4, ease: "easeInOut" }}
                                     className="absolute inset-0 flex items-center justify-center"
                                   >
                                     {/* Left Arrow Column */}
@@ -1126,6 +1138,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.prev2 && (
                                               <motion.div
                                                 key={roulette.prev2.id}
+                                                initial={{
+                                                  left: '-10%',
+                                                  opacity: 0.1
+                                                }}
                                                 animate={{
                                                   left: '-10%',
                                                   opacity: 0.1
@@ -1153,6 +1169,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.prev && (
                                               <motion.div
                                                 key={roulette.prev.id}
+                                                initial={{
+                                                  left: '10%',
+                                                  opacity: 0.5
+                                                }}
                                                 animate={{
                                                   left: '10%',
                                                   opacity: 0.5
@@ -1180,6 +1200,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.current && (
                                               <motion.div
                                                 key={roulette.current.id}
+                                                initial={{
+                                                  left: '50%',
+                                                  opacity: 1
+                                                }}
                                                 animate={{
                                                   left: '50%',
                                                   opacity: 1
@@ -1208,6 +1232,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.next && (
                                               <motion.div
                                                 key={roulette.next.id}
+                                                initial={{
+                                                  left: '90%',
+                                                  opacity: 0.5
+                                                }}
                                                 animate={{
                                                   left: '90%',
                                                   opacity: 0.5
@@ -1235,6 +1263,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.next2 && (
                                               <motion.div
                                                 key={roulette.next2.id}
+                                                initial={{
+                                                  left: '110%',
+                                                  opacity: 0.1
+                                                }}
                                                 animate={{
                                                   left: '110%',
                                                   opacity: 0.1
@@ -1276,6 +1308,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.prev2 && (
                                               <motion.div
                                                 key={roulette.prev2.id}
+                                                initial={{
+                                                  left: '-10%',
+                                                  opacity: 0.1
+                                                }}
                                                 animate={{
                                                   left: '-10%',
                                                   opacity: 0.1
@@ -1303,6 +1339,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.prev && (
                                               <motion.div
                                                 key={roulette.prev.id}
+                                                initial={{
+                                                  left: '10%',
+                                                  opacity: 0.5
+                                                }}
                                                 animate={{
                                                   left: '10%',
                                                   opacity: 0.5
@@ -1330,6 +1370,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.current && (
                                               <motion.div
                                                 key={roulette.current.id}
+                                                initial={{
+                                                  left: '50%',
+                                                  opacity: 1
+                                                }}
                                                 animate={{
                                                   left: '50%',
                                                   opacity: 1
@@ -1358,6 +1402,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.next && (
                                               <motion.div
                                                 key={roulette.next.id}
+                                                initial={{
+                                                  left: '90%',
+                                                  opacity: 0.5
+                                                }}
                                                 animate={{
                                                   left: '90%',
                                                   opacity: 0.5
@@ -1385,6 +1433,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.next2 && (
                                               <motion.div
                                                 key={roulette.next2.id}
+                                                initial={{
+                                                  left: '110%',
+                                                  opacity: 0.1
+                                                }}
                                                 animate={{
                                                   left: '110%',
                                                   opacity: 0.1
@@ -1426,6 +1478,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.prev2 && (
                                               <motion.div
                                                 key={roulette.prev2.id}
+                                                initial={{
+                                                  left: '-10%',
+                                                  opacity: 0.1
+                                                }}
                                                 animate={{
                                                   left: '-10%',
                                                   opacity: 0.1
@@ -1453,6 +1509,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.prev && (
                                               <motion.div
                                                 key={roulette.prev.id}
+                                                initial={{
+                                                  left: '10%',
+                                                  opacity: 0.5
+                                                }}
                                                 animate={{
                                                   left: '10%',
                                                   opacity: 0.5
@@ -1480,6 +1540,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.current && (
                                               <motion.div
                                                 key={roulette.current.id}
+                                                initial={{
+                                                  left: '50%',
+                                                  opacity: 1
+                                                }}
                                                 animate={{
                                                   left: '50%',
                                                   opacity: 1
@@ -1508,6 +1572,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.next && (
                                               <motion.div
                                                 key={roulette.next.id}
+                                                initial={{
+                                                  left: '90%',
+                                                  opacity: 0.5
+                                                }}
                                                 animate={{
                                                   left: '90%',
                                                   opacity: 0.5
@@ -1535,6 +1603,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {roulette.next2 && (
                                               <motion.div
                                                 key={roulette.next2.id}
+                                                initial={{
+                                                  left: '110%',
+                                                  opacity: 0.1
+                                                }}
                                                 animate={{
                                                   left: '110%',
                                                   opacity: 0.1
@@ -1599,7 +1671,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           </div>
 
                           {/* Display Mode Controls */}
-                          <div className="w-[420px] mt-3 flex items-center justify-between gap-2">
+                          <div className="flex justify-center mt-3">
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => setDisplayToggles(prev => ({ ...prev, shoes: !prev.shoes }))}
@@ -1637,41 +1709,43 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               >
                                 Add Outerwear
                               </button>
+                              <button
+                                onClick={randomizeOutfit}
+                                className="rounded-md bg-muted hover:bg-muted/80 text-foreground flex items-center justify-center shrink-0"
+                                style={{
+                                  width: '40px',
+                                  height: '36px',
+                                  minWidth: '40px',
+                                  maxWidth: '40px',
+                                  boxSizing: 'border-box',
+                                  padding: '0'
+                                }}
+                                title="Randomize outfit"
+                              >
+                                {currentDiceFace === 1 && <Dice1 className="w-5 h-5" />}
+                                {currentDiceFace === 2 && <Dice2 className="w-5 h-5" />}
+                                {currentDiceFace === 3 && <Dice3 className="w-5 h-5" />}
+                                {currentDiceFace === 4 && <Dice4 className="w-5 h-5" />}
+                                {currentDiceFace === 5 && <Dice5 className="w-5 h-5" />}
+                                {currentDiceFace === 6 && <Dice6 className="w-5 h-5" />}
+                              </button>
                             </div>
-                            <button
-                              onClick={randomizeOutfit}
-                              className="rounded-md bg-muted hover:bg-muted/80 text-foreground flex items-center justify-center shrink-0"
-                              style={{
-                                width: '40px',
-                                height: '36px',
-                                minWidth: '40px',
-                                maxWidth: '40px',
-                                boxSizing: 'border-box',
-                                padding: '0'
-                              }}
-                              title="Randomize outfit"
-                            >
-                              {currentDiceFace === 1 && <Dice1 className="w-5 h-5" />}
-                              {currentDiceFace === 2 && <Dice2 className="w-5 h-5" />}
-                              {currentDiceFace === 3 && <Dice3 className="w-5 h-5" />}
-                              {currentDiceFace === 4 && <Dice4 className="w-5 h-5" />}
-                              {currentDiceFace === 5 && <Dice5 className="w-5 h-5" />}
-                              {currentDiceFace === 6 && <Dice6 className="w-5 h-5" />}
-                            </button>
                           </div>
 
                           {/* Save Button for Display Mode */}
-                          <Button
-                            onClick={() => {
-                              const currentItems = getCurrentDisplayItems()
-                              setEditedCategorizedItems(currentItems)
-                              createOutfit()
-                            }}
-                            disabled={isCreating || (clothingItems.tops.length === 0 && clothingItems.bottoms.length === 0)}
-                            className="w-[420px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-2"
-                          >
-                            {isCreating ? "Saving..." : "Save"}
-                          </Button>
+                          <div className="flex justify-center mt-2">
+                            <Button
+                              onClick={() => {
+                                const currentItems = getCurrentDisplayItems()
+                                setEditedCategorizedItems(currentItems)
+                                createOutfit()
+                              }}
+                              disabled={isCreating || (clothingItems.tops.length === 0 && clothingItems.bottoms.length === 0)}
+                              className="w-[420px] bg-foreground text-background hover:bg-foreground/90 font-semibold"
+                            >
+                              {isCreating ? "Saving..." : "Save"}
+                            </Button>
+                          </div>
                         </>
                       )}
                     </div>

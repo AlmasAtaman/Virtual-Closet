@@ -1,20 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Plus, Check, X, Trash2, Loader2, Folder } from "lucide-react"
+import { ArrowLeft, Plus, Check, X, Trash2, Loader2, Folder, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import CreateOutfitModal from "../../components/CreateOutfitModal"
-import CreateOccasionModal from "../../components/CreateOccasionModal"
 import AddToFolderModal from "../../components/AddToFolderModal"
 import OutfitCard from "../../components/OutfitCard"
-import OccasionCard from "../../components/OccasionCard"
-import LogOutButton from "../../components/LogoutButton"
-import { ThemeToggle } from "../../components/ThemeToggle"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ConfirmDialog } from "@/components/ui/dialog"
-import { ThemedLogo as Logo } from "../../components/Logo"
+import { DashboardSidebar } from "../../components/DashboardSidebar"
+import { useTheme } from "../../contexts/ThemeContext"
+import { GridSelectIcon } from "../../components/icons/GridSelectIcon"
+import OccasionsView, { type OccasionsViewRef } from "../../components/occasions/OccasionsView"
 
 interface ClothingItem {
   id: string
@@ -46,33 +44,27 @@ interface Outfit {
   createdAt?: string
 }
 
-interface Occasion {
-  id: string
-  name: string
-  userId: string
-  createdAt?: string
-  outfits: Outfit[]
-  customThumbnail?: string
-}
-
 export default function OutfitsPage() {
   const [outfits, setOutfits] = useState<Outfit[]>([])
-  const [occasions, setOccasions] = useState<Occasion[]>([])
   const [loading, setLoading] = useState(true)
-  const [occasionsLoading, setOccasionsLoading] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showCreateOccasionModal, setShowCreateOccasionModal] = useState(false)
   const [activeTab, setActiveTab] = useState<"outfits" | "occasions">("outfits")
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedOutfitIds, setSelectedOutfitIds] = useState<string[]>([])
-  const [isMultiSelectingOccasions, setIsMultiSelectingOccasions] = useState(false)
-  const [selectedOccasionIds, setSelectedOccasionIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showDeleteOccasionsDialog, setShowDeleteOccasionsDialog] = useState(false)
   const [showAddToFolderModal, setShowAddToFolderModal] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { theme, setTheme } = useTheme()
+  const occasionsViewRef = useRef<OccasionsViewRef>(null)
+
+  const toggleTheme = useCallback(() => {
+    const themeOrder: Array<"light" | "dark" | "chrome"> = ["light", "dark", "chrome"]
+    const currentIndex = themeOrder.indexOf(theme as "light" | "dark" | "chrome")
+    const nextIndex = (currentIndex + 1) % themeOrder.length
+    setTheme(themeOrder[nextIndex])
+  }, [theme, setTheme])
 
   // Check for tab parameter in URL and set active tab
   useEffect(() => {
@@ -87,12 +79,6 @@ export default function OutfitsPage() {
   useEffect(() => {
     fetchOutfits()
   }, [])
-
-  useEffect(() => {
-    if (activeTab === "occasions") {
-      fetchOccasions()
-    }
-  }, [activeTab])
 
   const fetchOutfits = async () => {
     setLoading(true)
@@ -112,24 +98,6 @@ export default function OutfitsPage() {
     }
   }
 
-  const fetchOccasions = async () => {
-    setOccasionsLoading(true)
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions`, {
-        credentials: "include",
-      })
-      if (!response.ok) throw new Error("Failed to fetch occasions")
-
-      const data = await response.json()
-      setOccasions(data.occasions || [])
-    } catch (error) {
-      console.error("Failed to fetch occasions:", error)
-      setOccasions([])
-    } finally {
-      setOccasionsLoading(false)
-    }
-  }
-
   const handleOutfitCreated = () => {
     fetchOutfits()
   }
@@ -140,22 +108,6 @@ export default function OutfitsPage() {
 
   const handleOutfitUpdated = () => {
     fetchOutfits()
-  }
-
-  const handleOccasionCreated = () => {
-    fetchOccasions()
-  }
-
-  const handleOccasionDeleted = (occasionId: string) => {
-    setOccasions((prev) => prev.filter((occasion) => occasion.id !== occasionId))
-  }
-
-  const handleOccasionUpdated = () => {
-    fetchOccasions()
-  }
-
-  const handleOccasionClick = (occasionId: string) => {
-    router.push(`/occasions/${occasionId}`)
   }
 
   const handleBackToDashboard = () => {
@@ -172,19 +124,6 @@ export default function OutfitsPage() {
   const toggleOutfitSelection = (outfitId: string) => {
     setSelectedOutfitIds((prev) =>
       prev.includes(outfitId) ? prev.filter((id) => id !== outfitId) : [...prev, outfitId],
-    )
-  }
-
-  const toggleMultiSelectOccasions = () => {
-    setIsMultiSelectingOccasions((prev) => !prev)
-    if (isMultiSelectingOccasions) {
-      setSelectedOccasionIds([])
-    }
-  }
-
-  const toggleOccasionSelection = (occasionId: string) => {
-    setSelectedOccasionIds((prev) =>
-      prev.includes(occasionId) ? prev.filter((id) => id !== occasionId) : [...prev, occasionId],
     )
   }
 
@@ -216,158 +155,96 @@ export default function OutfitsPage() {
     }
   }
 
-  const handleDeleteSelectedOccasions = async () => {
-    setShowDeleteOccasionsDialog(false)
-
-    try {
-      setIsDeleting(true)
-
-      // Delete occasions in parallel
-      await Promise.all(
-        selectedOccasionIds.map((occasionId) =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/occasions/${occasionId}`, {
-            method: "DELETE",
-            credentials: "include",
-          }),
-        ),
-      )
-
-      // Update frontend state
-      setOccasions((prev) => prev.filter((occasion) => !selectedOccasionIds.includes(occasion.id)))
-      setSelectedOccasionIds([])
-      setIsMultiSelectingOccasions(false) // Exit multi-select mode after deletion
-    } catch (error) {
-      console.error("Error deleting selected occasions:", error)
-      alert("Failed to delete selected folders.")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
   const handleAddToFolderSuccess = () => {
     // Exit multi-select mode and clear selections
     setSelectedOutfitIds([])
     setIsMultiSelecting(false)
-    // Refresh occasions data if we're on the occasions tab
-    if (activeTab === "occasions") {
-      fetchOccasions()
-    }
   }
 
     return (
-        <div className="min-h-screen bg-background">
-          {/* Always show navbar */}
-          <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="w-full max-w-none flex h-16 items-center justify-between px-4 lg:px-6 xl:px-8">
-              <div className="flex items-center">
-                <Logo />
+        <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+          {/* Sidebar */}
+          <DashboardSidebar
+            onThemeToggle={toggleTheme}
+            onSettingsClick={() => router.push("/settings")}
+          />
+
+          {/* Main Content with left margin for sidebar on desktop */}
+          <main className="md:ml-[60px] md:w-[calc(100%-60px)] w-full flex flex-col flex-1 min-h-0">
+            {/* Content Area */}
+            <div className="flex-1 px-6 py-6 overflow-auto">
+              {/* 2-Section Segmented Control Toggle Bar */}
+              <div className="relative w-full mb-6 bg-[#E5E5E5] rounded-full p-0.5 flex items-center justify-center gap-0">
+                {/* Left Half: Outfits Section */}
+                <div className="flex-1">
+                  <button
+                    onClick={() => setActiveTab('outfits')}
+                    className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
+                      activeTab === 'outfits'
+                        ? 'bg-white text-black shadow-sm rounded-full'
+                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Outfits
+                  </button>
+                </div>
+
+                {/* Right Half: Occasions Section */}
+                <div className="flex-1">
+                  <button
+                    onClick={() => setActiveTab('occasions')}
+                    className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
+                      activeTab === 'occasions'
+                        ? 'bg-white text-black shadow-sm rounded-full'
+                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Occasions
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <Button onClick={() => router.push("/settings")} variant="outline" className="gap-2">
-                  Settings
-                </Button>
-                <Button onClick={() => router.push("/dashboard")} variant="outline" className="gap-2">
-                  Closet
-                </Button>
-                <ThemeToggle />
-                <LogOutButton />
-              </div>
-            </div>
-          </header>
 
-      <div className="px-4 lg:px-6 xl:px-8 py-6">
-        {/* Back to Closet button */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="mb-6"
-        >
-          <Button
-            variant="outline"
-            onClick={handleBackToDashboard}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-transparent"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Closet
-          </Button>
-        </motion.div>
-
-        {/* Outfits/Occasions tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
-          className="mb-8 w-full max-w-md mx-auto"
-        >
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as "outfits" | "occasions")}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 rounded-lg overflow-hidden shadow-sm border border-border dark:border-border/60">
-              <TabsTrigger value="outfits">Outfits</TabsTrigger>
-              <TabsTrigger value="occasions">Occasions</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </motion.div>
-
-        {/* Multi-select Controls */}
-        {activeTab === "outfits" && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              {isMultiSelecting && selectedOutfitIds.length > 0 && (
-                <span className="text-sm font-medium">{selectedOutfitIds.length} selected</span>
-              )}
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <Button variant={isMultiSelecting ? "destructive" : "outline"} onClick={toggleMultiSelect}>
-                {isMultiSelecting ? (
+              {/* Action Buttons Row */}
+              <div className="flex items-center justify-end mb-6 gap-3">
+                {activeTab === 'outfits' ? (
                   <>
-                    <X className="h-4 w-4 mr-1" />
-                    Cancel
+                    {/* Grid Select */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isMultiSelecting
+                          ? "bg-black dark:bg-white"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                      onClick={toggleMultiSelect}
+                    >
+                      <GridSelectIcon
+                        size={20}
+                        className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                      />
+                    </motion.button>
+
+                    {/* Add */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                      onClick={() => setShowCreateModal(true)}
+                    >
+                      <Plus size={20} />
+                    </motion.button>
                   </>
                 ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-1" />
-                    Select
-                  </>
+                  /* Create button for Occasions tab */
+                  <button
+                    onClick={() => occasionsViewRef.current?.createOccasion()}
+                    className="px-6 py-2 bg-black dark:bg-black text-white rounded-full font-medium hover:bg-black/90 transition-colors"
+                  >
+                    Create
+                  </button>
                 )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Multi-select Controls for Occasions */}
-        {activeTab === "occasions" && occasions.length > 0 && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              {isMultiSelectingOccasions && selectedOccasionIds.length > 0 && (
-                <span className="text-sm font-medium">{selectedOccasionIds.length} selected</span>
-              )}
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <Button
-                variant={isMultiSelectingOccasions ? "destructive" : "outline"}
-                onClick={toggleMultiSelectOccasions}
-              >
-                {isMultiSelectingOccasions ? (
-                  <>
-                    <X className="h-4 w-4 mr-1" />
-                    Cancel
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-1" />
-                    Select
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+              </div>
 
         {/* Delete Toolbar - Slide up from bottom when items selected */}
         <AnimatePresence>
@@ -400,31 +277,6 @@ export default function OutfitsPage() {
               </div>
             </motion.div>
           )}
-          {isMultiSelectingOccasions && selectedOccasionIds.length > 0 && (
-            <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
-            >
-              <div className="bg-card rounded-full shadow-lg border border-border dark:border-border/60 px-6 py-3 flex items-center gap-4">
-                <span className="text-sm font-medium">
-                  {selectedOccasionIds.length} folder{selectedOccasionIds.length > 1 ? "s" : ""} selected
-                </span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteOccasionsDialog(true)}
-                  disabled={isDeleting}
-                  className="gap-2"
-                >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  Delete Folders
-                </Button>
-              </div>
-            </motion.div>
-          )}
         </AnimatePresence>
 
         {/* Content */}
@@ -438,43 +290,20 @@ export default function OutfitsPage() {
               transition={{ duration: 0.2 }}
             >
               {loading ? (
-                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
+                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, 280px)', justifyContent: 'start' }}>
                   {Array.from({ length: 10 }).map((_, index) => (
-                    <div key={index} className="aspect-[3/4] bg-card rounded-xl animate-pulse shadow-lg" />
+                    <div key={index} className="w-[280px] h-[373px] bg-card rounded-xl animate-pulse shadow-lg" />
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
-                  {/* Create Outfit Button - Same size as outfit cards */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="h-full"
-                  >
-                    <div
-                      onClick={() => setShowCreateModal(true)}
-                      className="h-[32rem] flex flex-col justify-between bg-gradient-to-br from-muted via-background to-muted border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-accent transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl"
-                    >
-                      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-muted to-accent rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                          <Plus className="w-10 h-10 text-primary" />
-                        </div>
-                        <span className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
-                          Create Outfit
-                        </span>
-                        <span className="text-sm text-muted-foreground mt-1">Design your look</span>
-                      </div>
-                      <div className="h-[42px]" /> {/* matches height of footer in OutfitCard */}
-                    </div>
-                  </motion.div>
-
+                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, 280px)', justifyContent: 'start' }}>
                   {outfits.map((outfit, index) => (
                     <motion.div
                       key={outfit.id}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2, delay: (index + 1) * 0.05 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                      className="w-[280px]"
                     >
                       <OutfitCard
                         outfit={outfit}
@@ -493,110 +322,38 @@ export default function OutfitsPage() {
           )}
 
           {activeTab === "occasions" && (
-            <motion.div
-              key="occasions"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {occasionsLoading ? (
-                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <div key={index} className="aspect-square bg-card rounded-xl animate-pulse shadow-lg" />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
-                  {/* Create Folder Button - First item in grid */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div
-                      onClick={() => setShowCreateOccasionModal(true)}
-                      className="aspect-[3/4] bg-gradient-to-br from-muted via-background to-accent border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-gradient-to-br hover:from-accent hover:via-muted hover:to-secondary transition-all duration-300 cursor-pointer group shadow-md hover:shadow-xl flex flex-col items-center justify-center p-6"
-                    >
-                      <div className="w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
-                        <Plus className="w-10 h-10 text-primary" />
-                      </div>
-                      <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors text-center">
-                        Create New Folder
-                      </span>
-                    </div>
-                  </motion.div>
-
-                  {occasions.map((occasion, index) => (
-                    <motion.div
-                      key={occasion.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2, delay: (index + 1) * 0.05 }}
-                    >
-                      <OccasionCard
-                        occasion={occasion}
-                        onClick={() => handleOccasionClick(occasion.id)}
-                        onDelete={handleOccasionDeleted}
-                        onUpdate={handleOccasionUpdated}
-                        isSelected={selectedOccasionIds.includes(occasion.id)}
-                        isMultiSelecting={isMultiSelectingOccasions}
-                        onToggleSelect={toggleOccasionSelection}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
+            <OccasionsView ref={occasionsViewRef} />
           )}
-        </AnimatePresence>
-      </div>
+              </AnimatePresence>
+            </div>
+          </main>
 
-      {/* Create Outfit Modal */}
-      <CreateOutfitModal
-        show={showCreateModal}
-        onCloseAction={() => setShowCreateModal(false)}
-        onOutfitCreated={handleOutfitCreated}
-      />
+          {/* Create Outfit Modal */}
+          <CreateOutfitModal
+            show={showCreateModal}
+            onCloseAction={() => setShowCreateModal(false)}
+            onOutfitCreated={handleOutfitCreated}
+          />
 
-      {/* Create Occasion Modal */}
-      <CreateOccasionModal
-        show={showCreateOccasionModal}
-        onCloseAction={() => setShowCreateOccasionModal(false)}
-        onOccasionCreated={handleOccasionCreated}
-      />
+          {/* Delete Outfits Confirmation Dialog */}
+          <ConfirmDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            title="Delete Selected Outfits"
+            description={`Are you sure you want to delete ${selectedOutfitIds.length} outfit${selectedOutfitIds.length > 1 ? "s" : ""}? This will only delete the outfit records - your clothing items will remain in your closet. This action cannot be undone.`}
+            onConfirm={handleDeleteSelected}
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            confirmVariant="destructive"
+          />
 
-      {/* Delete Outfits Confirmation Dialog */}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        title="Delete Selected Outfits"
-        description={`Are you sure you want to delete ${selectedOutfitIds.length} outfit${selectedOutfitIds.length > 1 ? "s" : ""}? This will only delete the outfit records - your clothing items will remain in your closet. This action cannot be undone.`}
-        onConfirm={handleDeleteSelected}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        confirmVariant="destructive"
-      />
-
-      {/* Delete Folders Confirmation Dialog */}
-      <ConfirmDialog
-        open={showDeleteOccasionsDialog}
-        onOpenChange={setShowDeleteOccasionsDialog}
-        title={`Delete ${selectedOccasionIds.length} Folder${selectedOccasionIds.length > 1 ? "s" : ""}?`}
-        description="This will remove the folders but keep your outfits. Your outfits will still be accessible from the Outfits tab."
-        onConfirm={handleDeleteSelectedOccasions}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        confirmVariant="destructive"
-      />
-
-      {/* Add to Folder Modal */}
-      <AddToFolderModal
-        show={showAddToFolderModal}
-        onCloseAction={() => setShowAddToFolderModal(false)}
-        selectedOutfitIds={selectedOutfitIds}
-        onSuccess={handleAddToFolderSuccess}
-      />
-    </div>
-  )
-}
+          {/* Add to Folder Modal */}
+          <AddToFolderModal
+            show={showAddToFolderModal}
+            onCloseAction={() => setShowAddToFolderModal(false)}
+            selectedOutfitIds={selectedOutfitIds}
+            onSuccess={handleAddToFolderSuccess}
+          />
+        </div>
+      )
+    }
