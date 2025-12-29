@@ -602,9 +602,19 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
     setDisplayIndices(prev => {
       const currentIndex = prev[category]
-      const newIndex = direction === "next"
-        ? (currentIndex + 1) % items.length
-        : (currentIndex - 1 + items.length) % items.length
+      let newIndex = currentIndex
+
+      if (direction === "next") {
+        // Only advance if there's a next item
+        if (currentIndex < items.length - 1) {
+          newIndex = currentIndex + 1
+        }
+      } else {
+        // Only go back if there's a previous item
+        if (currentIndex > 0) {
+          newIndex = currentIndex - 1
+        }
+      }
 
       return { ...prev, [category]: newIndex }
     })
@@ -713,17 +723,14 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     if (items.length === 0) return { prev2: null, prev: null, current: null, next: null, next2: null }
 
     const currentIndex = displayIndices[category]
-    const prev2Index = (currentIndex - 2 + items.length) % items.length
-    const prevIndex = (currentIndex - 1 + items.length) % items.length
-    const nextIndex = (currentIndex + 1) % items.length
-    const next2Index = (currentIndex + 2) % items.length
 
+    // Only show items that actually exist ahead/behind without circular wrapping
     return {
-      prev2: items[prev2Index],
-      prev: items[prevIndex],
+      prev2: currentIndex >= 2 ? items[currentIndex - 2] : null,
+      prev: currentIndex >= 1 ? items[currentIndex - 1] : null,
       current: items[currentIndex],
-      next: items[nextIndex],
-      next2: items[next2Index]
+      next: currentIndex < items.length - 1 ? items[currentIndex + 1] : null,
+      next2: currentIndex < items.length - 2 ? items[currentIndex + 2] : null
     }
   }
 
@@ -1129,15 +1136,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Prev-2 item - very faded, small, partially cut off on left */}
                                             {roulette.prev2 && (
                                               <motion.div
-                                                key={`outerwear-prev2-${roulette.prev2.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.prev2.id}
+                                                animate={{
+                                                  left: '-10%',
+                                                  opacity: 0.1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.3}rem`,
-                                                  position: 'absolute',
-                                                  left: '-10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-10"
                                               >
@@ -1156,15 +1163,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Prev-1 item - faded, positioned on left */}
                                             {roulette.prev && (
                                               <motion.div
-                                                key={`outerwear-prev-${roulette.prev.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.prev.id}
+                                                animate={{
+                                                  left: '10%',
+                                                  opacity: 0.5
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.5}rem`,
-                                                  position: 'absolute',
-                                                  left: '10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-50"
                                               >
@@ -1183,15 +1190,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Current item - full brightness, centered */}
                                             {roulette.current && (
                                               <motion.div
-                                                key={`outerwear-current-${roulette.current.id}`}
-                                                initial={{ scale: 1, x: '-50%' }}
-                                                animate={{ scale: 1, x: '-50%' }}
-                                                exit={{ scale: 1, x: '-50%' }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.current.id}
+                                                animate={{
+                                                  left: '50%',
+                                                  opacity: 1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width}rem`,
                                                   position: 'absolute',
-                                                  left: '50%',
+                                                  transform: 'translateX(-50%)',
                                                   zIndex: 10
                                                 }}
                                               >
@@ -1210,15 +1218,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Next-1 item - faded, positioned on right */}
                                             {roulette.next && (
                                               <motion.div
-                                                key={`outerwear-next-${roulette.next.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.next.id}
+                                                animate={{
+                                                  left: '90%',
+                                                  opacity: 0.5
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.5}rem`,
-                                                  position: 'absolute',
-                                                  right: '10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-50"
                                               >
@@ -1237,15 +1245,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Next-2 item - very faded, small, partially cut off on right */}
                                             {roulette.next2 && (
                                               <motion.div
-                                                key={`outerwear-next2-${roulette.next2.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.next2.id}
+                                                animate={{
+                                                  left: '110%',
+                                                  opacity: 0.1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.3}rem`,
-                                                  position: 'absolute',
-                                                  right: '-10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-10"
                                               >
@@ -1278,15 +1286,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Prev-2 item - very faded, small, partially cut off on left */}
                                             {roulette.prev2 && (
                                               <motion.div
-                                                key={`top-prev2-${roulette.prev2.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.prev2.id}
+                                                animate={{
+                                                  left: '-10%',
+                                                  opacity: 0.1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.3}rem`,
-                                                  position: 'absolute',
-                                                  left: '-10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-10"
                                               >
@@ -1305,15 +1313,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Prev-1 item - faded, positioned on left */}
                                             {roulette.prev && (
                                               <motion.div
-                                                key={`top-prev-${roulette.prev.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.prev.id}
+                                                animate={{
+                                                  left: '10%',
+                                                  opacity: 0.5
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.5}rem`,
-                                                  position: 'absolute',
-                                                  left: '10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-50"
                                               >
@@ -1332,15 +1340,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Current item - full brightness, centered */}
                                             {roulette.current && (
                                               <motion.div
-                                                key={`top-current-${roulette.current.id}`}
-                                                initial={{ scale: 1, x: '-50%' }}
-                                                animate={{ scale: 1, x: '-50%' }}
-                                                exit={{ scale: 1, x: '-50%' }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.current.id}
+                                                animate={{
+                                                  left: '50%',
+                                                  opacity: 1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width}rem`,
                                                   position: 'absolute',
-                                                  left: '50%',
+                                                  transform: 'translateX(-50%)',
                                                   zIndex: 10
                                                 }}
                                               >
@@ -1359,15 +1368,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Next-1 item - faded, positioned on right */}
                                             {roulette.next && (
                                               <motion.div
-                                                key={`top-next-${roulette.next.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.next.id}
+                                                animate={{
+                                                  left: '90%',
+                                                  opacity: 0.5
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.5}rem`,
-                                                  position: 'absolute',
-                                                  right: '10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-50"
                                               >
@@ -1386,15 +1395,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Next-2 item - very faded, small, partially cut off on right */}
                                             {roulette.next2 && (
                                               <motion.div
-                                                key={`top-next2-${roulette.next2.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.next2.id}
+                                                animate={{
+                                                  left: '110%',
+                                                  opacity: 0.1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.3}rem`,
-                                                  position: 'absolute',
-                                                  right: '-10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-10"
                                               >
@@ -1427,15 +1436,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Prev-2 item - very faded, small, partially cut off on left */}
                                             {roulette.prev2 && (
                                               <motion.div
-                                                key={`bottom-prev2-${roulette.prev2.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.prev2.id}
+                                                animate={{
+                                                  left: '-10%',
+                                                  opacity: 0.1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.3}rem`,
-                                                  position: 'absolute',
-                                                  left: '-10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-10"
                                               >
@@ -1454,15 +1463,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Prev-1 item - faded, positioned on left */}
                                             {roulette.prev && (
                                               <motion.div
-                                                key={`bottom-prev-${roulette.prev.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.prev.id}
+                                                animate={{
+                                                  left: '10%',
+                                                  opacity: 0.5
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.5}rem`,
-                                                  position: 'absolute',
-                                                  left: '10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-50"
                                               >
@@ -1481,15 +1490,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Current item - full brightness, centered */}
                                             {roulette.current && (
                                               <motion.div
-                                                key={`bottom-current-${roulette.current.id}`}
-                                                initial={{ scale: 1, x: '-50%' }}
-                                                animate={{ scale: 1, x: '-50%' }}
-                                                exit={{ scale: 1, x: '-50%' }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.current.id}
+                                                animate={{
+                                                  left: '50%',
+                                                  opacity: 1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width}rem`,
                                                   position: 'absolute',
-                                                  left: '50%',
+                                                  transform: 'translateX(-50%)',
                                                   zIndex: 10
                                                 }}
                                               >
@@ -1508,15 +1518,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Next-1 item - faded, positioned on right */}
                                             {roulette.next && (
                                               <motion.div
-                                                key={`bottom-next-${roulette.next.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.next.id}
+                                                animate={{
+                                                  left: '90%',
+                                                  opacity: 0.5
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.5}rem`,
-                                                  position: 'absolute',
-                                                  right: '10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-50"
                                               >
@@ -1535,15 +1545,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                             {/* Next-2 item - very faded, small, partially cut off on right */}
                                             {roulette.next2 && (
                                               <motion.div
-                                                key={`bottom-next2-${roulette.next2.id}`}
-                                                initial={{ x: 0 }}
-                                                animate={{ x: 0 }}
-                                                exit={{ x: 0 }}
-                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                key={roulette.next2.id}
+                                                animate={{
+                                                  left: '110%',
+                                                  opacity: 0.1
+                                                }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                                 style={{
                                                   width: `${width * 0.3}rem`,
-                                                  position: 'absolute',
-                                                  right: '-10%'
+                                                  position: 'absolute'
                                                 }}
                                                 className="opacity-10"
                                               >
