@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Search, ChevronLeft, ChevronRight, Dice5 } from "lucide-react"
+import { X, Search, ChevronLeft, ChevronRight, Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ClothingItemSelectModal from "./ClothingItemSelectModal"
 import Image from "next/image"
@@ -80,6 +80,8 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [mode, setMode] = useState<"canvas" | "display">("canvas")
   const [displayIndices, setDisplayIndices] = useState({ top: 0, bottom: 0, outerwear: 0, shoe: 0 })
   const [displayToggles, setDisplayToggles] = useState({ shoes: true, outerwear: true })
+  const [diceRolling, setDiceRolling] = useState(false)
+  const [currentDiceFace, setCurrentDiceFace] = useState(5)
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false)
@@ -608,14 +610,29 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     })
   }
 
-  // Randomize all categories
+  // Randomize all categories with dice roll animation
   const randomizeOutfit = () => {
-    setDisplayIndices({
-      top: clothingItems.tops.length > 0 ? Math.floor(Math.random() * clothingItems.tops.length) : 0,
-      bottom: clothingItems.bottoms.length > 0 ? Math.floor(Math.random() * clothingItems.bottoms.length) : 0,
-      outerwear: clothingItems.outerwear.length > 0 ? Math.floor(Math.random() * clothingItems.outerwear.length) : 0,
-      shoe: clothingItems.shoes.length > 0 ? Math.floor(Math.random() * clothingItems.shoes.length) : 0,
-    })
+    setDiceRolling(true)
+
+    // Animate through dice faces
+    let rollCount = 0
+    const rollInterval = setInterval(() => {
+      setCurrentDiceFace(Math.floor(Math.random() * 6) + 1)
+      rollCount++
+
+      if (rollCount >= 8) { // Roll 8 times over 400ms
+        clearInterval(rollInterval)
+        setDiceRolling(false)
+
+        // Set the final randomized outfit
+        setDisplayIndices({
+          top: clothingItems.tops.length > 0 ? Math.floor(Math.random() * clothingItems.tops.length) : 0,
+          bottom: clothingItems.bottoms.length > 0 ? Math.floor(Math.random() * clothingItems.bottoms.length) : 0,
+          outerwear: clothingItems.outerwear.length > 0 ? Math.floor(Math.random() * clothingItems.outerwear.length) : 0,
+          shoe: clothingItems.shoes.length > 0 ? Math.floor(Math.random() * clothingItems.shoes.length) : 0,
+        })
+      }
+    }, 50) // Change dice face every 50ms
   }
 
   // Get current display layout configuration
@@ -662,25 +679,52 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     return {}
   }
 
-  // Get current display items
+  // Get current display items with default canvas coordinates for saving
   const getCurrentDisplayItems = () => {
     const items: CategorizedOutfitItems = { others: [] }
-    const layout = getDisplayLayout()
 
-    if (layout.outerwear && clothingItems.outerwear.length > 0) {
+    // Use default canvas coordinates for consistency when saving from Display mode
+    if (clothingItems.outerwear.length > 0 && displayToggles.outerwear) {
       const item = clothingItems.outerwear[displayIndices.outerwear]
-      items.outerwear = { ...item, x: 50, y: layout.outerwear.y, width: layout.outerwear.width }
+      items.outerwear = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
     }
-    if (layout.top && clothingItems.tops.length > 0) {
+    if (clothingItems.tops.length > 0) {
       const item = clothingItems.tops[displayIndices.top]
-      items.top = { ...item, x: 50, y: layout.top.y, width: layout.top.width }
+      items.top = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
     }
-    if (layout.bottom && clothingItems.bottoms.length > 0) {
+    if (clothingItems.bottoms.length > 0) {
       const item = clothingItems.bottoms[displayIndices.bottom]
-      items.bottom = { ...item, x: 50, y: layout.bottom.y, width: layout.bottom.width }
+      items.bottom = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
+    }
+    if (clothingItems.shoes.length > 0 && displayToggles.shoes) {
+      const item = clothingItems.shoes[displayIndices.shoe]
+      items.shoe = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
     }
 
     return items
+  }
+
+  // Get roulette items (prev-2, prev-1, current, next-1, next-2) for a category
+  const getRouletteItems = (category: "top" | "bottom" | "outerwear") => {
+    const items = category === "top" ? clothingItems.tops :
+                  category === "bottom" ? clothingItems.bottoms :
+                  clothingItems.outerwear
+
+    if (items.length === 0) return { prev2: null, prev: null, current: null, next: null, next2: null }
+
+    const currentIndex = displayIndices[category]
+    const prev2Index = (currentIndex - 2 + items.length) % items.length
+    const prevIndex = (currentIndex - 1 + items.length) % items.length
+    const nextIndex = (currentIndex + 1) % items.length
+    const next2Index = (currentIndex + 2) % items.length
+
+    return {
+      prev2: items[prev2Index],
+      prev: items[prevIndex],
+      current: items[currentIndex],
+      next: items[nextIndex],
+      next2: items[next2Index]
+    }
   }
 
 
@@ -1022,131 +1066,579 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       ) : (
                         <>
                           {/* Display Mode */}
-                          <div className="relative h-[32rem] w-full flex items-center justify-center">
+                          <div className="relative h-[32rem] flex items-center justify-center" style={{ width: '480px' }}>
                             {(() => {
                               const layout = getDisplayLayout()
+                              // Create a layout key that changes when the configuration changes
+                              const layoutKey = `${layout.outerwear ? 'o' : ''}${layout.top ? 't' : ''}${layout.bottom ? 'b' : ''}`
+
                               return (
-                                <>
-                                  {/* Left Arrow Column */}
-                                  <div className="absolute left-0 top-0 w-[40px] h-full flex flex-col justify-center">
-                                    {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (
-                                      <button
-                                        onClick={() => navigateCategory("outerwear", "prev")}
-                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute left-0"
-                                        style={{ top: `${layout.outerwear.y}%`, transform: 'translateY(-50%)' }}
-                                      >
-                                        <ChevronLeft className="w-5 h-5" />
-                                      </button>
-                                    )}
-                                    {layout.top && clothingItems.tops.length > 0 && (
-                                      <button
-                                        onClick={() => navigateCategory("top", "prev")}
-                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute left-0"
-                                        style={{ top: `${layout.top.y}%`, transform: 'translateY(-50%)' }}
-                                      >
-                                        <ChevronLeft className="w-5 h-5" />
-                                      </button>
-                                    )}
-                                    {layout.bottom && clothingItems.bottoms.length > 0 && (
-                                      <button
-                                        onClick={() => navigateCategory("bottom", "prev")}
-                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute left-0"
-                                        style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
-                                      >
-                                        <ChevronLeft className="w-5 h-5" />
-                                      </button>
-                                    )}
-                                  </div>
+                                <AnimatePresence>
+                                  <motion.div
+                                    key={layoutKey}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute inset-0 flex items-center justify-center"
+                                  >
+                                    {/* Left Arrow Column */}
+                                    <div className="absolute left-[-60px] top-0 w-[40px] h-full flex flex-col justify-center z-10">
+                                      {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("outerwear", "prev")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                          style={{ top: `${layout.outerwear.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronLeft className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                      {layout.top && clothingItems.tops.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("top", "prev")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                          style={{ top: `${layout.top.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronLeft className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                      {layout.bottom && clothingItems.bottoms.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("bottom", "prev")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                          style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronLeft className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                    </div>
 
-                                  {/* Center Canvas */}
-                                  <div className="relative w-[280px] h-[32rem]">
-                                    <OutfitCanvas
-                                      items={Object.values(getCurrentDisplayItems()).filter(Boolean).flat() as ClothingItem[]}
-                                      outerwearOnTop={true}
-                                      draggedItemId={null}
-                                      selectedItemForResize={null}
-                                      enableDragDrop={false}
-                                      enableResize={false}
-                                      onMouseDown={() => {}}
-                                      onTouchStart={() => {}}
-                                      onClick={() => {}}
-                                      onImageLoad={() => {}}
-                                    />
-                                  </div>
+                                    {/* Center Roulette View */}
+                                    <div className="relative w-[400px] h-[32rem]">
+                                      {/* Render roulette for each category */}
+                                      {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (() => {
+                                        const roulette = getRouletteItems("outerwear")
+                                        const yPos = layout.outerwear.y
+                                        const width = layout.outerwear.width
 
-                                  {/* Right Arrow Column */}
-                                  <div className="absolute right-0 top-0 w-[40px] h-full flex flex-col justify-center">
-                                    {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (
-                                      <button
-                                        onClick={() => navigateCategory("outerwear", "next")}
-                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute right-0"
-                                        style={{ top: `${layout.outerwear.y}%`, transform: 'translateY(-50%)' }}
-                                      >
-                                        <ChevronRight className="w-5 h-5" />
-                                      </button>
-                                    )}
-                                    {layout.top && clothingItems.tops.length > 0 && (
-                                      <button
-                                        onClick={() => navigateCategory("top", "next")}
-                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute right-0"
-                                        style={{ top: `${layout.top.y}%`, transform: 'translateY(-50%)' }}
-                                      >
-                                        <ChevronRight className="w-5 h-5" />
-                                      </button>
-                                    )}
-                                    {layout.bottom && clothingItems.bottoms.length > 0 && (
-                                      <button
-                                        onClick={() => navigateCategory("bottom", "next")}
-                                        className="p-1.5 hover:bg-muted/50 rounded transition-colors absolute right-0"
-                                        style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
-                                      >
-                                        <ChevronRight className="w-5 h-5" />
-                                      </button>
-                                    )}
-                                  </div>
-                                </>
+                                        return (
+                                          <div
+                                            className="absolute w-full flex items-center"
+                                            style={{ top: `${yPos}%`, transform: 'translateY(-50%)' }}
+                                          >
+                                            {/* Prev-2 item - very faded, small, partially cut off on left */}
+                                            {roulette.prev2 && (
+                                              <motion.div
+                                                key={`outerwear-prev2-${roulette.prev2.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.3}rem`,
+                                                  position: 'absolute',
+                                                  left: '-10%'
+                                                }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.prev2.url}
+                                                  alt={roulette.prev2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Prev-1 item - faded, positioned on left */}
+                                            {roulette.prev && (
+                                              <motion.div
+                                                key={`outerwear-prev-${roulette.prev.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.5}rem`,
+                                                  position: 'absolute',
+                                                  left: '10%'
+                                                }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.prev.url}
+                                                  alt={roulette.prev.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Current item - full brightness, centered */}
+                                            {roulette.current && (
+                                              <motion.div
+                                                key={`outerwear-current-${roulette.current.id}`}
+                                                initial={{ scale: 1, x: '-50%' }}
+                                                animate={{ scale: 1, x: '-50%' }}
+                                                exit={{ scale: 1, x: '-50%' }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width}rem`,
+                                                  position: 'absolute',
+                                                  left: '50%',
+                                                  zIndex: 10
+                                                }}
+                                              >
+                                                <Image
+                                                  src={roulette.current.url}
+                                                  alt={roulette.current.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-1 item - faded, positioned on right */}
+                                            {roulette.next && (
+                                              <motion.div
+                                                key={`outerwear-next-${roulette.next.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.5}rem`,
+                                                  position: 'absolute',
+                                                  right: '10%'
+                                                }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.next.url}
+                                                  alt={roulette.next.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-2 item - very faded, small, partially cut off on right */}
+                                            {roulette.next2 && (
+                                              <motion.div
+                                                key={`outerwear-next2-${roulette.next2.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.3}rem`,
+                                                  position: 'absolute',
+                                                  right: '-10%'
+                                                }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.next2.url}
+                                                  alt={roulette.next2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+                                          </div>
+                                        )
+                                      })()}
+
+                                      {/* Top roulette */}
+                                      {layout.top && clothingItems.tops.length > 0 && (() => {
+                                        const roulette = getRouletteItems("top")
+                                        const yPos = layout.top.y
+                                        const width = layout.top.width
+
+                                        return (
+                                          <div
+                                            className="absolute w-full flex items-center"
+                                            style={{ top: `${yPos}%`, transform: 'translateY(-50%)' }}
+                                          >
+                                            {/* Prev-2 item - very faded, small, partially cut off on left */}
+                                            {roulette.prev2 && (
+                                              <motion.div
+                                                key={`top-prev2-${roulette.prev2.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.3}rem`,
+                                                  position: 'absolute',
+                                                  left: '-10%'
+                                                }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.prev2.url}
+                                                  alt={roulette.prev2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Prev-1 item - faded, positioned on left */}
+                                            {roulette.prev && (
+                                              <motion.div
+                                                key={`top-prev-${roulette.prev.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.5}rem`,
+                                                  position: 'absolute',
+                                                  left: '10%'
+                                                }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.prev.url}
+                                                  alt={roulette.prev.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Current item - full brightness, centered */}
+                                            {roulette.current && (
+                                              <motion.div
+                                                key={`top-current-${roulette.current.id}`}
+                                                initial={{ scale: 1, x: '-50%' }}
+                                                animate={{ scale: 1, x: '-50%' }}
+                                                exit={{ scale: 1, x: '-50%' }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width}rem`,
+                                                  position: 'absolute',
+                                                  left: '50%',
+                                                  zIndex: 10
+                                                }}
+                                              >
+                                                <Image
+                                                  src={roulette.current.url}
+                                                  alt={roulette.current.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-1 item - faded, positioned on right */}
+                                            {roulette.next && (
+                                              <motion.div
+                                                key={`top-next-${roulette.next.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.5}rem`,
+                                                  position: 'absolute',
+                                                  right: '10%'
+                                                }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.next.url}
+                                                  alt={roulette.next.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-2 item - very faded, small, partially cut off on right */}
+                                            {roulette.next2 && (
+                                              <motion.div
+                                                key={`top-next2-${roulette.next2.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.3}rem`,
+                                                  position: 'absolute',
+                                                  right: '-10%'
+                                                }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.next2.url}
+                                                  alt={roulette.next2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+                                          </div>
+                                        )
+                                      })()}
+
+                                      {/* Bottom roulette */}
+                                      {layout.bottom && clothingItems.bottoms.length > 0 && (() => {
+                                        const roulette = getRouletteItems("bottom")
+                                        const yPos = layout.bottom.y
+                                        const width = layout.bottom.width
+
+                                        return (
+                                          <div
+                                            className="absolute w-full flex items-center"
+                                            style={{ top: `${yPos}%`, transform: 'translateY(-50%)' }}
+                                          >
+                                            {/* Prev-2 item - very faded, small, partially cut off on left */}
+                                            {roulette.prev2 && (
+                                              <motion.div
+                                                key={`bottom-prev2-${roulette.prev2.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.3}rem`,
+                                                  position: 'absolute',
+                                                  left: '-10%'
+                                                }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.prev2.url}
+                                                  alt={roulette.prev2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Prev-1 item - faded, positioned on left */}
+                                            {roulette.prev && (
+                                              <motion.div
+                                                key={`bottom-prev-${roulette.prev.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.5}rem`,
+                                                  position: 'absolute',
+                                                  left: '10%'
+                                                }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.prev.url}
+                                                  alt={roulette.prev.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Current item - full brightness, centered */}
+                                            {roulette.current && (
+                                              <motion.div
+                                                key={`bottom-current-${roulette.current.id}`}
+                                                initial={{ scale: 1, x: '-50%' }}
+                                                animate={{ scale: 1, x: '-50%' }}
+                                                exit={{ scale: 1, x: '-50%' }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width}rem`,
+                                                  position: 'absolute',
+                                                  left: '50%',
+                                                  zIndex: 10
+                                                }}
+                                              >
+                                                <Image
+                                                  src={roulette.current.url}
+                                                  alt={roulette.current.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-1 item - faded, positioned on right */}
+                                            {roulette.next && (
+                                              <motion.div
+                                                key={`bottom-next-${roulette.next.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.5}rem`,
+                                                  position: 'absolute',
+                                                  right: '10%'
+                                                }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.next.url}
+                                                  alt={roulette.next.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-2 item - very faded, small, partially cut off on right */}
+                                            {roulette.next2 && (
+                                              <motion.div
+                                                key={`bottom-next2-${roulette.next2.id}`}
+                                                initial={{ x: 0 }}
+                                                animate={{ x: 0 }}
+                                                exit={{ x: 0 }}
+                                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                style={{
+                                                  width: `${width * 0.3}rem`,
+                                                  position: 'absolute',
+                                                  right: '-10%'
+                                                }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.next2.url}
+                                                  alt={roulette.next2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+                                          </div>
+                                        )
+                                      })()}
+                                    </div>
+
+                                    {/* Right Arrow Column */}
+                                    <div className="absolute right-[-60px] top-0 w-[40px] h-full flex flex-col justify-center z-10">
+                                      {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("outerwear", "next")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                          style={{ top: `${layout.outerwear.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronRight className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                      {layout.top && clothingItems.tops.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("top", "next")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                          style={{ top: `${layout.top.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronRight className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                      {layout.bottom && clothingItems.bottoms.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("bottom", "next")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                          style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronRight className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                </AnimatePresence>
                               )
                             })()}
                           </div>
 
                           {/* Display Mode Controls */}
-                          <div className="w-[280px] mt-3 flex items-center gap-2">
-                            <button
-                              onClick={() => setDisplayToggles(prev => ({ ...prev, shoes: !prev.shoes }))}
-                              className={`text-xs font-medium rounded-md whitespace-nowrap flex items-center justify-center shrink-0 ${
-                                displayToggles.shoes
-                                  ? "bg-foreground text-background"
-                                  : "bg-muted text-foreground hover:bg-muted/80"
-                              }`}
-                              style={{
-                                width: '108px',
-                                height: '36px',
-                                minWidth: '108px',
-                                maxWidth: '108px',
-                                boxSizing: 'border-box',
-                                padding: '0'
-                              }}
-                            >
-                              Add Shoe
-                            </button>
-                            <button
-                              onClick={() => setDisplayToggles(prev => ({ ...prev, outerwear: !prev.outerwear }))}
-                              className={`text-xs font-medium rounded-md whitespace-nowrap flex items-center justify-center shrink-0 ${
-                                displayToggles.outerwear
-                                  ? "bg-foreground text-background"
-                                  : "bg-muted text-foreground hover:bg-muted/80"
-                              }`}
-                              style={{
-                                width: '108px',
-                                height: '36px',
-                                minWidth: '108px',
-                                maxWidth: '108px',
-                                boxSizing: 'border-box',
-                                padding: '0'
-                              }}
-                            >
-                              Add Outerwear
-                            </button>
+                          <div className="w-[420px] mt-3 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setDisplayToggles(prev => ({ ...prev, shoes: !prev.shoes }))}
+                                className={`text-xs font-medium rounded-md whitespace-nowrap flex items-center justify-center shrink-0 ${
+                                  displayToggles.shoes
+                                    ? "bg-foreground text-background"
+                                    : "bg-muted text-foreground hover:bg-muted/80"
+                                }`}
+                                style={{
+                                  width: '108px',
+                                  height: '36px',
+                                  minWidth: '108px',
+                                  maxWidth: '108px',
+                                  boxSizing: 'border-box',
+                                  padding: '0'
+                                }}
+                              >
+                                Add Shoe
+                              </button>
+                              <button
+                                onClick={() => setDisplayToggles(prev => ({ ...prev, outerwear: !prev.outerwear }))}
+                                className={`text-xs font-medium rounded-md whitespace-nowrap flex items-center justify-center shrink-0 ${
+                                  displayToggles.outerwear
+                                    ? "bg-foreground text-background"
+                                    : "bg-muted text-foreground hover:bg-muted/80"
+                                }`}
+                                style={{
+                                  width: '108px',
+                                  height: '36px',
+                                  minWidth: '108px',
+                                  maxWidth: '108px',
+                                  boxSizing: 'border-box',
+                                  padding: '0'
+                                }}
+                              >
+                                Add Outerwear
+                              </button>
+                            </div>
                             <button
                               onClick={randomizeOutfit}
                               className="rounded-md bg-muted hover:bg-muted/80 text-foreground flex items-center justify-center shrink-0"
@@ -1160,7 +1652,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               }}
                               title="Randomize outfit"
                             >
-                              <Dice5 className="w-5 h-5" />
+                              {currentDiceFace === 1 && <Dice1 className="w-5 h-5" />}
+                              {currentDiceFace === 2 && <Dice2 className="w-5 h-5" />}
+                              {currentDiceFace === 3 && <Dice3 className="w-5 h-5" />}
+                              {currentDiceFace === 4 && <Dice4 className="w-5 h-5" />}
+                              {currentDiceFace === 5 && <Dice5 className="w-5 h-5" />}
+                              {currentDiceFace === 6 && <Dice6 className="w-5 h-5" />}
                             </button>
                           </div>
 
@@ -1172,7 +1669,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               createOutfit()
                             }}
                             disabled={isCreating || (clothingItems.tops.length === 0 && clothingItems.bottoms.length === 0)}
-                            className="w-[280px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-2"
+                            className="w-[420px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-2"
                           >
                             {isCreating ? "Saving..." : "Save"}
                           </Button>
