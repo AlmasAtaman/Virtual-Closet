@@ -620,29 +620,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     })
   }
 
-  // Randomize all categories with dice roll animation
+  // Randomize all categories with instant change
   const randomizeOutfit = () => {
-    setDiceRolling(true)
+    // Instantly change dice face
+    setCurrentDiceFace(Math.floor(Math.random() * 6) + 1)
 
-    // Animate through dice faces
-    let rollCount = 0
-    const rollInterval = setInterval(() => {
-      setCurrentDiceFace(Math.floor(Math.random() * 6) + 1)
-      rollCount++
-
-      if (rollCount >= 8) { // Roll 8 times over 400ms
-        clearInterval(rollInterval)
-        setDiceRolling(false)
-
-        // Set the final randomized outfit
-        setDisplayIndices({
-          top: clothingItems.tops.length > 0 ? Math.floor(Math.random() * clothingItems.tops.length) : 0,
-          bottom: clothingItems.bottoms.length > 0 ? Math.floor(Math.random() * clothingItems.bottoms.length) : 0,
-          outerwear: clothingItems.outerwear.length > 0 ? Math.floor(Math.random() * clothingItems.outerwear.length) : 0,
-          shoe: clothingItems.shoes.length > 0 ? Math.floor(Math.random() * clothingItems.shoes.length) : 0,
-        })
-      }
-    }, 50) // Change dice face every 50ms
+    // Instantly set random outfit indices
+    setDisplayIndices({
+      top: clothingItems.tops.length > 0 ? Math.floor(Math.random() * clothingItems.tops.length) : 0,
+      bottom: clothingItems.bottoms.length > 0 ? Math.floor(Math.random() * clothingItems.bottoms.length) : 0,
+      outerwear: clothingItems.outerwear.length > 0 ? Math.floor(Math.random() * clothingItems.outerwear.length) : 0,
+      shoe: clothingItems.shoes.length > 0 ? Math.floor(Math.random() * clothingItems.shoes.length) : 0,
+    })
   }
 
   // Get current display layout configuration
