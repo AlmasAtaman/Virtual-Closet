@@ -92,17 +92,67 @@ export default function ChangeFolderImageModal({
         setMultiplePictureImages(images);
         setSinglePictureImages([]);
       }
+
+      // If no preview images exist, fetch the default (first clothing items) to show in the preview
+      if (images.length === 0 && folderId) {
+        fetchDefaultImagesForPreview(layout);
+      }
     }
   }, [isOpen, currentImageLayout, currentPreviewImages]);
 
-  // Sync rectangleImages with the appropriate layout state when images change
-  useEffect(() => {
-    if (selectedLayout === "one") {
-      setSinglePictureImages(rectangleImages);
-    } else {
-      setMultiplePictureImages(rectangleImages);
+  const fetchDefaultImagesForPreview = async (layout: "one" | "multiple") => {
+    if (!folderId) {
+      return;
     }
-  }, [rectangleImages, selectedLayout]);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/folders/${folderId}/items`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      // Get the first clothing items (this matches the fallback logic in FolderCard)
+      if (data.items && data.items.length > 0) {
+        if (layout === "one") {
+          // Single image layout - use first item
+          const firstItem = data.items[0];
+          const defaultImage = [{
+            position: "main" as RectanglePosition,
+            imageUrl: firstItem.url || "",
+            clothingItemId: firstItem.id,
+          }];
+          setRectangleImages(defaultImage);
+          setSinglePictureImages(defaultImage);
+        } else {
+          // Multiple image layout - use first 3 items
+          const defaultImages: RectangleImage[] = [];
+          const positions: RectanglePosition[] = ["main", "top-right", "bottom-right"];
+
+          for (let i = 0; i < Math.min(3, data.items.length); i++) {
+            const item = data.items[i];
+            if (item.url) {
+              defaultImages.push({
+                position: positions[i],
+                imageUrl: item.url,
+                clothingItemId: item.id,
+              });
+            }
+          }
+
+          setRectangleImages(defaultImages);
+          setMultiplePictureImages(defaultImages);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch default images for preview:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { X, Loader2, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import OutfitPreviewHorizontal from "./OutfitPreviewHorizontal";
+import OutfitCard from "../OutfitCard";
 
 interface ClothingItem {
   id: string;
@@ -42,7 +42,7 @@ interface SelectFromOccasionModalProps {
   show: boolean;
   onClose: () => void;
   occasionId: string;
-  onSelectImage: (imageUrl: string, outfitId: string) => void;
+  onSelectImage: (outfit: Outfit) => void;
   selectedOutfitIds?: string[];
 }
 
@@ -84,10 +84,8 @@ export default function SelectFromOccasionModal({
   };
 
   const handleSelectOutfit = (outfit: Outfit) => {
-    // For outfits, we can use either the imageUrl or pass empty string if only clothingItems exist
-    // The parent component will handle rendering via OutfitPreviewHorizontal
-    const imageUrl = outfit.imageUrl || "";
-    onSelectImage(imageUrl, outfit.id);
+    // Pass the full outfit object so parent can render using OutfitPreviewHorizontal
+    onSelectImage(outfit);
   };
 
   if (!show) return null;
@@ -142,23 +140,23 @@ export default function SelectFromOccasionModal({
               </Button>
             </div>
           ) : (
-            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, 293px)', justifyContent: 'start' }}>
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', justifyContent: 'start' }}>
               {outfits.map((outfit) => {
                 const isSelected = selectedOutfitIds.includes(outfit.id);
                 return (
                   <div
                     key={outfit.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg rounded-2xl overflow-hidden ${
+                    className={`cursor-pointer transition-all hover:shadow-lg ${
                       isSelected
-                        ? "ring-2 ring-black dark:ring-white"
+                        ? "ring-2 ring-black dark:ring-white rounded-2xl"
                         : ""
-                    } relative w-[293px] h-48 bg-white dark:bg-gray-900`}
+                    } relative`}
                     onClick={() => handleSelectOutfit(outfit)}
                   >
-                    <OutfitPreviewHorizontal
+                    <OutfitCard
                       outfit={outfit}
-                      containerWidth={293}
-                      containerHeight={192}
+                      hideFooter={true}
+                      hideHeader={true}
                     />
                     {isSelected && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl z-10 pointer-events-none">

@@ -101,6 +101,8 @@ model Occasion {
   id              String   @id @default(uuid())
   name            String
   customThumbnail String?
+  imageLayout     String?  @default("one-picture")
+  previewImages   Json?
   createdAt       DateTime @default(now())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)

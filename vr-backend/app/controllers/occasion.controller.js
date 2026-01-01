@@ -109,7 +109,7 @@ export const updateOccasion = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    const { name, customThumbnail } = req.body;
+    const { name, customThumbnail, imageLayout, previewImages } = req.body;
 
     // Check ownership
     const occasion = await prisma.occasion.findUnique({ where: { id } });
@@ -123,6 +123,8 @@ export const updateOccasion = async (req, res) => {
       data: {
         ...(name && { name }),
         ...(customThumbnail !== undefined && { customThumbnail }),
+        ...(imageLayout !== undefined && { imageLayout }),
+        ...(previewImages !== undefined && { previewImages }),
       },
       include: {
         outfits: {

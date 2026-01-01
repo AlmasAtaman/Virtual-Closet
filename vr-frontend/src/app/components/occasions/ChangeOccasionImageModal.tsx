@@ -6,13 +6,46 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { X, CloudUpload, FolderOpen, ZoomIn, ZoomOut } from "lucide-react";
 import { motion } from "framer-motion";
 import SelectFromOccasionModal from "./SelectFromOccasionModal";
+import OutfitPreviewHorizontal from "./OutfitPreviewHorizontal";
 
 type RectanglePosition = "main";
+
+interface ClothingItem {
+  id: string;
+  name?: string;
+  url: string;
+  type?: string;
+  brand?: string;
+  price?: number;
+  mode: "closet" | "wishlist";
+  x?: number;
+  y?: number;
+  scale?: number;
+  left?: number;
+  bottom?: number;
+  width?: number;
+}
+
+interface Outfit {
+  id: string;
+  name?: string;
+  occasion?: string;
+  season?: string;
+  notes?: string;
+  price?: number;
+  totalPrice?: number;
+  outerwearOnTop?: boolean;
+  clothingItems: ClothingItem[];
+  isFavorite?: boolean;
+  createdAt?: string;
+  imageUrl?: string;
+}
 
 interface RectangleImage {
   position: RectanglePosition;
   imageUrl?: string;
   outfitId?: string;
+  outfit?: Outfit;
 }
 
 interface ChangeOccasionImageModalProps {
@@ -61,14 +94,83 @@ export default function ChangeOccasionImageModal({
 
   // Reset state when modal opens with new data
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && occasionId) {
       const images: RectangleImage[] = currentPreviewImages
         ? (Array.isArray(currentPreviewImages) ? currentPreviewImages : [])
         : [];
 
       setRectangleImages(images);
+
+      // If there's an outfit ID but no outfit object, we need to fetch it
+      const mainImage = images.find(img => img.position === 'main');
+
+      if (mainImage?.outfitId && !mainImage.outfit) {
+        // Fetch outfit data for preview
+        fetchOutfitForPreview(mainImage.outfitId);
+      } else if (images.length === 0) {
+        // If no preview images exist, fetch the default (first outfit) to show in the preview
+        fetchDefaultOutfitForPreview();
+      }
     }
-  }, [isOpen, currentPreviewImages]);
+  }, [isOpen, currentPreviewImages, occasionId]);
+
+  const fetchOutfitForPreview = async (outfitId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/occasions/${occasionId}/outfits`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const outfit = data.outfits?.find((o: Outfit) => o.id === outfitId);
+
+      if (outfit) {
+        setRectangleImages(prev => prev.map(img =>
+          img.position === 'main' && img.outfitId === outfitId
+            ? { ...img, outfit }
+            : img
+        ));
+      }
+    } catch (error) {
+      console.error("Failed to fetch outfit for preview:", error);
+    }
+  };
+
+  const fetchDefaultOutfitForPreview = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/occasions/${occasionId}/outfits`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      // Get the first outfit (this matches the fallback logic in OccasionCard)
+      if (data.outfits && data.outfits.length > 0) {
+        const firstOutfit = data.outfits[0];
+
+        // Only set it if the outfit has clothingItems
+        if (firstOutfit.clothingItems && firstOutfit.clothingItems.length > 0) {
+          setRectangleImages([{
+            position: "main",
+            imageUrl: firstOutfit.imageUrl || "",
+            outfitId: firstOutfit.id,
+            outfit: firstOutfit,
+          }]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch default outfit for preview:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,12 +244,13 @@ export default function ChangeOccasionImageModal({
     setUploadingRect(false);
   };
 
-  const handleImageSelected = (imageUrl: string, outfitId: string) => {
+  const handleImageSelected = (outfit: Outfit) => {
     setRectangleImages([
       {
         position: "main",
-        imageUrl,
-        outfitId,
+        imageUrl: outfit.imageUrl || "",
+        outfitId: outfit.id,
+        outfit: outfit,
       },
     ]);
 
@@ -308,6 +411,7 @@ export default function ChangeOccasionImageModal({
           position: "main",
           imageUrl: dataUrl,
           outfitId: undefined,
+          outfit: undefined,
         },
       ]);
 
@@ -492,12 +596,22 @@ export default function ChangeOccasionImageModal({
                     />
 
                     {/* Image if exists */}
-                    {rectImage?.imageUrl && !isEditingUpload && (
-                      <img
-                        src={rectImage.imageUrl}
-                        alt="Rectangle preview"
-                        className="absolute inset-0 w-full h-full object-contain"
-                      />
+                    {rectImage && !isEditingUpload && (
+                      <>
+                        {rectImage.outfit ? (
+                          <OutfitPreviewHorizontal
+                            outfit={rectImage.outfit}
+                            containerWidth={293}
+                            containerHeight={192}
+                          />
+                        ) : rectImage.imageUrl ? (
+                          <img
+                            src={rectImage.imageUrl}
+                            alt="Rectangle preview"
+                            className="absolute inset-0 w-full h-full object-contain"
+                          />
+                        ) : null}
+                      </>
                     )}
 
                     {/* Editing mode - show the draggable image */}
@@ -524,7 +638,7 @@ export default function ChangeOccasionImageModal({
                         transition={{ duration: 0.2 }}
                         className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2"
                       >
-                        {rectImage?.imageUrl ? (
+                        {rectImage?.imageUrl || rectImage?.outfit ? (
                           // Show X button to remove image
                           <button
                             type="button"

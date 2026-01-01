@@ -91,30 +91,29 @@ export default function OutfitPreviewHorizontal({
       });
 
       // Horizontal layout strategy:
-      // - If outerwear exists: outerwear on LEFT (40% width), bottoms on RIGHT (40% width), overlapping in middle
-      // - If no outerwear: tops on LEFT (40% width), bottoms on RIGHT (40% width), overlapping in middle
-      // - Items overlap by about 20% in the middle area
+      // - If outerwear exists: outerwear > top > bottom (layered on top of each other, overlapping)
+      // - If no outerwear: top > bottom (layered on top of each other, overlapping, centered)
+      // - Items should be close together and overlapping significantly
 
-      const leftItem = outerwear.length > 0 ? outerwear[0] : tops.length > 0 ? tops[0] : null;
-      const rightItem = bottoms.length > 0 ? bottoms[0] : null;
+      const hasOuterwear = outerwear.length > 0;
+      const hasTop = tops.length > 0;
+      const hasBottom = bottoms.length > 0;
 
-      if (!leftItem && !rightItem) {
+      if (!hasOuterwear && !hasTop && !hasBottom) {
         setIsRendering(false);
         return;
       }
 
-      // Layout parameters
-      const itemWidth = canvas.width * 0.5; // Each item takes 50% width
-      const overlapAmount = canvas.width * 0.1; // 10% overlap
-
-      const leftX = 0;
-      const rightX = canvas.width - itemWidth + overlapAmount;
+      // Layout parameters - items should overlap significantly
+      const itemWidth = canvas.width * 0.6; // Each item takes 60% of canvas width
+      const overlapPercentage = 0.35; // 35% overlap between items
 
       // Load and draw items
       const loadImage = (url: string): Promise<HTMLImageElement> => {
         return new Promise((resolve, reject) => {
           const img = new window.Image();
-          img.crossOrigin = "anonymous";
+          // Remove crossOrigin to avoid CORS issues with S3
+          // img.crossOrigin = "anonymous";
           img.onload = () => resolve(img);
           img.onerror = reject;
           img.src = url;
@@ -122,9 +121,27 @@ export default function OutfitPreviewHorizontal({
       };
 
       try {
-        // Draw right item first (so left item overlaps it)
-        if (rightItem) {
-          const img = await loadImage(rightItem.url);
+        // Collect items to draw in order: outerwear, top, bottom (left to right, bottom layer first)
+        const itemsToDraw: ClothingItem[] = [];
+        if (hasOuterwear) itemsToDraw.push(outerwear[0]);
+        if (hasTop) itemsToDraw.push(tops[0]);
+        if (hasBottom) itemsToDraw.push(bottoms[0]);
+
+        if (itemsToDraw.length === 0) {
+          setIsRendering(false);
+          return;
+        }
+
+        // Calculate total width needed
+        const totalOverlap = (itemsToDraw.length - 1) * (itemWidth * overlapPercentage);
+        const totalWidth = itemsToDraw.length * itemWidth - totalOverlap;
+
+        // Start x position to center the entire group
+        let currentX = (canvas.width - totalWidth) / 2;
+
+        // Draw each item with overlap
+        for (const item of itemsToDraw) {
+          const img = await loadImage(item.url);
 
           // Calculate scaling to fit within allocated space
           const scale = Math.min(itemWidth / img.width, canvas.height / img.height);
@@ -134,20 +151,13 @@ export default function OutfitPreviewHorizontal({
           // Center vertically within canvas
           const y = (canvas.height - scaledHeight) / 2;
 
-          ctx.drawImage(img, rightX, y, scaledWidth, scaledHeight);
-        }
+          // Center horizontally within allocated itemWidth
+          const xOffset = (itemWidth - scaledWidth) / 2;
 
-        // Draw left item (overlaps right item)
-        if (leftItem) {
-          const img = await loadImage(leftItem.url);
+          ctx.drawImage(img, currentX + xOffset, y, scaledWidth, scaledHeight);
 
-          const scale = Math.min(itemWidth / img.width, canvas.height / img.height);
-          const scaledWidth = img.width * scale;
-          const scaledHeight = img.height * scale;
-
-          const y = (canvas.height - scaledHeight) / 2;
-
-          ctx.drawImage(img, leftX, y, scaledWidth, scaledHeight);
+          // Move to next position with overlap
+          currentX += itemWidth - (itemWidth * overlapPercentage);
         }
 
         setIsRendering(false);
