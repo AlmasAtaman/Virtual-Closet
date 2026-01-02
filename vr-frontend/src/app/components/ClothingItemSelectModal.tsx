@@ -118,14 +118,6 @@ const ClothingItemSelectModal: React.FC<ClothingItemSelectModalProps> = ({
                     <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onCloseAction}
-                  className="rounded-full"
-                >
-                  <X className="w-5 h-5" />
-                </Button>
               </div>
             </div>
 

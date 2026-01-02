@@ -12,7 +12,7 @@ function Logo({ isDark = false, withText = false }: { isDark?: boolean; withText
     return (
       <div className="flex items-center gap-2.5">
         <Image
-          src={isDark ? "/VestkoWhite.png" : "/VestkoBlack.png"}
+          src={isDark ? "/vestkoLogoLight.PNG" : "/vestkoLogo.PNG"}
           alt="Vestko"
           width={32}
           height={32}
@@ -26,7 +26,7 @@ function Logo({ isDark = false, withText = false }: { isDark?: boolean; withText
 
   return (
     <Image
-      src={isDark ? "/VestkoWhite.png" : "/VestkoBlack.png"}
+      src={isDark ? "/vestkoLogoLight.PNG" : "/vestkoLogo.PNG"}
       alt="Vestko Logo"
       width={120}
       height={40}

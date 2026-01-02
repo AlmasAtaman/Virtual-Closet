@@ -143,14 +143,6 @@ export default function AddToFolderModal({
               Add {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? 's' : ''} to an occasion folder
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="rounded-full"
-          >
-            <X className="w-5 h-5" />
-          </Button>
         </div>
 
         {/* Content */}

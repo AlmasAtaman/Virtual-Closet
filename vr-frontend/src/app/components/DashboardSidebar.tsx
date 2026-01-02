@@ -1,12 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Home, Sun, Settings } from 'lucide-react';
-import { HangerIcon } from './icons/HangerIcon';
-import { TagIcon } from './icons/TagIcon';
+import { Sun, Settings } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface DashboardSidebarProps {
   onThemeToggle?: () => void;
@@ -18,84 +16,107 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onSettingsClick,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <motion.aside
-      initial={{ x: -60, opacity: 0 }}
+      initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="hidden md:flex fixed left-0 top-0 h-screen w-[60px] bg-[#F5F5F5] flex-col items-center py-6 z-40"
+      className="hidden md:flex fixed left-0 top-0 h-screen w-[70px] bg-white border-r border-gray-200 flex-col items-center py-6 z-40"
     >
       {/* Logo Section */}
       <div className="mb-8">
         <Image
-          src="/VestkoBlack.png"
+          src="/vestkoLogo.PNG"
           alt="Vestko Logo"
-          width={40}
-          height={40}
+          width={60}
+          height={60}
           className="object-contain"
         />
       </div>
 
       {/* Navigation Icons */}
-      <nav className="flex flex-col items-center gap-6 flex-1">
+      <nav className="flex flex-col items-center gap-6">
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 transition-colors"
+          onClick={() => router.push('/dashboard')}
+          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 transition-colors"
           aria-label="Home"
         >
-          <Home size={24} />
+          <Image
+            src={pathname === '/dashboard' ? '/homeSelect.PNG' : '/home.PNG'}
+            alt="Home"
+            width={52}
+            height={52}
+            className="object-contain"
+          />
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           onClick={() => router.push('/outfits')}
-          className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 transition-colors"
+          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 transition-colors"
           aria-label="Clothing"
         >
-          <HangerIcon size={24} />
+          <Image
+            src={pathname === '/outfits' ? '/outfitSelect.PNG' : '/outfit.PNG'}
+            alt="Outfits"
+            width={56}
+            height={56}
+            className="object-contain"
+          />
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 transition-colors"
+          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 transition-colors"
           aria-label="Tags"
         >
-          <TagIcon size={24} />
+          <Image
+            src={pathname === '/shop' ? '/shopSelect.PNG' : '/shop.PNG'}
+            alt="Shop"
+            width={52}
+            height={52}
+            className="object-contain"
+          />
         </motion.button>
       </nav>
 
+      {/* Spacer */}
+      <div className="flex-1"></div>
+
       {/* Bottom Section */}
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-4 mb-2">
         {onThemeToggle && (
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={onThemeToggle}
-            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 transition-colors"
+            className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
             aria-label="Toggle Theme"
           >
-            <Sun size={24} />
+            <Sun size={34} />
           </motion.button>
         )}
 
         {onSettingsClick && (
           <motion.button
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={onSettingsClick}
-            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200/50 transition-colors"
+            className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
             aria-label="Settings"
           >
-            <Settings size={24} />
+            <Settings size={34} />
           </motion.button>
         )}
       </div>

@@ -17,8 +17,8 @@ interface ClothingGalleryRef {
 import FilterSection, { type FilterAttribute } from "../../components/FilterSection"
 import { Badge } from "@/components/ui/badge"
 import { DashboardSidebar } from "../../components/DashboardSidebar"
-import { GridSelectIcon } from "../../components/icons/GridSelectIcon"
 import { useTheme } from "../../contexts/ThemeContext"
+import Image from "next/image"
 
 
 export default function Homepage() {
@@ -318,16 +318,15 @@ export default function Homepage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isMultiSelecting
-                        ? "bg-black dark:bg-white"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
                     onClick={() => setIsMultiSelecting(!isMultiSelecting)}
                   >
-                    <GridSelectIcon
-                      size={20}
-                      className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                    <Image
+                      src={isMultiSelecting ? "/multiSelect.PNG" : "/multi.PNG"}
+                      alt="Multi-select"
+                      width={24}
+                      height={24}
+                      className="object-contain"
                     />
                   </motion.button>
 

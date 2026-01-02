@@ -69,7 +69,7 @@ export default function ClothingCard({
     >
       <Card
         className={`group h-full transition-all duration-300 border-0 ring-0 rounded-[10px] bg-[#ECECEC] ${isSelected
-          ? "ring-2 ring-blue-500 shadow-lg scale-[1.02]"
+          ? "ring-2 ring-black dark:ring-white"
           : !isMultiSelecting
             ? "hover:shadow-md"
             : "shadow-none"
@@ -142,19 +142,11 @@ export default function ClothingCard({
             </button>
           )}
 
-          {/* Multi-select checkmark - top left corner */}
+          {/* Multi-select checkmark overlay - consistent with background selection */}
           {isMultiSelecting && isSelected && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute top-2 left-2 z-20"
-            >
-              <button
-                className="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 bg-blue-600 border-blue-600 text-white shadow-lg"
-              >
-                <Check className="w-4 h-4" />
-              </button>
-            </motion.div>
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-[10px] z-20">
+              <Check className="w-8 h-8 text-white" />
+            </div>
           )}
 
           {/* Top Right - Favorite Heart Icon (on hover, unless multi-selecting) */}

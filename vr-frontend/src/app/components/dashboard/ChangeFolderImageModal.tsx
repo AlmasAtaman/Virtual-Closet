@@ -603,23 +603,6 @@ export default function ChangeFolderImageModal({
               <DialogTitle>Change Folder Image</DialogTitle>
             </VisuallyHidden>
 
-            {/* Custom Close Button */}
-            <button
-              onClick={() => {
-                if (isEditingUpload) {
-                  // Only cancel edit mode, don't close modal
-                  handleCancelUpload();
-                } else {
-                  // Close modal only if not in edit mode
-                  onClose();
-                }
-              }}
-              className="absolute -top-12 -right-12 z-50 w-8 h-8 rounded-full bg-white dark:bg-background border border-gray-200 dark:border-border/50 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-accent/50 transition-all shadow-sm hover:shadow-md pointer-events-auto opacity-90 hover:opacity-100"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4 text-gray-500 dark:text-foreground/70" />
-            </button>
-
             {/* Zoom controls for editing mode */}
             {isEditingUpload && (
               <div className="absolute -right-20 top-1/2 transform -translate-y-1/2 z-50">

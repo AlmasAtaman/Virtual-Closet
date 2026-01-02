@@ -187,9 +187,6 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
                       <p className="text-sm text-muted-foreground">Name your folder</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleCloseModal} className="rounded-full">
-                    <X className="w-4 h-4" />
-                  </Button>
                 </div>
 
                 {/* Compact Form */}

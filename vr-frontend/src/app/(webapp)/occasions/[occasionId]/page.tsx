@@ -7,8 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import OutfitCard from "../../../components/OutfitCard"
 import { DashboardSidebar } from "../../../components/DashboardSidebar"
 import { useTheme } from "../../../contexts/ThemeContext"
-import { GridSelectIcon } from "../../../components/icons/GridSelectIcon"
 import AddOutfitsToOccasionModal from "../../../components/occasions/AddOutfitsToOccasionModal"
+import Image from "next/image"
 
 interface ClothingItem {
   id: string
@@ -226,16 +226,15 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`p-2 rounded-lg transition-colors ${
-                  isMultiSelecting
-                    ? "bg-black dark:bg-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
                 onClick={toggleMultiSelect}
               >
-                <GridSelectIcon
-                  size={20}
-                  className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                <Image
+                  src={isMultiSelecting ? "/multiSelect.PNG" : "/multi.PNG"}
+                  alt="Multi-select"
+                  width={24}
+                  height={24}
+                  className="object-contain"
                 />
               </motion.button>
 

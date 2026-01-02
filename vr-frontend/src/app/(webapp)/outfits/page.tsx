@@ -11,8 +11,8 @@ import OutfitCard from "../../components/OutfitCard"
 import { ConfirmDialog } from "@/components/ui/dialog"
 import { DashboardSidebar } from "../../components/DashboardSidebar"
 import { useTheme } from "../../contexts/ThemeContext"
-import { GridSelectIcon } from "../../components/icons/GridSelectIcon"
 import OccasionsView, { type OccasionsViewRef } from "../../components/occasions/OccasionsView"
+import Image from "next/image"
 
 interface ClothingItem {
   id: string
@@ -212,16 +212,15 @@ export default function OutfitsPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isMultiSelecting
-                          ? "bg-black dark:bg-white"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
+                      className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={toggleMultiSelect}
                     >
-                      <GridSelectIcon
-                        size={20}
-                        className={isMultiSelecting ? "text-white dark:text-black" : ""}
+                      <Image
+                        src={isMultiSelecting ? "/multiSelect.PNG" : "/multi.PNG"}
+                        alt="Multi-select"
+                        width={24}
+                        height={24}
+                        className="object-contain"
                       />
                     </motion.button>
 
@@ -246,9 +245,9 @@ export default function OutfitsPage() {
                 )}
               </div>
 
-        {/* Delete Toolbar - Slide up from bottom when items selected */}
+        {/* Delete Toolbar - Slide up from bottom when multiselect is active */}
         <AnimatePresence>
-          {isMultiSelecting && selectedOutfitIds.length > 0 && (
+          {isMultiSelecting && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -260,7 +259,13 @@ export default function OutfitsPage() {
                 <span className="text-sm font-medium">
                   {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? "s" : ""} selected
                 </span>
-                <Button variant="outline" size="sm" onClick={() => setShowAddToFolderModal(true)} className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddToFolderModal(true)}
+                  className="gap-2"
+                  disabled={selectedOutfitIds.length === 0}
+                >
                   <Folder className="h-4 w-4" />
                   Add to Folder
                 </Button>
@@ -268,7 +273,7 @@ export default function OutfitsPage() {
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowDeleteDialog(true)}
-                  disabled={isDeleting}
+                  disabled={isDeleting || selectedOutfitIds.length === 0}
                   className="gap-2"
                 >
                   {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

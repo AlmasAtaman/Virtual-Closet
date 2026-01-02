@@ -463,9 +463,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       } else if (onSelectToggle) {
         onSelectToggle(!isSelected)
       }
-    } else {
-      window.location.href = `/outfits/${outfit.id}`
     }
+    // Navigation to detail page removed - no separate outfit detail page needed
   }
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
@@ -481,7 +480,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
   // RENDER OUTFIT DISPLAY - Always use OutfitCanvas for consistency
   const renderOutfitDisplay = () => {
     return (
-      <div className="relative w-[280px] h-[32rem] mx-auto">
+      <div className={`relative w-[280px] h-[32rem] mx-auto ${(isMultiSelecting || selectMode) ? 'pointer-events-none' : ''}`}>
         {allCurrentItems.length > 0 ? (
           // Always use OutfitCanvas component - same as CreateOutfitModal
           <OutfitCanvas
@@ -728,30 +727,17 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       transition={{ duration: 0.2 }}
       className="relative"
     >
-      {/* Multi-select checkbox */}
-      {(isMultiSelecting || selectMode) && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-2 right-2 z-10"
-        >
-          <button
-            onClick={handleCheckboxClick}
-            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-              isSelected
-                ? "bg-blue-600 border-blue-600 text-white shadow-lg"
-                : "bg-white border-border hover:border-accent shadow-md"
-            }`}
-          >
-            {isSelected && <Check className="w-4 h-4" />}
-          </button>
-        </motion.div>
+      {/* Multi-select checkmark overlay - consistent with background selection */}
+      {(isMultiSelecting || selectMode) && isSelected && (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl z-50 pointer-events-none">
+          <Check className="w-12 h-12 text-white" />
+        </div>
       )}
 
       <Card
         className={`cursor-pointer overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
           isSelected
-            ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900 scale-[1.02]"
+            ? "ring-2 ring-black dark:ring-white"
             : "ring-border hover:ring-accent"
         }`}
         onClick={handleCardClick}

@@ -22,15 +22,15 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/VestkoBlack.png",
+        url: "/vestkoLogo.PNG",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/VestkoWhite.png",
+        url: "/vestkoLogoLight.PNG",
         media: "(prefers-color-scheme: dark)",
       },
     ],
-    apple: "/VestkoBlack.png",
+    apple: "/vestkoLogo.PNG",
   },
 };
 

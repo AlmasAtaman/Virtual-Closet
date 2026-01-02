@@ -13,8 +13,8 @@ interface LogoProps {
 
 export function Logo({ width = 120, height = 40, className = "h-10 w-auto", theme = "light" }: LogoProps) {
   const logoSrc = theme === "dark" || theme === "chrome"
-    ? "/VestkoWhite.png"
-    : "/VestkoBlack.png"
+    ? "/vestkoLogoLight.PNG"
+    : "/vestkoLogo.PNG"
 
   return (
     <Image

@@ -694,22 +694,30 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const getCurrentDisplayItems = () => {
     const items: CategorizedOutfitItems = { others: [] }
 
+    // Default positions for each category (Canvas mode) - using center coordinates (x, y as percentages)
+    const DEFAULT_POSITIONS = {
+      top: { x: 50, y: 40, width: 9 },
+      bottom: { x: 50, y: 68, width: 10 },
+      outerwear: { x: 70, y: 35, width: 10 },
+      shoe: { x: 50, y: 80, width: 8 },
+    }
+
     // Use default canvas coordinates for consistency when saving from Display mode
     if (clothingItems.outerwear.length > 0 && displayToggles.outerwear) {
       const item = clothingItems.outerwear[displayIndices.outerwear]
-      items.outerwear = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
+      items.outerwear = { ...item, x: DEFAULT_POSITIONS.outerwear.x, y: DEFAULT_POSITIONS.outerwear.y, width: DEFAULT_POSITIONS.outerwear.width }
     }
     if (clothingItems.tops.length > 0) {
       const item = clothingItems.tops[displayIndices.top]
-      items.top = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
+      items.top = { ...item, x: DEFAULT_POSITIONS.top.x, y: DEFAULT_POSITIONS.top.y, width: DEFAULT_POSITIONS.top.width }
     }
     if (clothingItems.bottoms.length > 0) {
       const item = clothingItems.bottoms[displayIndices.bottom]
-      items.bottom = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
+      items.bottom = { ...item, x: DEFAULT_POSITIONS.bottom.x, y: DEFAULT_POSITIONS.bottom.y, width: DEFAULT_POSITIONS.bottom.width }
     }
     if (clothingItems.shoes.length > 0 && displayToggles.shoes) {
       const item = clothingItems.shoes[displayIndices.shoe]
-      items.shoe = { ...item, x: DEFAULTS.x, y: DEFAULTS.y, width: DEFAULTS.width }
+      items.shoe = { ...item, x: DEFAULT_POSITIONS.shoe.x, y: DEFAULT_POSITIONS.shoe.y, width: DEFAULT_POSITIONS.shoe.width }
     }
 
     return items
@@ -736,14 +744,17 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   }
 
 
-  const createOutfit = async () => {
+  const createOutfit = async (itemsOverride?: CategorizedOutfitItems) => {
+    // Use override items if provided (for Display mode), otherwise use editedCategorizedItems
+    const itemsToCheck = itemsOverride || editedCategorizedItems
+
     // Check if there are any items in editedCategorizedItems OR the old selected items
-    const hasItemsInCanvas = editedCategorizedItems && (
-      editedCategorizedItems.top ||
-      editedCategorizedItems.bottom ||
-      editedCategorizedItems.outerwear ||
-      editedCategorizedItems.shoe ||
-      editedCategorizedItems.others.length > 0
+    const hasItemsInCanvas = itemsToCheck && (
+      itemsToCheck.top ||
+      itemsToCheck.bottom ||
+      itemsToCheck.outerwear ||
+      itemsToCheck.shoe ||
+      itemsToCheck.others.length > 0
     )
 
     const selectedItems = [selectedTop, selectedBottom, selectedOuterwear].filter(Boolean) as ClothingItem[]
@@ -755,12 +766,12 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
     setIsCreating(true)
     try {
-      const itemsToUse = editedCategorizedItems ? [
-        editedCategorizedItems.outerwear,
-        editedCategorizedItems.top,
-        editedCategorizedItems.bottom,
-        editedCategorizedItems.shoe,
-        ...editedCategorizedItems.others
+      const itemsToUse = itemsToCheck ? [
+        itemsToCheck.outerwear,
+        itemsToCheck.top,
+        itemsToCheck.bottom,
+        itemsToCheck.shoe,
+        ...itemsToCheck.others
       ].filter(Boolean) as ClothingItem[] : selectedItems
 
       console.log("[CREATE OUTFIT] Items to use:", itemsToUse)
@@ -886,9 +897,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           setSelectingCategory("outerwear")
                           setShowSelectModal(true)
                         }}
-                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center p-3"
                       >
-                        Outer
+                        <Image
+                          src={editedCategorizedItems?.outerwear ? "/outerwearSelect.PNG" : "/outerwear.PNG"}
+                          alt="Outerwear"
+                          width={50}
+                          height={50}
+                          className="object-contain"
+                        />
                       </button>
                       <button
                         onClick={() => {
@@ -896,9 +913,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           setSelectingCategory("top")
                           setShowSelectModal(true)
                         }}
-                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center p-3"
                       >
-                        Top
+                        <Image
+                          src={editedCategorizedItems?.top ? "/topSelect.PNG" : "/top.PNG"}
+                          alt="Top"
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                        />
                       </button>
                       <button
                         onClick={() => {
@@ -906,9 +929,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           setSelectingCategory("bottom")
                           setShowSelectModal(true)
                         }}
-                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center p-3"
                       >
-                        Bottom
+                        <Image
+                          src={editedCategorizedItems?.bottom ? "/bottomSelect.PNG" : "/bottom.PNG"}
+                          alt="Bottom"
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                        />
                       </button>
                       <button
                         onClick={() => {
@@ -916,9 +945,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           setSelectingCategory("shoe")
                           setShowSelectModal(true)
                         }}
-                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center p-3"
                       >
-                        Shoes
+                        <Image
+                          src={editedCategorizedItems?.shoe ? "/shoeSelect.PNG" : "/shoe.PNG"}
+                          alt="Shoes"
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                        />
                       </button>
                       <button
                         onClick={() => {
@@ -926,9 +961,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           setSelectingCategory("accessory")
                           setShowSelectModal(true)
                         }}
-                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center text-sm font-medium text-foreground"
+                        className="w-16 h-16 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors bg-background flex items-center justify-center p-3"
                       >
-                        Access
+                        <Image
+                          src={editedCategorizedItems?.accessory ? "/accessSelect.PNG" : "/access.PNG"}
+                          alt="Accessories"
+                          width={50}
+                          height={50}
+                          className="object-contain"
+                        />
                       </button>
                     </div>
                   )}
@@ -1738,7 +1779,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                               onClick={() => {
                                 const currentItems = getCurrentDisplayItems()
                                 setEditedCategorizedItems(currentItems)
-                                createOutfit()
+                                createOutfit(currentItems)
                               }}
                               disabled={isCreating || (clothingItems.tops.length === 0 && clothingItems.bottoms.length === 0)}
                               className="w-[420px] bg-foreground text-background hover:bg-foreground/90 font-semibold"

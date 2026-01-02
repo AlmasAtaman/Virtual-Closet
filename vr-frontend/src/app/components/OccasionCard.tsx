@@ -506,25 +506,11 @@ export default function OccasionCard({
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className={`relative ${isEditingThumbnail ? 'z-50' : ''}`}
       >
-        {isMultiSelecting && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className="absolute top-3 left-3 z-20"
-          >
-            <button
-              onClick={handleCheckboxClick}
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                isSelected
-                  ? "bg-blue-600 border-blue-600 text-white shadow-lg"
-                  : "bg-white border-slate-300 hover:border-blue-400 chrome:bg-muted chrome:border-border chrome:hover:border-primary shadow-md"
-              }`}
-            >
-              {isSelected && <Check className="w-4 h-4" />}
-            </button>
-          </motion.div>
+        {/* Multi-select checkmark overlay - consistent with background selection */}
+        {isMultiSelecting && isSelected && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg z-20 pointer-events-none">
+            <Check className="w-12 h-12 text-white" />
+          </div>
         )}
 
         {/* Zoom controls for editing mode */}
@@ -602,7 +588,7 @@ export default function OccasionCard({
           ref={cardRef}
           className={`aspect-[3/4] cursor-pointer overflow-hidden bg-white dark:bg-slate-800 chrome:bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 group ${
             isSelected
-              ? "ring-2 ring-blue-500 shadow-blue-200 dark:shadow-blue-900"
+              ? "ring-2 ring-black dark:ring-white"
               : "ring-slate-200 dark:ring-slate-700 chrome:ring-border hover:ring-slate-300 dark:hover:ring-slate-600 chrome:hover:ring-accent"
           }`}
           onClick={handleCardClick}

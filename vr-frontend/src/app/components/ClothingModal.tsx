@@ -53,10 +53,6 @@ const ClothingModal: React.FC<ClothingModalProps> = ({ isOpen, onCloseAction, cl
         className="bg-gray-800 p-6 rounded-lg max-w-lg w-full relative text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onCloseAction} className="absolute top-3 right-3 text-gray-400 hover:text-gray-200">
-          <X size={20} />
-        </button>
-
         <h2 className="text-xl font-bold mb-4 text-center">{currentItem.name || "Clothing Item"}</h2>
 
         <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden rounded mb-4 flex items-center justify-center">
