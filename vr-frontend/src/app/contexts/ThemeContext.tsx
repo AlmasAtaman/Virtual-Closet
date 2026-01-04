@@ -105,8 +105,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (storedCustomColor) {
           setCustomColor(storedCustomColor)
         }
-      } catch (error) {
-        console.warn("Error initializing theme:", error)
+      } catch {
         // Fallback to defaults
         setThemeState("light")
         setCustomColor(null)
@@ -133,8 +132,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
         setCustomColor(color)
         setStoredCustomColor(color)
-      } catch (error) {
-        console.error("Error applying custom theme:", error)
+      } catch {
       }
     },
     [resolvedTheme],
@@ -187,8 +185,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
       setCustomColor(null)
       removeStoredCustomColor()
-    } catch (error) {
-      console.error("Error resetting custom theme:", error)
+    } catch {
     }
   }, [])
 

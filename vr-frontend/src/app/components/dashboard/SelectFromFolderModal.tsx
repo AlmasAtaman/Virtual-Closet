@@ -51,8 +51,7 @@ export default function SelectFromFolderModal({
 
       const data = await response.json();
       setItems(data.items || []);
-    } catch (error) {
-      console.error("Failed to fetch folder items:", error);
+    } catch {
       setItems([]);
     } finally {
       setLoading(false);

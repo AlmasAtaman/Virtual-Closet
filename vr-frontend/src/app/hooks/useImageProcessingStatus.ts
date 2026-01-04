@@ -53,8 +53,7 @@ export const useImageProcessingStatus = ({
       if (allDone) {
         stopPolling()
       }
-    } catch (error) {
-      console.error('Error fetching processing status:', error)
+    } catch {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemIds, onStatusUpdate])

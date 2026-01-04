@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { X, Folder, Plus, Loader2, Check } from "lucide-react"
+import { Folder, Plus, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -72,8 +72,7 @@ export default function AddToFolderModal({
 
       const data = await response.json()
       setOccasions(data.occasions || [])
-    } catch (error) {
-      console.error("Failed to fetch occasions:", error)
+    } catch {
       setOccasions([])
     } finally {
       setLoading(false)
@@ -110,8 +109,7 @@ export default function AddToFolderModal({
 
       onSuccess()
       onCloseAction()
-    } catch (error) {
-      console.error("Failed to add outfits to folder:", error)
+    } catch {
       alert("Failed to add outfits to folder. Please try again.")
     } finally {
       setAssigning(false)

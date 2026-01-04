@@ -116,8 +116,7 @@ export default function LoginPage(){
                     router.push("/dashboard");
                 }, 2000); // Redirect after 2 seconds
             }
-        } catch (error) {
-            console.error("Login error:", error);
+        } catch {
             setMessage("An unexpected error occurred. Please try again later.");
             setIsSuccess(false);
         } finally {

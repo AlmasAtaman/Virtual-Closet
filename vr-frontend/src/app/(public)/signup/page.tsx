@@ -23,7 +23,6 @@ export default function SignUp(){
 
     // Google OAuth handler - same logic as login page
     const handleGoogleButtonClick = () => {
-        console.log("Google button clicked from signup page");
         setLoading(true);
         setMessage("");
         setIsSuccess(false);
@@ -113,7 +112,6 @@ export default function SignUp(){
             if (res.ok){
                 setMessage(data.message || `Account for ${username} created successfully! Redirecting...`);
                 setIsSuccess(true);
-                console.log(`Registered User ${username}`);
                 setTimeout(() => {
                     router.push("/dashboard");
                 }, 2000);
@@ -121,8 +119,7 @@ export default function SignUp(){
                 setMessage(data.message || "Signup failed. Please try again.");
                 setIsSuccess(false);
             }
-        } catch (error) {
-            console.error("Signup error:", error);
+        } catch {
             setMessage("An unexpected error occurred. Please try again later.");
             setIsSuccess(false);
         } finally {

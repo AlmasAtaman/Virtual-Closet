@@ -31,7 +31,6 @@ export default function AddToFolderDropdown({
 
   // Wrapper to update both local and parent state
   const updateOpenState = (newState: boolean) => {
-    console.log(`[${Date.now()}] updateOpenState called with`, newState);
     if (controlledOpen === undefined) {
       setInternalOpen(newState);
     }
@@ -46,6 +45,7 @@ export default function AddToFolderDropdown({
   const [mounted, setMounted] = useState(false);
   const [buttonPosition, setButtonPosition] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [addedFolderIds, setAddedFolderIds] = useState<Set<string>>(new Set());
 
   // For SSR safety - only render portal on client
   useEffect(() => {
@@ -58,11 +58,6 @@ export default function AddToFolderDropdown({
       fetchFolders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  // Sync with parent state changes (when parent closes dropdown)
-  useEffect(() => {
-    console.log(`[${Date.now()}] AddToFolderDropdown: isOpen =`, isOpen);
   }, [isOpen]);
 
   const updatePosition = () => {
@@ -92,14 +87,23 @@ export default function AddToFolderDropdown({
   useEffect(() => {
     if (!isOpen) return;
 
-    window.addEventListener('scroll', updatePosition, true);
+    const handleScroll = (e: Event) => {
+      // Don't update position if scrolling inside the modal
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-folder-dropdown]')) {
+        return;
+      }
+      updatePosition();
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
     window.addEventListener('resize', updatePosition);
 
     // Initial position update
     updatePosition();
 
     return () => {
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen]);
@@ -113,8 +117,7 @@ export default function AddToFolderDropdown({
       );
       setFolders(response.data.folders || []);
       setRecentlyAddedTo(response.data.recentlyAddedTo || []);
-    } catch (error) {
-      console.error("Error fetching folders:", error);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -131,6 +134,9 @@ export default function AddToFolderDropdown({
         { withCredentials: true }
       );
 
+      // Track that we've added this item to this folder
+      setAddedFolderIds((prev) => new Set([...prev, folderId]));
+
       // Update recently added-to folders
       const addedFolder = folders.find(f => f.id === folderId);
       if (addedFolder) {
@@ -144,13 +150,7 @@ export default function AddToFolderDropdown({
       if (onAddToFolder) {
         onAddToFolder(folderId);
       }
-
-      // Close dropdown after successful add
-      setTimeout(() => {
-        updateOpenState(false);
-      }, 500);
-    } catch (error) {
-      console.error("Error adding item to folder:", error);
+    } catch {
       // Show error feedback
     } finally {
       setAddingToFolder(null);
@@ -180,14 +180,14 @@ export default function AddToFolderDropdown({
       // We pass a synthetic event since we're calling it programmatically
       const syntheticEvent = { stopPropagation: () => { } } as React.MouseEvent;
       handleAddToFolder(newFolder.id, syntheticEvent);
-    } catch (err) {
-      console.error("Error creating folder:", err);
+    } catch {
       // You might want to add error handling state here
     }
   };
 
   const isItemInFolder = (folder: Folder) => {
-    return folder.previewItems.some(item => item.id === clothingItemId);
+    // Check both the folder's previewItems and our local tracking of added folders
+    return folder.previewItems.some(item => item.id === clothingItemId) || addedFolderIds.has(folder.id);
   };
 
   // Filter folders based on search query
@@ -209,7 +209,7 @@ export default function AddToFolderDropdown({
     <>
       <button
         ref={buttonRef}
-        className="p-1 rounded-full hover:scale-110 transition-transform cursor-pointer z-50"
+        className={`p-1 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer relative ${isOpen ? 'z-[10000]' : 'z-50'}`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -258,7 +258,6 @@ export default function AddToFolderDropdown({
           }
 
           const newState = !isOpen;
-          console.log(`[${Date.now()}] BUTTON CLICK: Setting dropdown to`, newState);
           updateOpenState(newState);
         }}
         onMouseDown={(e) => {
@@ -267,11 +266,16 @@ export default function AddToFolderDropdown({
         aria-label="Add to folder"
         type="button"
       >
-        {icon === "plus" ? (
-          <Plus className="text-gray-500 dark:text-gray-300 w-6 h-6" />
-        ) : (
-          <FolderPlus className="text-gray-500 dark:text-gray-300 w-6 h-6" />
-        )}
+        <div
+          className="transition-transform duration-300"
+          style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}
+        >
+          {icon === "plus" ? (
+            <Plus className={`w-6 h-6 ${isOpen ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-300'}`} />
+          ) : (
+            <FolderPlus className={`w-6 h-6 ${isOpen ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-300'}`} />
+          )}
+        </div>
       </button>
 
       {mounted && isOpen && createPortal(
@@ -284,7 +288,6 @@ export default function AddToFolderDropdown({
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[9998] bg-black/20"
               onClick={(e) => {
-                console.log(`[${Date.now()}] BACKDROP CLICK: Closing dropdown`);
                 e.stopPropagation();
                 updateOpenState(false);
               }}
@@ -303,9 +306,15 @@ export default function AddToFolderDropdown({
                 transform: !buttonPosition ? 'translate(-50%, -50%)' : 'none',
                 pointerEvents: 'auto'
               }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
               onPointerDown={(e) => {
                 e.stopPropagation();
                 e.nativeEvent.stopImmediatePropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
               }}
               onWheel={(e) => {
                 e.stopPropagation();
@@ -455,7 +464,7 @@ export default function AddToFolderDropdown({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setIsOpen(false);
+                          updateOpenState(false);
                           setIsCreateModalOpen(true);
                         }}
                         className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

@@ -3,7 +3,7 @@
 import type React from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload, X, ZoomIn, ZoomOut } from "lucide-react"
+import { X, Folder, MoreVertical, Trash2, Edit2, Check, Camera, Upload, ZoomIn, ZoomOut } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -110,8 +110,7 @@ export default function OccasionCard({
       }
 
       onDelete?.(occasion.id)
-    } catch (error) {
-      console.error("Failed to delete occasion:", error)
+    } catch {
       alert("Failed to delete occasion. Please try again.")
     } finally {
       setIsDeleting(false)
@@ -276,7 +275,7 @@ export default function OccasionCard({
             
             const base64 = canvas.toDataURL("image/jpeg", 0.9)
             resolve(base64)
-          } catch (err) {
+          } catch {
             reject(err)
           }
         }
@@ -314,8 +313,7 @@ export default function OccasionCard({
 
       handleCancelDirectEdit()
       onUpdate?.()
-    } catch (error) {
-      console.error("Failed to save thumbnail:", error)
+    } catch {
       alert("Failed to save thumbnail. Please try again.")
     } finally {
       setIsUpdatingThumbnail(false)
@@ -354,8 +352,7 @@ export default function OccasionCard({
       }
 
       onUpdate?.()
-    } catch (error) {
-      console.error("Failed to remove thumbnail:", error)
+    } catch {
       alert("Failed to remove thumbnail. Please try again.")
     } finally {
       setIsUpdatingThumbnail(false)
@@ -394,8 +391,7 @@ export default function OccasionCard({
 
       onUpdate?.()
       setShowRenameDialog(false)
-    } catch (error) {
-      console.error("Failed to rename occasion:", error)
+    } catch {
       alert("Failed to rename occasion. Please try again.")
     } finally {
       setIsRenaming(false)
@@ -609,7 +605,6 @@ export default function OccasionCard({
                     className="object-cover"
                     unoptimized
                     onError={(e) => {
-                      console.error('Failed to load custom thumbnail for', occasion.name)
                       // Fallback to default folder display
                       e.currentTarget.style.display = 'none'
                     }}

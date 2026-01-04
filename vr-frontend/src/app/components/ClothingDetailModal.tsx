@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Heart, Loader2, ShoppingCart, Pencil, Trash2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
 import { ExpandIcon } from "./icons/ExpandIcon"
 import { ClosetIcon } from "./icons/ClosetIcon"
 import { ColorSwatches } from "./icons/ColorSwatches"
@@ -75,11 +75,6 @@ export default function ClothingDetailModal({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isFolderDropdownOpen, setIsFolderDropdownOpen] = useState(false)
 
-  // Log state changes
-  useEffect(() => {
-    console.log(`[${Date.now()}] ClothingDetailModal useEffect: isFolderDropdownOpen changed to`, isFolderDropdownOpen);
-  }, [isFolderDropdownOpen]);
-
   // Helper function to ensure URL has proper protocol
   const ensureProtocol = (url: string) => {
     if (!url) return url
@@ -90,23 +85,16 @@ export default function ClothingDetailModal({
   }
 
   const handleOpenChange = (open: boolean) => {
-    console.log(`[${Date.now()}] === Dialog handleOpenChange START ===`);
-    console.log('Attempting to set open to:', open);
-    console.log('isFolderDropdownOpen:', isFolderDropdownOpen);
-
     // If trying to close the dialog
     if (!open) {
       // Don't close if folder dropdown is open
       if (isFolderDropdownOpen) {
-        console.log(`[${Date.now()}] ✗ BLOCKING CLOSE - folder dropdown is open`);
         return;
       }
-      console.log(`[${Date.now()}] ✓ ALLOWING CLOSE - folder dropdown is closed, calling onClose()`);
     }
 
     // Allow the change
     onClose();
-    console.log(`[${Date.now()}] === Dialog handleOpenChange END ===`);
   };
 
   return (
@@ -114,29 +102,19 @@ export default function ClothingDetailModal({
       <DialogContent
         className="max-w-md w-[420px] p-6 border border-border rounded-lg [&>button.absolute.right-4.top-4]:hidden overflow-visible"
         onPointerDownOutside={(e) => {
-          console.log(`[${Date.now()}] === onPointerDownOutside fired ===`);
-          console.log('isFolderDropdownOpen:', isFolderDropdownOpen);
-
           const target = e.target as HTMLElement;
           const dropdownElement = document.querySelector('[data-folder-dropdown]');
 
-          console.log('Click target:', target);
-          console.log('Dropdown element exists:', !!dropdownElement);
-
           // Check if the click is inside the dropdown content
           if (dropdownElement && dropdownElement.contains(target)) {
-            console.log(`[${Date.now()}] ✓ Click inside dropdown content - allowing it`);
             return;
           }
 
           if (isFolderDropdownOpen) {
-            console.log(`[${Date.now()}] ✗ Dropdown is open, click is outside - closing dropdown`);
             // Close the dropdown
             setIsFolderDropdownOpen(false);
             // Prevent the dialog from closing
             e.preventDefault();
-          } else {
-            console.log(`[${Date.now()}] ✓ Allowing default - dropdown is closed`);
           }
         }}
       >
@@ -156,70 +134,70 @@ export default function ClothingDetailModal({
               className="absolute left-0 top-1/2 -translate-y-1/2 bg-background border-y border-l border-border overflow-hidden h-[480px] rounded-l-lg"
               style={{ originX: 1 }}
             >
-              <div className="p-6 h-full flex flex-col justify-between">
-                <div className="space-y-6">
+              <div className={isEditing ? "p-4 h-full flex flex-col" : "p-6 h-full flex flex-col"}>
+                <div className={isEditing ? "space-y-4" : "space-y-10"}>
                   {/* Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium">Name</Label>
+                  <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                    <Label htmlFor="name" className="text-sm font-medium text-muted-foreground">Name</Label>
                     {isEditing ? (
                       <Input
                         id="name"
-                        placeholder=""
+                        placeholder="Enter name"
                         value={editForm.name || ""}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                         className="h-9 text-sm"
                       />
                     ) : (
-                      <p className="h-9 flex items-center text-sm">{currentItem.name || "-"}</p>
+                      <p className="text-sm font-medium">{currentItem.name || "-"}</p>
                     )}
                   </div>
 
                   {/* Price */}
-                  <div className="space-y-2">
-                    <Label htmlFor="price" className="text-sm font-medium">Price</Label>
+                  <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                    <Label htmlFor="price" className="text-sm font-medium text-muted-foreground">Price</Label>
                     {isEditing ? (
                       <Input
                         id="price"
                         type="text"
-                        placeholder=""
+                        placeholder="Enter price"
                         value={editForm.price || ""}
                         onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
                         className="h-9 text-sm"
                       />
                     ) : (
-                      <p className="h-9 flex items-center text-sm">{currentItem.price ? `$${currentItem.price}` : "-"}</p>
+                      <p className="text-sm font-medium">{currentItem.price ? `$${currentItem.price}` : "-"}</p>
                     )}
                   </div>
 
                   {/* Brand */}
-                  <div className="space-y-2">
-                    <Label htmlFor="brand" className="text-sm font-medium">Brand</Label>
+                  <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                    <Label htmlFor="brand" className="text-sm font-medium text-muted-foreground">Brand</Label>
                     {isEditing ? (
                       <Input
                         id="brand"
-                        placeholder=""
+                        placeholder="Enter brand"
                         value={editForm.brand || ""}
                         onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
                         className="h-9 text-sm"
                       />
                     ) : (
-                      <p className="h-9 flex items-center text-sm">{currentItem.brand || "-"}</p>
+                      <p className="text-sm font-medium capitalize">{currentItem.brand || "No brand"}</p>
                     )}
                   </div>
 
                   {/* Type */}
-                  <div className="space-y-2">
-                    <Label htmlFor="type" className="text-sm font-medium">Type</Label>
+                  <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                    <Label htmlFor="type" className="text-sm font-medium text-muted-foreground">Type</Label>
                     {isEditing ? (
                       <Input
                         id="type"
-                        placeholder=""
+                        placeholder="Enter type"
                         value={editForm.type || ""}
                         onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
-                        className="h-9 text-sm"
+                        className="h-8 text-sm capitalize"
                       />
                     ) : (
-                      <p className="h-9 flex items-center text-sm">{currentItem.type || "-"}</p>
+                      <p className="text-sm font-medium capitalize">{currentItem.type || "-"}</p>
                     )}
                   </div>
                 </div>
@@ -258,52 +236,52 @@ export default function ClothingDetailModal({
               className="absolute right-0 top-1/2 -translate-y-1/2 bg-background border-y border-r border-border overflow-hidden h-[480px] rounded-r-lg"
               style={{ originX: 0 }}
             >
-              <div className="p-6 space-y-3 h-full flex flex-col overflow-hidden">
+              <div className={`${isEditing ? "p-4" : "p-6"} h-full flex flex-col overflow-hidden ${isEditing ? "space-y-4" : "space-y-10"}`}>
                 {/* Source URL */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="sourceUrl" className="text-sm font-medium">Source URL</Label>
+                <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                  <Label htmlFor="sourceUrl" className="text-sm font-medium text-muted-foreground">Source URL</Label>
                   {isEditing ? (
                     <Input
                       id="sourceUrl"
-                      placeholder=""
+                      placeholder="Enter URL"
                       value={editForm.sourceUrl || ""}
                       onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
-                      className="h-8 text-xs"
+                      className="h-8 text-sm"
                     />
                   ) : (
-                    <p className="h-8 flex items-center text-xs truncate">{currentItem.sourceUrl || "-"}</p>
+                    <p className="text-sm font-medium truncate">{currentItem.sourceUrl || "-"}</p>
                   )}
                 </div>
 
                 {/* Season */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="season" className="text-sm font-medium">Season</Label>
+                <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                  <Label htmlFor="season" className="text-sm font-medium text-muted-foreground">Season</Label>
                   {isEditing ? (
                     <Select
                       value={editForm.season || ""}
                       onValueChange={(value: string) => setEditForm({ ...editForm, season: value })}
                     >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="" />
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Select season" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="spring">Spring</SelectItem>
-                        <SelectItem value="summer">Summer</SelectItem>
-                        <SelectItem value="fall">Fall</SelectItem>
-                        <SelectItem value="winter">Winter</SelectItem>
-                        <SelectItem value="all">All Seasons</SelectItem>
+                        <SelectItem value="Spring">Spring</SelectItem>
+                        <SelectItem value="Summer">Summer</SelectItem>
+                        <SelectItem value="Fall">Fall</SelectItem>
+                        <SelectItem value="Winter">Winter</SelectItem>
+                        <SelectItem value="All Season">All Season</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="h-8 flex items-center text-xs capitalize">{currentItem.season || "-"}</p>
+                    <p className="text-sm font-medium">{currentItem.season || "-"}</p>
                   )}
                 </div>
 
                 {/* Color */}
-                <div className="space-y-1.5 flex-1 flex flex-col min-h-0">
-                  <Label className="text-sm font-medium">Color</Label>
+                <div className={isEditing ? "space-y-1.5" : "space-y-3"}>
+                  <Label className="text-sm font-medium text-muted-foreground">Color</Label>
                   {isEditing ? (
-                    <div className="grid grid-cols-2 gap-1.5 overflow-hidden">
+                    <div className="grid grid-cols-2 gap-1.5">
                       {[
                         { name: "Beige", component: ColorSwatches.Beige },
                         { name: "Black", component: ColorSwatches.Black },
@@ -340,17 +318,51 @@ export default function ClothingDetailModal({
                       })}
                     </div>
                   ) : (
-                    <div className="h-8 flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       {currentItem.color ? (
                         <>
                           {(() => {
-                            const ColorComponent = ColorSwatches[currentItem.color as keyof typeof ColorSwatches];
-                            return ColorComponent ? <ColorComponent size={18} /> : null;
+                            // Map database color values to ColorSwatch keys
+                            const colorMapping: Record<string, string> = {
+                              // Blues
+                              'navy': 'Blue',
+                              'light blue': 'Blue',
+                              'dark blue': 'Blue',
+                              'sky blue': 'Blue',
+                              // Blacks/Greys
+                              'charcoal': 'Black',
+                              'gray': 'Grey',
+                              'light gray': 'Grey',
+                              'dark gray': 'Grey',
+                              // Browns
+                              'light brown': 'Brown',
+                              'dark brown': 'Brown',
+                              'camel': 'Tan',
+                              'khaki': 'Tan',
+                              // Reds/Pinks
+                              'burgundy': 'Red',
+                              'maroon': 'Red',
+                              'rose': 'Pink',
+                              // Others
+                              'olive': 'Green',
+                              'cream': 'Beige',
+                              'ivory': 'White',
+                            };
+
+                            const colorLower = currentItem.color.toLowerCase();
+                            const mappedColor = colorMapping[colorLower] || currentItem.color;
+
+                            // Try exact match first, then case-insensitive
+                            const colorKey = Object.keys(ColorSwatches).find(
+                              key => key.toLowerCase() === mappedColor.toLowerCase()
+                            );
+                            const ColorComponent = colorKey ? ColorSwatches[colorKey as keyof typeof ColorSwatches] : null;
+                            return ColorComponent ? <ColorComponent size={24} /> : null;
                           })()}
-                          <span className="text-[10px] font-medium">{currentItem.color}</span>
+                          <span className="text-sm font-medium capitalize">{currentItem.color}</span>
                         </>
                       ) : (
-                        <p className="text-xs">-</p>
+                        <p className="text-sm font-medium">-</p>
                       )}
                     </div>
                   )}
@@ -403,7 +415,7 @@ export default function ClothingDetailModal({
           {/* Main Image Area */}
           <div className="group relative w-full h-[480px] flex items-center justify-center p-8 bg-background rounded-t-lg">
             {/* Plus Icon - Top Left - Only visible on hover */}
-            <div className="absolute top-4 left-4 z-50 pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 scale-90 group-hover:scale-100">
+            <div className={`absolute top-4 left-4 z-50 pointer-events-auto transition-all duration-200 ${isFolderDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'}`}>
               <AddToFolderDropdown
                 clothingItemId={currentItem.id}
                 icon="plus"

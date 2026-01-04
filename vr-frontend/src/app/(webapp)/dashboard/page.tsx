@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Search, X, Folder, FolderOpen } from "lucide-react"
+import { X, Plus, Search, Folder, FolderOpen } from "lucide-react"
 import UploadForm from "../../components/UploadForm"
 import { useRouter, useSearchParams } from "next/navigation"
 import ClothingGallery from "../../components/ClothingGallery"
@@ -15,7 +15,6 @@ interface ClothingGalleryRef {
   addClothingItem: (newItem: ClothingItem) => void;
 }
 import FilterSection, { type FilterAttribute } from "../../components/FilterSection"
-import { Badge } from "@/components/ui/badge"
 import { DashboardSidebar } from "../../components/DashboardSidebar"
 import { useTheme } from "../../contexts/ThemeContext"
 import Image from "next/image"
@@ -73,7 +72,7 @@ export default function Homepage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
 
   const filterAttributes: FilterAttribute[] = useMemo(() => [
-    { key: "type", label: "Type" },
+    { key: "category", label: "Category" },
     { key: "occasion", label: "Occasion" },
     { key: "style", label: "Style" },
     { key: "fit", label: "Fit" },
@@ -144,10 +143,6 @@ export default function Homepage() {
   // Conditional return statements must come AFTER all hooks have been called.
   if (!hasMounted || loading) return null
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
-  }
-
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
       {/* Sidebar */}
@@ -215,8 +210,83 @@ export default function Homepage() {
 
           {/* Category Header with Action Buttons */}
           <div className="flex items-center justify-between mb-6">
-            {/* Left side - empty for folders, title for grid */}
-            <div className="flex-1"></div>
+            {/* Left side - Filter tags display */}
+            <div className="flex-1 flex items-center gap-2 flex-wrap">
+              {displayMode === "grid" && (selectedTags.length > 0 || showFavoritesOnly || priceSort !== "none") && (
+                <>
+                  {/* Active filter tags */}
+                  {showFavoritesOnly && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full flex items-center gap-1.5"
+                    >
+                      <span>Favorites</span>
+                      <button
+                        onClick={() => setShowFavoritesOnly(false)}
+                        className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {priceSort !== "none" && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full flex items-center gap-1.5"
+                    >
+                      <span>{priceSort === "asc" ? "Price: Low to High" : "Price: High to Low"}</span>
+                      <button
+                        onClick={() => setPriceSort("none")}
+                        className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {selectedTags.map((tag) => (
+                    <motion.div
+                      key={tag}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full flex items-center gap-1.5 capitalize"
+                    >
+                      <span>{tag}</span>
+                      <button
+                        onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
+                        className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </motion.div>
+                  ))}
+
+                  {/* Clear All button */}
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setSelectedTags([]);
+                      setShowFavoritesOnly(false);
+                      setPriceSort("none");
+                      setPriceRange([null, null]);
+                    }}
+                    className="px-3 py-1.5 bg-black text-white text-xs rounded-full hover:bg-gray-800 transition-colors"
+                  >
+                    Clear All
+                  </motion.button>
+                </>
+              )}
+            </div>
 
             {/* Right side - Action Buttons */}
             <div className={`flex items-center gap-3 relative ${displayMode === "folders" ? "mr-8" : ""}`}>
@@ -311,6 +381,8 @@ export default function Homepage() {
                       setPriceSort={setPriceSort}
                       priceRange={priceRange}
                       setPriceRange={setPriceRange}
+                      showFavoritesOnly={showFavoritesOnly}
+                      setShowFavoritesOnly={setShowFavoritesOnly}
                     />
                   </div>
 
@@ -354,60 +426,6 @@ export default function Homepage() {
               transition={{ duration: 0.3 }}
               className="flex flex-col flex-1 min-h-0"
             >
-              {displayMode === "grid" && (selectedTags.length > 0 || priceSort !== "none") && (
-                <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
-                  {/* Always show priceSort badge first if active */}
-                  {priceSort !== "none" && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      transition={{ delay: 0.05 }}
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                        onClick={() => setPriceSort("none")}
-                      >
-                        <span className="mr-1">{priceSort === "asc" ? "Price: Low → High" : "Price: High → Low"}</span>
-                        <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                      </Badge>
-                    </motion.div>
-                  )}
-
-                  {/* Then show selected tags */}
-                  {selectedTags.map((tag, index) => (
-                    <motion.div
-                      key={tag}
-                      initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      transition={{ delay: (index + 1) * 0.05 }}
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="group cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 pr-1"
-                        onClick={() => toggleTag(tag)}
-                      >
-                        <span className="mr-1">{tag}</span>
-                        <X className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                      </Badge>
-                    </motion.div>
-                  ))}
-
-                  {/* Clear all */}
-                  {(selectedTags.length > 0 || priceSort !== "none") && (
-                    <button
-                      onClick={() => {
-                        setSelectedTags([])
-                        setPriceSort("none")
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary underline ml-2"
-                    >
-                      Clear all
-                    </button>
-                  )}
-                </div>
-              )}
-
               {displayMode === "grid" ? (
                 <ClothingGallery
                   ref={galleryRef}

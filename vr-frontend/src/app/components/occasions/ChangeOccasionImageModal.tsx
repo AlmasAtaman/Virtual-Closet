@@ -62,9 +62,9 @@ export default function ChangeOccasionImageModal({
   isOpen,
   onClose,
   onChangeImage,
-  occasionName,
+  // occasionName,
   occasionId,
-  currentImageLayout,
+  // currentImageLayout,
   currentPreviewImages,
 }: ChangeOccasionImageModalProps) {
   // Always use single image layout
@@ -74,10 +74,10 @@ export default function ChangeOccasionImageModal({
 
   const [isLoading, setIsLoading] = useState(false);
   const [hoveredRect, setHoveredRect] = useState(false);
-  const [editingRect, setEditingRect] = useState(false);
+  const [/* editingRect */, setEditingRect] = useState(false);
   const [rectangleImages, setRectangleImages] = useState<RectangleImage[]>(initialImages);
   const [showSelectFromOccasionModal, setShowSelectFromOccasionModal] = useState(false);
-  const [uploadingRect, setUploadingRect] = useState(false);
+  const [, setUploadingRect] = useState(false);
 
   // Upload editing states
   const [isEditingUpload, setIsEditingUpload] = useState(false);
@@ -135,8 +135,7 @@ export default function ChangeOccasionImageModal({
             : img
         ));
       }
-    } catch (error) {
-      console.error("Failed to fetch outfit for preview:", error);
+    } catch {
     }
   };
 
@@ -167,8 +166,7 @@ export default function ChangeOccasionImageModal({
           }]);
         }
       }
-    } catch (error) {
-      console.error("Failed to fetch default outfit for preview:", error);
+    } catch {
     }
   };
 
@@ -181,8 +179,7 @@ export default function ChangeOccasionImageModal({
       // Always use one-picture layout
       await onChangeImage("one-picture", rectangleImages);
       onClose();
-    } catch (err) {
-      console.error("Failed to change occasion image:", err);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -429,8 +426,7 @@ export default function ChangeOccasionImageModal({
       setEditingRect(false);
       setUploadingRect(false);
       setEditImageDimensions({ width: 0, height: 0 });
-    } catch (error) {
-      console.error('Error saving upload:', error);
+    } catch {
       alert('Failed to save image. Please try again.');
     }
   };

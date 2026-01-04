@@ -114,8 +114,7 @@ export default function SettingsPage() {
         setEmailMessage(data.message || "Failed to update email.")
         setEmailSuccess(false)
       }
-    } catch (error) {
-      console.error("Change email error:", error)
+    } catch {
       setEmailMessage("An unexpected error occurred. Please try again.")
       setEmailSuccess(false)
     } finally {
@@ -167,8 +166,7 @@ export default function SettingsPage() {
         setPasswordMessage(data.message || "Failed to update password.")
         setPasswordSuccess(false)
       }
-    } catch (error) {
-      console.error("Change password error:", error)
+    } catch {
       setPasswordMessage("An unexpected error occurred. Please try again.")
       setPasswordSuccess(false)
     } finally {
@@ -202,8 +200,7 @@ export default function SettingsPage() {
         setDeleteMessage(data.message || "Failed to delete account.")
         setDeleteLoading(false)
       }
-    } catch (error) {
-      console.error("Delete account error:", error)
+    } catch {
       setDeleteMessage("An unexpected error occurred. Please try again.")
       setDeleteLoading(false)
     }

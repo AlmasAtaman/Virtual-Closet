@@ -28,8 +28,7 @@ export function RestrictedThemeProvider({ children }: { children: React.ReactNod
         if (stored && ["light", "dark", "system"].includes(stored)) {
           setThemeState(stored)
         }
-      } catch (error) {
-        console.warn("Error initializing public theme:", error)
+      } catch {
       } finally {
         setIsLoading(false)
       }
@@ -65,8 +64,7 @@ if (publicRoot) {
       // Store theme preference
       try {
         localStorage.setItem("vrc-public-theme", theme)
-      } catch (error) {
-        console.warn("Error storing public theme:", error)
+      } catch {
       }
     }
 

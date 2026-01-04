@@ -74,8 +74,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
 
       const data = await response.json()
       setOutfits(data.outfits || [])
-    } catch (error) {
-      console.error("Failed to fetch outfits:", error)
+    } catch {
       setOutfits([])
     } finally {
       setLoading(false)
@@ -109,8 +108,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
 
       onOccasionCreated()
       handleCloseModal()
-    } catch (error) {
-      console.error("Failed to create occasion:", error)
+    } catch {
       alert("Failed to create occasion. Please try again.")
     } finally {
       setIsCreating(false)

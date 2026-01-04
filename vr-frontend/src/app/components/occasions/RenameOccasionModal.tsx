@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { X } from "lucide-react";
+;
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -41,8 +41,7 @@ export default function RenameOccasionModal({
     try {
       await onRename(name.trim());
       onClose();
-    } catch (err) {
-      console.error("Failed to rename occasion:", err);
+    } catch {
     } finally {
       setIsLoading(false);
     }

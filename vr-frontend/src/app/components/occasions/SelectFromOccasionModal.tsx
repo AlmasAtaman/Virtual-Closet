@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Loader2, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+// import { Card, CardContent } from "@/components/ui/card";
 import OutfitCard from "../OutfitCard";
 
 interface ClothingItem {
@@ -75,8 +75,7 @@ export default function SelectFromOccasionModal({
 
       const data = await response.json();
       setOutfits(data.outfits || []);
-    } catch (error) {
-      console.error("Failed to fetch occasion outfits:", error);
+    } catch {
       setOutfits([]);
     } finally {
       setLoading(false);

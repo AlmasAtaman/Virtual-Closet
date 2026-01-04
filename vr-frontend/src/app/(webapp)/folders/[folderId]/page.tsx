@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
-import { ArrowLeft, Plus, Search, X } from "lucide-react";
+import { X, ArrowLeft, Plus, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ClothingCard from "@/app/components/ClothingCard";
 import ClothingDetailModal from "@/app/components/ClothingDetailModal";
@@ -74,8 +74,7 @@ export default function FolderDetailPage() {
         `/api/folders/${folderId}`
       );
       setFolder(response.data.folder);
-    } catch (error) {
-      console.error("Error fetching folder:", error);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -190,7 +189,7 @@ export default function FolderDetailPage() {
 
 
   // Handle clothing item click
-  const handleItemClick = (item: ClothingItem, rect: DOMRect) => {
+  const handleItemClick = (item: ClothingItem) => {
     const index = folder?.items.findIndex(i => i.id === item.id) ?? -1;
     setSelectedItem(item);
     setSelectedIndex(index);
@@ -264,11 +263,8 @@ export default function FolderDetailPage() {
             await createAuthenticatedAxios().delete(
               `/api/folders/${folderId}/items/${itemId}`
             );
-          } catch (error: any) {
+          } catch {
             // Silently ignore 404 errors (item already removed)
-            if (error?.response?.status !== 404) {
-              console.error(`Error removing item ${itemId}:`, error);
-            }
           }
         });
       }
@@ -301,7 +297,7 @@ export default function FolderDetailPage() {
       await createAuthenticatedAxios().patch(`/api/images/${id}/favorite`, {
         isFavorite,
       });
-    } catch (err) {
+    } catch {
       // Revert on error
       setFolder((prev) => {
         if (!prev) return prev;
@@ -565,8 +561,7 @@ export default function FolderDetailPage() {
 
                       // Refresh folder
                       await fetchFolder();
-                    } catch (error) {
-                      console.error("Error removing items from folder:", error);
+                    } catch {
                     }
                   }}
                   className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors border border-red-200 dark:border-red-800"

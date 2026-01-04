@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Shirt, Check, Settings, X } from "lucide-react"
+import { X, Shirt, Check, Settings } from "lucide-react"
 import OutfitCanvas from "./OutfitCanvas"
 
 interface ClothingItem {
@@ -467,15 +467,15 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
     // Navigation to detail page removed - no separate outfit detail page needed
   }
 
-  const handleCheckboxClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (onToggleSelect) {
-      onToggleSelect(outfit.id)
-    } else if (onSelectToggle) {
-      onSelectToggle(!isSelected)
-    }
-  }
+  // const handleCheckboxClick = (e: React.MouseEvent) => {
+  //   e.preventDefault()
+  //   e.stopPropagation()
+  //   if (onToggleSelect) {
+  //     onToggleSelect(outfit.id)
+  //   } else if (onSelectToggle) {
+  //     onSelectToggle(!isSelected)
+  //   }
+  // }
 
   // RENDER OUTFIT DISPLAY - Always use OutfitCanvas for consistency
   const renderOutfitDisplay = () => {

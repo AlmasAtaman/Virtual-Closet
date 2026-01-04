@@ -80,7 +80,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [mode, setMode] = useState<"canvas" | "display">("canvas")
   const [displayIndices, setDisplayIndices] = useState({ top: 0, bottom: 0, outerwear: 0, shoe: 0 })
   const [displayToggles, setDisplayToggles] = useState({ shoes: true, outerwear: true })
-  const [diceRolling, setDiceRolling] = useState(false)
   const [currentDiceFace, setCurrentDiceFace] = useState(5)
 
   // Drag state
@@ -135,8 +134,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       }
 
       setClothingItems(categorizedItems)
-    } catch (error) {
-      console.error("Error fetching clothing items:", error)
+    } catch {
       setClothingItems({ tops: [], bottoms: [], outerwear: [], shoes: [], allItems: [] })
     } finally {
       setLoadingClothing(false)
@@ -281,7 +279,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -409,7 +407,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
       setEditedCategorizedItems(updatedItems)
     },
-    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems],
+    [isDragging, draggedItemId, editedCategorizedItems, setEditedCategorizedItems, DEFAULTS.width],
   )
 
   const handleTouchEnd = useCallback(() => {
@@ -774,8 +772,6 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         ...itemsToCheck.others
       ].filter(Boolean) as ClothingItem[] : selectedItems
 
-      console.log("[CREATE OUTFIT] Items to use:", itemsToUse)
-
       const clothingData = itemsToUse.map((item) => ({
         clothingId: item.id,
         x: item.x ?? 50,
@@ -784,25 +780,16 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         aspectRatio: item.aspectRatio ?? 1.25,
       }))
 
-      console.log("[CREATE OUTFIT] Clothing data to send:", clothingData)
-
       const axios = createAuthenticatedAxios()
-      const response = await axios.post("/api/outfits", {
+      await axios.post("/api/outfits", {
         clothingItems: clothingData,
         name: outfitName || null,
         outerwearOnTop: outerwearOnTop, // Include layer order preference
       })
 
-      console.log("[CREATE OUTFIT] Success! Response:", response.data)
-
       onOutfitCreated()
       handleCloseModal()
-    } catch (error) {
-      console.error("[CREATE OUTFIT] Error creating outfit:", error)
-      if (axios.isAxiosError(error)) {
-        console.error("[CREATE OUTFIT] Response data:", error.response?.data)
-        console.error("[CREATE OUTFIT] Response status:", error.response?.status)
-      }
+    } catch {
       alert("Failed to create outfit")
     } finally {
       setIsCreating(false)

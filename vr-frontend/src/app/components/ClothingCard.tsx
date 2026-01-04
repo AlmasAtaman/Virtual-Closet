@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
@@ -40,6 +41,8 @@ export default function ClothingCard({
   isPendingRemoval = false,
   onTogglePendingRemoval,
 }: ClothingCardProps) {
+  const [isFolderDropdownOpen, setIsFolderDropdownOpen] = useState(false);
+
   // Helper function to ensure URL has proper protocol
   const ensureProtocol = (url: string) => {
     if (!url) return url
@@ -124,8 +127,12 @@ export default function ClothingCard({
 
           {/* Top Left - Add to Folder / Saved button */}
           {!isMultiSelecting && !showAsSaved && (
-            <div className="absolute top-2 left-2 z-50 pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 scale-90 group-hover:scale-100">
-              <AddToFolderDropdown clothingItemId={item.id} icon="plus" />
+            <div className={`absolute top-2 left-2 z-50 pointer-events-auto transition-all duration-200 ${isFolderDropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'}`}>
+              <AddToFolderDropdown
+                clothingItemId={item.id}
+                icon="plus"
+                onOpenChange={setIsFolderDropdownOpen}
+              />
             </div>
           )}
 

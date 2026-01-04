@@ -64,11 +64,6 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
 
   // Debug logging to see what URLs we're getting
   if (displayItems.some(item => item === null || item?.url === '')) {
-    console.log(`Folder "${folder.name}" has empty/null items:`, {
-      displayItems,
-      previewImages: folder.previewImages,
-      previewItems: folder.previewItems
-    });
   }
 
   // Close menu when clicking outside

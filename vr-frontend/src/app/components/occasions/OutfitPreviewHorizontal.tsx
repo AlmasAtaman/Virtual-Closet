@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+// import Image from "next/image";
 
 interface ClothingItem {
   id: string;
@@ -161,8 +161,7 @@ export default function OutfitPreviewHorizontal({
         }
 
         setIsRendering(false);
-      } catch (error) {
-        console.error("Error rendering outfit:", error);
+      } catch {
         setIsRendering(false);
       }
     };

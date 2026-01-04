@@ -1,0 +1,210 @@
+
+> vr-frontend@0.1.0 build
+> next build
+
+   ▲ Next.js 15.3.1
+   - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 2000ms
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./src/app/(public)/auth/google/callback/page.tsx
+74:22  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(public)/forgot-password/page.tsx
+38:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(public)/login/page.tsx
+119:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(public)/reset-password/page.tsx
+79:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(public)/signup/page.tsx
+122:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(webapp)/folders/[folderId]/page.tsx
+77:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+87:6  Warning: React Hook useEffect has a missing dependency: 'fetchFolder'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+260:61  Warning: The ref value 'pendingRemovalsRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'pendingRemovalsRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+266:20  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+564:30  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(webapp)/occasions/[occasionId]/page.tsx
+78:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+151:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(webapp)/outfits/page.tsx
+93:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+145:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(webapp)/settings/page.tsx
+117:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+169:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+203:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/auth/[...nextauth]/route.ts
+67:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/AddToFolderDropdown.tsx
+115:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+150:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+180:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/AddToFolderModal.tsx
+5:10  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+112:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/ClothingDetailModal.tsx
+5:97  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/ClothingGallery.tsx
+7:10  Error: 'Trash2' is defined but never used.  @typescript-eslint/no-unused-vars
+7:18  Error: 'MoveRight' is defined but never used.  @typescript-eslint/no-unused-vars
+100:12  Error: 'outfitsUsingSingleItem' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/ClothingModal.tsx
+5:37  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/CreateOccasionModal.tsx
+111:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/CreateOutfitModal.tsx
+792:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/CustomCheckbox.tsx
+12:3  Error: 'onCheckedChange' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/dashboard/AddItemsToFolderModal.tsx
+66:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+109:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/dashboard/ChangeFolderImageModal.tsx
+25:26  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:3  Error: 'folderName' is defined but never used.  @typescript-eslint/no-unused-vars
+56:10  Error: 'uploadingRect' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+57:10  Error: 'uploadPreview' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+101:6  Warning: React Hook useEffect has missing dependencies: 'fetchDefaultImagesForPreview' and 'folderId'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+167:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+443:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+494:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/components/dashboard/CreateFolderModal.tsx
+6:10  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+43:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/dashboard/FoldersView.tsx
+6:10  Error: 'Plus' is defined but never used.  @typescript-eslint/no-unused-vars
+23:69  Error: 'viewMode' is defined but never used.  @typescript-eslint/no-unused-vars
+55:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+76:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+103:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+113:73  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+128:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+151:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+197:25  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+197:32  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/app/components/dashboard/RenameFolderModal.tsx
+6:10  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+48:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/dashboard/SelectFromFolderModal.tsx
+39:6  Warning: React Hook useEffect has a missing dependency: 'fetchFolderItems'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+107:34  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/components/FilterSection.tsx
+71:3  Error: 'clothingItems' is defined but never used.  @typescript-eslint/no-unused-vars
+74:3  Error: 'filterAttributes' is defined but never used.  @typescript-eslint/no-unused-vars
+75:3  Error: 'uniqueAttributeValues' is defined but never used.  @typescript-eslint/no-unused-vars
+79:3  Error: 'setPriceRange' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/LogoutButton.tsx
+14:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/OccasionCard.tsx
+113:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+316:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+355:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+394:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+431:9  Error: 'handleCheckboxClick' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/OccasionOutfits.tsx
+75:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+144:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/occasions/AddOutfitsToOccasionModal.tsx
+91:11  Error: 'isInOccasion' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+154:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/occasions/ChangeOccasionImageModal.tsx
+58:26  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:3  Error: 'occasionName' is defined but never used.  @typescript-eslint/no-unused-vars
+67:3  Error: 'currentImageLayout' is defined but never used.  @typescript-eslint/no-unused-vars
+77:10  Error: 'editingRect' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+80:10  Error: 'uploadingRect' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+115:6  Warning: React Hook useEffect has missing dependencies: 'fetchDefaultOutfitForPreview' and 'fetchOutfitForPreview'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+182:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+604:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/components/occasions/CreateOccasionModal.tsx
+6:10  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+43:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/occasions/OccasionsView.tsx
+42:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+54:52  Error: The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.  @typescript-eslint/no-empty-object-type
+86:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+107:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+134:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+144:73  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+159:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+182:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+228:25  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+228:27  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/app/components/occasions/OutfitPreviewHorizontal.tsx
+4:8  Error: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+164:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/occasions/RenameOccasionModal.tsx
+6:10  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+44:14  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/occasions/SelectFromOccasionModal.tsx
+7:10  Error: 'Card' is defined but never used.  @typescript-eslint/no-unused-vars
+7:16  Error: 'CardContent' is defined but never used.  @typescript-eslint/no-unused-vars
+63:6  Warning: React Hook useEffect has a missing dependency: 'fetchOccasionOutfits'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+132:36  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/components/OutfitCard.tsx
+128:9  Error: 'dragOffsetRef' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+300:5  Warning: React Hook useCallback has a missing dependency: 'DEFAULTS.width'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+403:5  Warning: React Hook useCallback has a missing dependency: 'DEFAULTS.width'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+470:9  Error: 'handleCheckboxClick' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/components/OutfitDetailsStep.tsx
+100:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/contexts/RestrictedThemeContext.tsx
+31:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+67:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/contexts/ThemeContext.tsx
+108:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+135:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+188:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/hooks/useImageProcessingStatus.ts
+56:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/types/clothing.ts
+70:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

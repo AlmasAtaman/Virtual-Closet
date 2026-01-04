@@ -71,8 +71,7 @@ export default function GoogleCallbackPage() {
                 setIsError(false);
                 setTimeout(() => router.push('/dashboard'), 2000);
 
-            } catch (error) {
-                console.error("Google callback error:", error);
+            } catch {
                 setMessage("An unexpected error occurred. Please try again.");
                 setIsError(true);
                 setTimeout(() => router.push('/login'), 3000);

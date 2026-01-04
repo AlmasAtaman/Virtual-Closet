@@ -97,8 +97,7 @@ export default function OutfitDetailsModal({
 
       onComplete()
       onClose() // Close the modal on successful save
-    } catch (error) {
-      console.error("Error saving outfit details:", error)
+    } catch {
       // Still complete the flow even if saving fails
       onComplete()
       onClose() // Close the modal even if saving fails

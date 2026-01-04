@@ -43,7 +43,6 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
 
     const handleDelete = async () => {
         if (!item || !outfit) { // Double check item and outfit are available
-            console.error("Cannot remove item from outfit: Item or outfit is missing.");
             return;
         }
 
@@ -65,7 +64,6 @@ const ClothingItemDetailModal: React.FC<ClothingItemDetailModalProps> = ({
 
             } catch (error: unknown) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-                console.error('Error removing item from outfit:', error);
                 alert(`Error removing item from outfit: ${errorMessage}`);
             }
         }

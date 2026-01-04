@@ -52,8 +52,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
         { withCredentials: true }
       );
       setFolders(response.data.folders || []);
-    } catch (err) {
-      console.error("Error fetching folders:", err);
+    } catch {
       setError("Failed to load folders");
     } finally {
       setIsLoading(false);
@@ -74,8 +73,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
       // Navigate to the newly created folder with query param to open modal
       const newFolder = response.data.folder;
       router.push(`/folders/${newFolder.id}?openAddModal=true`);
-    } catch (err) {
-      console.error("Error creating folder:", err);
+    } catch {
       alert("Failed to create folder");
     }
   };
@@ -102,8 +100,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
 
       // Re-fetch folders to maintain consistent sort order
       await fetchFolders();
-    } catch (err) {
-      console.error("Error renaming folder:", err);
+    } catch {
       alert("Failed to rename folder");
     }
   };
@@ -128,8 +125,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
 
       // Re-fetch folders to maintain consistent sort order
       await fetchFolders();
-    } catch (err) {
-      console.error("Error changing folder image:", err);
+    } catch {
       alert("Failed to change folder image");
     }
   };
@@ -152,8 +148,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
       setFolders((prev) => prev.filter((f) => f.id !== selectedFolder.id));
       setIsDeleteDialogOpen(false);
       setSelectedFolder(null);
-    } catch (err) {
-      console.error("Error deleting folder:", err);
+    } catch {
       alert("Failed to delete folder");
     }
   };

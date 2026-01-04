@@ -35,8 +35,7 @@ export default function ForgotPasswordPage() {
                 setIsSuccess(true);
                 setEmail(""); // Clear the form on success
             }
-        } catch (error) {
-            console.error("Forgot password error:", error);
+        } catch {
             setMessage("An unexpected error occurred. Please try again later.");
             setIsSuccess(false);
         } finally {

@@ -199,7 +199,6 @@ const ClothingGallery = forwardRef(
         }
       } catch (err: unknown) {
         const axiosError = err as AxiosError;
-        console.error("Error fetching images:", axiosError);
         // If 401, might need to redirect to login
         if (axiosError.response?.status === 401) {
         }
@@ -218,8 +217,7 @@ const ClothingGallery = forwardRef(
         setSelectedItemIds((prev) => prev.filter((id) => id !== key));
         setSelectedItem(null);
         setSingleDeleteKey(null);
-      } catch (err) {
-        console.error("Error deleting image:", err);
+      } catch {
       } finally {
         setIsDeleting(false);
       }
@@ -269,8 +267,7 @@ const ClothingGallery = forwardRef(
         setSelectedItem(updated);
         setClothingItems((prev) => prev.map((item) => (item.key === updated.key ? updated : item)));
         setIsEditing(false);
-      } catch (err) {
-        console.error("Failed to update clothing item:", err);
+      } catch {
         alert("Failed to save changes.");
       }
     };
@@ -291,8 +288,7 @@ const ClothingGallery = forwardRef(
 
         // Close the modal
         setSelectedItem(null);
-      } catch (err) {
-        console.error("Error moving item:", err);
+      } catch {
         const destination = item.mode === "closet" ? "wishlist" : "closet";
         alert(`Failed to move item to ${destination}`);
       } finally {
@@ -317,8 +313,7 @@ const ClothingGallery = forwardRef(
         if (selectedItem?.id === id) {
           setSelectedItem((prev) => prev ? { ...prev, processingStatus: "pending" as const, processingError: undefined } : null);
         }
-      } catch (err) {
-        console.error("Error retrying processing:", err);
+      } catch {
         alert("Failed to retry processing. Please try uploading the item again.");
       }
     };
@@ -360,8 +355,7 @@ const ClothingGallery = forwardRef(
         setClothingItems((prev) => prev.filter((item) => !selectedItemIds.includes(item.id)));
         setSelectedItemIds([]);
         setIsMultiSelecting(false); // Exit multi-select mode after deletion
-      } catch (err) {
-        console.error("Error deleting selected items:", err);
+      } catch {
         alert("Failed to delete selected items.");
       } finally {
         setIsDeleting(false);
@@ -394,8 +388,7 @@ const ClothingGallery = forwardRef(
         setClothingItems((prev) => prev.filter((item) => !selectedItemIds.includes(item.id)));
         setSelectedItemIds([]);
         setIsMultiSelecting(false); // Exit multi-select mode after moving
-      } catch (err) {
-        console.error("Error moving selected items to closet:", err);
+      } catch {
         alert("Failed to move selected items to closet.");
       } finally {
         setIsMoving(false);
@@ -427,17 +420,38 @@ const ClothingGallery = forwardRef(
 
     const searchResults = searchQuery ? fuse.search(searchQuery).map((result) => result.item) : baseItems;
 
+    // Define which tags belong to which filter category
+    const CLOTHING_TYPES = ["tops", "bottoms", "dresses", "outerwear", "shoes", "accessories", "bags", "jumpsuits", "underwear"];
+    const COLOR_OPTIONS = ["beige", "black", "blue", "brown", "green", "grey", "orange", "pink", "purple", "red", "silver", "tan", "white", "yellow"];
+    const SEASONS = ["spring", "summer", "fall", "winter"];
+
     const filteredItems = searchResults
       .filter((item) => {
         // Group selected tags by their attribute type
         const selectedTagsByCategory: Record<string, string[]> = {};
         selectedTags.forEach((tag) => {
-          const attribute = filterAttributes.find((attr) => uniqueAttributeValues[attr.key]?.includes(tag));
-          if (attribute) {
-            if (!selectedTagsByCategory[attribute.key]) {
-              selectedTagsByCategory[attribute.key] = [];
+          // Determine which category this tag belongs to
+          let categoryKey: string | null = null;
+
+          if (CLOTHING_TYPES.includes(tag)) {
+            categoryKey = "category";
+          } else if (COLOR_OPTIONS.includes(tag)) {
+            categoryKey = "color";
+          } else if (SEASONS.includes(tag)) {
+            categoryKey = "season";
+          } else {
+            // Fallback: try to find in uniqueAttributeValues
+            const attribute = filterAttributes.find((attr) => uniqueAttributeValues[attr.key]?.includes(tag));
+            if (attribute) {
+              categoryKey = attribute.key;
             }
-            selectedTagsByCategory[attribute.key].push(tag);
+          }
+
+          if (categoryKey) {
+            if (!selectedTagsByCategory[categoryKey]) {
+              selectedTagsByCategory[categoryKey] = [];
+            }
+            selectedTagsByCategory[categoryKey].push(tag);
           }
         });
 
@@ -453,9 +467,44 @@ const ClothingGallery = forwardRef(
               if (!itemTags.some((tag) => selectedValuesInThisCategory.includes(tag))) {
                 return false; // Item doesn't have any of the selected tags
               }
+            } else if (attributeKey === "color") {
+              // Special handling for color - partial matching
+              const itemColor = typeof itemValueForCategory === 'string' ? itemValueForCategory.toLowerCase() : '';
+              if (!itemValueForCategory) return false;
+
+              // Check if any selected color is contained in the item's color, or vice versa
+              const hasMatch = selectedValuesInThisCategory.some((val) => {
+                const selectedColor = val.toLowerCase();
+                return itemColor.includes(selectedColor) || selectedColor.includes(itemColor);
+              });
+
+              if (!hasMatch) return false;
+            } else if (attributeKey === "season") {
+              // Special handling for season - "All Season" matches all season filters
+              const itemSeason = typeof itemValueForCategory === 'string' ? itemValueForCategory.toLowerCase() : '';
+              if (!itemValueForCategory) return false;
+
+              // If item is "All Season", it matches any season filter
+              if (itemSeason.includes('all')) {
+                // All Season items always match
+                return true;
+              }
+
+              // Otherwise do exact matching
+              const hasMatch = selectedValuesInThisCategory.some((val) => val.toLowerCase() === itemSeason);
+              if (!hasMatch) return false;
+            } else if (attributeKey === "category") {
+              // Special handling for category - match against the category field
+              const itemCategory = typeof itemValueForCategory === 'string' ? itemValueForCategory.toLowerCase() : '';
+              if (!itemValueForCategory) return false;
+
+              // Check if any selected category matches
+              const hasMatch = selectedValuesInThisCategory.some((val) => val.toLowerCase() === itemCategory);
+              if (!hasMatch) return false;
             } else {
-              // Regular string field matching
-              if (!itemValueForCategory || !selectedValuesInThisCategory.some((val) => val === itemValueForCategory)) {
+              // Regular string field matching (case-insensitive)
+              const itemValue = typeof itemValueForCategory === 'string' ? itemValueForCategory.toLowerCase() : '';
+              if (!itemValueForCategory || !selectedValuesInThisCategory.some((val) => val.toLowerCase() === itemValue)) {
                 return false; // Item does not match any selected tag in this category
               }
             }
@@ -521,7 +570,7 @@ const ClothingGallery = forwardRef(
           { isFavorite }
         );
         // No need to refetch, UI already updated
-      } catch (err) {
+      } catch {
         // Revert UI if error
         setClothingItems(prev =>
           prev.map(item =>
@@ -531,7 +580,6 @@ const ClothingGallery = forwardRef(
         setSelectedItem(prev =>
           prev && prev.id === id ? { ...prev, isFavorite: !isFavorite } : prev
         );
-        console.error("Failed to toggle favorite:", err);
       }
     };
 

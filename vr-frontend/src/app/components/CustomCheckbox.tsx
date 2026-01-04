@@ -9,7 +9,7 @@ interface CustomCheckboxProps {
 
 export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
   checked,
-  onCheckedChange,
+  // onCheckedChange,
   className = '',
   style = {},
 }) => {

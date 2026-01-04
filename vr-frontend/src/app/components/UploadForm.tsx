@@ -4,7 +4,7 @@ import type React from "react"
 import Image from "next/image"
 import { useState, useCallback, useRef, useEffect } from "react"
 import axios from "axios"
-import { Upload, Link, X, Check, Zap, Shield, UploadCloud, ShoppingCart } from "lucide-react"
+import { X, Upload, Link, Check, Zap, Shield, UploadCloud, ShoppingCart } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ClosetIcon } from "./icons/ClosetIcon"
 import { ColorSwatches } from "./icons/ColorSwatches"
@@ -247,8 +247,7 @@ export default function UploadForm({
         size: clothingData?.size ?? prev.size,
         notes: "",
       }))
-    } catch (error) {
-      console.error("Auto-fill failed:", error)
+    } catch {
       alert("Auto-fill failed.")
     } finally {
       setIsAutoFilling(false)
@@ -299,7 +298,6 @@ export default function UploadForm({
       setTimeout(() => setUploadProgress(0), 1000);
       setQuickMetadataFetched(true);
     } catch (error: unknown) {
-      console.error("Gemini metadata fetch failed:", error);
 
       // Check the error type from backend response
       const axiosError = error as { response?: { status?: number; data?: { _errorType?: string; error?: string } } };
@@ -375,8 +373,7 @@ export default function UploadForm({
       }
 
       return nextNumber === 1 ? "Untitled" : `Untitled ${nextNumber}`
-    } catch (error) {
-      console.error('Error generating auto name:', error)
+    } catch {
       // Fallback to simple "Untitled" if API call fails
       return "Untitled"
     }
@@ -385,13 +382,11 @@ export default function UploadForm({
   const handleSubmit = async () => {
     // SAFETY CHECK: Prevent double submission
     if (!isFormValid() || isSubmitting) {
-      console.log('⚠️ Submission blocked - form invalid or already submitting');
       return;
     }
 
     setIsSubmitting(true)
     setUploadProgress(0)
-    console.log('🚀 Starting submission process');
     setUploadProgress(0)
 
     try {
@@ -408,10 +403,8 @@ export default function UploadForm({
 
       if (finalImageFile) {
         submitFormData.append("image", finalImageFile)
-        console.log('📤 Submitting direct upload to final-submit endpoint');
       } else if (finalImageUrl) {
         submitFormData.append("imageUrl", finalImageUrl)
-        console.log('📤 Submitting URL upload to final-submit endpoint');
       } else {
         alert("No image selected for submission.")
         return
@@ -460,7 +453,6 @@ export default function UploadForm({
 
       clearInterval(progressInterval)
       setUploadProgress(100)
-      console.log('✅ Optimistic submission successful - item will process in background');
 
       const { item: newItem } = res.data
 
@@ -501,8 +493,7 @@ export default function UploadForm({
       setUploadTarget(currentViewMode)
 
       onCloseAction()
-    } catch (error) {
-      console.error("Submission failed:", error)
+    } catch {
       alert("Submission failed.")
     } finally {
       setIsSubmitting(false)

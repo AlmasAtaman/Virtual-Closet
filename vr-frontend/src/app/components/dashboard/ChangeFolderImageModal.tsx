@@ -54,7 +54,7 @@ export default function ChangeFolderImageModal({
   );
   const [showSelectFromFolderModal, setShowSelectFromFolderModal] = useState(false);
   const [uploadingRect, setUploadingRect] = useState<RectanglePosition | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [, setUploadPreview] = useState<string | null>(null);
 
   // Upload editing states
   const [isEditingUpload, setIsEditingUpload] = useState(false);
@@ -149,8 +149,7 @@ export default function ChangeFolderImageModal({
           setMultiplePictureImages(defaultImages);
         }
       }
-    } catch (error) {
-      console.error("Failed to fetch default images for preview:", error);
+    } catch {
     }
   };
 
@@ -165,8 +164,7 @@ export default function ChangeFolderImageModal({
         rectangleImages
       );
       onClose();
-    } catch (err) {
-      console.error("Failed to change folder image:", err);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +198,6 @@ export default function ChangeFolderImageModal({
         fileInput.setAttribute('data-position', position);
         fileInput.click();
       } else {
-        console.error(`File input not found for position: ${position}`);
       }
     });
   }, []);
@@ -443,8 +440,7 @@ export default function ChangeFolderImageModal({
       setEditingRect(null);
       setUploadingRect(null);
       setEditImageDimensions({ width: 0, height: 0 });
-    } catch (error) {
-      console.error('Error saving upload:', error);
+    } catch {
       alert('Failed to save image. Please try again.');
     }
   };

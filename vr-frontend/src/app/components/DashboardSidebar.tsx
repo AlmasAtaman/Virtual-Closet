@@ -82,8 +82,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           <Image
             src={pathname === '/shop' ? '/shopSelect.PNG' : '/shop.PNG'}
             alt="Shop"
-            width={52}
-            height={52}
+            width={48}
+            height={48}
             className="object-contain"
           />
         </motion.button>

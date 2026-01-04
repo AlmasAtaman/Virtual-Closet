@@ -63,8 +63,7 @@ export default function AddItemsToFolderModal({
 
       // Combine both arrays
       setAllItems([...closetItems, ...wishlistItems]);
-    } catch (error) {
-      console.error("Error fetching clothing items:", error);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -107,8 +106,7 @@ export default function AddItemsToFolderModal({
         // Track as added
         setSessionChanges((prev) => new Map(prev).set(itemId, 'add'));
       }
-    } catch (error) {
-      console.error("Error toggling item:", error);
+    } catch {
     } finally {
       setProcessingItems((prev) => {
         const next = new Set(prev);

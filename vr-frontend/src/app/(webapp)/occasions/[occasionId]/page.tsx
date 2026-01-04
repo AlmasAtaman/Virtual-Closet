@@ -75,8 +75,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
       const data = await response.json()
       setOccasion(data.occasion)
       setOutfits(data.outfits || [])
-    } catch (error) {
-      console.error("Failed to fetch occasion outfits:", error)
+    } catch {
       setOccasion(null)
       setOutfits([])
     } finally {
@@ -149,8 +148,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
       setOutfits((prev) => prev.filter((outfit) => !selectedOutfitIds.includes(outfit.id)))
       setSelectedOutfitIds([])
       setIsMultiSelecting(false)
-    } catch (error) {
-      console.error("Failed to remove outfits from occasion:", error)
+    } catch {
       alert("Failed to remove outfits from occasion. Please try again.")
     } finally {
       setIsRemoving(false)

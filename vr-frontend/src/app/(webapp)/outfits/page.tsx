@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Plus, Check, X, Trash2, Loader2, Folder, FolderOpen } from "lucide-react"
+import { Plus, Trash2, Loader2, Folder } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import CreateOutfitModal from "../../components/CreateOutfitModal"
@@ -90,8 +90,7 @@ export default function OutfitsPage() {
 
       const data = await response.json()
       setOutfits(data.outfits || [])
-    } catch (error) {
-      console.error("Failed to fetch outfits:", error)
+    } catch {
       setOutfits([])
     } finally {
       setLoading(false)
@@ -108,10 +107,6 @@ export default function OutfitsPage() {
 
   const handleOutfitUpdated = () => {
     fetchOutfits()
-  }
-
-  const handleBackToDashboard = () => {
-    router.push("/dashboard")
   }
 
   const toggleMultiSelect = () => {
@@ -147,8 +142,7 @@ export default function OutfitsPage() {
       setOutfits((prev) => prev.filter((outfit) => !selectedOutfitIds.includes(outfit.id)))
       setSelectedOutfitIds([])
       setIsMultiSelecting(false) // Exit multi-select mode after deletion
-    } catch (error) {
-      console.error("Error deleting selected outfits:", error)
+    } catch {
       alert("Failed to delete selected outfits.")
     } finally {
       setIsDeleting(false)

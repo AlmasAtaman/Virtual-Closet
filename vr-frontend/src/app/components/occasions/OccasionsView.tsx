@@ -83,8 +83,7 @@ const OccasionsView = forwardRef<OccasionsViewRef, {}>((props, ref) => {
         { withCredentials: true }
       );
       setOccasions(response.data.occasions || []);
-    } catch (err) {
-      console.error("Error fetching occasions:", err);
+    } catch {
       setError("Failed to load occasions");
     } finally {
       setIsLoading(false);
@@ -105,8 +104,7 @@ const OccasionsView = forwardRef<OccasionsViewRef, {}>((props, ref) => {
       // Navigate to the newly created occasion with query param to open modal
       const newOccasion = response.data;
       router.push(`/occasions/${newOccasion.id}?openAddModal=true`);
-    } catch (err) {
-      console.error("Error creating occasion:", err);
+    } catch {
       alert("Failed to create occasion");
     }
   };
@@ -133,8 +131,7 @@ const OccasionsView = forwardRef<OccasionsViewRef, {}>((props, ref) => {
 
       // Re-fetch occasions to maintain consistent sort order
       await fetchOccasions();
-    } catch (err) {
-      console.error("Error renaming occasion:", err);
+    } catch {
       alert("Failed to rename occasion");
     }
   };
@@ -159,8 +156,7 @@ const OccasionsView = forwardRef<OccasionsViewRef, {}>((props, ref) => {
 
       // Re-fetch occasions to maintain consistent sort order
       await fetchOccasions();
-    } catch (err) {
-      console.error("Error changing occasion image:", err);
+    } catch {
       alert("Failed to change occasion image");
     }
   };
@@ -183,8 +179,7 @@ const OccasionsView = forwardRef<OccasionsViewRef, {}>((props, ref) => {
       setOccasions((prev) => prev.filter((o) => o.id !== selectedOccasion.id));
       setIsDeleteDialogOpen(false);
       setSelectedOccasion(null);
-    } catch (err) {
-      console.error("Error deleting occasion:", err);
+    } catch {
       alert("Failed to delete occasion");
     }
   };

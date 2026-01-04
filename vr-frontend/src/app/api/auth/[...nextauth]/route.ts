@@ -64,8 +64,7 @@ const handler = NextAuth({
         };
         return customJwt;
 
-      } catch (error) {
-        console.error("JWT Decode Error:", error);
+      } catch {
         return null;
       }
     },

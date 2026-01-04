@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+;
 import axios from "axios";
 import OutfitCard from "../OutfitCard";
 
@@ -79,8 +79,7 @@ export default function AddOutfitsToOccasionModal({
         { withCredentials: true }
       );
       setAllOutfits(response.data.outfits || []);
-    } catch (error) {
-      console.error("Error fetching outfits:", error);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -152,8 +151,7 @@ export default function AddOutfitsToOccasionModal({
         // Track as added
         setSessionChanges((prev) => new Map(prev).set(outfitId, 'add'));
       }
-    } catch (error) {
-      console.error("Error toggling outfit:", error);
+    } catch {
     } finally {
       setProcessingOutfits((prev) => {
         const next = new Set(prev);
