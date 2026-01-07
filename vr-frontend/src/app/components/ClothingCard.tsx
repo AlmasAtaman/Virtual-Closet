@@ -55,7 +55,7 @@ export default function ClothingCard({
   return (
     <motion.div
       whileHover={{
-        scale: isMultiSelecting ? 1 : 1.03,
+        scale: isMultiSelecting ? (isSelected ? 1.05 : 1) : 1.03,
         y: isMultiSelecting ? 0 : -5,
       }}
       transition={{
@@ -64,9 +64,12 @@ export default function ClothingCard({
         damping: 17,
       }}
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: isPendingRemoval ? 0.5 : 1, y: 0 }}
+      animate={{
+        opacity: isPendingRemoval ? 0.5 : 1,
+        y: 0,
+        scale: isSelected && isMultiSelecting ? 1.05 : 1,
+      }}
       exit={{ opacity: 0, scale: 0.95 }}
-      layout
       className={`relative overflow-hidden ${isPendingRemoval ? 'opacity-50' : ''}`}
       style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
     >

@@ -216,7 +216,12 @@ html {
   filter: brightness(1.08) contrast(1.03) saturate(1.05);
 }
 
-/* Special handling for clothing images in dark mode */
+/* Special handling for clothing images */
+.clothing-image {
+  background: transparent;
+  border-radius: 0.5rem;
+}
+
 .dark .clothing-image {
   background: radial-gradient(circle at center, oklch(22% 0.01 250), oklch(16% 0.01 250));
   border-radius: 0.5rem;

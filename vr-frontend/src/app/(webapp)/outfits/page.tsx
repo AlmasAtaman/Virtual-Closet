@@ -289,20 +289,20 @@ export default function OutfitsPage() {
               transition={{ duration: 0.2 }}
             >
               {loading ? (
-                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, 280px)', justifyContent: 'start' }}>
+                <div className="grid gap-6 w-full" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   {Array.from({ length: 10 }).map((_, index) => (
-                    <div key={index} className="w-[280px] h-[373px] bg-card rounded-xl animate-pulse shadow-lg" />
+                    <div key={index} className="w-full max-w-[400px] h-[373px] bg-card rounded-xl animate-pulse shadow-lg mx-auto" />
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, 280px)', justifyContent: 'start' }}>
+                <div className="grid gap-6 w-full" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   {outfits.map((outfit, index) => (
                     <motion.div
                       key={outfit.id}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
-                      className="w-[280px]"
+                      className="w-full max-w-[400px] mx-auto"
                     >
                       <OutfitCard
                         outfit={outfit}

@@ -65,6 +65,7 @@ export default function UploadForm({
   const [isLoading, setIsLoading] = useState(false)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [autoFillEnabled, setAutoFillEnabled] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isShoeSizes, setIsShoeSizes] = useState(false)
   const [selectedColors, setSelectedColors] = useState<string[]>([])
@@ -390,6 +391,34 @@ export default function UploadForm({
     setUploadProgress(0)
 
     try {
+      // Run autofill if toggle is enabled
+      let autoFilledData: any = null
+      if (autoFillEnabled && selectedFile) {
+        setIsAutoFilling(true)
+        try {
+          const autoFillForm = new FormData()
+          autoFillForm.append("image", selectedFile)
+
+          const autoFillRes = await axios.post(`${API_URL}/api/images`, autoFillForm, {
+            withCredentials: true,
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+
+          const { clothingData } = autoFillRes.data
+
+          if (clothingData?.isClothing) {
+            // Store AI suggestions for analytics
+            setAiSuggestions(clothingData)
+            autoFilledData = clothingData
+          }
+        } catch (error) {
+          console.error("Auto-fill failed during submit:", error)
+          // Continue with submission even if autofill fails
+        } finally {
+          setIsAutoFilling(false)
+        }
+      }
+
       const submitFormData = new FormData()
 
       let finalImageFile: File | undefined
@@ -415,24 +444,24 @@ export default function UploadForm({
       // Set default type if not provided
       const finalType = formData.type?.trim() || "uncategorized"
 
-      submitFormData.append("name", finalName)
-      submitFormData.append("type", finalType)
-      submitFormData.append("category", formData.category || "")
-      submitFormData.append("brand", formData.brand || "")
-      submitFormData.append("price", (formData.price || 0).toString())
+      submitFormData.append("name", autoFilledData?.name || finalName)
+      submitFormData.append("type", autoFilledData?.type || finalType)
+      submitFormData.append("category", autoFilledData?.category || formData.category || "")
+      submitFormData.append("brand", autoFilledData?.brand || formData.brand || "")
+      submitFormData.append("price", (autoFilledData?.price || formData.price || 0).toString())
       submitFormData.append("mode", uploadTarget)
       submitFormData.append("sourceUrl", formData.sourceUrl || "")
 
       // New schema fields
-      submitFormData.append("color", formData.color || "")
-      submitFormData.append("season", formData.season || "")
+      submitFormData.append("color", autoFilledData?.color || formData.color || "")
+      submitFormData.append("season", autoFilledData?.season || formData.season || "")
       submitFormData.append("notes", formData.notes || "")
-      submitFormData.append("tags", JSON.stringify(formData.tags || []))
-      submitFormData.append("size", formData.size || "")
+      submitFormData.append("tags", JSON.stringify(autoFilledData?.tags || formData.tags || []))
+      submitFormData.append("size", autoFilledData?.size || formData.size || "")
 
       // Include AI suggestions if they exist (for backend analytics)
-      if (aiSuggestions) {
-        submitFormData.append("aiSuggestions", JSON.stringify(aiSuggestions))
+      if (autoFilledData || aiSuggestions) {
+        submitFormData.append("aiSuggestions", JSON.stringify(autoFilledData || aiSuggestions))
       }
 
       const progressInterval = setInterval(() => {
@@ -828,13 +857,18 @@ export default function UploadForm({
                     Type
                   </Button>
                   <Button
-                    onClick={handleAutoFill}
-                    disabled={isAutoFilling || !selectedFile || !imagePreview}
-                    size="sm"
-                    className="h-8 text-xs px-3 bg-black hover:bg-black/90 text-white"
-                    style={{ backgroundColor: '#000' }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setAutoFillEnabled(prev => !prev)
+                    }}
+                    className={`h-8 text-xs px-3 transition-all ${
+                      autoFillEnabled
+                        ? 'bg-white hover:bg-white/90 text-black border border-black'
+                        : 'bg-black hover:bg-black/90 text-white'
+                    }`}
+                    style={autoFillEnabled ? {} : { backgroundColor: '#000' }}
                   >
-                    {isAutoFilling ? "..." : "Auto Fill"}
+                    Auto Fill
                   </Button>
                   <button
                     className="h-8 w-8 flex items-center justify-center rounded-md border border-input hover:bg-accent transition-all"

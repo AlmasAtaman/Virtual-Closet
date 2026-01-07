@@ -516,7 +516,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       bottom: { x: 50, y: 65, width: 10 },
       outerwear: { x: 70, y: 30, width: 10 },
       shoe: { x: 50, y: 87, width: 7 },        // Below bottoms
-      accessory: { x: 75, y: 70, width: 5 },   // Right side, mid-height
+      accessory: { x: 18, y: 30, width: 5 },   // Left side, upper area
     }
 
     setEditedCategorizedItems(prev => {
