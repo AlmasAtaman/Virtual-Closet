@@ -86,6 +86,15 @@ const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrom
     border: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
     input: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
     ring: `oklch(0.708 0 0)`,
+    // Sidebar colors matching the theme
+    sidebar: `oklch(0.97 ${Math.min(s / 100, 0.03)} ${h})`,
+    sidebarForeground: `oklch(0.145 0 0)`,
+    sidebarPrimary: `oklch(0.205 0 0)`,
+    sidebarPrimaryForeground: `oklch(0.985 0 0)`,
+    sidebarAccent: `oklch(0.94 ${Math.min(s / 100, 0.03)} ${h})`,
+    sidebarAccentForeground: `oklch(0.205 0 0)`,
+    sidebarBorder: `oklch(${Math.min(0.9, l / 100 + 0.15)} ${Math.min(s / 100, 0.02)} ${h})`,
+    sidebarRing: `oklch(0.708 0 0)`,
   }
 }
 

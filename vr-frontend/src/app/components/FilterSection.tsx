@@ -355,11 +355,21 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                 placeholder="Search"
                                 value={clothingTypeSearch}
                                 onChange={(e) => setClothingTypeSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && clothingTypeSearch.trim()) {
+                                    // Apply the search term as a filter tag
+                                    const searchTerm = clothingTypeSearch.trim().toLowerCase();
+                                    if (!selectedTags.includes(searchTerm)) {
+                                      toggleTag(searchTerm);
+                                    }
+                                    setClothingTypeSearch('');
+                                  }
+                                }}
                                 className="pl-10 h-10 text-sm border-gray-300 rounded-md"
                               />
                             </div>
                             <p className="text-xs text-gray-400 mt-2 italic">
-                              Search hint for More Accurate Labels
+                              Press Enter to find specific label
                             </p>
                           </div>
 

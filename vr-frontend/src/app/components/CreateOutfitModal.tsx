@@ -37,6 +37,7 @@ interface CategorizedClothing {
   bottoms: ClothingItem[]
   outerwear: ClothingItem[]
   shoes: ClothingItem[]
+  accessories: ClothingItem[]
   allItems: ClothingItem[]
 }
 
@@ -61,7 +62,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const [selectedTop, setSelectedTop] = useState<ClothingItem | null>(null)
   const [selectedBottom, setSelectedBottom] = useState<ClothingItem | null>(null)
   const [selectedOuterwear, setSelectedOuterwear] = useState<ClothingItem | null>(null)
-  const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], shoes: [], allItems: [] })
+  const [clothingItems, setClothingItems] = useState<CategorizedClothing>({ tops: [], bottoms: [], outerwear: [], shoes: [], accessories: [], allItems: [] })
   const [, setLoadingClothing] = useState(true)
   const [showTopSelectModal, setShowTopSelectModal] = useState(false)
   const [showBottomSelectModal, setShowBottomSelectModal] = useState(false)
@@ -113,29 +114,63 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const wishlistItems = wishlistResponse.data.clothingItems || []
       const allItems = [...closetItems, ...wishlistItems]
 
+      // Categorize items based on their category field first, then fall back to type matching
       const categorizedItems = {
         tops: allItems.filter((item: ClothingItem) => {
+          const category = item.category?.toLowerCase() || ""
           const type = item.type?.toLowerCase() || ""
-          return ["t-shirt", "dress", "shirt", "blouse"].includes(type)
+          return category === "tops" ||
+                 ["t-shirt", "dress", "shirt", "blouse", "tank top", "crop top", "sweater", "polo"].includes(type)
         }),
         bottoms: allItems.filter((item: ClothingItem) => {
+          const category = item.category?.toLowerCase() || ""
           const type = item.type?.toLowerCase() || ""
-          return ["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)
+          return category === "bottoms" ||
+                 ["pants", "skirt", "shorts", "jeans", "leggings", "trousers", "chinos"].includes(type)
         }),
         outerwear: allItems.filter((item: ClothingItem) => {
+          const category = item.category?.toLowerCase() || ""
           const type = item.type?.toLowerCase() || ""
-          return ["jacket", "coat", "blazer", "vest", "sweater", "hoodie", "cardigan"].includes(type)
+          return category === "outerwear" ||
+                 ["jacket", "coat", "blazer", "vest", "hoodie", "cardigan", "windbreaker", "parka", "bomber"].includes(type)
         }),
         shoes: allItems.filter((item: ClothingItem) => {
+          const category = item.category?.toLowerCase() || ""
           const type = item.type?.toLowerCase() || ""
-          return ["shoes", "sneakers", "boots", "sandals", "heels", "loafers"].includes(type)
+          return category === "shoes" ||
+                 ["shoes", "sneakers", "boots", "sandals", "heels", "loafers", "flats"].includes(type)
+        }),
+        accessories: allItems.filter((item: ClothingItem) => {
+          const category = item.category?.toLowerCase() || ""
+          const type = item.type?.toLowerCase() || ""
+          return category === "accessories" || category === "bags" ||
+                 ["watch", "hat", "scarf", "belt", "sunglasses", "eyeglasses", "jewelry", "necklace", "bracelet", "ring", "earrings", "cap", "beanie", "headband", "gloves", "tie", "bow tie", "suspenders", "handbag", "backpack", "tote", "clutch", "crossbody", "messenger"].includes(type)
         }),
         allItems: allItems,
       }
 
+      // Find items that weren't categorized
+      const categorizedIds = new Set([
+        ...categorizedItems.tops.map(i => i.id),
+        ...categorizedItems.bottoms.map(i => i.id),
+        ...categorizedItems.outerwear.map(i => i.id),
+        ...categorizedItems.shoes.map(i => i.id),
+        ...categorizedItems.accessories.map(i => i.id)
+      ])
+
+      const uncategorizedItems = allItems.filter((item: ClothingItem) => !categorizedIds.has(item.id))
+
+      if (uncategorizedItems.length > 0) {
+        console.warn(`[CreateOutfitModal] Found ${uncategorizedItems.length} uncategorized items:`,
+          uncategorizedItems.map(item => ({ id: item.id, category: item.category, type: item.type, name: item.name }))
+        )
+        // Add uncategorized items to accessories as a fallback
+        categorizedItems.accessories = [...categorizedItems.accessories, ...uncategorizedItems]
+      }
+
       setClothingItems(categorizedItems)
     } catch {
-      setClothingItems({ tops: [], bottoms: [], outerwear: [], shoes: [], allItems: [] })
+      setClothingItems({ tops: [], bottoms: [], outerwear: [], shoes: [], accessories: [], allItems: [] })
     } finally {
       setLoadingClothing(false)
     }
@@ -477,11 +512,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   const updateCategorizedItems = (category: "top" | "bottom" | "outerwear" | "shoe" | "accessory", item: ClothingItem) => {
     // Default positions for each category (Canvas mode) - using center coordinates (x, y as percentages)
     const DEFAULT_POSITIONS = {
-      top: { x: 50, y: 40, width: 9 },
-      bottom: { x: 50, y: 68, width: 10 },
-      outerwear: { x: 70, y: 35, width: 10 },
-      shoe: { x: 50, y: 80, width: 8 },
-      accessory: { x: 50, y: 25, width: 6 },
+      top: { x: 50, y: 35, width: 9 },
+      bottom: { x: 50, y: 65, width: 10 },
+      outerwear: { x: 70, y: 30, width: 10 },
+      shoe: { x: 50, y: 87, width: 7 },        // Below bottoms
+      accessory: { x: 75, y: 70, width: 5 },   // Right side, mid-height
     }
 
     setEditedCategorizedItems(prev => {
@@ -571,7 +606,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         // If there's outerwear and we just removed the top, move outerwear to top position (keep outerwear width)
         if (newItems.outerwear) {
           const DEFAULT_POSITIONS = {
-            top: { x: 50, y: 40 },
+            top: { x: 50, y: 35 },
           }
 
           newItems.outerwear = {
@@ -649,13 +684,29 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     const hasOuterwear = displayToggles.outerwear && clothingItems.outerwear.length > 0
     const hasTop = clothingItems.tops.length > 0
     const hasBottom = clothingItems.bottoms.length > 0
+    const hasShoes = displayToggles.shoes && clothingItems.shoes.length > 0
 
-    if (hasOuterwear && hasTop && hasBottom) {
-      // All 3 items: outerwear, top, bottom
+    if (hasOuterwear && hasTop && hasBottom && hasShoes) {
+      // All 4 items: outerwear, top, bottom, shoes
+      return {
+        outerwear: { y: 15, width: 8 },
+        top: { y: 38, width: 8 },
+        bottom: { y: 62, width: 8 },
+        shoes: { y: 85, width: 7 },
+      }
+    } else if (hasOuterwear && hasTop && hasBottom) {
+      // 3 items: outerwear, top, bottom
       return {
         outerwear: { y: 18, width: 9 },
         top: { y: 48, width: 9 },
         bottom: { y: 76, width: 9 },
+      }
+    } else if (!hasOuterwear && hasTop && hasBottom && hasShoes) {
+      // Top, bottom, shoes (no outerwear)
+      return {
+        top: { y: 25, width: 10 },
+        bottom: { y: 55, width: 10 },
+        shoes: { y: 82, width: 8 },
       }
     } else if (!hasOuterwear && hasTop && hasBottom) {
       // Just top and bottom (no outerwear)
@@ -684,6 +735,9 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     } else if (hasOuterwear) {
       // Only outerwear
       return { outerwear: { y: 50, width: 13 } }
+    } else if (hasShoes) {
+      // Only shoes
+      return { shoes: { y: 50, width: 12 } }
     }
     return {}
   }
@@ -694,10 +748,10 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
     // Default positions for each category (Canvas mode) - using center coordinates (x, y as percentages)
     const DEFAULT_POSITIONS = {
-      top: { x: 50, y: 40, width: 9 },
-      bottom: { x: 50, y: 68, width: 10 },
-      outerwear: { x: 70, y: 35, width: 10 },
-      shoe: { x: 50, y: 80, width: 8 },
+      top: { x: 50, y: 35, width: 9 },
+      bottom: { x: 50, y: 65, width: 10 },
+      outerwear: { x: 70, y: 30, width: 10 },
+      shoe: { x: 50, y: 87, width: 7 },
     }
 
     // Use default canvas coordinates for consistency when saving from Display mode
@@ -713,7 +767,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       const item = clothingItems.bottoms[displayIndices.bottom]
       items.bottom = { ...item, x: DEFAULT_POSITIONS.bottom.x, y: DEFAULT_POSITIONS.bottom.y, width: DEFAULT_POSITIONS.bottom.width }
     }
-    if (clothingItems.shoes.length > 0 && displayToggles.shoes) {
+    if (clothingItems.shoes.length > 0) {
       const item = clothingItems.shoes[displayIndices.shoe]
       items.shoe = { ...item, x: DEFAULT_POSITIONS.shoe.x, y: DEFAULT_POSITIONS.shoe.y, width: DEFAULT_POSITIONS.shoe.width }
     }
@@ -722,10 +776,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
   }
 
   // Get roulette items (prev-2, prev-1, current, next-1, next-2) for a category
-  const getRouletteItems = (category: "top" | "bottom" | "outerwear") => {
+  const getRouletteItems = (category: "top" | "bottom" | "outerwear" | "shoe") => {
     const items = category === "top" ? clothingItems.tops :
                   category === "bottom" ? clothingItems.bottoms :
-                  clothingItems.outerwear
+                  category === "outerwear" ? clothingItems.outerwear :
+                  clothingItems.shoes
 
     if (items.length === 0) return { prev2: null, prev: null, current: null, next: null, next2: null }
 
@@ -752,7 +807,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
       itemsToCheck.bottom ||
       itemsToCheck.outerwear ||
       itemsToCheck.shoe ||
-      itemsToCheck.others.length > 0
+      (itemsToCheck.others && itemsToCheck.others.length > 0)
     )
 
     const selectedItems = [selectedTop, selectedBottom, selectedOuterwear].filter(Boolean) as ClothingItem[]
@@ -769,7 +824,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         itemsToCheck.top,
         itemsToCheck.bottom,
         itemsToCheck.shoe,
-        ...itemsToCheck.others
+        ...(itemsToCheck.others || [])
       ].filter(Boolean) as ClothingItem[] : selectedItems
 
       const clothingData = itemsToUse.map((item) => ({
@@ -1092,7 +1147,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
 
                       {/* Save Button for Canvas Mode */}
                       <Button
-                        onClick={createOutfit}
+                        onClick={() => createOutfit()}
                         disabled={!editedCategorizedItems || (!editedCategorizedItems.top && !editedCategorizedItems.bottom && !editedCategorizedItems.outerwear && !editedCategorizedItems.shoe && editedCategorizedItems.others.length === 0) || isCreating}
                         className="w-[280px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-3"
                       >
@@ -1143,6 +1198,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                           onClick={() => navigateCategory("bottom", "prev")}
                                           className="p-2 hover:bg-muted/50 rounded transition-colors absolute left-0"
                                           style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronLeft className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                      {layout.shoes && displayToggles.shoes && clothingItems.shoes.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("shoe", "prev")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute left-0"
+                                          style={{ top: `${layout.shoes.y}%`, transform: 'translateY(-50%)' }}
                                         >
                                           <ChevronLeft className="w-6 h-6 text-white" />
                                         </button>
@@ -1660,6 +1724,134 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                           </div>
                                         )
                                       })()}
+
+                                      {/* Shoes Roulette */}
+                                      {layout.shoes && displayToggles.shoes && clothingItems.shoes.length > 0 && (() => {
+                                        const roulette = getRouletteItems("shoe")
+                                        const yPos = layout.shoes.y
+                                        const width = layout.shoes.width
+
+                                        return (
+                                          <div
+                                            className="absolute w-full flex items-center"
+                                            style={{ top: `${yPos}%`, transform: 'translateY(-50%)' }}
+                                          >
+                                            {/* Prev-2 item */}
+                                            {roulette.prev2 && (
+                                              <motion.div
+                                                key={roulette.prev2.id}
+                                                initial={{ left: '-10%', opacity: 0.1 }}
+                                                animate={{ left: '-10%', opacity: 0.1 }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                                style={{ width: `${width * 0.3}rem`, position: 'absolute' }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.prev2.url}
+                                                  alt={roulette.prev2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Prev-1 item */}
+                                            {roulette.prev && (
+                                              <motion.div
+                                                key={roulette.prev.id}
+                                                initial={{ left: '10%', opacity: 0.5 }}
+                                                animate={{ left: '10%', opacity: 0.5 }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                                style={{ width: `${width * 0.5}rem`, position: 'absolute' }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.prev.url}
+                                                  alt={roulette.prev.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Current item */}
+                                            {roulette.current && (
+                                              <motion.div
+                                                key={roulette.current.id}
+                                                initial={{ left: '50%', opacity: 1 }}
+                                                animate={{ left: '50%', opacity: 1 }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                                style={{
+                                                  width: `${width}rem`,
+                                                  position: 'absolute',
+                                                  transform: 'translateX(-50%)',
+                                                  zIndex: 10
+                                                }}
+                                              >
+                                                <Image
+                                                  src={roulette.current.url}
+                                                  alt={roulette.current.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-1 item */}
+                                            {roulette.next && (
+                                              <motion.div
+                                                key={roulette.next.id}
+                                                initial={{ left: '90%', opacity: 0.5 }}
+                                                animate={{ left: '90%', opacity: 0.5 }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                                style={{ width: `${width * 0.5}rem`, position: 'absolute' }}
+                                                className="opacity-50"
+                                              >
+                                                <Image
+                                                  src={roulette.next.url}
+                                                  alt={roulette.next.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+
+                                            {/* Next-2 item */}
+                                            {roulette.next2 && (
+                                              <motion.div
+                                                key={roulette.next2.id}
+                                                initial={{ left: '110%', opacity: 0.1 }}
+                                                animate={{ left: '110%', opacity: 0.1 }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                                style={{ width: `${width * 0.3}rem`, position: 'absolute' }}
+                                                className="opacity-10"
+                                              >
+                                                <Image
+                                                  src={roulette.next2.url}
+                                                  alt={roulette.next2.name || ""}
+                                                  width={100}
+                                                  height={120}
+                                                  className="w-full h-auto object-contain rounded-lg"
+                                                  draggable={false}
+                                                  unoptimized
+                                                />
+                                              </motion.div>
+                                            )}
+                                          </div>
+                                        )
+                                      })()}
                                     </div>
 
                                     {/* Right Arrow Column */}
@@ -1687,6 +1879,15 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                           onClick={() => navigateCategory("bottom", "next")}
                                           className="p-2 hover:bg-muted/50 rounded transition-colors absolute right-0"
                                           style={{ top: `${layout.bottom.y}%`, transform: 'translateY(-50%)' }}
+                                        >
+                                          <ChevronRight className="w-6 h-6 text-white" />
+                                        </button>
+                                      )}
+                                      {layout.shoes && displayToggles.shoes && clothingItems.shoes.length > 0 && (
+                                        <button
+                                          onClick={() => navigateCategory("shoe", "next")}
+                                          className="p-2 hover:bg-muted/50 rounded transition-colors absolute right-0"
+                                          style={{ top: `${layout.shoes.y}%`, transform: 'translateY(-50%)' }}
                                         >
                                           <ChevronRight className="w-6 h-6 text-white" />
                                         </button>
@@ -1967,7 +2168,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
         clothingItems={clothingItems.allItems}
         onSelectItem={handleCanvasItemSelect}
         viewMode="closet"
-        selectedCategory={selectingCategory === "outerwear" ? "outerwear" : selectingCategory === "top" ? "top" : selectingCategory === "bottom" ? "bottom" : selectingCategory === "shoe" ? "shoe" : null}
+        selectedCategory={selectingCategory === "outerwear" ? "outerwear" : selectingCategory === "top" ? "top" : selectingCategory === "bottom" ? "bottom" : selectingCategory === "shoe" ? "shoe" : selectingCategory === "accessory" ? "accessory" : null}
         currentlySelectedItemId={
           selectingCategory === "outerwear" ? editedCategorizedItems?.outerwear?.id :
           selectingCategory === "top" ? editedCategorizedItems?.top?.id :

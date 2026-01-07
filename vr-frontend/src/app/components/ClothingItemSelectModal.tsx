@@ -22,15 +22,28 @@ interface ClothingItem {
   mode: "closet" | "wishlist"
 }
 
-// Helper function to determine the broad category of an item based on its type
-const getItemCategory = (item: ClothingItem): "top" | "bottom" | "outerwear" | "others" => {
+// Helper function to determine the broad category of an item based on its category field or type
+const getItemCategory = (item: ClothingItem): "top" | "bottom" | "outerwear" | "shoe" | "accessory" | "others" => {
+  // First check the category field (from AI labeling)
+  const category = (item as any).category?.toLowerCase() || ""
+  if (category === "tops") return "top"
+  if (category === "bottoms") return "bottom"
+  if (category === "outerwear") return "outerwear"
+  if (category === "shoes") return "shoe"
+  if (category === "accessories" || category === "bags") return "accessory"
+
+  // Fallback to type matching
   const type = item.type?.toLowerCase() || ""
-  if (["t-shirt", "dress", "shirt", "blouse"].includes(type)) {
+  if (["t-shirt", "dress", "shirt", "blouse", "tank top", "crop top", "sweater", "polo"].includes(type)) {
     return "top"
-  } else if (["pants", "skirt", "shorts", "jeans", "leggings"].includes(type)) {
+  } else if (["pants", "skirt", "shorts", "jeans", "leggings", "trousers", "chinos"].includes(type)) {
     return "bottom"
-  } else if (["jacket", "sweater", "coat", "hoodie", "cardigan"].includes(type)) {
+  } else if (["jacket", "coat", "blazer", "vest", "hoodie", "cardigan", "windbreaker", "parka", "bomber"].includes(type)) {
     return "outerwear"
+  } else if (["shoes", "sneakers", "boots", "sandals", "heels", "loafers", "flats"].includes(type)) {
+    return "shoe"
+  } else if (["watch", "hat", "scarf", "belt", "sunglasses", "eyeglasses", "jewelry", "necklace", "bracelet", "ring", "earrings", "cap", "beanie", "headband", "gloves", "tie", "bow tie", "suspenders", "handbag", "backpack", "tote", "clutch", "crossbody", "messenger"].includes(type)) {
+    return "accessory"
   } else {
     return "others"
   }
@@ -42,7 +55,7 @@ interface ClothingItemSelectModalProps {
   clothingItems: ClothingItem[]
   onSelectItem: (selectedItem: ClothingItem) => void
   viewMode: "closet" | "wishlist"
-  selectedCategory: "outerwear" | "top" | "bottom" | "shoe" | null
+  selectedCategory: "outerwear" | "top" | "bottom" | "shoe" | "accessory" | null
   currentlySelectedItemId?: string | null
 }
 

@@ -41,12 +41,12 @@ export async function getClothingInfoFromImage(imagePath) {
               type: "text",
               text: `You are a fashion labeling assistant for a wardrobe management app.
 
-Analyze this clothing item image and return a JSON object with these fields:
+Analyze this image and return a JSON object with these fields:
 
 Required fields:
-- "isClothing": boolean (true if this is a clothing item)
-- "name": short descriptive name (e.g., "Black Graphic Hoodie", "Slim Fit Jeans")
-- "brand": brand name if visible in image, otherwise null
+- "isClothing": boolean (true if this is ANY wearable item, clothing, shoes, accessories, jewelry, watches, bags, etc.)
+- "name": short descriptive name (e.g., "Black Graphic Hoodie", "Slim Fit Jeans", "Silver Chronograph Watch")
+- "brand": brand name if visible in image (like Fossil, Nike, Gucci), otherwise null
 - "category": MAIN CATEGORY, one of: "tops", "bottoms", "outerwear", "dresses", "shoes", "accessories", "bags"
 - "type": SUBCATEGORY within category, examples:
   * tops: "t-shirt", "shirt", "blouse", "tank top", "crop top", "sweater", "polo"
@@ -54,14 +54,18 @@ Required fields:
   * outerwear: "jacket", "coat", "blazer", "cardigan", "hoodie", "vest", "windbreaker", "parka", "bomber"
   * dresses: "mini dress", "midi dress", "maxi dress", "cocktail dress", "sundress"
   * shoes: "sneakers", "boots", "heels", "flats", "sandals", "loafers"
-  * accessories: "hat", "scarf", "belt", "sunglasses", "jewelry", "watch", "cap", "beanie"
+  * accessories: "watch", "hat", "scarf", "belt", "sunglasses", "eyeglasses", "jewelry", "necklace", "bracelet", "ring", "earrings", "cap", "beanie", "headband", "gloves", "tie", "bow tie", "suspenders"
   * bags: "handbag", "backpack", "tote", "clutch", "crossbody", "messenger"
 - "tags": array of 1-3 style tags from: "casual", "elegant", "sporty", "vintage", "minimalist", "bohemian", "streetwear", "formal", "edgy", "preppy", "chic", "retro", "athleisure", "grunge", "romantic"
-- "color": primary color like "Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink", "Navy", "Beige", "Cream", "Orange"
+- "color": primary color like "Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink", "Navy", "Beige", "Cream", "Orange", "Silver", "Gold"
 - "season": one of "Spring", "Summer", "Fall", "Winter", "All Season"
 - "size": size if visible in image (e.g., "M", "L", "XL", "28"), otherwise null
 
-IMPORTANT:
+CRITICAL RULES:
+- Watches, jewelry, accessories, bags, shoes ARE clothing items (isClothing: true)
+- ONLY set isClothing to false for non-wearable items (furniture, electronics, food, etc.)
+- Sneakers, boots, heels, sandals, loafers, flats = category "shoes" (NOT accessories!)
+- Watches, hats, scarves, belts, jewelry = category "accessories" (NOT shoes!)
 - Provide a value for ALL fields if isClothing is true (except size can be null)
 - Make reasonable guesses based on visual information
 - Tags array must have 1-3 items maximum
@@ -79,6 +83,19 @@ Hoodie:
   "tags": ["casual", "streetwear"],
   "color": "Black",
   "season": "Fall",
+  "size": null
+}
+
+Watch:
+{
+  "isClothing": true,
+  "name": "Silver Chronograph Watch",
+  "brand": "Fossil",
+  "category": "accessories",
+  "type": "watch",
+  "tags": ["formal", "elegant"],
+  "color": "Silver",
+  "season": "All Season",
   "size": null
 }
 
@@ -153,12 +170,12 @@ export async function analyzeBufferWithAI(imageBuffer) {
               type: "text",
               text: `You are a fashion labeling assistant for a wardrobe management app.
 
-Analyze this clothing item image and return a JSON object with these fields:
+Analyze this image and return a JSON object with these fields:
 
 Required fields:
-- "isClothing": boolean (true if this is a clothing item)
-- "name": short descriptive name (e.g., "Black Graphic Hoodie", "Slim Fit Jeans")
-- "brand": brand name if visible in image, otherwise null
+- "isClothing": boolean (true if this is ANY wearable item, clothing, shoes, accessories, jewelry, watches, bags, etc.)
+- "name": short descriptive name (e.g., "Black Graphic Hoodie", "Slim Fit Jeans", "Silver Chronograph Watch")
+- "brand": brand name if visible in image (like Fossil, Nike, Gucci), otherwise null
 - "category": MAIN CATEGORY, one of: "tops", "bottoms", "outerwear", "dresses", "shoes", "accessories", "bags"
 - "type": SUBCATEGORY within category, examples:
   * tops: "t-shirt", "shirt", "blouse", "tank top", "crop top", "sweater", "polo"
@@ -166,14 +183,18 @@ Required fields:
   * outerwear: "jacket", "coat", "blazer", "cardigan", "hoodie", "vest", "windbreaker", "parka", "bomber"
   * dresses: "mini dress", "midi dress", "maxi dress", "cocktail dress", "sundress"
   * shoes: "sneakers", "boots", "heels", "flats", "sandals", "loafers"
-  * accessories: "hat", "scarf", "belt", "sunglasses", "jewelry", "watch", "cap", "beanie"
+  * accessories: "watch", "hat", "scarf", "belt", "sunglasses", "eyeglasses", "jewelry", "necklace", "bracelet", "ring", "earrings", "cap", "beanie", "headband", "gloves", "tie", "bow tie", "suspenders"
   * bags: "handbag", "backpack", "tote", "clutch", "crossbody", "messenger"
 - "tags": array of 1-3 style tags from: "casual", "elegant", "sporty", "vintage", "minimalist", "bohemian", "streetwear", "formal", "edgy", "preppy", "chic", "retro", "athleisure", "grunge", "romantic"
-- "color": primary color like "Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink", "Navy", "Beige", "Cream", "Orange"
+- "color": primary color like "Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink", "Navy", "Beige", "Cream", "Orange", "Silver", "Gold"
 - "season": one of "Spring", "Summer", "Fall", "Winter", "All Season"
 - "size": size if visible in image (e.g., "M", "L", "XL", "28"), otherwise null
 
-IMPORTANT:
+CRITICAL RULES:
+- Watches, jewelry, accessories, bags, shoes ARE clothing items (isClothing: true)
+- ONLY set isClothing to false for non-wearable items (furniture, electronics, food, etc.)
+- Sneakers, boots, heels, sandals, loafers, flats = category "shoes" (NOT accessories!)
+- Watches, hats, scarves, belts, jewelry = category "accessories" (NOT shoes!)
 - Provide a value for ALL fields if isClothing is true (except size can be null)
 - Make reasonable guesses based on visual information
 - Tags array must have 1-3 items maximum
