@@ -13,6 +13,7 @@ import ClothingDetailModal from "./ClothingDetailModal";
 import type { ClothingItem } from "../types/clothing";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { useImageProcessingStatus } from "../hooks/useImageProcessingStatus";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Type definitions for outfit-related API responses
 interface OutfitUsageInfo {
@@ -64,6 +65,9 @@ const ClothingGallery = forwardRef(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _unusedSetShowFavoritesOnly = setShowFavoritesOnly;
 
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
     // Create an axios instance with credentials (uses cookies automatically)
     const createAuthenticatedAxios = () => {
       return axios.create({
@@ -106,6 +110,31 @@ const ClothingGallery = forwardRef(
         setSelectedItemIds([]);
       }
     }, [isMultiSelecting]);
+
+    // Handle URL parameter for opening item modal
+    useEffect(() => {
+      const itemId = searchParams.get("item");
+      if (itemId && clothingItems.length > 0) {
+        const item = clothingItems.find(i => i.id === itemId);
+        if (item) {
+          setSelectedItem(item);
+          setEditForm({
+            name: item.name || "",
+            category: item.category || "",
+            type: item.type || "",
+            brand: item.brand || "",
+            price: item.price?.toString() || "",
+            color: item.color || "",
+            season: item.season || "",
+            notes: item.notes || "",
+            sourceUrl: item.sourceUrl || "",
+            tags: item.tags || [],
+            size: item.size || "",
+          });
+          setIsEditing(false);
+        }
+      }
+    }, [searchParams, clothingItems]);
 
     // Define the filterable attributes
     const filterAttributes: FilterAttribute[] = [
@@ -726,6 +755,10 @@ const ClothingGallery = forwardRef(
                         size: item.size || "",
                       });
                       setIsEditing(false);
+                      // Update URL with item parameter
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.set("item", item.id);
+                      router.push(`?${params.toString()}`, { scroll: false });
                     }}
 
                     isSelected={selectedItemIds.includes(item.id)}
@@ -749,6 +782,10 @@ const ClothingGallery = forwardRef(
               setSelectedItem(null);
               setIsEditing(false);
               setClickedItemRect(null);
+              // Remove item parameter from URL
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete("item");
+              router.replace(`?${params.toString()}`, { scroll: false });
             }}
             onEdit={handleEdit}
             onDelete={(key: string) => {
@@ -783,6 +820,10 @@ const ClothingGallery = forwardRef(
                   tags: nextItem.tags || [],
                   size: nextItem.size || "",
                 });
+                // Update URL with next item
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("item", nextItem.id);
+                router.push(`?${params.toString()}`, { scroll: false });
               }
             }}
             onNavigatePrev={() => {
@@ -803,6 +844,10 @@ const ClothingGallery = forwardRef(
                   tags: prevItem.tags || [],
                   size: prevItem.size || "",
                 });
+                // Update URL with previous item
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("item", prevItem.id);
+                router.push(`?${params.toString()}`, { scroll: false });
               }
             }}
             hasNext={(() => {
