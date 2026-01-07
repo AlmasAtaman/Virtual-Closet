@@ -299,7 +299,7 @@ export default function AddToFolderDropdown({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="fixed z-[9999] w-[360px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+              className="fixed z-[9999] w-[360px] bg-background dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
               style={{
                 top: buttonPosition?.top ? `${buttonPosition.top}px` : '50%',
                 left: buttonPosition?.left ? `${buttonPosition.left}px` : '50%',
@@ -460,7 +460,7 @@ export default function AddToFolderDropdown({
                     </div>
 
                     {/* Create Board Button */}
-                    <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-3">
+                    <div className="sticky bottom-0 bg-background dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-3">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

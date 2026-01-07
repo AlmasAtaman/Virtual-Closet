@@ -71,15 +71,15 @@ export default function ClothingCard({
       style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
     >
       <Card
-        className={`group h-full transition-all duration-300 border-0 ring-0 rounded-[10px] bg-[#ECECEC] ${isSelected
+        className={`group h-full transition-all duration-300 border border-gray-200 dark:border-gray-700 rounded-xl bg-card shadow-lg ${isSelected
           ? "ring-2 ring-black dark:ring-white"
           : !isMultiSelecting
-            ? "hover:shadow-md"
-            : "shadow-none"
+            ? "hover:shadow-xl hover:border-gray-300 dark:hover:border-gray-600"
+            : ""
           }`}
       >
         <div
-          className="relative w-full h-[320px] flex items-center justify-center bg-[#ECECEC] cursor-pointer overflow-hidden clothing-image rounded-[10px]"
+          className="relative w-full h-[320px] flex items-center justify-center bg-card cursor-pointer overflow-hidden clothing-image rounded-xl"
           onClick={(e) => {
             // Don't trigger if clicking on a button or link inside the card
             const target = e.target as HTMLElement;
@@ -151,7 +151,7 @@ export default function ClothingCard({
 
           {/* Multi-select checkmark overlay - consistent with background selection */}
           {isMultiSelecting && isSelected && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-[10px] z-20">
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl z-20">
               <Check className="w-8 h-8 text-white" />
             </div>
           )}

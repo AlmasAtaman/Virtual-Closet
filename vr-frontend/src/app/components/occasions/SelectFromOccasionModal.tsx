@@ -98,7 +98,7 @@ export default function SelectFromOccasionModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden"
+        className="bg-background dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

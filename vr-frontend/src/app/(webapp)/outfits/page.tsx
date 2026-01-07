@@ -156,7 +156,7 @@ export default function OutfitsPage() {
   }
 
     return (
-        <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+        <div className="min-h-screen bg-background flex flex-col">
           {/* Sidebar */}
           <DashboardSidebar
             onThemeToggle={toggleTheme}
@@ -168,15 +168,15 @@ export default function OutfitsPage() {
             {/* Content Area */}
             <div className="flex-1 px-6 py-6 overflow-auto">
               {/* 2-Section Segmented Control Toggle Bar */}
-              <div className="relative w-full mb-6 bg-[#E5E5E5] rounded-full p-0.5 flex items-center justify-center gap-0">
+              <div className="relative w-full mb-6 bg-muted rounded-full p-0.5 flex items-center justify-center gap-0">
                 {/* Left Half: Outfits Section */}
                 <div className="flex-1">
                   <button
                     onClick={() => setActiveTab('outfits')}
                     className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
                       activeTab === 'outfits'
-                        ? 'bg-white text-black shadow-sm rounded-full'
-                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                        ? 'bg-card text-foreground shadow-sm rounded-full'
+                        : 'bg-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Outfits
@@ -189,8 +189,8 @@ export default function OutfitsPage() {
                     onClick={() => setActiveTab('occasions')}
                     className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${
                       activeTab === 'occasions'
-                        ? 'bg-white text-black shadow-sm rounded-full'
-                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                        ? 'bg-card text-foreground shadow-sm rounded-full'
+                        : 'bg-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Occasions
@@ -206,7 +206,7 @@ export default function OutfitsPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                       onClick={toggleMultiSelect}
                     >
                       <Image
@@ -222,7 +222,7 @@ export default function OutfitsPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                       onClick={() => setShowCreateModal(true)}
                     >
                       <Plus size={20} />
@@ -232,7 +232,7 @@ export default function OutfitsPage() {
                   /* Create button for Occasions tab */
                   <button
                     onClick={() => occasionsViewRef.current?.createOccasion()}
-                    className="px-6 py-2 bg-black dark:bg-black text-white rounded-full font-medium hover:bg-black/90 transition-colors"
+                    className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-colors"
                   >
                     Create
                   </button>

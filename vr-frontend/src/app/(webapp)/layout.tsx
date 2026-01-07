@@ -9,9 +9,7 @@ export default function WebappLayout({
 }>) {
   return (
     <ThemeProvider>
-      <div className="webapp-theme-root light">
-        {children}
-      </div>
+      {children}
     </ThemeProvider>
   );
 }

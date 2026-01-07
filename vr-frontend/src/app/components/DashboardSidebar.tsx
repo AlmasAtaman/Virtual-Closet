@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Sun, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
 
 interface DashboardSidebarProps {
   onThemeToggle?: () => void;
@@ -19,11 +20,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const pathname = usePathname();
 
   return (
+    <>
     <motion.aside
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="hidden md:flex fixed left-0 top-0 h-screen w-[70px] bg-white border-r border-gray-200 flex-col items-center py-6 z-40"
+      className="hidden md:flex fixed left-0 top-0 h-screen w-[70px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-col items-center py-6 z-40"
     >
       {/* Logo Section */}
       <div className="mb-8">
@@ -43,7 +45,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           onClick={() => router.push('/dashboard')}
-          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 transition-colors"
+          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           aria-label="Home"
         >
           <Image
@@ -60,7 +62,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           onClick={() => router.push('/outfits')}
-          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 transition-colors"
+          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           aria-label="Clothing"
         >
           <Image
@@ -76,7 +78,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 transition-colors"
+          className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           aria-label="Tags"
         >
           <Image
@@ -94,18 +96,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
       {/* Bottom Section */}
       <div className="flex flex-col items-center gap-4 mb-2">
-        {onThemeToggle && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            onClick={onThemeToggle}
-            className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-            aria-label="Toggle Theme"
-          >
-            <Sun size={34} />
-          </motion.button>
-        )}
+        <ThemeToggle />
 
         {onSettingsClick && (
           <motion.button
@@ -113,13 +104,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={onSettingsClick}
-            className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+            className="w-[56px] h-[56px] flex items-center justify-center rounded-2xl text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Settings"
           >
-            <Settings size={34} />
+            <Settings size={20} />
           </motion.button>
         )}
       </div>
     </motion.aside>
+    </>
   );
 };

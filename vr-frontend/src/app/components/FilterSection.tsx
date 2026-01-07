@@ -191,7 +191,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed right-0 top-0 h-full w-[450px] bg-white dark:bg-slate-900 shadow-2xl z-[70] flex flex-col"
+              className="fixed right-0 top-0 h-full w-[450px] bg-background dark:bg-gray-900 shadow-2xl z-[70] flex flex-col"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-8 py-6 border-b-2 border-gray-300 dark:border-slate-600">

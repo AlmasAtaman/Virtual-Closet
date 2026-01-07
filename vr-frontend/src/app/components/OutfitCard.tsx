@@ -559,7 +559,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
         )}
 
         {/* Enhanced Outfit Card for Detail View */}
-        <Card className="w-full max-w-md mx-auto h-[500px] overflow-hidden bg-card shadow-lg border-0 ring-1 ring-border rounded-xl">
+        <Card className="w-full max-w-md mx-auto h-[500px] overflow-hidden bg-card shadow-lg border border-gray-200 dark:border-gray-700 rounded-xl">
           {!hideHeader && (
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between text-lg">
@@ -582,7 +582,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
             </CardHeader>
           )}
           <CardContent className="p-0 flex-1">
-            <div className="relative bg-gradient-to-br from-muted via-background to-card rounded-lg w-full h-full max-w-sm mx-auto">
+            <div className="relative bg-card rounded-lg w-full h-full max-w-sm mx-auto">
               {renderOutfitDisplay()}
             </div>
           </CardContent>
@@ -735,16 +735,16 @@ const OutfitCard: React.FC<OutfitCardProps> = ({
       )}
 
       <Card
-        className={`cursor-pointer overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300 border-0 ring-1 rounded-xl ${
+        className={`cursor-pointer overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 rounded-xl ${
           isSelected
             ? "ring-2 ring-black dark:ring-white"
-            : "ring-border hover:ring-accent"
+            : "hover:border-gray-300 dark:hover:border-gray-600"
         }`}
         onClick={handleCardClick}
       >
         <CardContent className="p-0 flex flex-col">
           {/* Outfit Visual Area - Fixed height to match CreateOutfitModal canvas */}
-          <div className="h-[32rem] relative bg-gradient-to-br from-muted via-background to-card">
+          <div className="h-[32rem] relative bg-card">
             {renderOutfitDisplay()}
           </div>
 

@@ -200,7 +200,7 @@ export default function AddOutfitsToOccasionModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-[90vw] max-w-5xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+          className="relative w-[90vw] max-w-5xl max-h-[90vh] bg-background dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-800">

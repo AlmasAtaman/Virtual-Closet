@@ -344,7 +344,7 @@ export default function FolderDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Sidebar */}
       <DashboardSidebar
         onThemeToggle={toggleTheme}
@@ -363,7 +363,7 @@ export default function FolderDetailPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push("/dashboard?view=folders")}
-                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
               >
                 <ArrowLeft className="w-6 h-6" />
               </motion.button>
@@ -387,11 +387,9 @@ export default function FolderDetailPage() {
                   initial={false}
                   animate={{
                     width: showSearchBar ? 350 : 40,
-                    backgroundColor: showSearchBar ? "#ffffff" : "transparent",
-                    borderColor: showSearchBar ? "#d1d5db" : "transparent",
                   }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-gray-100 cursor-pointer border-transparent" : "border-gray-300"
+                  className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-accent cursor-pointer border-transparent bg-transparent" : "border-border bg-card"
                     }`}
                   onClick={() => {
                     if (!showSearchBar) setShowSearchBar(true);
@@ -403,7 +401,7 @@ export default function FolderDetailPage() {
                       x: showSearchBar ? 0 : "-50%",
                     }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="absolute top-1/2 -translate-y-1/2 z-10 text-gray-400 pointer-events-none"
+                    className="absolute top-1/2 -translate-y-1/2 z-10 text-muted-foreground pointer-events-none"
                   >
                     <Search className="w-5 h-5" />
                   </motion.div>
@@ -422,7 +420,7 @@ export default function FolderDetailPage() {
                         setShowSearchBar(false);
                       }
                     }}
-                    className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400 ${!showSearchBar ? "pointer-events-none" : ""
+                    className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-foreground placeholder-muted-foreground ${!showSearchBar ? "pointer-events-none" : ""
                       }`}
                   />
 
@@ -438,7 +436,7 @@ export default function FolderDetailPage() {
                           searchInputRef.current?.focus();
                         }}
                         onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-20"
                       >
                         <X size={14} />
                       </motion.button>
@@ -465,7 +463,7 @@ export default function FolderDetailPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                   onClick={() => setIsMultiSelecting(!isMultiSelecting)}
                 >
                   <Image
@@ -481,7 +479,7 @@ export default function FolderDetailPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                   onClick={() => setIsAddItemsModalOpen(true)}
                 >
                   <Plus size={20} />
@@ -537,7 +535,7 @@ export default function FolderDetailPage() {
               transition={{ duration: 0.2 }}
               className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center gap-4">
+              <div className="bg-card rounded-full shadow-lg border border-border px-6 py-3 flex items-center gap-4">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {selectedItemIds.length} item{selectedItemIds.length > 1 ? "s" : ""} selected
                 </span>

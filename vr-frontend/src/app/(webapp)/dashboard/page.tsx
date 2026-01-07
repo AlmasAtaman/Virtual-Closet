@@ -144,7 +144,7 @@ export default function Homepage() {
   if (!hasMounted || loading) return null
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Sidebar */}
       <DashboardSidebar
         onThemeToggle={toggleTheme}
@@ -158,15 +158,15 @@ export default function Homepage() {
           {/* 3-Section Segmented Control Toggle Bar with Notched Design */}
           <div className="relative w-full mb-6 flex items-center justify-center gap-0">
             {/* Left Half: Wishlist Section */}
-            <div className="flex-1 bg-[#E5E5E5] border-2 border-gray-300 rounded-l-full border-r-0 py-0.5 pl-0.5">
+            <div className="flex-1 bg-muted border-2 border-border rounded-l-full border-r-0 py-0.5 pl-0.5">
               <button
                 onClick={() => {
                   setViewMode('wishlist');
                   setDisplayMode('grid');
                 }}
                 className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${viewMode === 'wishlist' && displayMode === 'grid'
-                    ? 'bg-white text-black shadow-sm rounded-l-full'
-                    : 'bg-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-card text-foreground shadow-sm rounded-l-full'
+                    : 'bg-transparent text-muted-foreground hover:text-foreground'
                   }`}
               >
                 Wishlist
@@ -177,9 +177,9 @@ export default function Homepage() {
             <div className="relative z-10 -mx-3">
               <button
                 onClick={() => setDisplayMode(displayMode === "grid" ? "folders" : "grid")}
-                className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-gray-300 transition-all duration-200 shadow-md ${displayMode === "folders"
-                    ? "bg-white text-gray-900"
-                    : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-border transition-all duration-200 shadow-md ${displayMode === "folders"
+                    ? "bg-card text-foreground"
+                    : "bg-card text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
                 aria-label="Toggle Folders View"
               >
@@ -192,15 +192,15 @@ export default function Homepage() {
             </div>
 
             {/* Right Half: Closet Section */}
-            <div className="flex-1 bg-[#E5E5E5] border-2 border-gray-300 rounded-r-full border-l-0 py-0.5 pr-0.5">
+            <div className="flex-1 bg-muted border-2 border-border rounded-r-full border-l-0 py-0.5 pr-0.5">
               <button
                 onClick={() => {
                   setViewMode('closet');
                   setDisplayMode('grid');
                 }}
                 className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${viewMode === 'closet' && displayMode === 'grid'
-                    ? 'bg-white text-black shadow-sm rounded-r-full'
-                    : 'bg-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-card text-foreground shadow-sm rounded-r-full'
+                    : 'bg-transparent text-muted-foreground hover:text-foreground'
                   }`}
               >
                 Closet
@@ -220,12 +220,12 @@ export default function Homepage() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
-                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-muted text-foreground text-xs rounded-full flex items-center gap-1.5"
                     >
                       <span>Favorites</span>
                       <button
                         onClick={() => setShowFavoritesOnly(false)}
-                        className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                        className="hover:bg-accent rounded-full p-0.5 transition-colors"
                       >
                         <X size={12} />
                       </button>
@@ -237,12 +237,12 @@ export default function Homepage() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
-                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-muted text-foreground text-xs rounded-full flex items-center gap-1.5"
                     >
                       <span>{priceSort === "asc" ? "Price: Low to High" : "Price: High to Low"}</span>
                       <button
                         onClick={() => setPriceSort("none")}
-                        className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                        className="hover:bg-accent rounded-full p-0.5 transition-colors"
                       >
                         <X size={12} />
                       </button>
@@ -255,12 +255,12 @@ export default function Homepage() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
-                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full flex items-center gap-1.5 capitalize"
+                      className="px-3 py-1.5 bg-muted text-foreground text-xs rounded-full flex items-center gap-1.5 capitalize"
                     >
                       <span>{tag}</span>
                       <button
                         onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                        className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+                        className="hover:bg-accent rounded-full p-0.5 transition-colors"
                       >
                         <X size={12} />
                       </button>
@@ -280,7 +280,7 @@ export default function Homepage() {
                       setPriceSort("none");
                       setPriceRange([null, null]);
                     }}
-                    className="px-3 py-1.5 bg-black text-white text-xs rounded-full hover:bg-gray-800 transition-colors"
+                    className="px-3 py-1.5 bg-primary text-primary-foreground text-xs rounded-full hover:bg-primary/90 transition-colors"
                   >
                     Clear All
                   </motion.button>
@@ -295,7 +295,7 @@ export default function Homepage() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-6 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-base font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-sm"
+                  className="px-6 py-3 rounded-full bg-primary text-primary-foreground text-base font-semibold hover:bg-primary/90 transition-colors shadow-sm"
                   onClick={() => {
                     foldersViewRef.current?.createFolder();
                   }}
@@ -310,11 +310,9 @@ export default function Homepage() {
                     initial={false}
                     animate={{
                       width: showSearchBar ? 350 : 40,
-                      backgroundColor: showSearchBar ? "#ffffff" : "transparent",
-                      borderColor: showSearchBar ? "#d1d5db" : "transparent",
                     }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-gray-100 cursor-pointer border-transparent" : "border-gray-300"
+                    className={`relative h-10 flex items-center rounded-full border overflow-hidden ${!showSearchBar ? "hover:bg-accent cursor-pointer border-transparent bg-transparent" : "border-border bg-card"
                       }`}
                     onClick={() => {
                       if (!showSearchBar) setShowSearchBar(true);
@@ -326,7 +324,7 @@ export default function Homepage() {
                         x: showSearchBar ? 0 : "-50%",
                       }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="absolute top-1/2 -translate-y-1/2 z-10 text-gray-400 pointer-events-none"
+                      className="absolute top-1/2 -translate-y-1/2 z-10 text-muted-foreground pointer-events-none"
                     >
                       <Search className="w-5 h-5" />
                     </motion.div>
@@ -345,7 +343,7 @@ export default function Homepage() {
                           setShowSearchBar(false);
                         }
                       }}
-                      className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-gray-900 placeholder-gray-400 ${!showSearchBar ? "pointer-events-none" : ""
+                      className={`w-full h-full pl-10 pr-10 bg-transparent border-none focus:outline-none text-sm text-foreground placeholder-muted-foreground ${!showSearchBar ? "pointer-events-none" : ""
                         }`}
                     />
 
@@ -361,7 +359,7 @@ export default function Homepage() {
                             searchInputRef.current?.focus();
                           }}
                           onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-20"
                         >
                           <X size={14} />
                         </motion.button>
@@ -370,7 +368,7 @@ export default function Homepage() {
                   </motion.div>
 
                   {/* Filter */}
-                  <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-gray-700 [&_button]:hover:bg-gray-100 [&_button]:shadow-none">
+                  <div className="[&_button]:p-2 [&_button]:rounded-lg [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-foreground [&_button]:hover:bg-accent [&_button]:shadow-none">
                     <FilterSection
                       clothingItems={clothingItems}
                       selectedTags={selectedTags}
@@ -390,7 +388,7 @@ export default function Homepage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                     onClick={() => setIsMultiSelecting(!isMultiSelecting)}
                   >
                     <Image
@@ -406,7 +404,7 @@ export default function Homepage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                     onClick={handleOpenUploadModal}
                   >
                     <Plus size={20} />

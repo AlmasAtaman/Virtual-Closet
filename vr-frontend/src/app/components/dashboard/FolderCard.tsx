@@ -93,10 +93,10 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
     >
       <div className="overflow-visible">
         {/* Preview Grid - Pinterest style: Only outer container has rounded corners */}
-        <div className="w-full h-48 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+        <div className="w-full h-48 rounded-2xl overflow-hidden border border-border">
           {folder.imageLayout === "one-picture" ? (
             /* Single image layout */
-            <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div className="relative w-full h-full bg-white dark:bg-gray-800 overflow-hidden">
               {displayItems[0] ? (
                 <Image
                   src={displayItems[0].url}
@@ -110,9 +110,9 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
             </div>
           ) : (
             /* Three images layout */
-            <div className="flex gap-[2px] h-full p-[2px]">
+            <div className="flex gap-[2px] h-full bg-white dark:bg-gray-800">
               {/* Left side - First item (takes 2/3 width, full height, NO rounded corners) */}
-              <div className="relative w-2/3 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+              <div className="relative w-2/3 bg-white dark:bg-gray-800 overflow-hidden border-r-[1px] border-border">
                 {displayItems[0] ? (
                   <Image
                     src={displayItems[0].url}
@@ -128,7 +128,7 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
               {/* Right side - Two items stacked (each takes 1/3 width, NO rounded corners) */}
               <div className="flex flex-col gap-[2px] w-1/3">
                 {/* Top right - Second item */}
-                <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div className="relative flex-1 bg-white dark:bg-gray-800 overflow-hidden border-b-[1px] border-border">
                   {displayItems[1] ? (
                     <Image
                       src={displayItems[1].url}
@@ -142,7 +142,7 @@ export default function FolderCard({ folder, onClick, onRename, onChangeImage, o
                 </div>
 
                 {/* Bottom right - Third item */}
-                <div className="relative flex-1 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div className="relative flex-1 bg-white dark:bg-gray-800 overflow-hidden">
                   {displayItems[2] ? (
                     <Image
                       src={displayItems[2].url}

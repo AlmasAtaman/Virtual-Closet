@@ -187,7 +187,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Sidebar */}
       <DashboardSidebar
         onThemeToggle={toggleTheme}
@@ -206,7 +206,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleBackToOccasions}
-                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
               >
                 <ArrowLeft className="w-6 h-6" />
               </motion.button>
@@ -224,7 +224,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                 onClick={toggleMultiSelect}
               >
                 <Image
@@ -240,7 +240,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
                 onClick={() => setIsAddOutfitsModalOpen(true)}
               >
                 <Plus size={20} />
@@ -258,7 +258,7 @@ export default function OccasionPage({ params }: { params: Promise<{ occasionId:
                 transition={{ duration: 0.2 }}
                 className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
               >
-                <div className="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center gap-4">
+                <div className="bg-card rounded-full shadow-lg border border-border px-6 py-3 flex items-center gap-4">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {selectedOutfitIds.length} outfit{selectedOutfitIds.length > 1 ? 's' : ''} selected
                   </span>

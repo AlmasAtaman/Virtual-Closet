@@ -28,7 +28,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 
 const generateThemeColors = (baseColor: string, theme: "light" | "dark" | "chrome") => {
-  // Colors are only applied to light theme - other themes ignore custom colors
+  // Colors are only applied to light theme - dark and chrome themes ignore custom colors
   if (theme !== "light") {
     return {}
   }
@@ -120,14 +120,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const applyCustomTheme = useCallback(
     (color: string) => {
       try {
-        const webappRoot = document.querySelector('.webapp-theme-root') as HTMLElement
-        if (!webappRoot) return
         const colors = generateThemeColors(color, resolvedTheme)
 
-        // Apply the generated colors to CSS custom properties
+        // Apply the generated colors to CSS custom properties on :root
         Object.entries(colors).forEach(([key, value]) => {
           const cssVar = key.replace(/([A-Z])/g, "-$1").toLowerCase()
-          webappRoot.style.setProperty(`--${cssVar}`, value)
+          document.documentElement.style.setProperty(`--${cssVar}`, value)
         })
 
         setCustomColor(color)
@@ -140,10 +138,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const resetCustomTheme = useCallback(() => {
     try {
-    const webappRoot = document.querySelector('.webapp-theme-root') as HTMLElement
-    if (!webappRoot) return
-
-      // Remove all custom color properties
+      // Remove all custom color properties from :root
       const colorProperties = [
         "background",
         "foreground",
@@ -179,9 +174,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         "sidebar-ring",
       ]
 
-    colorProperties.forEach((prop) => {
-      webappRoot.style.removeProperty(`--${prop}`)
-    })
+      colorProperties.forEach((prop) => {
+        document.documentElement.style.removeProperty(`--${prop}`)
+      })
 
       setCustomColor(null)
       removeStoredCustomColor()
@@ -223,8 +218,7 @@ const updateTheme = () => {
 
   setResolvedTheme(resolved)
 
-  // Apply theme classes to BOTH document root (for Tailwind) AND webapp container (for scoping)
-// Apply theme classes ONLY to document root (for Tailwind)
+  // Apply theme classes ONLY to document root (for Tailwind)
 const documentRoot = document.documentElement
 documentRoot.classList.remove("light", "dark", "chrome")
 documentRoot.classList.add(resolved)
@@ -269,9 +263,7 @@ documentRoot.classList.add(resolved)
         isLoading,
       }}
     >
-      <div className="webapp-theme-root light">
-        {children}
-      </div>
+      {children}
     </ThemeContext.Provider>
   )
 }

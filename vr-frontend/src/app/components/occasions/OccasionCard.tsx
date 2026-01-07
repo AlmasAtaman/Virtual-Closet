@@ -94,7 +94,7 @@ export default function OccasionCard({ occasion, onClick, onRename, onChangeImag
     >
       <div className="overflow-visible">
         {/* Preview - Single image layout */}
-        <div className="w-full h-48 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+        <div className="w-full h-48 rounded-2xl overflow-hidden bg-background dark:bg-gray-900">
           <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
             {displayData?.type === 'image' ? (
               <Image
@@ -146,7 +146,7 @@ export default function OccasionCard({ occasion, onClick, onRename, onChangeImag
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 flex flex-col min-w-[140px]"
+                  className="absolute right-0 mt-1 bg-background dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 flex flex-col min-w-[140px]"
                   onClick={(e) => e.stopPropagation()}
                 >
                     <button
