@@ -51,16 +51,12 @@ export function RestrictedThemeProvider({ children }: { children: React.ReactNod
 
       setResolvedTheme(resolved)
 
-      // Only apply theme to public pages container, not the whole document
-// Override document root theme for public pages AND apply to container
-// Only apply theme to public container, don't touch document root
-const publicRoot = document.querySelector('.public-theme-root')
-
-// Apply restricted theme to public container
-if (publicRoot) {
-  publicRoot.classList.remove("light", "dark")
-  publicRoot.classList.add(resolved)
-}
+      // Apply restricted theme to public container only
+      const publicRoot = document.querySelector('.public-theme-root')
+      if (publicRoot) {
+        publicRoot.classList.remove("light", "dark")
+        publicRoot.classList.add(resolved)
+      }
       // Store theme preference
       try {
         localStorage.setItem("vrc-public-theme", theme)

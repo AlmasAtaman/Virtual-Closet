@@ -17,29 +17,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-/**
- * Analyze clothing image using GPT-4o Mini Vision
- *
- * @param {string} imagePath - Path to the image file
- * @returns {Promise<Object>} Clothing metadata
- */
-export async function getClothingInfoFromImage(imagePath) {
-  const startTime = Date.now();
-
-  try {
-    const optimizedBuffer = await optimizeFileForAI(imagePath);
-    const base64Image = optimizedBuffer.toString('base64');
-
-    // Call GPT-4o Mini Vision
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `You are a fashion labeling assistant for a wardrobe management app.
+// Shared prompt for clothing analysis
+const CLOTHING_ANALYSIS_PROMPT = `You are a fashion labeling assistant for a wardrobe management app.
 
 Analyze this image and return a JSON object with these fields:
 
@@ -117,7 +96,31 @@ Not clothing:
   "isClothing": false
 }
 
-Return ONLY the JSON object, no explanations.`
+Return ONLY the JSON object, no explanations.`;
+
+/**
+ * Analyze clothing image using GPT-4o Mini Vision
+ *
+ * @param {string} imagePath - Path to the image file
+ * @returns {Promise<Object>} Clothing metadata
+ */
+export async function getClothingInfoFromImage(imagePath) {
+  const startTime = Date.now();
+
+  try {
+    const optimizedBuffer = await optimizeFileForAI(imagePath);
+    const base64Image = optimizedBuffer.toString('base64');
+
+    // Call GPT-4o Mini Vision
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: CLOTHING_ANALYSIS_PROMPT
             },
             {
               type: "image_url",
@@ -168,39 +171,7 @@ export async function analyzeBufferWithAI(imageBuffer) {
           content: [
             {
               type: "text",
-              text: `You are a fashion labeling assistant for a wardrobe management app.
-
-Analyze this image and return a JSON object with these fields:
-
-Required fields:
-- "isClothing": boolean (true if this is ANY wearable item, clothing, shoes, accessories, jewelry, watches, bags, etc.)
-- "name": short descriptive name (e.g., "Black Graphic Hoodie", "Slim Fit Jeans", "Silver Chronograph Watch")
-- "brand": brand name if visible in image (like Fossil, Nike, Gucci), otherwise null
-- "category": MAIN CATEGORY, one of: "tops", "bottoms", "outerwear", "dresses", "shoes", "accessories", "bags"
-- "type": SUBCATEGORY within category, examples:
-  * tops: "t-shirt", "shirt", "blouse", "tank top", "crop top", "sweater", "polo"
-  * bottoms: "jeans", "pants", "shorts", "skirt", "leggings", "trousers", "chinos"
-  * outerwear: "jacket", "coat", "blazer", "cardigan", "hoodie", "vest", "windbreaker", "parka", "bomber"
-  * dresses: "mini dress", "midi dress", "maxi dress", "cocktail dress", "sundress"
-  * shoes: "sneakers", "boots", "heels", "flats", "sandals", "loafers"
-  * accessories: "watch", "hat", "scarf", "belt", "sunglasses", "eyeglasses", "jewelry", "necklace", "bracelet", "ring", "earrings", "cap", "beanie", "headband", "gloves", "tie", "bow tie", "suspenders"
-  * bags: "handbag", "backpack", "tote", "clutch", "crossbody", "messenger"
-- "tags": array of 1-3 style tags from: "casual", "elegant", "sporty", "vintage", "minimalist", "bohemian", "streetwear", "formal", "edgy", "preppy", "chic", "retro", "athleisure", "grunge", "romantic"
-- "color": primary color like "Black", "White", "Red", "Blue", "Green", "Yellow", "Gray", "Brown", "Purple", "Pink", "Navy", "Beige", "Cream", "Orange", "Silver", "Gold"
-- "season": one of "Spring", "Summer", "Fall", "Winter", "All Season"
-- "size": size if visible in image (e.g., "M", "L", "XL", "28"), otherwise null
-
-CRITICAL RULES:
-- Watches, jewelry, accessories, bags, shoes ARE clothing items (isClothing: true)
-- ONLY set isClothing to false for non-wearable items (furniture, electronics, food, etc.)
-- Sneakers, boots, heels, sandals, loafers, flats = category "shoes" (NOT accessories!)
-- Watches, hats, scarves, belts, jewelry = category "accessories" (NOT shoes!)
-- Provide a value for ALL fields if isClothing is true (except size can be null)
-- Make reasonable guesses based on visual information
-- Tags array must have 1-3 items maximum
-- Be specific with the type (subcategory)
-
-Return ONLY the JSON object, no explanations.`
+              text: CLOTHING_ANALYSIS_PROMPT
             },
             {
               type: "image_url",
