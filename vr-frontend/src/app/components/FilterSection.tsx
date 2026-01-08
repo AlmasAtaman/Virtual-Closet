@@ -11,6 +11,7 @@ import { FilterIcon } from "./icons/FilterIcon";
 import { ChevronDownIcon } from "./icons/ChevronDownIcon";
 import { ColorSwatches } from "./icons/ColorSwatches";
 import { CustomCheckbox } from "./CustomCheckbox";
+import { SUBCATEGORIES } from "../constants/clothing";
 
 export type Clothing = ClothingItem;
 
@@ -33,8 +34,8 @@ type FilterSectionProps = {
   setShowFavoritesOnly?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-// Clothing type options as per design
-const CLOTHING_TYPES = [
+// Main clothing categories shown by default
+const MAIN_CLOTHING_CATEGORIES = [
   "Tops",
   "Bottoms",
   "Dresses",
@@ -68,7 +69,7 @@ const COLOR_OPTIONS = [
 ];
 
 const FilterSection: React.FC<FilterSectionProps> = ({
-  // clothingItems,
+  clothingItems,
   selectedTags,
   setSelectedTags,
   // filterAttributes,
@@ -83,6 +84,16 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const [clothingTypeSearch, setClothingTypeSearch] = useState("");
+
+  // Extract unique tags from actual clothing items
+  const actualTags = Array.from(new Set(
+    clothingItems.flatMap(item => item.tags || [])
+  )).filter(tag => tag && tag.trim() !== '').sort();
+
+  // Extract unique clothing types (subcategories) from actual clothing items
+  const userClothingTypes = Array.from(new Set(
+    clothingItems.map(item => item.type?.toLowerCase()).filter(type => type && type.trim() !== '')
+  )).sort();
 
   // Track which sections are expanded - all open by default
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -125,9 +136,13 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   );
 
   // Filter clothing types based on search
-  const filteredClothingTypes = CLOTHING_TYPES.filter((type) =>
-    type.toLowerCase().includes(clothingTypeSearch.toLowerCase())
-  );
+  // When search is empty: show main categories
+  // When searching: search through user's actual clothing types, matching only types that START with the search term
+  const filteredClothingTypes = clothingTypeSearch.trim()
+    ? userClothingTypes.filter((type) =>
+        type.toLowerCase().startsWith(clothingTypeSearch.toLowerCase())
+      )
+    : MAIN_CLOTHING_CATEGORIES;
 
   // Get selected items for each category
   const getSelectedSort = () => {
@@ -139,7 +154,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   };
 
   const getSelectedClothingTypes = () => {
-    return CLOTHING_TYPES.filter(type => selectedTags.includes(type.toLowerCase()));
+    return MAIN_CLOTHING_CATEGORIES.filter(type => selectedTags.includes(type.toLowerCase()));
   };
 
   const getSelectedColors = () => {
@@ -375,16 +390,18 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 
                           {/* Clothing Type Checkboxes */}
                           {filteredClothingTypes.map((type) => {
-                            const isChecked = selectedTags.includes(type.toLowerCase());
+                            // Normalize the tag for comparison (actual tags are already lowercase)
+                            const normalizedType = type.toLowerCase();
+                            const isChecked = selectedTags.includes(normalizedType);
                             return (
                               <label
                                 key={type}
                                 className="flex items-center gap-3 cursor-pointer group w-full"
-                                onClick={() => toggleTag(type.toLowerCase())}
+                                onClick={() => toggleTag(normalizedType)}
                               >
                                 <CustomCheckbox
                                   checked={isChecked}
-                                  onCheckedChange={() => toggleTag(type.toLowerCase())}
+                                  onCheckedChange={() => toggleTag(normalizedType)}
                                   className="w-[18px] h-[18px] rounded-[4px] border-2 flex-shrink-0"
                                   style={{
                                     minWidth: '18px',
@@ -393,7 +410,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                                     borderColor: isChecked ? '#000' : '#9ca3af',
                                   }}
                                 />
-                                <span className="text-xs text-gray-600 dark:text-gray-300 flex-1">{type}</span>
+                                <span className="text-xs text-gray-600 dark:text-gray-300 flex-1 capitalize">{type}</span>
                               </label>
                             );
                           })}
