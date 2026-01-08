@@ -129,6 +129,11 @@ export default function UploadForm({
     const hasType = formData.type && formData.type.trim() !== ''
 
     if (!hasImage) return false
+
+    // If autofill is enabled, we don't need category/type filled yet
+    // because they'll be autofilled during submission
+    if (autoFillEnabled) return true
+
     if (!hasCategory) return false // Category is required for consistent sizing
     if (!hasType) return false // Type (subcategory) is also required
 
@@ -391,34 +396,6 @@ export default function UploadForm({
     setUploadProgress(0)
 
     try {
-      // Run autofill if toggle is enabled
-      let autoFilledData: any = null
-      if (autoFillEnabled && selectedFile) {
-        setIsAutoFilling(true)
-        try {
-          const autoFillForm = new FormData()
-          autoFillForm.append("image", selectedFile)
-
-          const autoFillRes = await axios.post(`${API_URL}/api/images`, autoFillForm, {
-            withCredentials: true,
-            headers: { "Content-Type": "multipart/form-data" },
-          })
-
-          const { clothingData } = autoFillRes.data
-
-          if (clothingData?.isClothing) {
-            // Store AI suggestions for analytics
-            setAiSuggestions(clothingData)
-            autoFilledData = clothingData
-          }
-        } catch (error) {
-          console.error("Auto-fill failed during submit:", error)
-          // Continue with submission even if autofill fails
-        } finally {
-          setIsAutoFilling(false)
-        }
-      }
-
       const submitFormData = new FormData()
 
       let finalImageFile: File | undefined
@@ -444,24 +421,27 @@ export default function UploadForm({
       // Set default type if not provided
       const finalType = formData.type?.trim() || "uncategorized"
 
-      submitFormData.append("name", autoFilledData?.name || finalName)
-      submitFormData.append("type", autoFilledData?.type || finalType)
-      submitFormData.append("category", autoFilledData?.category || formData.category || "")
-      submitFormData.append("brand", autoFilledData?.brand || formData.brand || "")
-      submitFormData.append("price", (autoFilledData?.price || formData.price || 0).toString())
+      submitFormData.append("name", finalName)
+      submitFormData.append("type", finalType)
+      submitFormData.append("category", formData.category || "")
+      submitFormData.append("brand", formData.brand || "")
+      submitFormData.append("price", (formData.price || 0).toString())
       submitFormData.append("mode", uploadTarget)
       submitFormData.append("sourceUrl", formData.sourceUrl || "")
 
       // New schema fields
-      submitFormData.append("color", autoFilledData?.color || formData.color || "")
-      submitFormData.append("season", autoFilledData?.season || formData.season || "")
+      submitFormData.append("color", formData.color || "")
+      submitFormData.append("season", formData.season || "")
       submitFormData.append("notes", formData.notes || "")
-      submitFormData.append("tags", JSON.stringify(autoFilledData?.tags || formData.tags || []))
-      submitFormData.append("size", autoFilledData?.size || formData.size || "")
+      submitFormData.append("tags", JSON.stringify(formData.tags || []))
+      submitFormData.append("size", formData.size || "")
+
+      // Pass autofill flag to backend so it can run autofill during background processing
+      submitFormData.append("autoFill", autoFillEnabled.toString())
 
       // Include AI suggestions if they exist (for backend analytics)
-      if (autoFilledData || aiSuggestions) {
-        submitFormData.append("aiSuggestions", JSON.stringify(autoFilledData || aiSuggestions))
+      if (aiSuggestions) {
+        submitFormData.append("aiSuggestions", JSON.stringify(aiSuggestions))
       }
 
       const progressInterval = setInterval(() => {

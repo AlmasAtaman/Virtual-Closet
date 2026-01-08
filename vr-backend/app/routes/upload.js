@@ -405,7 +405,8 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
     mode = "closet",
     sourceUrl = null,
     price = null,
-    aiSuggestions = null
+    aiSuggestions = null,
+    autoFill = "false"
   } = req.body;
   const userId = req.user.id;
   const file = req.file;
@@ -416,16 +417,56 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
   console.log(`📋 Creating optimistic item with pending status`);
   console.log(`📎 File received:`, file ? `Yes (${file.originalname}, ${file.size} bytes)` : 'No');
   console.log(`🔗 Image URL received:`, imageUrl || 'No');
+  console.log(`🤖 AutoFill requested:`, autoFill === "true");
 
   if (!userId || (!file && !imageUrl)) {
     return res.status(400).json({ message: "Bad Request: Missing userId or image data" });
   }
 
-  if (!type || type.trim() === '') {
+  // If autofill is NOT enabled, category is required
+  if (autoFill !== "true" && (!type || type.trim() === '')) {
     return res.status(400).json({ message: "Category is required. Please select a clothing category." });
   }
 
   try {
+    // If autofill is enabled, run Gemini analysis first to get category/type
+    let autoFilledData = null;
+    let finalType = type;
+    let finalCategory = category;
+    let finalName = name;
+    let finalBrand = brand;
+    let finalColor = color;
+    let finalSeason = season;
+    let finalTags = tags;
+    let finalSize = size;
+    let finalPrice = price;
+
+    if (autoFill === "true" && file) {
+      console.log(`🤖 Running autofill analysis before creating optimistic item...`);
+      try {
+        autoFilledData = await analyzeImageWithGemini(file.buffer);
+        if (autoFilledData?.isClothing) {
+          console.log(`✅ Autofill analysis complete:`, autoFilledData);
+          finalType = autoFilledData.type || "uncategorized";
+          finalCategory = autoFilledData.category || null;
+          finalName = autoFilledData.name || "Untitled";
+          finalBrand = autoFilledData.brand || null;
+          finalColor = autoFilledData.color || null;
+          finalSeason = autoFilledData.season || null;
+          finalTags = autoFilledData.tags || [];
+          finalSize = autoFilledData.size || null;
+          finalPrice = autoFilledData.price || null;
+        } else {
+          console.log(`⚠️ Autofill detected non-clothing image`);
+          finalType = "uncategorized";
+        }
+      } catch (err) {
+        console.error(`❌ Autofill analysis failed:`, err);
+        // Continue with defaults if autofill fails
+        finalType = "uncategorized";
+      }
+    }
+
     // Generate a unique key for the item
     const tempKey = `temp/${userId}/${uuidv4()}`;
 
@@ -458,11 +499,13 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
       originalPresignedUrl = imageUrl;
     }
 
-    // Parse tags if it's a string (from form data)
+    // Parse tags if it's a string (from form data) or use autofilled tags
     let tagsArray = [];
-    if (tags) {
+    if (Array.isArray(finalTags)) {
+      tagsArray = finalTags;
+    } else if (finalTags) {
       try {
-        tagsArray = typeof tags === 'string' ? JSON.parse(tags) : tags;
+        tagsArray = typeof finalTags === 'string' ? JSON.parse(finalTags) : finalTags;
       } catch (e) {
         console.warn('Failed to parse tags:', e);
         tagsArray = [];
@@ -483,31 +526,31 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
       }
     }
 
-    // Create database record with pending status
+    // Create database record with pending status (use autofilled data if available)
     const clothing = await prisma.clothing.create({
       data: {
         userId: userId,
         key: tempKey,
         url: tempKey,
         originalImageUrl: originalPresignedUrl,
-        name: name || "Untitled",
-        type,
-        category: category || null,
-        brand: brand || null,
-        color: color || null,
-        season: season || null,
+        name: finalName || "Untitled",
+        type: finalType,
+        category: finalCategory || null,
+        brand: finalBrand || null,
+        color: finalColor || null,
+        season: finalSeason || null,
         notes: notes || null,
         tags: tagsArray,
-        size: size || null,
+        size: finalSize || null,
         purchaseDate: new Date(),
         mode,
         sourceUrl,
-        price: price ? parseFloat(price) : null,
+        price: finalPrice ? parseFloat(finalPrice) : null,
         processingStatus: "pending",
         uploadMethod,
         sourceDomain,
-        aiGenerated: !!aiSuggestions,
-        aiSuggestions: aiSuggestions ? (typeof aiSuggestions === 'string' ? JSON.parse(aiSuggestions) : aiSuggestions) : null
+        aiGenerated: !!(autoFilledData || aiSuggestions),
+        aiSuggestions: autoFilledData || (aiSuggestions ? (typeof aiSuggestions === 'string' ? JSON.parse(aiSuggestions) : aiSuggestions) : null)
       }
     });
 
@@ -526,7 +569,7 @@ router.post("/create-optimistic", authMiddleware, upload.single("image"), async 
         data: imageUrl,
         originalname: 'scraped_image.jpg'
       },
-      category: category
+      category: finalCategory || category // Use the category from autofill if available
     };
 
     // Start background processing asynchronously (don't wait for it)
@@ -557,6 +600,7 @@ async function processImageInBackground(processingData) {
 
   try {
     console.log(`\n🔄 Starting background processing for item ${itemId}`);
+    console.log(`📦 Category for sizing: ${category}`);
 
     // Update status to processing
     await prisma.clothing.update({
