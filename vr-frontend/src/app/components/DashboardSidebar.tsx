@@ -19,6 +19,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
+  // Check if we're on dashboard or folders
+  const isHomeSelected = pathname === '/dashboard' || pathname?.startsWith('/folders/');
+
+  // Check if we're on outfits or occasions
+  const isOutfitsSelected = pathname === '/outfits' || pathname?.startsWith('/occasions/');
+
   return (
     <>
     <motion.aside
@@ -49,7 +55,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           aria-label="Home"
         >
           <Image
-            src={pathname === '/dashboard' ? '/homeSelect.PNG' : '/home.PNG'}
+            src={isHomeSelected ? '/homeSelect.PNG' : '/home.PNG'}
             alt="Home"
             width={52}
             height={52}
@@ -66,7 +72,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           aria-label="Clothing"
         >
           <Image
-            src={pathname === '/outfits' ? '/outfitSelect.PNG' : '/outfit.PNG'}
+            src={isOutfitsSelected ? '/outfitSelect.PNG' : '/outfit.PNG'}
             alt="Outfits"
             width={56}
             height={56}

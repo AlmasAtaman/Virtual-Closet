@@ -100,7 +100,7 @@ export default function ClothingDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-md w-[420px] p-6 border border-border rounded-lg [&>button.absolute.right-4.top-4]:hidden overflow-visible"
+        className="max-w-md w-[min(420px,95vw)] p-6 border border-border rounded-lg [&>button.absolute.right-4.top-4]:hidden overflow-visible"
         onPointerDownOutside={(e) => {
           const target = e.target as HTMLElement;
           const dropdownElement = document.querySelector('[data-folder-dropdown]');
@@ -379,6 +379,7 @@ export default function ClothingDetailModal({
             {hasPrev && (
               <motion.button
                 onClick={onNavigatePrev}
+                initial={{ x: 0, opacity: 1 }}
                 animate={{
                   x: isExpanded ? -220 : 0,
                   opacity: isEditing ? 0 : 1,
@@ -396,6 +397,7 @@ export default function ClothingDetailModal({
             {hasNext && (
               <motion.button
                 onClick={onNavigateNext}
+                initial={{ x: 0, opacity: 1 }}
                 animate={{
                   x: isExpanded ? 220 : 0,
                   opacity: isEditing ? 0 : 1,

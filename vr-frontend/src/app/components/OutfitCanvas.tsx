@@ -100,8 +100,8 @@ export default function OutfitCanvas({
             exit={{ opacity: 0 }}
             transition={{
               opacity: { duration: 0.3 },
-              left: { duration: 0 },
-              top: { duration: 0 },
+              left: { duration: 0.4, ease: "easeInOut" },
+              top: { duration: 0.4, ease: "easeInOut" },
             }}
             className={`absolute ${
               enableDragDrop ? "cursor-move hover:shadow-lg transition-shadow" : ""

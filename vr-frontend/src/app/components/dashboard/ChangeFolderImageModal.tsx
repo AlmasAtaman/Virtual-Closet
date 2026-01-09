@@ -23,6 +23,7 @@ interface ChangeFolderImageModalProps {
   folderId: string;
   currentImageLayout?: string | null;
   currentPreviewImages?: any;
+  folderPreviewItems?: Array<{ id: string; url: string; name: string }>;
 }
 
 export default function ChangeFolderImageModal({
@@ -33,6 +34,7 @@ export default function ChangeFolderImageModal({
   folderId,
   currentImageLayout,
   currentPreviewImages,
+  folderPreviewItems = [],
 }: ChangeFolderImageModalProps) {
   // Initialize with current data
   const initialLayout = currentImageLayout === "one-picture" ? "one" : "multiple";
@@ -73,6 +75,43 @@ export default function ChangeFolderImageModal({
     'bottom-right': null,
   });
 
+  const fetchDefaultImagesForPreview = useCallback((layout: "one" | "multiple") => {
+    // Use folderPreviewItems if available (matches FolderCard logic)
+    const items = folderPreviewItems.filter(item => item && item.url && item.url.trim() !== '');
+
+    if (items.length > 0) {
+      if (layout === "one") {
+        // Single image layout - use first item
+        const firstItem = items[0];
+        const defaultImage = [{
+          position: "main" as RectanglePosition,
+          imageUrl: firstItem.url || "",
+          clothingItemId: firstItem.id,
+        }];
+        setRectangleImages(defaultImage);
+        setSinglePictureImages(defaultImage);
+      } else {
+        // Multiple image layout - use first 3 items
+        const defaultImages: RectangleImage[] = [];
+        const positions: RectanglePosition[] = ["main", "top-right", "bottom-right"];
+
+        for (let i = 0; i < Math.min(3, items.length); i++) {
+          const item = items[i];
+          if (item.url) {
+            defaultImages.push({
+              position: positions[i],
+              imageUrl: item.url,
+              clothingItemId: item.id,
+            });
+          }
+        }
+
+        setRectangleImages(defaultImages);
+        setMultiplePictureImages(defaultImages);
+      }
+    }
+  }, [folderPreviewItems]);
+
   // Reset state when modal opens with new data
   useEffect(() => {
     if (isOpen) {
@@ -94,64 +133,11 @@ export default function ChangeFolderImageModal({
       }
 
       // If no preview images exist, fetch the default (first clothing items) to show in the preview
-      if (images.length === 0 && folderId) {
+      if (images.length === 0 && folderPreviewItems.length > 0) {
         fetchDefaultImagesForPreview(layout);
       }
     }
-  }, [isOpen, currentImageLayout, currentPreviewImages]);
-
-  const fetchDefaultImagesForPreview = async (layout: "one" | "multiple") => {
-    if (!folderId) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/folders/${folderId}/items`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) return;
-
-      const data = await response.json();
-
-      // Get the first clothing items (this matches the fallback logic in FolderCard)
-      if (data.items && data.items.length > 0) {
-        if (layout === "one") {
-          // Single image layout - use first item
-          const firstItem = data.items[0];
-          const defaultImage = [{
-            position: "main" as RectanglePosition,
-            imageUrl: firstItem.url || "",
-            clothingItemId: firstItem.id,
-          }];
-          setRectangleImages(defaultImage);
-          setSinglePictureImages(defaultImage);
-        } else {
-          // Multiple image layout - use first 3 items
-          const defaultImages: RectangleImage[] = [];
-          const positions: RectanglePosition[] = ["main", "top-right", "bottom-right"];
-
-          for (let i = 0; i < Math.min(3, data.items.length); i++) {
-            const item = data.items[i];
-            if (item.url) {
-              defaultImages.push({
-                position: positions[i],
-                imageUrl: item.url,
-                clothingItemId: item.id,
-              });
-            }
-          }
-
-          setRectangleImages(defaultImages);
-          setMultiplePictureImages(defaultImages);
-        }
-      }
-    } catch {
-    }
-  };
+  }, [isOpen, currentImageLayout, currentPreviewImages, folderPreviewItems, fetchDefaultImagesForPreview]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

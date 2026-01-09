@@ -755,9 +755,10 @@ const ClothingGallery = forwardRef(
                         size: item.size || "",
                       });
                       setIsEditing(false);
-                      // Update URL with item parameter
+                      // Update URL with item parameter, clear view parameter
                       const params = new URLSearchParams(searchParams.toString());
                       params.set("item", item.id);
+                      params.delete("view"); // Remove view parameter to prevent redirect
                       router.push(`?${params.toString()}`, { scroll: false });
                     }}
 
@@ -823,6 +824,7 @@ const ClothingGallery = forwardRef(
                 // Update URL with next item
                 const params = new URLSearchParams(searchParams.toString());
                 params.set("item", nextItem.id);
+                params.delete("view"); // Remove view parameter to prevent redirect
                 router.push(`?${params.toString()}`, { scroll: false });
               }
             }}
@@ -847,6 +849,7 @@ const ClothingGallery = forwardRef(
                 // Update URL with previous item
                 const params = new URLSearchParams(searchParams.toString());
                 params.set("item", prevItem.id);
+                params.delete("view"); // Remove view parameter to prevent redirect
                 router.push(`?${params.toString()}`, { scroll: false });
               }
             }}

@@ -182,6 +182,18 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
     }
   }, [show, fetchClothingItems])
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (show) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [show])
+
   // Randomize initial display indices when clothing items are loaded
   useEffect(() => {
     if (clothingItems.allItems.length > 0) {
@@ -926,10 +938,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+            className="w-full max-w-[95vw] md:max-w-3xl lg:max-w-4xl max-h-[95vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Main Content - Canvas Mode Only */}
-            <div className="flex-1 flex flex-row overflow-hidden justify-center items-start gap-6 p-6 relative" style={{ paddingTop: '66px' }}>
+            <div className="flex-1 flex flex-row overflow-y-auto overflow-x-hidden justify-center items-start gap-3 md:gap-6 p-3 md:p-6 relative" style={{ paddingTop: '66px' }}>
                   {/* Left Sidebar - Category Buttons (Canvas Mode Only) */}
                   {mode === "canvas" && (
                     <div className="flex flex-col gap-3 relative" style={{ marginTop: 'calc(28px + 8px)', zIndex: 2 }} onClick={(e) => e.stopPropagation()}>
@@ -1052,7 +1065,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                           {/* Canvas - Direct container with border as the visual boundary */}
                           <div
                             data-canvas
-                            className="relative h-[32rem] w-[280px] bg-gradient-to-br from-muted via-background to-card rounded-xl ring-1 ring-border overflow-hidden shadow-lg"
+                            className="relative h-[min(32rem,70vh)] w-[min(280px,40vw)] max-w-[280px] bg-gradient-to-br from-muted via-background to-card rounded-xl ring-1 ring-border overflow-hidden shadow-lg"
                             style={{ boxSizing: 'border-box' }}
                             onClick={() => {
                               setSelectedItemForResize(null)
@@ -1149,7 +1162,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       <Button
                         onClick={() => createOutfit()}
                         disabled={!editedCategorizedItems || (!editedCategorizedItems.top && !editedCategorizedItems.bottom && !editedCategorizedItems.outerwear && !editedCategorizedItems.shoe && editedCategorizedItems.others.length === 0) || isCreating}
-                        className="w-[280px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-3"
+                        className="w-[min(280px,40vw)] max-w-[280px] bg-foreground text-background hover:bg-foreground/90 font-semibold mt-3"
                       >
                         {isCreating ? "Saving..." : "Save"}
                       </Button>
@@ -1157,11 +1170,11 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                       ) : (
                         <>
                           {/* Display Mode */}
-                          <div className="relative h-[32rem] flex items-center justify-center" style={{ width: '480px' }}>
+                          <div className="relative h-[min(32rem,70vh)] flex items-center justify-center w-[min(480px,70vw)] max-w-[480px]">
                             {(() => {
                               const layout = getDisplayLayout()
                               // Create a layout key that changes when the configuration changes
-                              const layoutKey = `${layout.outerwear ? 'o' : ''}${layout.top ? 't' : ''}${layout.bottom ? 'b' : ''}`
+                              const layoutKey = `${layout.outerwear ? 'o' : ''}${layout.top ? 't' : ''}${layout.bottom ? 'b' : ''}${layout.shoes ? 's' : ''}`
 
                               return (
                                 <AnimatePresence mode="wait">
@@ -1214,7 +1227,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                     </div>
 
                                     {/* Center Roulette View */}
-                                    <div className="relative w-[400px] h-[32rem]">
+                                    <div className="relative w-[min(400px,60vw)] max-w-[400px] h-[min(32rem,70vh)]">
                                       {/* Render roulette for each category */}
                                       {layout.outerwear && displayToggles.outerwear && clothingItems.outerwear.length > 0 && (() => {
                                         const roulette = getRouletteItems("outerwear")
@@ -1970,7 +1983,7 @@ export default function CreateOutfitModal({ show, onCloseAction, onOutfitCreated
                                 createOutfit(currentItems)
                               }}
                               disabled={isCreating || (clothingItems.tops.length === 0 && clothingItems.bottoms.length === 0)}
-                              className="w-[420px] bg-foreground text-background hover:bg-foreground/90 font-semibold"
+                              className="w-[min(420px,70vw)] max-w-[420px] bg-foreground text-background hover:bg-foreground/90 font-semibold"
                             >
                               {isCreating ? "Saving..." : "Save"}
                             </Button>

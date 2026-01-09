@@ -295,7 +295,7 @@ export default function OutfitsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-6 w-full" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                <div className={`grid gap-6 w-full ${isMultiSelecting ? 'pb-24' : ''}`} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   {outfits.map((outfit, index) => (
                     <motion.div
                       key={outfit.id}

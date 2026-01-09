@@ -254,6 +254,7 @@ const FoldersView = forwardRef<FoldersViewRef, FoldersViewProps>(({ viewMode }, 
         folderId={selectedFolder?.id || ""}
         currentImageLayout={selectedFolder?.imageLayout}
         currentPreviewImages={selectedFolder?.previewImages}
+        folderPreviewItems={selectedFolder?.previewItems || []}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -43,6 +43,18 @@ export default function AddItemsToFolderModal({
     }
   }, [isOpen]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const fetchAllItems = async () => {
     try {
       setIsLoading(true);
@@ -164,7 +176,7 @@ export default function AddItemsToFolderModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-[90vw] max-w-5xl max-h-[90vh] bg-background dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+          className="relative w-[95vw] md:max-w-3xl lg:max-w-4xl max-h-[90vh] bg-background dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-800">
@@ -250,7 +262,7 @@ export default function AddItemsToFolderModal({
                           src={item.url}
                           alt={item.name}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                         />
                         {/* Overlay on hover or when processing */}

@@ -160,7 +160,7 @@ export default function CreateOccasionModal({ show, onCloseAction, onOccasionCre
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className={`bg-background rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col ${
-            step === "name" ? "max-w-md" : "max-w-6xl"
+            step === "name" ? "max-w-md" : "max-w-[95vw] md:max-w-3xl lg:max-w-5xl"
           }`}
           onClick={(e) => e.stopPropagation()}
         >

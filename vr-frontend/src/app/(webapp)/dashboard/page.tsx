@@ -41,11 +41,18 @@ export default function Homepage() {
     }
   }, [showSearchBar])
 
-  // Check for view parameter in URL
+  // Check for view and section parameters in URL
   useEffect(() => {
     const view = searchParams.get("view")
+    const section = searchParams.get("section")
+
     if (view === "folders") {
       setDisplayMode("folders")
+    }
+
+    if (section === "wishlist" || section === "closet") {
+      setViewMode(section)
+      setDisplayMode("grid")
     }
   }, [searchParams])
 
@@ -163,6 +170,7 @@ export default function Homepage() {
                 onClick={() => {
                   setViewMode('wishlist');
                   setDisplayMode('grid');
+                  router.push('?section=wishlist', { scroll: false });
                 }}
                 className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${viewMode === 'wishlist' && displayMode === 'grid'
                     ? 'bg-card text-foreground shadow-sm rounded-l-full'
@@ -176,7 +184,15 @@ export default function Homepage() {
             {/* Center: Circular Folder Button (Sticks Out) */}
             <div className="relative z-10 -mx-3">
               <button
-                onClick={() => setDisplayMode(displayMode === "grid" ? "folders" : "grid")}
+                onClick={() => {
+                  const newMode = displayMode === "grid" ? "folders" : "grid";
+                  setDisplayMode(newMode);
+                  if (newMode === "folders") {
+                    router.push('?view=folders', { scroll: false });
+                  } else {
+                    router.push(`?section=${viewMode}`, { scroll: false });
+                  }
+                }}
                 className={`w-14 h-14 flex items-center justify-center rounded-full border-[3px] border-border transition-all duration-200 shadow-md ${displayMode === "folders"
                     ? "bg-card text-foreground"
                     : "bg-card text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -197,6 +213,7 @@ export default function Homepage() {
                 onClick={() => {
                   setViewMode('closet');
                   setDisplayMode('grid');
+                  router.push('?section=closet', { scroll: false });
                 }}
                 className={`w-full py-1.5 px-6 text-sm font-medium transition-all duration-200 text-center ${viewMode === 'closet' && displayMode === 'grid'
                     ? 'bg-card text-foreground shadow-sm rounded-r-full'

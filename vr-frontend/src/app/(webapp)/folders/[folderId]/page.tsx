@@ -190,7 +190,7 @@ export default function FolderDetailPage() {
 
   // Handle clothing item click
   const handleItemClick = (item: ClothingItem) => {
-    const index = folder?.items.findIndex(i => i.id === item.id) ?? -1;
+    const index = sortedItems.findIndex(i => i.id === item.id);
     setSelectedItem(item);
     setSelectedIndex(index);
   };
@@ -210,10 +210,10 @@ export default function FolderDetailPage() {
 
   // Navigate to next/previous item
   const handleNext = () => {
-    if (folder && selectedIndex < folder.items.length - 1) {
+    if (selectedIndex < sortedItems.length - 1) {
       const nextIndex = selectedIndex + 1;
       setSelectedIndex(nextIndex);
-      setSelectedItem(folder.items[nextIndex]);
+      setSelectedItem(sortedItems[nextIndex]);
     }
   };
 
@@ -221,7 +221,7 @@ export default function FolderDetailPage() {
     if (selectedIndex > 0) {
       const prevIndex = selectedIndex - 1;
       setSelectedIndex(prevIndex);
-      setSelectedItem(folder!.items[prevIndex]);
+      setSelectedItem(sortedItems[prevIndex]);
     }
   };
 
@@ -579,9 +579,9 @@ export default function FolderDetailPage() {
             isOpen={!!selectedItem}
             onClose={handleCloseModal}
             onToggleFavorite={toggleFavorite}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            hasNext={folder ? selectedIndex < folder.items.length - 1 : false}
+            onNavigateNext={handleNext}
+            onNavigatePrev={handlePrev}
+            hasNext={selectedIndex < sortedItems.length - 1}
             hasPrev={selectedIndex > 0}
           />
         )}

@@ -113,7 +113,7 @@ export default function OutfitDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-lg">
+      <DialogContent className="max-w-[min(480px,95vw)] sm:max-w-[480px] p-0 overflow-hidden rounded-lg">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

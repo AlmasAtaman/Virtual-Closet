@@ -519,7 +519,7 @@ export default function UploadForm({
         <Dialog key="upload-modal" open={isOpen} onOpenChange={onCloseAction}>
           <DialogContent
             className={`p-6 border border-border rounded-lg overflow-visible transition-all duration-500 [&>button.absolute.right-4.top-4]:hidden ${
-              mode === "advanced" ? "max-w-md w-[420px]" : "max-w-md w-[420px]"
+              mode === "advanced" ? "max-w-md w-[min(420px,95vw)]" : "max-w-md w-[min(420px,95vw)]"
             }`}
           >
             <VisuallyHidden>
